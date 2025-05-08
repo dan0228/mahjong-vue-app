@@ -1,30 +1,32 @@
-<script setup>
-import HelloWorld from './components/HelloWorld.vue'
-</script>
-
 <template>
-  <div>
-    <a href="https://vite.dev" target="_blank">
-      <img src="/vite.svg" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://vuejs.org/" target="_blank">
-      <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-    </a>
+  <div id="app-container">
+    <header>
+      <h1>四牌麻雀</h1>
+    </header>
+    <main>
+      <GameBoard />
+    </main>
+    <!-- 必要であればここにフッターを追加できます -->
   </div>
-  <HelloWorld msg="Vite + Vue" />
 </template>
 
+<script setup>
+// 今のところ、特別なスクリプトは不要です。
+// 将来的に、グローバルなイベントリスナーや初期化処理などを記述する可能性があります。
+import GameBoard from './components/GameBoard.vue';
+</script>
+
 <style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+#app-container {
+  font-family: Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-align: center;
+  color: #2c3e50;
+  margin-top: 20px;
 }
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
+
+header h1 {
+  color: #42b983; /* Vue Green */
 }
 </style>

@@ -1,13 +1,5 @@
 <template>
-  <div id="app-container">
-    <header>
-      <h1>四牌麻雀</h1>
-    </header>
-    <main>
-      <GameBoard />
-    </main>
-    <!-- 必要であればここにフッターを追加できます -->
-  </div>
+  <router-view />
 </template>
 
 <script setup>
@@ -17,16 +9,5 @@ import GameBoard from './components/GameBoard.vue';
 </script>
 
 <style scoped>
-#app-container {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 20px;
-}
-
-header h1 {
-  color: #42b983; /* Vue Green */
-}
+/* App.vueのスタイルは最小限に、各ビューやコンポーネントで管理するのが一般的 */
 </style>

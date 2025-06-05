@@ -5,10 +5,20 @@
       <span>{{ honbaCount }}本場</span>
       <span>供託: {{ riichiSticksCount }}</span>
     </div>
+    <div v-if="dealer" class="dealer-info">
+      <span>現在の親: {{ dealer.name }} ({{ dealer.seatWind }})</span>
+    </div>
     <div class="scores">
-      <div v-for="player in players" :key="player.id" class="player-score">
-        <span class="player-name">{{ getPlayerPositionName(player.id) }}:</span>
+      <!-- GameBoard.vue の表示順 (自分、右、対面、左) に合わせてプレイヤー情報を表示 -->
+      <div v-for="player in orderedPlayersForDisplay" :key="player.id" class="player-score">
+        <span class="player-name">
+          {{ getPlayerDisplayLabel(player) }}:
+        </span>
         <span class="score-value">{{ player.score }}</span>
+        <span v-if="player.isDealer && player.id !== dealer?.id" class="dealer-indicator-small"> (親)</span>
+        <span v-if="player.seatWind && player.id !== dealer?.id" class="wind-indicator-small">
+           ({{ player.seatWind }})
+        </span>
       </div>
     </div>
     <div class="game-state-info">
@@ -30,23 +40,39 @@ import { useGameStore } from '@/stores/gameStore';
 
 const gameStore = useGameStore();
 
-const players = computed(() => gameStore.players);
 const roundWind = computed(() => gameStore.currentRound.wind === 'east' ? '東' : '南'); // 東風戦のみなので基本は東
 const roundNumber = computed(() => gameStore.currentRound.number);
 const honbaCount = computed(() => gameStore.honba);
 const riichiSticksCount = computed(() => gameStore.riichiSticks);
 const remainingTiles = computed(() => gameStore.remainingWallTilesCount);
 const doraTiles = computed(() => gameStore.revealedDoraIndicators);
+const dealer = computed(() => {
+  if (gameStore.dealerIndex !== null && gameStore.players[gameStore.dealerIndex]) {
+    return gameStore.players[gameStore.dealerIndex];
+  }
+  return null;
+});
 
-// プレイヤーIDから表示上の位置名を取得するヘルパー (GameBoard.vueのロジックと合わせる)
-function getPlayerPositionName(playerId) {
+// GameBoard.vue の表示順に合わせてプレイヤーを並び替える
+const orderedPlayersForDisplay = computed(() => {
+  const playerOrder = ['player1', 'player2', 'player3', 'player4']; // 自分(下)、右、対面(上)、左
+  return playerOrder.map(id => gameStore.players.find(p => p.id === id)).filter(Boolean);
+});
+
+// 表示用のプレイヤーラベルを取得する関数
+function getPlayerDisplayLabel(player) {
+  if (!player) return '';
   // GameBoard.vue でのプレイヤー位置割り当てロジックに基づいて名前を返す
-  // ここでは仮の対応
-  if (playerId === 'player1') return '自分(下)';
-  if (playerId === 'player2') return '右';
-  if (playerId === 'player3') return '対面(上)';
-  if (playerId === 'player4') return '左';
-  return playerId;
+  // player.name を基本とし、必要に応じて seatWind や isDealer を追加表示
+  // ここでは player.name をそのまま使うか、固定的な位置名を使うか選択
+  // 例:
+  if (player.id === 'player1') return `${player.name}(下)`;
+  if (player.id === 'player2') return `${player.name}(右)`;
+  if (player.id === 'player3') return `${player.name}(上)`;
+  if (player.id === 'player4') return `${player.name}(左)`;
+  return player.name;
+  // もしくは、席風を重視する場合
+  // return `${player.name} (${player.seatWind || '風未定'})`;
 }
 
 // Tile.vue や PlayerHand.vue と共通の牌画像取得ロジック
@@ -77,6 +103,10 @@ function tileToString(tile) {
   font-size: 0.9em;
   color: #333;
 }
+.dealer-info {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
 .round-info, .game-state-info {
   display: flex;
   gap: 15px;
@@ -90,6 +120,12 @@ function tileToString(tile) {
 .player-score {
   display: flex;
   gap: 5px;
+  align-items: center; /* 縦位置を揃える */
+}
+.dealer-indicator-small, .wind-indicator-small {
+  font-size: 0.8em;
+  color: #555;
+  margin-left: 2px;
 }
 .dora-indicators {
   display: flex;

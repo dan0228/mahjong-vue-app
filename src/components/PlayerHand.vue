@@ -4,7 +4,7 @@
         class="hand-tiles-area player-hand"
       >
         <div
-          v-for="tile in handTiles"
+          v-for="tile in playerDisplayHand"
           :key="tile.id"
           :class="['tile', { 'my-tile': isMyHand, 'selectable': isMyHand && canDiscard }]"
           @click="selectTile(tile, false)"
@@ -22,12 +22,12 @@
 </template>
 
 <script setup>
-  import { defineProps, defineEmits } from 'vue';
-
+  import { defineProps, defineEmits, computed } from 'vue';
+  import { getTileImageUrl, tileToString } from '@/utils/tileUtils'; // 共通ユーティリティをインポート
   const props = defineProps({
-    handTiles: {
-      type: Array,
-      default: () => []
+    player: { // handTiles から player オブジェクト全体を受け取るように変更
+      type: Object,
+      default: () => null
     },
     isMyHand: {
       type: Boolean,
@@ -43,31 +43,17 @@
       type: Boolean,
       default: false
     }
+    // position プロパティは PlayerArea でレイアウトに使用されるため、
+    // PlayerHand 自身では使用しない場合は削除するか、レイアウト調整に使用する
+    // position: { type: String, default: 'bottom' } // 未使用なら削除
   });
 
   const emit = defineEmits(['tile-selected']);
 
-  // 牌の画像URLを取得する関数
-  // isRevealed: 副露などで公開されている牌か (他家の手牌表示用)
-  //             自分の手牌やツモ牌は常に表向き
-  function getTileImageUrl(tile) {
-    if (!props.isMyHand && !tile.isRevealed) {
-        return `/assets/images/tiles/ura.png`;
-    }
-    if (tile && tile.suit && tile.rank) {
-        return `/assets/images/tiles/${tile.suit}${tile.rank}.png`;
-    }
-    console.warn('画像表示のための牌データが無効です:', tile);
-    return `/assets/images/tiles/ura.png`;
-  }
-
-  function tileToString(tile) {
-    if (tile && tile.suit && tile.rank){
-        return `${tile.suit}${tile.rank}`;
-    } else {
-        return '不明な牌';
-    }
-  }
+  // player プロパティから手牌を取得する算出プロパティ
+  const playerDisplayHand = computed(() => {
+    return props.player ? props.player.hand : [];
+  });
 
   function selectTile(tile, isFromDrawnTile) {
     if (props.isMyHand && props.canDiscard && tile) {
@@ -79,7 +65,9 @@
 <style scoped>
   .player-hand-container {
     display: flex;
+    flex-direction: column; /* プレイヤー情報と手牌を縦に並べる */
     align-items: flex-start; /* 手牌とツモ牌の上端を揃える */
+    padding: 2px 5px;
   }
 
   .my-turn-active .selectable:hover {

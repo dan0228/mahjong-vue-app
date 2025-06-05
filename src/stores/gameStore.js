@@ -2,25 +2,65 @@
 import { defineStore } from 'pinia';
 import * as mahjongLogic from '@/services/mahjongLogic';
 
+export const GAME_PHASES = {
+  WAITING_TO_START: 'waitingToStart',
+  PLAYER_TURN: 'playerTurn', // ツモ待ち
+  AWAITING_DISCARD: 'awaitingDiscard', // 打牌待ち
+  AWAITING_ACTION_RESPONSE: 'awaitingActionResponse', // 他家の打牌に対するロン・ポン・カン待ち
+  AWAITING_KAKAN_RESPONSE: 'awaitingKakanResponse', // 加槓に対する槍槓ロン待ち
+  ROUND_END: 'roundEnd', // 局終了 (結果表示待ち)
+  GAME_OVER: 'gameOver' // ゲーム終了
+  // 必要に応じて他のフェーズを追加
+};
+
 export const useGameStore = defineStore('game', {
   state: () => ({
     players: [
-      { id: 'player1', name: '自分', hand: [], discards: [], melds: [], isDealer: true, score: 25000 },
-      { id: 'player2', name: '上家', hand: [], discards: [], melds: [], isDealer: false, score: 25000 },
-      { id: 'player3', name: '対面', hand: [], discards: [], melds: [], isDealer: false, score: 25000 },
-      { id: 'player4', name: '下家', hand: [], discards: [], melds: [], isDealer: false, score: 25000 }
+      { id: 'player1', name: '自分', hand: [], discards: [], melds: [], isDealer: false, score: 25000, seatWind: null },
+      { id: 'player2', name: '上家', hand: [], discards: [], melds: [], isDealer: false, score: 25000, seatWind: null },
+      { id: 'player3', name: '対面', hand: [], discards: [], melds: [], isDealer: false, score: 25000, seatWind: null },
+      { id: 'player4', name: '下家', hand: [], discards: [], melds: [], isDealer: false, score: 25000, seatWind: null }
     ],
     wall: [], // 山牌
     deadWall: [], // 王牌 (嶺上牌、ドラ表示牌など)
+    dealerIndex: null, // 親プレイヤーのインデックス
     doraIndicators: [], // ドラ表示牌 (めくれているもの)
     uraDoraIndicators: [], // 裏ドラ表示牌 (リーチ和了時のみ)
     currentTurnPlayerId: null, // 現在のターンプレイヤーID
-    gamePhase: 'waitingToStart', // ゲームの進行状況
+    gamePhase: GAME_PHASES.WAITING_TO_START, // ゲームの進行状況
     lastDiscardedTile: null, // 直前に捨てられた牌
     drawnTile: null, // 現在のプレイヤーがツモった牌 (手牌に加える前)
+    showResultPopup: false,
+    resultMessage: '',
+    showFinalResultPopup: false,
+    finalResultMessage: '', // または最終結果オブジェクト
     currentRound: { wind: 'east', number: 1 }, // 例: 東1局
     honba: 0, // 本場
     riichiSticks: 0, // 供託リーチ棒
+    turnCount: 0, // 現在の局の総ターン数 (捨て牌が行われるたびにインクリメント)
+    playerTurnCount: {}, // 各プレイヤーがその局で手番を開始した回数 (ツモ、ポン/カン後の打牌前)
+    isIppatsuChance: {}, // 各プレイヤーの一発のチャンスがあるか (リーチ直後の自分のツモ番まで)
+    isChankanChance: false, // 槍槓のチャンスがあるか (他家が加槓した直後)
+    chankanTile: null, // 槍槓の対象となる牌
+    rinshanKaihouChance: false, // 嶺上開花のチャンス (カンの後)
+    lastActionPlayerId: null, // 最後に行動（打牌、カンなど）したプレイヤーID
+    canDeclareRon: {}, // 各プレイヤーがロン宣言可能か (他家の打牌後)
+    canDeclarePon: {}, // 各プレイヤーがポン宣言可能か { playerId: tileObject | null }
+    canDeclareMinkan: {}, // 各プレイヤーが明槓宣言可能か { playerId: tileObject | null }
+    canDeclareAnkan: {}, // 各プレイヤーが暗槓可能か { playerId: tileObject | true | null }
+    canDeclareKakan: {}, // 各プレイヤーが加槓可能か { playerId: tileObject | true | null }
+    // 各プレイヤーが現在可能なアクションを保持するオブジェクト
+    // 例: playerActionEligibility[playerId] = { canRon: true, canPon: tile, canMinkan: tile, canChankan: tile, canTsumoAgari: true, canRiichi: true }
+    playerActionEligibility: {},
+    // 他のプレイヤーのアクション宣言を待っているプレイヤーのIDリスト
+    actionResponseQueue: [], // { playerId, actionType, tile, priority } プレイヤーが宣言したアクションを一時的に保持
+    waitingForPlayerResponses: [], // 応答待ちのプレイヤーIDのリスト
+    // どのプレイヤーがどのアクションに対して応答したか
+    // 例: playerResponses[actionTargetPlayerId][respondingPlayerId] = 'skip' | 'ron' | 'pon'
+    playerResponses: {},
+    // isTenho, isChiho, isRenho は handleAgari 内で turnCount と isParent (isDealer) で判定するため、
+    // 必ずしも state に持つ必要はないが、デバッグやUI表示用に持つことも可能。
+    // ここでは handleAgari で直接判定する方針とする。
     gameMode: 'allManual', // 'allManual', 'vsCPU', 'online'
   }),
   getters: {
@@ -49,65 +89,146 @@ export const useGameStore = defineStore('game', {
     initializeGame() {
       // TODO: ここでmahjongLogicを呼び出し、山牌生成、配牌などを行う
       console.log('gameStore: initializeGame action started');
+      this.turnCount = 0; // 局開始時に総ターン数をリセット
+      this.players.forEach(player => {
+        this.playerTurnCount[player.id] = 0; // 各プレイヤーのターン数もリセット
+        this.isIppatsuChance[player.id] = false; // 一発チャンスをリセット
+        this.canDeclareRon[player.id] = false; // ロン宣言可能状態をリセット
+        this.canDeclarePon[player.id] = null;
+        this.canDeclareMinkan[player.id] = null;
+        this.canDeclareAnkan[player.id] = null;
+        this.canDeclareKakan[player.id] = null;
+        this.playerActionEligibility[player.id] = {}; // アクション可能状態もリセット
+        this.playerResponses = {};
+        this.waitingForPlayerResponses = [];
+        this.actionResponseQueue = [];
+      });
+      this.rinshanKaihouChance = false;
+      this.lastActionPlayerId = null;
       // ゲームモードに応じて初期設定を変更する場合、ここで this.gameMode を参照できる
       // 例: if (this.gameMode === 'vsCPU') { /* CPUプレイヤーのセットアップ */ }
 
+      // 1. 親の決定と風の割り当て
+      const playerCount = this.players.length;
+      // dealerIndex が null (ゲーム初回開始時など) の場合のみランダムに親を決定
+      // それ以外の場合 (連荘や親流れ後) は、既存の dealerIndex を使用
+      if (this.dealerIndex === null) {
+        this.dealerIndex = Math.floor(Math.random() * playerCount);
+      }
+      const currentDealerIndex = this.dealerIndex; // 決定された親インデックスを使用
+
+      // isDealerフラグを設定
+      this.players.forEach((player, index) => {
+        player.isDealer = (index === currentDealerIndex);
+      });
+
+      // 席風を割り当てる (mahjongLogic.assignPlayerWinds は新しい配列を返す)
+      // 注意: assignPlayerWinds に渡す this.players は isDealer が設定された状態
+      const playersWithWinds = mahjongLogic.assignPlayerWinds(
+        this.players, // isDealerが設定された現在のプレイヤー配列
+        currentDealerIndex,
+        playerCount
+      );
+      this.players = playersWithWinds; // ストアのプレイヤー情報を更新
+
+      // 2. 山牌の準備と配牌
       let fullWall = mahjongLogic.getAllTiles();
       fullWall = mahjongLogic.shuffleWall(fullWall); 
 
       // 山牌と王牌を分ける
-      const deadWallSize = 14;
+      const deadWallSize = 14; // 四牌麻雀も通常の王牌と同じサイズ
       // 王牌をfullWallの先頭から取得
       this.deadWall = fullWall.slice(0, deadWallSize);
       // 配牌に使用する山牌は、王牌を除いた残り
       const liveWallForDealing = fullWall.slice(deadWallSize);
 
-      // mahjongLogic.dealInitialHands は手牌と更新された山牌を返すと仮定
-      const { hands: initialHands, wall: updatedLiveWall } = mahjongLogic.dealInitialHands(this.players.length, liveWallForDealing, 4);
+      // 四牌麻雀の初期手牌枚数
+      const initialHandSize = 4; // 初期手牌枚数
+      const { hands: initialHands, wall: updatedLiveWall } = mahjongLogic.dealInitialHands(playerCount, liveWallForDealing, initialHandSize);
       this.wall = updatedLiveWall; // 配牌後の山牌でストアを更新
 
       this.players.forEach((player, index) => {
         player.hand = initialHands[index] || []; // 配牌結果をセット、失敗時は空配列
         player.discards = []; // 捨て牌をリセット
         player.melds = []; // 副露
-        // player.score = 25000; // スコアは初期化時に設定済み
-        // 必要であれば、他のラウンド毎のプレイヤー状態もリセット (例: リーチ状態)
+        player.isRiichi = false; // リーチ状態をリセット
+        player.isDoubleRiichi = false; // ダブルリーチ状態をリセット
+        // player.isIppatsu は isIppatsuChance で管理
       });
 
       // ドラ表示牌を王牌からめくる
       this.doraIndicators = [mahjongLogic.revealDora(this.deadWall)].filter(Boolean); // nullを除外
 
-      this.currentTurnPlayerId = this.players.find(p => p.isDealer)?.id || this.players[0]?.id; // 親または最初のプレイヤー
-      this.gamePhase = 'playerTurn'; // ゲームフェーズをプレイヤーのターンにする
-      console.log('gameStore: initializeGame action finished. Player hands:', this.players.map(p => ({ id: p.id, hand: p.hand.map(t => t?.id) })), 'Wall size:', this.wall.length, 'DeadWall size:', this.deadWall.length);
+      this.currentTurnPlayerId = this.players[this.dealerIndex]?.id; // 親からスタート
+      this.gamePhase = GAME_PHASES.PLAYER_TURN; // ゲームフェーズをプレイヤーのターンにする
+      console.log(`gameStore: initializeGame finished. Dealer: ${this.players[this.dealerIndex]?.name} (${this.players[this.dealerIndex]?.seatWind}). Player hands:`, this.players.map(p => ({ id: p.id, name: p.name, wind: p.seatWind, hand: p.hand.map(t => t?.id) })), 'Wall size:', this.wall.length, 'DeadWall size:', this.deadWall.length);
+
+      // 新しい局の開始時、またはゲーム初回開始時に、最初のプレイヤー(親)がツモを行う
+      if (this.gamePhase === 'playerTurn' && this.currentTurnPlayerId) {
+        this.drawTile();
+      }
     },
     drawTile() {
       // プレイヤーがツモるアクション
       // 自分のターンで、かつ山牌があり、かつゲームフェーズがツモ待ちの時のみ実行
       if (this.wall.length > 0 &&
-          this.currentTurnPlayerId &&
-          this.gamePhase === 'playerTurn') { // gamePhaseのチェックを追加
+          this.currentTurnPlayerId && // currentTurnPlayerId が null でないことを確認
+          this.gamePhase === GAME_PHASES.PLAYER_TURN) { // gamePhaseのチェックを追加
         const wallSizeBeforeDraw = this.wall.length;
-        const tile = this.wall.pop(); // 山の最後からツモる想定
+        // 現在のプレイヤーのターン数をインクリメント
+        if (this.playerTurnCount[this.currentTurnPlayerId] !== undefined && !this.rinshanKaihouChance) {
+          this.playerTurnCount[this.currentTurnPlayerId]++;
+        }
+        const tile = this.wall.shift(); // 山の先頭からツモる
         console.log(`gameStore: [drawTile] Player ${this.currentTurnPlayerId} is drawing. Tile: ${tile?.id}. Wall before: ${wallSizeBeforeDraw}, Wall after: ${this.wall.length}`);
         this.drawnTile = tile; // ツモった牌をセット
-        this.gamePhase = 'awaitingDiscard'; // プレイヤーの打牌待ち
+        this.gamePhase = GAME_PHASES.AWAITING_DISCARD; // プレイヤーの打牌待ち
         console.log(`gameStore: Player ${this.currentTurnPlayerId} drew tile: ${tile?.id}. Phase: ${this.gamePhase}. Wall: ${this.wall.length}`);
+        this.lastActionPlayerId = this.currentTurnPlayerId; // ツモもアクションとみなす
+
+        // ツモったので、他家のロン宣言は不可にする
+        this.players.forEach(p => this.canDeclareRon[p.id] = false);
+        this.players.forEach(p => this.canDeclarePon[p.id] = null);
+        this.players.forEach(p => this.canDeclareMinkan[p.id] = null);
+        // 槍槓のチャンスは、槍槓対象の打牌後、次のツモまでの間。ここでリセット。
+        if (this.isChankanChance && this.lastActionPlayerId === this.currentTurnPlayerId) {
+            this.isChankanChance = false;
+        }
+        // 自分のツモ番なので、暗槓・加槓の可能性をチェック
+        const currentPlayer = this.players.find(p => p.id === this.currentTurnPlayerId);
+        if (currentPlayer) {
+            // ツモ和了可能か
+            const gameContextForTsumo = this.createGameContextForPlayer(currentPlayer, true);
+            const tsumoWinResult = mahjongLogic.checkYonhaiWin([...currentPlayer.hand, this.drawnTile], this.drawnTile, true, gameContextForTsumo);
+            this.playerActionEligibility[currentPlayer.id] = { ...this.playerActionEligibility[currentPlayer.id], canTsumoAgari: tsumoWinResult.isWin };
+
+            // リーチ可能か (仮のロジック、mahjongLogicに関数を作るべき)
+            // リーチ宣言牌を選択するUIがないため、テンパイしていればリーチ可能とする (ツモ切りリーチ前提)
+            const canRiichi = currentPlayer.melds.length === 0 && currentPlayer.score >= 1000 && !currentPlayer.isRiichi && !currentPlayer.isDoubleRiichi && mahjongLogic.checkYonhaiTenpai(currentPlayer.hand, this.createGameContextForPlayer(currentPlayer, false)).isTenpai;
+            this.playerActionEligibility[currentPlayer.id] = { ...this.playerActionEligibility[currentPlayer.id], canRiichi: canRiichi };
+
+            const ankanable = mahjongLogic.checkCanAnkan(currentPlayer.hand, this.drawnTile);
+            this.canDeclareAnkan[currentPlayer.id] = ankanable ? (this.drawnTile || true) : null; // 具体的な牌またはtrue
+
+            const kakanable = mahjongLogic.checkCanKakan(currentPlayer.hand, currentPlayer.melds, this.drawnTile); // ツモ牌での加槓
+            this.canDeclareKakan[currentPlayer.id] = kakanable ? (this.drawnTile || true) : null;
+        }
         // TODO: リーチ後のツモなど、特殊なケースの処理
       } else {
         if (this.wall.length === 0) {
-          console.warn('gameStore: Cannot draw tile. Wall is empty.');
-          this.gamePhase = 'roundOver'; // 例: 山切れでラウンド終了
+          console.log('gameStore: No more tiles in the wall. Round ends in a draw (ryuukyoku).');
+          this.handleRyuukyoku(); // 流局処理を呼び出す
         } else { // wall.length > 0 だが、他の条件が満たされない場合
           console.warn(`gameStore: Cannot draw tile. Conditions not met. Player: ${this.currentTurnPlayerId}, Phase: ${this.gamePhase}, Wall: ${this.wall.length}`);
+          // この場合、ゲームが進行不能になる可能性があるため、エラーハンドリングやリカバリ処理を検討
         }
       }
     },
-    discardTile(tileIdToDiscard, isFromDrawnTile) {
-      const player = this.currentPlayer; // currentPlayer getter があると便利
+    discardTile(playerId, tileIdToDiscard, isFromDrawnTile) {
+      const player = this.players.find(p => p.id === playerId);
       // 打牌可能な条件: プレイヤーが存在し、打牌待ちフェーズであること。
       // さらに、ツモ切りでない場合は、手牌から切るためのツモ牌(this.drawnTile)が存在すること。
-      if (!player || this.gamePhase !== 'awaitingDiscard' || (!isFromDrawnTile && !this.drawnTile)) {
+      if (!player || this.gamePhase !== GAME_PHASES.AWAITING_DISCARD || (!isFromDrawnTile && !this.drawnTile)) {
         console.warn('gameStore: Cannot discard tile now. Conditions not met.', { playerId: player?.id, phase: this.gamePhase, isFromDrawnTile, drawnTile: this.drawnTile });
         return;
       }
@@ -139,9 +260,41 @@ export const useGameStore = defineStore('game', {
       }
 
       this.lastDiscardedTile = discardedTileActual;
-      // TODO: 他のプレイヤーのアクションチェック (ロン、ポンなど)
-      // アクションがなければ次のプレイヤーへ
-      this.moveToNextPlayer(); // 仮: すぐに次のプレイヤーのターンへ
+      this.turnCount++; // 総ターン数をインクリメント
+      this.lastActionPlayerId = player.id;
+      this.rinshanKaihouChance = false; // 打牌したら嶺上開花の権利は消える
+
+      // 自分の打牌で自分の一発チャンスは消える。
+      this.isIppatsuChance[player.id] = false;
+      this.isChankanChance = false; // 打牌されたら槍槓のチャンスはなくなる
+      // 他のプレイヤーのアクション可能性をチェック
+      this.waitingForPlayerResponses = []; // 応答待ちリストを初期化
+      let canAnyoneAct = false;
+      this.players.forEach(p => {
+        if (p.id !== player.id) {
+          const eligibility = {};
+          // ロン判定のためのコンテキストを作成
+          const gameCtxForRon = this.createGameContextForPlayer(p, false, this.lastDiscardedTile);
+          eligibility.canRon = mahjongLogic.checkCanRon(p.hand, this.lastDiscardedTile, gameCtxForRon).isWin;
+          eligibility.canPon = mahjongLogic.checkCanPon(p.hand, this.lastDiscardedTile) ? this.lastDiscardedTile : null;
+          eligibility.canMinkan = mahjongLogic.checkCanMinkan(p.hand, this.lastDiscardedTile) ? this.lastDiscardedTile : null;
+          this.playerActionEligibility[p.id] = eligibility;
+
+          if (eligibility.canRon || eligibility.canPon || eligibility.canMinkan) {
+            canAnyoneAct = true;
+            this.waitingForPlayerResponses.push(p.id);
+          }
+        }
+      });
+
+      if (!canAnyoneAct) {
+        this.gamePhase = GAME_PHASES.PLAYER_TURN;
+        this.moveToNextPlayer();
+      } else {
+        this.gamePhase = GAME_PHASES.AWAITING_ACTION_RESPONSE;
+        this.playerResponses = {}; // 応答状態をリセット
+        console.log(`gameStore: Player ${player.id} discarded ${tileIdToDiscard}. Waiting for: ${this.waitingForPlayerResponses.join(', ')}. Eligible:`, JSON.parse(JSON.stringify(this.playerActionEligibility)));
+      }
     },
     moveToNextPlayer() {
       if (this.players.length === 0) return;
@@ -152,29 +305,539 @@ export const useGameStore = defineStore('game', {
       } else {
         this.currentTurnPlayerId = this.players[(currentPlayerIndex + 1) % this.players.length].id;
       }
-      this.gamePhase = 'playerTurn'; // 次のプレイヤーのターン開始 (ツモ待ち)
+      this.gamePhase = GAME_PHASES.PLAYER_TURN; // 次のプレイヤーのターン開始 (ツモ待ち)
       console.log(`gameStore: [moveToNextPlayer] Previous player: ${previousPlayerId}, Next player: ${this.currentTurnPlayerId}, Game phase set to: ${this.gamePhase}`);
-      // 次のプレイヤーのターンになったら自動でツモる
+      // ターンが移ったので、各種宣言可能フラグをリセット
+      this.players.forEach(p => {
+        this.canDeclareRon[p.id] = false;
+        this.canDeclarePon[p.id] = null;
+        this.canDeclareMinkan[p.id] = null;
+      });
+      this.players.forEach(p => this.canDeclareAnkan[p.id] = null);
+      this.players.forEach(p => this.canDeclareKakan[p.id] = null);
       this.drawTile(); 
+      this.waitingForPlayerResponses = []; // ターンが移るので応答待ちはクリア
+    },
+    handleRyuukyoku() {
+      this.gamePhase = GAME_PHASES.ROUND_END; // ゲームフェーズをラウンド終了に
+      // TODO: 実際の親のテンパイ判定ロジックをここに組み込む
+      // isDealerTenpai = mahjongLogic.checkYonhaiTenpai(dealerPlayer.hand).isTenpai;
+      const dealerPlayer = this.players[this.dealerIndex];
+      const gameCtxForTenpai = {
+        playerWind: dealerPlayer.seatWind, // PLAYER_WINDS.EAST など、mahjongLogicからインポート
+        roundWind: this.currentRound.wind === 'east' ? mahjongLogic.PLAYER_WINDS.EAST : mahjongLogic.PLAYER_WINDS.SOUTH,
+        doraIndicators: this.doraIndicators,
+        // isRiichi: dealerPlayer.isRiichi, // リーチ状態も渡す場合
+        // melds: dealerPlayer.melds, // 鳴きも考慮する場合
+      };
+      const tenpaiResult = mahjongLogic.checkYonhaiTenpai(dealerPlayer.hand, gameCtxForTenpai);
+      const isDealerTenpai = tenpaiResult.isTenpai;
+      console.log('[handleRyuukyoku] isDealerTenpai value:', isDealerTenpai); // デバッグ用ログ追加
+
+
+      if (isDealerTenpai) {
+        this.honba++; // 本場を増やす
+        this.resultMessage = `流局しました。\n親（${dealerPlayer.name}）がテンパイのため連荘します。\n次局: 東${this.currentRound.number}局 ${this.honba}本場`;
+        // dealerIndex は変更しない (親は継続)
+      } else {
+        this.honba = 0; // 本場をリセット
+        this.currentRound.number++; // 次の局へ
+        // 親を次のプレイヤーに移動
+        const oldDealerIndex = this.dealerIndex;
+        this.dealerIndex = (this.dealerIndex + 1) % this.players.length;
+        
+        // isDealerフラグを更新
+        this.players.forEach((player, index) => {
+          player.isDealer = (index === this.dealerIndex);
+        });
+        // 新しい親に風を再割り当て
+        const playersWithNewDealerWinds = mahjongLogic.assignPlayerWinds(
+          this.players,
+          this.dealerIndex,
+          this.players.length
+        );
+        this.players = playersWithNewDealerWinds; // ストアのプレイヤー情報を更新
+
+        const newDealerPlayer = this.players[this.dealerIndex];
+        // 東4局で親がノーテンの場合は、次の局の案内は最終リザルトで処理されるため、ここでは表示しない
+        if (this.currentRound.wind === 'east' && this.currentRound.number === 4) {
+          this.resultMessage = `流局しました。\n親（${this.players[oldDealerIndex].name}）がノーテンのため親流れです。\n最終結果を表示します。`;
+        } else {
+          this.resultMessage = `流局しました。\n親（${this.players[oldDealerIndex].name}）がノーテンのため親流れです。\n次局: 東${this.currentRound.number}局 ${newDealerPlayer.name}が親です。`;
+        }      }
+
+      // TODO: ノーテン罰符の処理をここに追加
+
+      this.showResultPopup = true; // リザルトポップアップを表示
+    },
+    prepareNextRound() {
+      this.showResultPopup = false;
+      this.resultMessage = '';
+      this.drawnTile = null;
+      this.lastDiscardedTile = null;
+      // リーチ棒は供託されたままなのでリセットしない
+      if (this.isChankanChance) this.isChankanChance = false; // 局をまたぐ槍槓はない
+      this.chankanTile = null;
+      // isIppatsuChance は initializeGame でリセットされる
+      this.players.forEach(p => {
+        this.canDeclarePon[p.id] = null; this.canDeclareMinkan[p.id] = null;
+      });
+      // turnCount, playerTurnCount も initializeGame でリセットされる
+
+      // ゲーム終了条件のチェック (東4局終了)
+      // TODO: 誰かが飛んだ場合の終了条件も追加する
+      if (this.currentRound.wind === 'east' && this.currentRound.number > 4) {
+        this.handleGameEnd();
+        return;
+      }
+      this.initializeGame(); // 次の局の準備 (山牌生成、配牌など)
     },
     setGameMode(mode) {
-      this.gameMode = mode;
+      this.gameMode = mode; // 'allManual', 'vsCPU', 'online'
       console.log(`gameStore: Game mode set to ${mode}`);
     },
+    declareRiichi(playerId) {
+      const player = this.players.find(p => p.id === playerId);
+      // ダブルリーチ: 自分の最初の捨て牌までで、かつ他家が誰も鳴いていない(turnCountがプレイヤー数未満)
+      // リーチ宣言牌を選択するUIがないため、ツモ切り前提とする
+      if (!player || player.isRiichi || player.isDoubleRiichi || !this.drawnTile) {
+        console.warn("Cannot declare Riichi now.");
+        return;
+      }
+      if (this.playerTurnCount[playerId] === 1 && this.turnCount < this.players.length && player.melds.length === 0) {
+        player.isDoubleRiichi = true;
+        console.log(`gameStore: Player ${playerId} declared Double Riichi.`);
+      } else {
+        player.isRiichi = true;
+        console.log(`gameStore: Player ${playerId} declared Riichi.`);
+      }
+      // リーチ宣言後、次の自分のツモまでは一発のチャンス
+      this.isIppatsuChance[playerId] = true;
+      this.riichiSticks++;
+      this.playerActionEligibility[playerId] = {}; // スキップしたのでアクション不可に
 
-    // 新しいゲームセッションのために状態をリセットするアクション (例)
+      let allResponded = false;
+      if (this.gamePhase === GAME_PHASES.AWAITING_ACTION_RESPONSE) {
+        allResponded = this.waitingForPlayerResponses.every(id => this.playerResponses[id]);
+      } else if (this.gamePhase === GAME_PHASES.AWAITING_KAKAN_RESPONSE) {
+        // 槍槓の場合、応答待ちリストは currentTurnPlayerId 以外の全員
+        const otherPlayers = this.players.filter(p => p.id !== this.currentTurnPlayerId).map(p => p.id);
+        allResponded = otherPlayers.every(id => this.playerResponses[id] === 'skip'); // 全員がスキップした場合のみ
+      }
+
+      if (allResponded) {
+        this.processPendingActions();
+      }
+      player.score -= 1000; // リーチ棒供託
+      this.playerActionEligibility[playerId] = {}; // リーチしたので他のアクションはリセット
+      // リーチ後は自動打牌 (ツモ切り)
+      this.discardTile(playerId, this.drawnTile.id, true);
+    },
+    // プレイヤーが鳴きやロンを見送るアクション
+    playerSkipsCall(playerId) {
+      if (!this.waitingForPlayerResponses.includes(playerId) && this.gamePhase !== GAME_PHASES.AWAITING_KAKAN_RESPONSE) {
+        console.warn(`Player ${playerId} cannot skip now or is not in waiting list.`);
+        return;
+      }
+      console.log(`gameStore: Player ${playerId} chose to skip.`);
+      this.playerResponses[playerId] = 'skip';
+      this.playerActionEligibility[playerId] = {}; // スキップしたのでアクション不可に
+
+      const allResponded = (this.gamePhase === GAME_PHASES.AWAITING_ACTION_RESPONSE && this.waitingForPlayerResponses.every(id => this.playerResponses[id])) ||
+                           (this.gamePhase === GAME_PHASES.AWAITING_KAKAN_RESPONSE && this.players.filter(p => p.id !== this.currentTurnPlayerId).every(p => this.playerResponses[p.id] === 'skip'));
+
+      if (allResponded) this.processPendingActions();
+    },
+    playerDeclaresCall(playerId, actionType, tile) { // tile はポンやカンの対象牌
+      if (!this.waitingForPlayerResponses.includes(playerId) && this.gamePhase !== GAME_PHASES.AWAITING_KAKAN_RESPONSE) {
+         console.warn(`Player ${playerId} cannot declare ${actionType} now or is not in waiting list.`);
+         return;
+      }
+
+      console.log(`gameStore: Player ${playerId} declares ${actionType} with tile ${tile?.id}.`);
+      this.playerResponses[playerId] = actionType;
+      this.playerActionEligibility[playerId] = {}; // アクション宣言したので他のアクションは不可に
+
+      let priority = 0;
+      if (actionType === 'ron') priority = 3;
+      else if (actionType === 'minkan') priority = 2;
+      else if (actionType === 'pon') priority = 1;
+
+      this.actionResponseQueue.push({ playerId, actionType, tile, priority });
+
+      const allResponded = this.waitingForPlayerResponses.every(id => this.playerResponses[id]);
+      if (allResponded) {
+        this.processPendingActions();
+      }
+    },
+    processPendingActions() {
+      console.log("gameStore: All players responded or Kakan response period ended. Processing actions:", JSON.parse(JSON.stringify(this.actionResponseQueue)));
+
+      if (this.gamePhase === GAME_PHASES.AWAITING_KAKAN_RESPONSE) {
+        // 槍槓の処理
+        const ronAction = this.actionResponseQueue.find(a => a.actionType === 'ron' && a.tile?.id === this.chankanTile?.id);
+        if (ronAction) {
+          console.log(`gameStore: Processing Chankan Ron by ${ronAction.playerId}`);
+          this.handleAgari(ronAction.playerId, this.chankanTile, false, this.currentTurnPlayerId);
+        } else {
+          // 槍槓されなかった場合
+          console.log("gameStore: No Chankan. Proceeding with Rinshan draw for Kakan player.");
+          this.drawRinshanAfterKakan(this.currentTurnPlayerId);
+        }
+      } else if (this.gamePhase === GAME_PHASES.AWAITING_ACTION_RESPONSE) {
+        // 通常の打牌に対するアクション処理
+        if (this.actionResponseQueue.length > 0) {
+          this.actionResponseQueue.sort((a, b) => b.priority - a.priority);
+          const highestPriorityAction = this.actionResponseQueue[0];
+
+          const ronActions = this.actionResponseQueue.filter(a => a.actionType === 'ron');
+          if (ronActions.length > 0) {
+            // TODO: ダブロン・トリプルロンの場合、上家取りなどのルールを適用。
+            // 現状は最初のロン宣言者を採用 (actionResponseQueueのソート順に依存)
+            const ronActionToProcess = ronActions[0]; // 仮
+            console.log(`gameStore: Processing Ron by ${ronActionToProcess.playerId}`);
+            this.handleAgari(ronActionToProcess.playerId, this.lastDiscardedTile, false, this.lastActionPlayerId);
+          } else if (highestPriorityAction.actionType === 'minkan') {
+            console.log(`gameStore: Processing Minkan by ${highestPriorityAction.playerId}`);
+            this.declareMinkan(highestPriorityAction.playerId, this.lastActionPlayerId, highestPriorityAction.tile);
+          } else if (highestPriorityAction.actionType === 'pon') {
+            console.log(`gameStore: Processing Pon by ${highestPriorityAction.playerId}`);
+            this.declarePon(highestPriorityAction.playerId, this.lastActionPlayerId, highestPriorityAction.tile);
+          }
+        } else {
+          // アクションが何も宣言されなかった場合のみ次のプレイヤーへ
+          if (this.actionResponseQueue.length === 0) {
+            console.log("gameStore: No actions declared. Moving to next player.");
+            this.moveToNextPlayer();
+          }
+        }
+      }
+
+      // 処理が終わったら関連stateをクリア
+      this.actionResponseQueue = [];
+      this.waitingForPlayerResponses = [];
+      this.playerResponses = {};
+      // playerActionEligibility は、和了/流局でなければ次のターン開始時にリセットされるか、
+      // 鳴きが発生した場合はそのプレイヤーの打牌待ちになるので、そのタイミングで適切に更新される。
+      // ここでは一旦クリアしないでおくか、次のフェーズに応じてクリアする。
+      if (this.gamePhase !== GAME_PHASES.ROUND_END && this.gamePhase !== GAME_PHASES.GAME_OVER && this.gamePhase !== GAME_PHASES.AWAITING_DISCARD) {
+          this.players.forEach(p => this.playerActionEligibility[p.id] = {});
+      }
+      this.isChankanChance = false; // 槍槓の機会は終了
+      this.chankanTile = null;
+    },
+    // ポン宣言
+    declarePon(playerId, targetPlayerId, tileToPon) {
+      const player = this.players.find(p => p.id === playerId);
+      const targetPlayer = this.players.find(p => p.id === targetPlayerId);
+      if (!player || !targetPlayer || !this.lastDiscardedTile || mahjongLogic.getTileKey(this.lastDiscardedTile) !== mahjongLogic.getTileKey(tileToPon)) {
+        console.error("Pon declaration invalid.");
+        return;
+      }
+      const canPon = mahjongLogic.checkCanPon(player.hand, this.lastDiscardedTile);
+      if (!canPon) {
+        console.error("Cannot declare Pon. Conditions not met.");
+        return;
+      }
+
+      console.log(`gameStore: Player ${playerId} declares Pon on ${tileToPon.id} from ${targetPlayerId}`);
+      // 手牌から2枚取り除く (tileToPon と同じ牌)
+      let removedCount = 0;
+      player.hand = player.hand.filter(tileInHand => {
+        if (mahjongLogic.getTileKey(tileInHand) === mahjongLogic.getTileKey(this.lastDiscardedTile) && removedCount < 2) {
+          removedCount++;
+          return false;
+        }
+        return true;
+      });
+      player.melds.push({ type: 'pon', tiles: [tileToPon, tileToPon, tileToPon], from: targetPlayerId }); // 鳴いた牌も含む
+      
+      this.currentTurnPlayerId = playerId; // ポンしたプレイヤーのターン
+      this.playerActionEligibility[playerId] = {}; // ポンしたのでアクションリセット
+      this.gamePhase = GAME_PHASES.AWAITING_DISCARD; // 打牌待ち
+      this.drawnTile = null; // ポンなのでツモ牌はない
+      this.lastDiscardedTile = null; // 他家の捨て牌は消費された
+      this.rinshanKaihouChance = false; // ポンでは嶺上開花なし
+      this.players.forEach(p => this.isIppatsuChance[p.id] = false); // 鳴きが入ったので一発は消える
+      this.isChankanChance = false;
+      this.players.forEach(p => { // 他のプレイヤーのアクション機会をリセット
+        this.playerActionEligibility[p.id] = {};
+      });
+      this.lastActionPlayerId = playerId;
+      if (this.playerTurnCount[playerId] !== undefined) {
+        this.playerTurnCount[playerId]++;
+      }
+    },
+    // 明カン宣言
+    declareMinkan(playerId, targetPlayerId, tileToKan) {
+      const player = this.players.find(p => p.id === playerId);
+      const targetPlayer = this.players.find(p => p.id === targetPlayerId);
+      if (!player || !targetPlayer || !this.lastDiscardedTile || mahjongLogic.getTileKey(this.lastDiscardedTile) !== mahjongLogic.getTileKey(tileToKan)) {
+        console.error("Minkan declaration invalid: No valid tile to kan from discard.");
+        return;
+      }
+      const canMinkan = mahjongLogic.checkCanMinkan(player.hand, this.lastDiscardedTile);
+      if (!canMinkan) {
+        console.error("Cannot declare Minkan. Conditions not met.");
+        return;
+      }
+      console.log(`gameStore: Player ${playerId} declares Minkan on ${tileToKan.id} from ${targetPlayerId}`);
+      // 手牌から3枚取り除く
+      let removedCount = 0;
+      player.hand = player.hand.filter(t => {
+        if (mahjongLogic.getTileKey(t) === mahjongLogic.getTileKey(tileToKan) && removedCount < 3) {
+          removedCount++;
+          return false;
+        }
+        return true;
+      });
+      player.melds.push({ type: 'minkan', tiles: [tileToKan, tileToKan, tileToKan, tileToKan], from: targetPlayerId });
+      
+      this.currentTurnPlayerId = playerId;
+      this.playerActionEligibility[playerId] = {}; 
+      this.lastDiscardedTile = null;
+      this.players.forEach(p => this.isIppatsuChance[p.id] = false);
+      this.isChankanChance = false;
+      this.players.forEach(p => {
+        this.playerActionEligibility[p.id] = {};
+      });
+      this.lastActionPlayerId = playerId;
+      if (this.playerTurnCount[playerId] !== undefined) {
+        this.playerTurnCount[playerId]++;
+      }
+      // 嶺上牌をツモる
+      if (this.deadWall.length > 0) {
+        this.drawnTile = mahjongLogic.drawRinshanTile(this.deadWall); // 修正: mahjongLogicから呼び出し
+        this.rinshanKaihouChance = true;
+        console.log(`gameStore: Player ${playerId} drew Rinshan tile: ${this.drawnTile?.id}`);
+        // 新しいドラ表示牌をめくる (カンがあった場合)
+        if (this.deadWall.length > 0) { // 王牌がまだあるか確認
+            const newDoraIndicator = mahjongLogic.revealDora(this.deadWall); 
+            // 重複チェック (既に表示されているドラや、前のカンで表示したドラと同じでないことを確認)
+            // mahjongLogic.revealDora が王牌の消費を管理しているならこのチェックは不要な場合もある
+            if (newDoraIndicator && !this.doraIndicators.some(d => d.id === newDoraIndicator.id)) this.doraIndicators.push(newDoraIndicator);
+        }
+        this.gamePhase = GAME_PHASES.AWAITING_DISCARD; // 打牌待ち
+      } else {
+        console.warn("Cannot draw Rinshan tile, dead wall is empty.");
+        this.gamePhase = GAME_PHASES.AWAITING_DISCARD; // 打牌は必要
+      }
+    },
+    // 暗カン宣言
+    declareAnkan(playerId, tileToAnkan) {
+      const player = this.players.find(p => p.id === playerId);
+      // 暗カンは手牌の4枚か、ツモ牌と手牌の3枚で行う。
+      // tileToAnkan はカンする牌の種類。this.drawnTile も考慮する。
+      const tileForAnkan = this.drawnTile && mahjongLogic.getTileKey(this.drawnTile) === mahjongLogic.getTileKey(tileToAnkan) ? this.drawnTile : tileToAnkan;
+      const canAnkan = mahjongLogic.checkCanAnkan(player.hand, tileForAnkan);
+      if (!player || !canAnkan) {
+        // UIから選択された手牌の牌を tileToAnkan として渡す場合、
+        // checkCanAnkan(player.hand, tileToAnkan) で判定
+        console.error("Ankan declaration invalid. Conditions not met with drawn tile.");
+        return; 
+      }
+      console.log(`gameStore: Player ${playerId} declares Ankan with ${tileToAnkan.id}`);
+      // 手牌から3枚取り除く (ツモ牌と合わせて4枚)
+      let removedCount = 0;
+      player.hand = player.hand.filter(t => { // 手牌から4枚取り除く場合
+        if (mahjongLogic.getTileKey(t) === mahjongLogic.getTileKey(tileToAnkan) && removedCount < (this.drawnTile && mahjongLogic.getTileKey(this.drawnTile) === mahjongLogic.getTileKey(tileToAnkan) ? 3 : 4) ) {
+          removedCount++;
+          return false;
+        }
+        return true;
+      });
+      player.melds.push({ type: 'ankan', tiles: [tileToAnkan, tileToAnkan, tileToAnkan, tileToAnkan], from: playerId });
+      // もしツモ牌で暗カンした場合、ツモ牌は消費される
+      if (this.drawnTile && mahjongLogic.getTileKey(this.drawnTile) === mahjongLogic.getTileKey(tileToAnkan) && removedCount === 3) {
+          this.drawnTile = null;
+      } else if (removedCount < 4) { // 手牌の4枚で暗カンした場合、filterで3枚しか消えていない場合がある
+          const idx = player.hand.findIndex(t => mahjongLogic.getTileKey(t) === mahjongLogic.getTileKey(tileToAnkan));
+          if (idx > -1) player.hand.splice(idx, 1);
+      }
+
+      this.isIppatsuChance[playerId] = false; // 自分の暗カンは自分の一発を消す
+      this.playerActionEligibility[playerId] = {}; // 暗カンしたのでアクションリセット
+
+      this.isChankanChance = false;
+      this.players.forEach(p => {
+        this.canDeclareRon[p.id] = false;
+        this.canDeclarePon[p.id] = null;
+        this.canDeclareMinkan[p.id] = null;
+      });
+      this.lastActionPlayerId = playerId;
+      if (this.playerTurnCount[playerId] !== undefined) {
+        this.playerTurnCount[playerId]++;
+      }
+      // 嶺上牌をツモる
+      if (this.deadWall.length > 0) {
+        this.drawnTile = mahjongLogic.drawRinshanTile(this.deadWall); // 修正: mahjongLogicから呼び出し
+        this.rinshanKaihouChance = true;
+        console.log(`gameStore: Player ${playerId} drew Rinshan tile: ${this.drawnTile?.id}`);
+        if (this.deadWall.length > 0) {
+            const newDoraIndicator = mahjongLogic.revealDora(this.deadWall);
+            if (newDoraIndicator && !this.doraIndicators.find(d => d.id === newDoraIndicator.id)) this.doraIndicators.push(newDoraIndicator);
+        }
+        this.gamePhase = GAME_PHASES.AWAITING_DISCARD;
+      } else {
+        console.warn("Cannot draw Rinshan tile, dead wall is empty.");
+        this.gamePhase = GAME_PHASES.AWAITING_DISCARD;
+      }
+    },
+    // 加カン宣言
+    declareKakan(playerId, tileToKakan) {
+      const player = this.players.find(p => p.id === playerId);
+      // 加カンする牌は手牌にあるもの (多くの場合ツモ牌ではない)
+      const canKakan = mahjongLogic.checkCanKakan(player.hand, player.melds, tileToKakan);
+      if (!player || !canKakan) {
+        console.error("Kakan declaration invalid. Conditions not met.");
+        return;
+      }
+      console.log(`gameStore: Player ${playerId} declares Kakan with ${tileToKakan.id}`);
+      // 既存のポンをカンに更新
+      const ponMeldIndex = player.melds.findIndex(m => m.type === 'pon' && mahjongLogic.getTileKey(m.tiles[0]) === mahjongLogic.getTileKey(tileToKakan));
+      player.melds[ponMeldIndex].type = 'kakan'; // または 'chakan'
+      player.melds[ponMeldIndex].tiles.push(tileToKakan); // 4枚目の牌を追加
+      // 手牌から加カンした牌を1枚取り除く
+      const tileIndexInHand = player.hand.findIndex(t => mahjongLogic.getTileKey(t) === mahjongLogic.getTileKey(tileToKakan));
+      if (tileIndexInHand > -1) {
+        player.hand.splice(tileIndexInHand, 1);
+      }
+      // 加カンに使用した牌がツモ牌だった場合 (ありえるか？通常は手牌から)
+      if (this.drawnTile && mahjongLogic.getTileKey(this.drawnTile) === mahjongLogic.getTileKey(tileToKakan)) {
+          this.drawnTile = null;
+      }
+      
+      this.isChankanChance = true; // 他家は槍槓のチャンス
+      this.chankanTile = tileToKakan;
+      this.waitingForPlayerResponses = []; // 槍槓応答待ちリストを初期化
+      this.players.forEach(p => {
+        if (p.id !== playerId) {
+          const gameCtxForChankanRon = this.createGameContextForPlayer(p, false, this.chankanTile);
+          const canChankanRon = mahjongLogic.checkCanRon(p.hand, this.chankanTile, gameCtxForChankanRon).isWin;
+          this.playerActionEligibility[p.id] = { canRon: canChankanRon };
+          if (canChankanRon) this.waitingForPlayerResponses.push(p.id);
+        }
+      });
+      this.lastActionPlayerId = playerId;
+
+      // UI側で他プレイヤーがロン/スキップを選択するのを待つ。
+      // 全員がスキップ、または誰かがロンを宣言したら processPendingActions が呼ばれる
+      this.gamePhase = GAME_PHASES.AWAITING_KAKAN_RESPONSE; // 仮のフェーズ
+      this.players.forEach(p => this.isIppatsuChance[p.id] = false); // 加カンは一発を消す
+      if (this.playerTurnCount[playerId] !== undefined) {
+        this.playerTurnCount[playerId]++;
+      }
+    },
+    // 加カン後、槍槓されなかった場合に嶺上牌をツモるアクション
+    drawRinshanAfterKakan(playerId) {
+      if (this.currentTurnPlayerId !== playerId || this.gamePhase !== GAME_PHASES.AWAITING_KAKAN_RESPONSE) { // AWAITING_ACTION_RESPONSE は不要
+        // 槍槓されなかったことが確認されてからこのアクションを呼ぶ
+        // (例: 他の全プレイヤーがスキップした、またはロンの有効時間が過ぎた)
+        console.warn("Cannot draw rinshan tile now for Kakan.");
+        return;
+      }
+      // このアクションは processPendingActions から呼ばれる想定 (槍槓ロンがなかった場合)
+      // なので、isChankanChance や他プレイヤーの eligibility は processPendingActions でリセット済みのはず
+
+      // drawRinshanAfterKakan が呼ばれるのは槍槓ロンがなかった場合なので、
+      // isChankanChance と chankanTile は processPendingActions でリセットされるべき。
+      // ここでは、カンしたプレイヤー以外の eligibility をクリアする。
+      this.players.forEach(p => {
+        if (p.id !== playerId) {
+            this.playerActionEligibility[p.id] = {};
+            this.playerResponses[p.id] = undefined; // 応答状態もクリア
+        }
+      });
+      if (this.deadWall.length > 0) {
+        this.drawnTile = mahjongLogic.drawRinshanTile(this.deadWall); // 修正: mahjongLogicから呼び出し
+        this.rinshanKaihouChance = true;
+        console.log(`gameStore: Player ${playerId} drew Rinshan tile after Kakan: ${this.drawnTile?.id}`);
+        if (this.deadWall.length > 0) {
+            const newDoraIndicator = mahjongLogic.revealDora(this.deadWall);
+            if (newDoraIndicator && !this.doraIndicators.find(d => d.id === newDoraIndicator.id)) this.doraIndicators.push(newDoraIndicator); // 重複追加を防ぐ
+        }
+        this.playerActionEligibility[playerId] = {}; // 嶺上ツモしたのでアクションリセット
+        this.gamePhase = GAME_PHASES.AWAITING_DISCARD;
+      } else {
+        console.warn("Cannot draw Rinshan tile, dead wall is empty.");
+        this.gamePhase = GAME_PHASES.AWAITING_DISCARD; // 打牌は必要
+      }
+    },
+    handleAgari(agariPlayerId, agariTile, isTsumo, ronTargetPlayerId = null) {
+      this.actionResponseQueue = []; // 和了が発生したので他のアクションは無効
+      const player = this.players.find(p => p.id === agariPlayerId);
+      if (!player) {
+        console.error(`[handleAgari] Player not found: ${agariPlayerId}`);
+        return;
+      }
+
+      // 和了時の手牌を準備 (ツモならそのまま、ロンなら和了牌を加える)
+      // 注意: 四牌麻雀では和了時に5枚になる。ツモった牌は this.drawnTile にある想定。
+      // ロン牌は agariTile として渡される。
+      const handForWin = isTsumo ? [...player.hand, this.drawnTile] : [...player.hand, agariTile];
+      if (handForWin.some(tile => !tile)) { // handForWin に null/undefined が含まれていないかチェック
+          console.error('[handleAgari] Invalid tile in handForWin:', handForWin);
+          return;
+      }
+
+      const gameCtxForWin = this.createGameContextForPlayer(player, isTsumo, agariTile);
+      const winResult = mahjongLogic.checkYonhaiWin(handForWin, agariTile, isTsumo, gameCtxForWin);
+
+      if (winResult.isWin) {
+        console.log(`[handleAgari] ${player.name} が和了しました！`, winResult);
+        if (player.isRiichi || player.isDoubleRiichi) {
+        // mahjongLogic.checkYonhaiWin が返した実際の裏ドラ表示牌をセットする
+        // 例: this.uraDoraIndicators = winResult.revealedUraDora || [];
+        // もし mahjongLogic.revealUraDora のような関数を別途呼ぶならここで呼ぶ
+        }
+        this.gamePhase = GAME_PHASES.ROUND_END;
+        // TODO: 点数移動処理
+        // TODO: 供託リーチ棒の処理
+        this.resultMessage = `${player.name} の和了！ ${winResult.yaku.map(y => y.name).join(' ')} ${winResult.isYakuman ? '' : (winResult.fans + '翻')} ${winResult.score}点`;
+        this.showResultPopup = true; // 局の結果ポップアップを表示
+        // isDealerHola の設定など、局の継続/終了に関わるフラグもここで設定
+        if (player.isDealer) {
+            this.honba++; // 親和了で本場プラス (連荘)
+        } else {
+            // 子和了で親流れ、本場リセットのロジックは prepareNextRound で局を進める際に行う
+        }
+      } else {
+        console.log(`[handleAgari] ${player.name} の和了宣言は役がありませんでした。または和了形ではありません。`);
+        // チョンボ処理など
+      }
+    },
+    handleGameEnd() {
+      this.gamePhase = GAME_PHASES.GAME_OVER;
+      console.log('gameStore: Game has ended.');
+      // 最終結果メッセージを生成 (例: 各プレイヤーの最終スコアと順位)
+      // プレイヤーをスコア順にソート
+      const sortedPlayers = [...this.players].sort((a, b) => b.score - a.score);
+      let resultText = "ゲーム終了！\n\n最終結果:\n";
+      sortedPlayers.forEach((player, index) => { // 各プレイヤーの最終スコアと順位を表示
+        resultText += `${index + 1}. ${player.name} (${player.seatWind || ''}): ${player.score}点\n`;
+      });
+      this.finalResultMessage = resultText;
+      this.showFinalResultPopup = true;
+    },
+    returnToTitle() {
+      console.log('gameStore: Returning to title.');
+      this.showFinalResultPopup = false;
+      this.resetGameForNewSession(); // ゲーム状態を完全にリセット
+      // ここでVue Routerなどを使ってタイトル画面へ遷移する処理を呼び出す (UI側で実装)
+    },
+    // 新しいゲームセッションのために状態をリセットするアクション
     resetGameForNewSession() {
       console.log('gameStore: Resetting game state for new session.');
       this.players.forEach(player => {
         player.hand = [];
         player.discards = [];
         player.melds = [];
-        player.score = 25000; // 初期スコアに戻すなど
-        // isDealer も初期状態に戻す必要がある
-      });
-      // isDealer の再設定 (例: player1 を親にする)
-      this.players.forEach((player, index) => {
-          player.isDealer = index === 0;
+        player.score = 25000; // 初期スコアに戻す
+        player.isDealer = false; // isDealer も初期状態に戻す
+        player.seatWind = null; // seatWind もリセット
+        player.isRiichi = false;
+        player.isDoubleRiichi = false;
+        this.isIppatsuChance[player.id] = false;
       });
 
       this.wall = [];
@@ -182,12 +845,57 @@ export const useGameStore = defineStore('game', {
       this.doraIndicators = [];
       this.drawnTile = null;
       this.lastDiscardedTile = null;
+      this.dealerIndex = null; // 親インデックスもリセット
       this.currentTurnPlayerId = null; // または初期プレイヤーに設定
-      this.gamePhase = 'waitingToStart'; // 初期フェーズに戻す
+      this.gamePhase = GAME_PHASES.WAITING_TO_START; // 初期フェーズに戻す
+      this.showResultPopup = false; // ポップアップ関連もリセット
+      this.resultMessage = '';
+      this.showFinalResultPopup = false; // 最終リザルトポップアップもリセット
+      this.finalResultMessage = '';    // 最終リザルトメッセージもリセット
       this.currentRound = { wind: 'east', number: 1 };
       this.honba = 0;
       this.riichiSticks = 0;
+      this.turnCount = 0;
+      this.playerTurnCount = {};
+      this.isChankanChance = false;
+      this.chankanTile = null;
+      this.rinshanKaihouChance = false;
+      this.lastActionPlayerId = null;
+      this.players.forEach(p => this.canDeclareRon[p.id] = false);
+      this.players.forEach(p => {
+        this.canDeclareRon[p.id] = false;
+        this.canDeclarePon[p.id] = null;
+        this.canDeclareMinkan[p.id] = null;
+        this.canDeclareAnkan[p.id] = null;
+        this.canDeclareKakan[p.id] = null;
+        this.playerActionEligibility[p.id] = {};
+        this.playerResponses = {};
+        this.actionResponseQueue = [];
+      });
       // isInitialized フラグなどがあればそれもリセット
+    },
+    // 役判定やアクション判定のためのゲームコンテキストを生成するヘルパー
+    createGameContextForPlayer(player, isTsumo, agariTile = null) {
+      if (!player) return null;
+      return {
+          playerWind: player.seatWind,
+          roundWind: this.currentRound.wind === 'east' ? mahjongLogic.PLAYER_WINDS.EAST : mahjongLogic.PLAYER_WINDS.SOUTH,
+          doraIndicators: this.doraIndicators,
+          uraDoraIndicators: (player.isRiichi || player.isDoubleRiichi) ? this.uraDoraIndicators : [],
+          turnCount: this.turnCount,
+          playerTurnCount: this.playerTurnCount[player.id],
+          isRiichi: player.isRiichi,
+          isDoubleRiichi: player.isDoubleRiichi,
+          isIppatsu: this.isIppatsuChance[player.id],
+          isHaitei: isTsumo && this.wall.length === 0 && !this.rinshanKaihouChance,
+          isHoutei: !isTsumo && this.wall.length === 0 && agariTile && this.lastDiscardedTile && agariTile.id === this.lastDiscardedTile.id,
+          isChankan: this.isChankanChance && agariTile && this.chankanTile && agariTile.id === this.chankanTile.id,
+          isTenho: player.isDealer && this.playerTurnCount[player.id] === 1 && isTsumo && this.turnCount === 0 && player.melds.length === 0,
+          isChiho: !player.isDealer && this.playerTurnCount[player.id] === 1 && isTsumo && this.turnCount < this.players.length && this.players.every(p => p.melds.length === 0),
+          melds: player.melds,
+          isParent: player.isDealer,
+          remainingTilesCount: this.wall.length,
+      }
     }
   }
 });

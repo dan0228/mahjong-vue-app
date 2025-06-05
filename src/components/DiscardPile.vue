@@ -12,6 +12,7 @@
 
 <script setup>
 import { defineProps } from 'vue';
+import { getTileImageUrl, tileToString } from '@/utils/tileUtils';
 
 const props = defineProps({
   tiles: {
@@ -19,23 +20,6 @@ const props = defineProps({
     default: () => []
   }
 });
-
-// PlayerHand.vue から getTileImageUrl と tileToString を共通化して
-// utils/tileUtils.js などに移動し、ここでもインポートして使うのが理想的です。
-// ここでは仮に PlayerHand.js と同様の関数を定義します。
-function getTileImageUrl(tile) {
-  if (tile && tile.suit && tile.rank) {
-    return `/assets/images/tiles/${tile.suit}${tile.rank}.png`;
-  }
-  return `/assets/images/tiles/ura.png`; // 不明な牌やエラー時
-}
-
-function tileToString(tile) {
-  if (tile && tile.suit && tile.rank){
-    return `${tile.suit}${tile.rank}`;
-  }
-  return '不明な牌';
-}
 </script>
 
 <style scoped>

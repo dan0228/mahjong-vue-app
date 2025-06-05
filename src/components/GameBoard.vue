@@ -1,83 +1,111 @@
 <template>
     <div class="game-board">
-      <div class="player-area top-player">
-        <!-- PlayerHand for top player -->
-        <DiscardPile v-if="playerAtTop" :tiles="playerAtTop.discards" />
-        <PlayerHand v-if="playerAtTop"
-          :hand-tiles="playerAtTop.hand"
-          :is-my-hand="determineIsMyHand(playerAtTop.id)"
-          :drawn-tile-display="drawnTileForPlayer(playerAtTop.id)"
-          :can-discard="canPlayerDiscard(playerAtTop.id)"
-          @tile-selected="handleTileSelection" />
-        <p v-if="!playerAtTop">対面のプレイヤーエリア</p>
-        <!-- 例: <DiscardPile :tiles="opponent1Discards" /> -->
+      <!-- PlayerArea コンポーネントを動的に配置 -->
+      <div class="player-area-container top-player-container" v-if="playerAtTop">
+         <PlayerArea :player="playerAtTop" position="top" :is-my-hand="determineIsMyHand(playerAtTop.id)" :drawn-tile-display="drawnTileForPlayer(playerAtTop.id)" :can-discard="canPlayerDiscard(playerAtTop.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
       </div>
-      <div class="middle-row">
-        <div class="player-area left-player">
-          <!-- PlayerHand for top player -->
-          <DiscardPile v-if="playerAtLeft" :tiles="playerAtLeft.discards" />
-          <!-- プレイヤー3 (左側) の手牌、捨て牌、副露 -->
-          <PlayerHand v-if="playerAtLeft"
-            :hand-tiles="playerAtLeft.hand"
-            :is-my-hand="determineIsMyHand(playerAtLeft.id)"
-            :drawn-tile-display="drawnTileForPlayer(playerAtLeft.id)"
-            :can-discard="canPlayerDiscard(playerAtLeft.id)"
-            @tile-selected="handleTileSelection" />
-          <p v-if="!playerAtLeft">左側のプレイヤーエリア</p>
-          <!-- 例: <DiscardPile :tiles="opponent2Discards" /> -->
+     <div class="middle-row">
+        <div class="player-area-container left-player-container" v-if="playerAtLeft">
+          <PlayerArea :player="playerAtLeft" position="left" :is-my-hand="determineIsMyHand(playerAtLeft.id)" :drawn-tile-display="drawnTileForPlayer(playerAtLeft.id)" :can-discard="canPlayerDiscard(playerAtLeft.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
         </div>
         <div class="center-table">
-          <CenterTableInfo />  
-            <!-- 例: <Wall :remaining-tiles-count="wallCount" /> -->
-            <!-- 例: <DoraIndicator :dora-tiles="doraTiles" /> -->
+          <CenterTableInfo />
         </div>
-        <div class="player-area right-player">
-          <!-- PlayerHand for top player -->
-          <DiscardPile v-if="playerAtRight" :tiles="playerAtRight.discards" />
-          <PlayerHand v-if="playerAtRight"
-            :hand-tiles="playerAtRight.hand"
-            :is-my-hand="determineIsMyHand(playerAtRight.id)"
-            :drawn-tile-display="drawnTileForPlayer(playerAtRight.id)"
-            :can-discard="canPlayerDiscard(playerAtRight.id)"
-            @tile-selected="handleTileSelection" />
-          <p v-if="!playerAtRight">右側のプレイヤーエリア</p>
-          <!-- 例: <DiscardPile :tiles="opponent3Discards" /> -->
+        <div class="player-area-container right-player-container" v-if="playerAtRight">
+          <PlayerArea :player="playerAtRight" position="right" :is-my-hand="determineIsMyHand(playerAtRight.id)" :drawn-tile-display="drawnTileForPlayer(playerAtRight.id)" :can-discard="canPlayerDiscard(playerAtRight.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
         </div>
       </div>
-      <div class="player-area bottom-player">
-        <!-- プレイヤー0 (自分) の手牌、捨て牌、副露、操作パネル -->
-        <PlayerHand v-if="playerAtBottom"
-          :hand-tiles="playerAtBottom.hand"
-          :is-my-hand="determineIsMyHand(playerAtBottom.id)"
-          :drawn-tile-display="drawnTileForPlayer(playerAtBottom.id)"
-          :can-discard="canPlayerDiscard(playerAtBottom.id)"
-          @tile-selected="handleTileSelection" />
-        <DiscardPile v-if="playerAtBottom" :tiles="playerAtBottom.discards" />
-        <!-- 将来的にはここに ControlPanel.vue なども配置 -->
-        <!-- 例: <DiscardPile :tiles="myDiscards" /> -->
-        <!-- 例: <GameActions :available-actions="myActions" @action-selected="handleAction" /> -->
+      <div class="player-area-container bottom-player-container" v-if="playerAtBottom">
+        <PlayerArea :player="playerAtBottom" position="bottom" :is-my-hand="determineIsMyHand(playerAtBottom.id)" :drawn-tile-display="drawnTileForPlayer(playerAtBottom.id)" :can-discard="canPlayerDiscard(playerAtBottom.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
       </div>
+      <!-- アクションボタンエリア -->
+      <!-- <div class="game-actions-panel"> -->
+        <!-- 自分のターンのアクションボタン -->
+        <!-- <button v-if="canDeclareTsumoAgari" @click="handleDeclareTsumoAgari">ツモ</button>
+        <button v-if="canDeclareRiichi" @click="handleDeclareRiichi">リーチ</button>
+        <button v-if="canDeclareAnkan" @click="handleDeclareAnkan">暗槓</button>
+        <button v-if="canDeclareKakan" @click="handleDeclareKakan">加槓</button> -->
+
+        <!-- 他家の打牌/加槓に対するアクションボタン -->
+        <!-- <button v-if="canPlayerDeclareRon(playerAtBottom?.id)" @click="handleDeclareRon">ロン</button> -->
+        <!-- <button v-if="canPlayerDeclarePon(playerAtBottom?.id)" @click="handleDeclarePon">ポン</button> -->
+        <!-- <button v-if="canPlayerDeclareMinkan(playerAtBottom?.id)" @click="handleDeclareMinkan">カン</button> -->
+
+        <!-- スキップボタン (他家のアクション待ち、または自分のカン宣言後など) -->
+        <!-- <button v-if="showSkipButton" @click="handleSkipAction">スキップ</button> -->
+      <!-- </div> -->
+      <ResultPopup
+        :show="gameStore.showResultPopup"
+        :message="gameStore.resultMessage"
+        @close="handleCloseResultPopup"
+        @proceed="handleProceedToNextRound"
+      />
+      <FinalResultPopup
+        :show="gameStore.showFinalResultPopup"
+        :message="gameStore.finalResultMessage"
+        @start-new-game="handleStartNewGameFromFinalResult"
+        @back-to-title="handleBackToTitleFromFinalResult"
+      />
     </div>
 </template>
   
 <script setup>
-  import { computed, onMounted } from 'vue';
+  import { computed, onMounted, ref } from 'vue';
+  import { useRouter } from 'vue-router';
   import PlayerHand from './PlayerHand.vue';
   import { useGameStore } from '@/stores/gameStore';
   import CenterTableInfo from './CenterTableInfo.vue';
   import DiscardPile from './DiscardPile.vue';
+  import PlayerArea from './PlayerArea.vue';
+  import ResultPopup from './ResultPopup.vue';
+  import FinalResultPopup from './FinalResultPopup.vue';
   // import Wall from './Wall.vue'; // 将来的に使用
-  // import DoraIndicator from './DoraIndicator.vue'; // 将来的に使用
-  // import GameActions from './GameActions.vue'; // 将来的に使用
+  import * as mahjongLogic from '@/services/mahjongLogic'; // 役判定などに使う場合 (例: checkYonhaiWin, canRiichi)
+  import { GAME_PHASES } from '@/stores/gameStore'; // gameStoreからフェーズ定数をインポート
 
   const gameStore = useGameStore(); // ストアのインスタンスを取得
-  // UIの各位置に表示するプレイヤーを固定的に割り当てる (4人麻雀前提)
-  // player1 (ID: 'player1') が常に下、player2が右、player3が対面、player4が左と仮定
-  // gameStore.players の初期化順序とIDに依存します。
-  const playerAtBottom = computed(() => gameStore.players.find(p => p.id === 'player1'));
-  const playerAtRight = computed(() => gameStore.players.find(p => p.id === 'player2'));
-  const playerAtTop = computed(() => gameStore.players.find(p => p.id === 'player3'));
-  const playerAtLeft = computed(() => gameStore.players.find(p => p.id === 'player4'));
+  const router = useRouter(); // routerインスタンスを取得
+  const showAnkanModal = ref(false);
+  const ankanOptions = ref([]); // ストアから渡される暗槓可能な牌のリスト
+  const showKakanModal = ref(false);
+  const kakanOptions = ref([]); // ストアから渡される加槓可能な牌のリスト
+  // ユーザー自身のプレイヤーID (全操作モードでは 'player1' を仮定)
+  // 将来的にはログイン機能やモード選択に応じて設定されるべき
+  const myPlayerId = computed(() => {
+      // 全操作モードでは player1 を操作対象とする
+      if (gameStore.gameMode === 'allManual') return 'player1';
+      // TODO: CPU対戦やオンライン対戦の場合は、ストアに保持されたユーザー自身のIDを返す
+      return gameStore.myActualPlayerId; // 例: ストアに myActualPlayerId を持つ
+  });
+
+  // プレイヤーの表示順序を動的に計算する (自分を下家として表示)
+  const orderedPlayersForDisplay = computed(() => {
+    if (!gameStore.players.length || !myPlayerId.value) return [];
+
+    const myIndex = gameStore.players.findIndex(p => p.id === myPlayerId.value);
+    if (myIndex === -1) return []; // 自分のプレイヤーが見つからない場合は空配列
+
+    // 自分(下家) -> 右家 -> 対面 -> 左家 の順に並び替える
+    const players = [...gameStore.players];
+    const bottomP = players[myIndex];
+    const rightP = players[(myIndex + 1) % 4];
+    const topP = players[(myIndex + 2) % 4];
+    const leftP = players[(myIndex + 3) % 4];
+
+    return [bottomP, rightP, topP, leftP];
+  });
+  // orderedPlayersForDisplay から各位置のプレイヤーを取得
+  const playerAtBottom = computed(() => orderedPlayersForDisplay.value[0]);
+  const playerAtRight = computed(() => orderedPlayersForDisplay.value[1]);
+  const playerAtTop = computed(() => orderedPlayersForDisplay.value[2]);
+  const playerAtLeft = computed(() => orderedPlayersForDisplay.value[3]);
+  const dealerInfo = computed(() => {
+    if (gameStore.dealerIndex !== null && gameStore.players[gameStore.dealerIndex]) {
+      const dealer = gameStore.players[gameStore.dealerIndex];
+      return { name: dealer.name, seatWind: dealer.seatWind };
+    }
+    return { name: null, seatWind: null };
+  });
 
   const gameMode = computed(() => gameStore.gameMode);
 
@@ -85,16 +113,27 @@
     if (gameMode.value === 'allManual') {
       return true; // 全操作モードでは全ての牌を表向きに
     }
-    // CPU対戦モードやオンライン対戦モードの場合のロジック (将来実装)
+    // CPU対戦モードやオンライン対戦モードの場合
+    // 自分のプレイヤーIDと一致する場合のみ手牌を表示
+    // 注意: 自分の手牌は常に表示されるべきなので、この関数は「裏向きにするか」の判定に使う方が適切かもしれません。
     // 例: 自分のプレイヤーIDと一致する場合のみtrue
     // return gameStore.myActualPlayerId === playerId;
-    // 現状は、全操作モード以外はplayer1のみ操作可能とする（仮）
-    return playerAtBottom.value?.id === playerId;
+    // この関数は、渡された playerId が myPlayerId と一致するかどうかを返す
+    return myPlayerId.value === playerId;
   }
+
+  // GameBoard.vue のテンプレートで使用する場合の canPlayerDeclareRon 関数の定義例
+  const canPlayerDeclareRon = (playerId) => {
+    if (!playerId || !gameStore.playerActionEligibility[playerId]) return false;
+    // 他家の打牌後、または槍槓のチャンスがある場合
+    return (gameStore.gamePhase === GAME_PHASES.AWAITING_ACTION_RESPONSE ||
+           (gameStore.gamePhase === GAME_PHASES.AWAITING_KAKAN_RESPONSE && gameStore.isChankanChance)) &&
+           gameStore.playerActionEligibility[playerId].canRon === true;
+  };
 
   // 渡されたプレイヤーIDに対応するツモ牌を取得
   function drawnTileForPlayer(playerId) {
-    if (gameStore.currentTurnPlayerId === playerId) {
+    if (gameStore.currentTurnPlayerId === playerId && gameStore.drawnTile) {
       return gameStore.drawnTile;
     }
     return null;
@@ -102,14 +141,12 @@
 
   // 渡されたプレイヤーIDが打牌可能か判定
   function canPlayerDiscard(playerId) {
-    return gameStore.currentTurnPlayerId === playerId && gameStore.gamePhase === 'awaitingDiscard';
+    return gameStore.currentTurnPlayerId === playerId && gameStore.gamePhase === GAME_PHASES.AWAITING_DISCARD;
   }
 
   onMounted(() => {
     // ゲームの初期化処理などをストア経由で実行
     // 例: プレイヤー情報の設定、山牌の準備、配牌など
-    // gameStore内で初期化済みフラグ (例: isInitialized) を持ち、
-    // それをチェックする方がより堅牢かもしれません。
     // if (!gameStore.isInitialized) {
     if (gameStore.gamePhase === 'waitingToStart') { // gameStore.myPlayer のチェックは initializeGame 内で行う方が適切
       gameStore.initializeGame(); // ストアのアクションを呼び出す
@@ -123,18 +160,204 @@
   function handleTileSelection(payload) { // payload は { tile: Object, isFromDrawnTile: Boolean }
     console.log('Selected tile for discard:', payload.tile, 'Is from drawn:', payload.isFromDrawnTile);
     // どのプレイヤーの操作かに関わらず、現在のターンプレイヤーが打牌可能な状態であれば実行
-    if (gameStore.currentPlayer && gameStore.currentTurnPlayerId === gameStore.currentPlayer.id && gameStore.gamePhase === 'awaitingDiscard') {
-+      gameStore.discardTile(payload.tile.id, payload.isFromDrawnTile);
+    // PlayerHand が can-discard プロパティ経由で適切なプレイヤーのターンであること保証すると想定
+    if (gameStore.currentTurnPlayerId && gameStore.gamePhase === 'awaitingDiscard') {
+      gameStore.discardTile(gameStore.currentTurnPlayerId, payload.tile.id, payload.isFromDrawnTile); // 誰が打牌したか渡す
     } else {
       console.log("It's not your turn or you cannot discard now.");
     }
   }
 
-  // function handleAction(action) {
-  //   console.log('Action selected:', action);
-  //   // ポン、ロンなどのアクション処理
-  // }
+  // --- アクションボタンの表示条件 ---
+  // --- アクション実行メソッド ---
+  function handleDeclareTsumoAgari() {
+    if (canDeclareTsumoAgari.value) {
+      gameStore.handleAgari(myPlayerId.value, gameStore.drawnTile, true);
+    }
+  }
 
+  function handleDeclareRiichi() {
+    if (canDeclareRiichi.value) {
+      gameStore.declareRiichi(myPlayerId.value);
+    }
+  }
+
+  function handleDeclareAnkan() {
+    if (canDeclareAnkan.value) {
+      const options = gameStore.canDeclareAnkan[myPlayerId.value]; // ストアが具体的な牌またはtrueを返す想定
+      if (options && options.length === 1) { // 選択肢が1つで明確な場合合
+        gameStore.declareAnkan(myPlayerId.value, options[0]);
+      } else if (options && options.length > 0) { // 複数の選択肢がある場合
+        ankanOptions.value = options;
+        showAnkanModal.value = true;
+      } else if (gameStore.canDeclareAnkan[myPlayerId.value] === true) { // ストアが候補を返さず、UIで選択が必要な場合
+          // このケースはストアが候補を返すようにするのが望ましい
+          console.warn("暗槓牌の選択肢をストアから取得できませんでした。UIでの選択が必要です。");
+          // ankanOptions.value = calculatePossibleAnkans(); // GameBoard側で計算する場合（非推奨）
+          // showAnkanModal.value = true;
+      }
+    }
+  }
+
+function onAnkanSelected(tile) { // モーダルからのイベント
+  showAnkanModal.value = false;
+  if (tile) {
+    gameStore.declareAnkan(myPlayerId.value, tile);
+  }
+}
+
+// handleDeclareKakan と onKakanSelected も同様に実装が必要
+
+  function handleDeclareKakan() {
+    if (canDeclareKakan.value) {
+      const tileToKakan = gameStore.canDeclareKakan[myPlayerId.value]; // ストアが具体的な牌またはtrueを返す想定
+      if (tileToKakan) gameStore.declareKakan(myPlayerId.value, tileToKakan);
+    }
+  }
+
+  function handleDeclareRon(playerId) {
+    if (gameStore.playerActionEligibility[playerId]?.canRon && (gameStore.lastDiscardedTile || gameStore.chankanTile)) {
+      const agariTile = gameStore.isChankanChance ? gameStore.chankanTile : gameStore.lastDiscardedTile;
+      gameStore.handleAgari(playerId, agariTile, false, gameStore.lastActionPlayerId);
+    }
+  }
+
+  function handleDeclarePon(playerId, tileToPon) {
+    if (tileToPon && gameStore.lastActionPlayerId) {
+      gameStore.declarePon(playerId, gameStore.lastActionPlayerId, tileToPon);
+    }
+  }
+
+  function handleDeclareMinkan(playerId, tileToKan) {
+    if (tileToKan && gameStore.lastActionPlayerId) {
+      gameStore.declareMinkan(playerId, gameStore.lastActionPlayerId, tileToKan);
+    }
+  }
+
+  function handleSkipAction() {
+    // スキップは、応答待ちのプレイヤーが行う
+    // gameStore.playerSkipsCall(myPlayerId.value); // myPlayerIdではなく、実際にスキップするプレイヤーIDを渡す必要がある
+    // このメソッドは PlayerArea からのイベントで呼び出されるので、引数で playerId を受け取るべき
+    console.warn("handleSkipAction needs to be called with the skipping player's ID from PlayerArea event.");
+  }
+
+  function handlePlayerAction(payload) { // { playerId, actionType, tile }
+    console.log('Player action received in GameBoard:', payload);
+    const { playerId, actionType, tile } = payload;
+    if (actionType === 'skip') {
+      gameStore.playerSkipsCall(playerId);
+    } else if (actionType === 'tsumoAgari') {
+      gameStore.handleAgari(playerId, gameStore.drawnTile, true);
+    } else if (actionType === 'riichi') {
+      gameStore.declareRiichi(playerId);
+    } else if (actionType === 'ankan') {
+      // TODO: 暗槓の牌選択UIを呼び出すか、ストアが候補を返す
+      const ankanTile = gameStore.canDeclareAnkan[playerId]; // 仮
+      if (ankanTile) gameStore.declareAnkan(playerId, ankanTile);
+    } else if (actionType === 'kakan') {
+      // TODO: 加槓の牌選択UIを呼び出すか、ストアが候補を返す
+      const kakanTile = gameStore.canDeclareKakan[playerId]; // 仮
+      if (kakanTile) gameStore.declareKakan(playerId, kakanTile);
+    } else if (actionType === 'ron') {
+      gameStore.playerDeclaresCall(playerId, 'ron', gameStore.lastDiscardedTile); // ロン対象牌は lastDiscardedTile
+    } else if (actionType === 'pon') {
+      gameStore.playerDeclaresCall(playerId, 'pon', tile); // ポン対象牌は PlayerArea から渡される
+    } else if (actionType === 'minkan') {
+      gameStore.playerDeclaresCall(playerId, 'minkan', tile); // カン対象牌は PlayerArea から渡される
+    }
+  }
+
+  // TODO: promptAnkanTileUI と promptKakanTileUI は実際のUI選択ロジックに置き換える
+  // これらは handlePlayerAction 内で、actionType が 'ankan' や 'kakan' の場合に呼び出される
+  function promptAnkanTileUI() {
+    // プレイヤーの手牌とツモ牌から暗槓可能な牌を提示し、選択させるUIロジック
+    // gameStore.canDeclareAnkanForCurrentPlayer が具体的な牌オブジェクトならそれを使用
+    console.warn("暗槓する牌を選択するUIが必要です。");
+    // TODO: 実際のモーダルや選択UIを実装し、ユーザーの選択結果を返すようにする
+    // 仮で、ストアが保持している情報（ツモ牌での暗槓を優先）を返す
+    if (gameStore.canDeclareAnkanForCurrentPlayer && gameStore.canDeclareAnkanForCurrentPlayer !== true) {
+        return gameStore.canDeclareAnkanForCurrentPlayer;
+    }
+    // 手牌4枚の暗槓の候補を探す (簡易版)
+    const player = playerAtBottom.value;
+    if (player) {
+        const counts = {};
+        player.hand.forEach(t => {
+            const key = mahjongLogic.getTileKey(t);
+            counts[key] = (counts[key] || 0) + 1;
+        });
+        for (const key in counts) {
+            if (counts[key] === 4) {
+                return player.hand.find(t => mahjongLogic.getTileKey(t) === key);
+            }
+        }
+    }
+    return null;
+  }
+
+  function promptKakanTileUI() {
+    // プレイヤーのポンしている牌と手牌/ツモ牌から加槓可能な牌を提示し、選択させるUIロジック
+    console.warn("加槓する牌を選択するUIが必要です。");
+    // TODO: 実際のモーダルや選択UIを実装し、ユーザーの選択結果を返すようにする
+    // 仮で、ストアが保持している情報（ツモ牌での加槓を優先）を返す
+    // 手牌からの加槓候補を探す (簡易版)
+    const player = playerAtBottom.value;
+    if (player) {
+        for (const meld of player.melds) {
+            if (meld.type === 'pon') {
+                const kakanCandidate = player.hand.find(hTile => mahjongLogic.getTileKey(hTile) === mahjongLogic.getTileKey(meld.tiles[0]));
+                if (kakanCandidate) return kakanCandidate;
+            }
+        }
+    }
+    return null;
+  }
+
+  // ゲームコンテキスト生成のヘルパー関数 (重複を避けるため)
+  // ストアから必要な情報を集めてコンテキストオブジェクトを作成
+  function createGameContextForPlayer(player, isTsumo, agariTile = null) { // agariTile を追加
+      if (!player) return null;
+      return {
+          playerWind: player.seatWind,
+          roundWind: gameStore.currentRound.wind === 'east' ? mahjongLogic.PLAYER_WINDS.EAST : mahjongLogic.PLAYER_WINDS.SOUTH, // 現在は東場のみ
+          doraIndicators: gameStore.doraIndicators,
+          uraDoraIndicators: player.isRiichi ? gameStore.uraDoraIndicators : [], // 裏ドラはリーチ時のみ
+          turnCount: gameStore.turnCount, // 全体の巡目
+          playerTurnCount: gameStore.playerTurnCount[player.id], // そのプレイヤーの巡目
+          isRiichi: player.isRiichi,
+          isDoubleRiichi: player.isDoubleRiichi,
+          isIppatsu: gameStore.isIppatsuChance[player.id], // 一発チャンス中か
+          isHaitei: isTsumo && gameStore.wall.length === 0, // 海底ツモ
+          isHoutei: !isTsumo && gameStore.wall.length === 0 && agariTile && gameStore.lastDiscardedTile && agariTile.id === gameStore.lastDiscardedTile.id, // 河底ロン
+          isChankan: gameStore.isChankanChance && agariTile && gameStore.chankanTile && agariTile.id === gameStore.chankanTile.id, // 槍槓チャンス中か
+          isTenho: player.isDealer && player.playerTurnCount[player.id] === 0 && isTsumo, // 天和
+          isChiho: !player.isDealer && player.playerTurnCount[player.id] === 0 && isTsumo, // 地和
+          // isRenho: !player.isDealer && player.playerTurnCount[player.id] === 0 && !isTsumo && gameStore.turnCount < gameStore.players.length && gameStore.players.every(p => p.melds.length === 0), // 人和 (四牌麻雀での定義を確認)
+          melds: player.melds,
+          isParent: player.isDealer,
+          remainingTilesCount: gameStore.wall.length,
+          // その他、役判定に必要な情報があれば追加 (例: lastDiscardedTile, chankanTile, deadWall)
+      };
+  }
+
+  function handleCloseResultPopup() {
+    // ポップアップを閉じるだけの場合 (基本的には proceed を使う)
+    gameStore.showResultPopup = false;
+  }
+
+  function handleProceedToNextRound() {
+    gameStore.prepareNextRound();
+  }
+
+  function handleStartNewGameFromFinalResult() {
+    gameStore.resetGameForNewSession(); // 状態を完全にリセット
+    gameStore.initializeGame(); // 新しいゲームを開始
+  }
+
+  function handleBackToTitleFromFinalResult() {
+    gameStore.returnToTitle();
+    router.push('/'); // タイトル画面のパス (router/index.jsで定義) に遷移
+  }
 </script>
   
 <style scoped>
@@ -149,22 +372,22 @@
     margin: 20px auto;
     padding: 10px;
     background-color: #f0f0f0; /* ボードの薄い灰色の背景 */
+    position: relative; /* ポップアップなどの基準点になる可能性 */
   }
+  
+  .player-area-container {
+     /* 各プレイヤーエリアコンテナのスタイル (必要に応じて) */
+     display: flex;
+  }
+  .bottom-player-container { order: 3; } /* Flexbox order for layout */
+  .middle-row { order: 2; }
+  .top-player-container { order: 1; }
   
   .middle-row {
     display: flex;
     justify-content: space-between;
     flex-grow: 1;
     margin: 10px 0;
-  }
-  
-  .player-area {
-    border: 1px dashed #666;
-    padding: 10px;
-    min-height: 100px; /* 視認性のための最小の高さ */
-    display: flex; /* 子要素を柔軟に配置するため */
-    flex-direction: column; /* 基本は縦積み */
-    align-items: center; /* 中央揃え */
   }
   
   .center-table {
@@ -175,27 +398,4 @@
     align-items: center;
     justify-content: center;
   }
-
-  .current-turn-indicator.central-indicator {
-    position: absolute; /* 中央テーブル内で位置調整しやすくする */
-    bottom: 10px; /* 例: 中央テーブルの下部に表示 */
-    font-weight: bold;
-    color: #2c3e50;
-  }
-
-  /* .top-player, .bottom-player は player-area の基本スタイルを継承しつつ、
-    必要に応じて個別のスタイル調整（例：手牌の向きなど）を行う */
-
-  /*
-  .top-player {
-    background-color: lightblue;
-  }
-  .bottom-player {
-    background-color: lightgreen;
-  }
-  .left-player, .right-player {
-    width: 150px;
-    background-color: lightcoral;
-  }
-  */
 </style>

@@ -1,19 +1,23 @@
 <template>
     <div :class="['player-hand-container', { 'my-turn-active': isMyHand && canDiscard }]">
+      <!-- プレイヤー情報は PlayerArea に移動済みと仮定 -->
       <div
         class="hand-tiles-area player-hand"
       >
         <div
           v-for="tile in playerDisplayHand"
           :key="tile.id"
-          :class="['tile', { 'my-tile': isMyHand, 'selectable': isMyHand && canDiscard }]"
+          :class="['tile', { 'my-tile': isMyHand, 'selectable': canSelectTile(tile, false) && isMyHand && canDiscard, 'disabled': !canSelectTile(tile, false) && isMyHand && gameStore.gamePhase === 'awaitingRiichiDiscard' }]"
           @click="selectTile(tile, false)"
         >
           <img :src="getTileImageUrl(tile)" :alt="tileToString(tile)" />
         </div>
       </div>
       <div v-if="isMyHand && drawnTileDisplay" class="drawn-tile-area player-hand">
-        <div :class="['tile', 'my-tile', 'drawn-tile', { 'selectable': canDiscard }]" @click="selectTile(drawnTileDisplay, true)">
+        <div
+          :class="['tile', 'my-tile', 'drawn-tile', { 'selectable': canSelectTile(drawnTileDisplay, true) && canDiscard, 'disabled': !canSelectTile(drawnTileDisplay, true) && gameStore.gamePhase === 'awaitingRiichiDiscard' }]"
+          @click="selectTile(drawnTileDisplay, true)"
+        >
           <img :src="getTileImageUrl(drawnTileDisplay)" :alt="tileToString(drawnTileDisplay)" />
           <span class="drawn-tile-label">ツモ</span>
         </div>
@@ -23,6 +27,7 @@
 
 <script setup>
   import { defineProps, defineEmits, computed } from 'vue';
+  import { useGameStore } from '@/stores/gameStore'; // gameStore をインポート
   import { getTileImageUrl, tileToString } from '@/utils/tileUtils'; // 共通ユーティリティをインポート
   const props = defineProps({
     player: { // handTiles から player オブジェクト全体を受け取るように変更
@@ -42,21 +47,36 @@
     canDiscard: {
       type: Boolean,
       default: false
+    },
+    position: {
+      type: String,
+      default: 'bottom'
     }
-    // position プロパティは PlayerArea でレイアウトに使用されるため、
+    // PlayerArea から渡される
     // PlayerHand 自身では使用しない場合は削除するか、レイアウト調整に使用する
     // position: { type: String, default: 'bottom' } // 未使用なら削除
   });
 
   const emit = defineEmits(['tile-selected']);
+  const gameStore = useGameStore(); // gameStore を使用
 
   // player プロパティから手牌を取得する算出プロパティ
   const playerDisplayHand = computed(() => {
     return props.player ? props.player.hand : [];
   });
 
+  function canSelectTile(tile, isFromDrawnTile) {
+    if (!props.isMyHand || !props.canDiscard || !tile) return false;
+
+    if (gameStore.gamePhase === 'awaitingRiichiDiscard') {
+      return gameStore.riichiDiscardOptions.includes(tile.id);
+    }
+    // 通常の打牌時は常に選択可能 (canDiscard で制御されている前提)
+    return true;
+  }
+
   function selectTile(tile, isFromDrawnTile) {
-    if (props.isMyHand && props.canDiscard && tile) {
+    if (canSelectTile(tile, isFromDrawnTile)) { // canSelectTile で選択可否を判定
       emit('tile-selected', { tile, isFromDrawnTile });
     }
   }
@@ -65,9 +85,19 @@
 <style scoped>
   .player-hand-container {
     display: flex;
-    flex-direction: column; /* プレイヤー情報と手牌を縦に並べる */
     align-items: flex-start; /* 手牌とツモ牌の上端を揃える */
     padding: 2px 5px;
+  }
+
+  /* プレイヤーの位置に応じた手牌の向き調整 */
+  .player-hand-container.position-bottom,
+  .player-hand-container.position-top {
+    flex-direction: column; /* 上下プレイヤーは手牌とツモ牌を縦に */
+  }
+  .player-hand-container.position-left,
+  .player-hand-container.position-right {
+    flex-direction: row; /* 左右プレイヤーは手牌とツモ牌を横に */
+    align-items: center;
   }
 
   .my-turn-active .selectable:hover {
@@ -85,8 +115,21 @@
     min-height: 62px; /* 牌の高さ + paddingなど */
   }
 
+  /* 左右プレイヤーの手牌は縦に並べる */
+  .position-left .player-hand,
+  .position-right .player-hand {
+    flex-direction: column;
+    min-width: 42px; /* 牌の幅 + padding */
+    min-height: auto;
+  }
+
   .drawn-tile-area {
     margin-left: 15px; /* 手牌とツモ牌の間隔 */
+  }
+  .position-left .drawn-tile-area,
+  .position-right .drawn-tile-area {
+    margin-left: 0;
+    margin-top: 10px; /* 左右プレイヤーのツモ牌は手牌の下に */
   }
 
   .tile {
@@ -100,6 +143,16 @@
     box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
     position: relative; /* ラベル表示のため */
   }
+  /* 牌の画像の向き */
+  .position-top .tile img {
+    transform: rotate(180deg);
+  }
+  .position-left .tile img {
+    transform: rotate(90deg);
+  }
+  .position-right .tile img {
+    transform: rotate(-90deg);
+  }
 
   /* .tile.my-tile {*/
     /* 自分の手牌はデフォルトでポインターなし。canDiscardがtrueの時だけホバーエフェクト */
@@ -112,6 +165,16 @@
     transform: translateX(-50%);
     font-size: 0.7em;
     color: #333;
+  }
+  .position-left .drawn-tile-label,
+  .position-right .drawn-tile-label {
+    bottom: auto;
+    top: 50%;
+    left: -20px; /* 牌の左側に表示 */
+    transform: translateY(-50%) rotate(-90deg);
+  }
+  .position-right .drawn-tile-label {
+    left: auto; right: -20px; transform: translateY(-50%) rotate(90deg);
   }
 
   .tile img {
@@ -133,5 +196,10 @@
   .tile:not(.my-tile) { /* isMyHand が false の場合 (他家の手牌) */
     /* 裏向き表示などのスタイル */
     cursor: default;
+  }
+  .tile.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    border-color: #ccc;
   }
 </style>

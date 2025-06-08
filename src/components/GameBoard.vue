@@ -37,6 +37,7 @@
       <ResultPopup
         :show="gameStore.showResultPopup"
         :message="gameStore.resultMessage"
+        :result-details="gameStore.agariResultDetails"
         @close="handleCloseResultPopup"
         @proceed="handleProceedToNextRound"
       />
@@ -364,30 +365,45 @@ function onAnkanSelected(tile) { // モーダルからのイベント
   .game-board {
     display: flex;
     flex-direction: column;
-    width: 90vw; /* 例: ビューポート幅の90% */
-    max-width: 800px; /* 例: 最大幅 */
-    height: 80vh; /* 例: ビューポート高さの80% */
-    max-height: 700px; /* 例: 最大高さ */
+    width: 100vw; /* 画面幅全体を利用 */
+    height: 100vh; /* 画面高さ全体を利用 */
     border: 2px solid #333;
-    margin: 20px auto;
+    margin: 0; /* マージンを削除 */
     padding: 10px;
     background-color: #f0f0f0; /* ボードの薄い灰色の背景 */
     position: relative; /* ポップアップなどの基準点になる可能性 */
+    box-sizing: border-box; /* paddingとborderをwidth/heightに含める */
   }
   
   .player-area-container {
      /* 各プレイヤーエリアコンテナのスタイル (必要に応じて) */
      display: flex;
+    /* 縦画面では各プレイヤーエリアが縦に積まれるため、個別の order は不要になることが多い */
+    /* 必要に応じて flex-grow や min-height を設定 */
   }
-  .bottom-player-container { order: 3; } /* Flexbox order for layout */
-  .middle-row { order: 2; }
-  .top-player-container { order: 1; }
-  
+  .top-player-container {
+    /* 対面プレイヤーのエリア */
+    flex-grow: 1; min-height: 100px;
+    justify-content: center; /* PlayerAreaを中央に配置 */
+    align-items: center; /* PlayerAreaを垂直中央に配置 */
+  }
   .middle-row {
+    /* 左右プレイヤーと中央テーブルを配置する行 */
     display: flex;
     justify-content: space-between;
-    flex-grow: 1;
-    margin: 10px 0;
+    align-items: center; /* 中央揃え */
+    flex-grow: 2;
+    margin: 5px 0;
+  }
+  .left-player-container, .right-player-container {
+    /* 左右プレイヤーのエリア */
+    width: 25%; display: flex; justify-content: center;
+  }
+  .bottom-player-container {
+    /* 自分プレイヤーのエリア */
+    flex-grow: 3; min-height: 150px;
+    justify-content: center; /* PlayerAreaを中央に配置 */
+    align-items: center; /* PlayerAreaを垂直中央に配置 */
   }
   
   .center-table {

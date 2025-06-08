@@ -4,15 +4,17 @@
       <p>{{ player.name }} ({{ player.seatWind }}) {{ player.score }}点</p>
       <p v-if="player.isRiichi">リーチ</p>
     </div>
-    <DiscardPile :tiles="player.discards" :position="position"/>
-    <PlayerHand
-      :player="player"
-      :is-my-hand="isMyHand"
-      :drawn-tile-display="drawnTileDisplay"
-      :can-discard="canDiscard"
-      :position="position"
-      @tile-selected="onTileSelected"
-    />
+    <div :class="['player-game-elements', positionClass + '-elements']">
+      <DiscardPile :tiles="player.discards" :position="position"/>
+      <PlayerHand
+        :player="player"
+        :is-my-hand="isMyHand"
+        :drawn-tile-display="drawnTileDisplay"
+        :can-discard="canDiscard"
+        :position="position"
+        @tile-selected="onTileSelected"
+      />
+    </div>
     <div v-if="player.melds && player.melds.length > 0" class="melds-area">
         <div v-for="(meld, index) in player.melds" :key="index" class="meld">
           <span v-for="tile in meld.tiles" :key="tile.id" class="meld-tile">
@@ -21,8 +23,8 @@
         </div>
     </div>
     <!-- アクションボタンエリア -->
-    <div v-if="isMyHand || gameStore.gameMode === 'allManual'" class="player-actions">
-        <!-- ツモ番のアクション -->
+    <div v-if="isMyHand || gameStore.gameMode === 'allManual'" :class="['player-actions', `player-actions-${position}`]">
+       <!-- ツモ番のアクション -->
         <button v-if="canDeclareTsumoAgari" @click="emitAction('tsumoAgari')">ツモ</button>
         <button v-if="canDeclareRiichi" @click="emitAction('riichi')">リーチ</button>
         <button v-if="canDeclareAnkan" @click="emitAction('ankan')">暗槓</button>
@@ -93,12 +95,23 @@ function emitAction(actionType) {
   border: 1px dashed #666;
   padding: 5px;
   display: flex;
-  /* Position-specific styles will adjust flex-direction and alignment */
+  flex-direction: column; /* 基本は縦積み */
+  align-items: center;
+  /* background-color: rgba(128, 128, 128, 0.1); */ /* デバッグ用背景色 */
 }
-.player-area-bottom { flex-direction: column; align-items: center; }
-.player-area-top { flex-direction: column-reverse; align-items: center; }
-.player-area-left { flex-direction: row-reverse; align-items: center; }
-.player-area-right { flex-direction: row; align-items: center; }
+.player-game-elements {
+  display: flex;
+  width: 100%;
+}
+
+.player-area-bottom > .player-game-elements { flex-direction: column; align-items: center; }
+.player-area-top > .player-game-elements { flex-direction: column-reverse; align-items: center; }
+/* 左右プレイヤーは手牌と捨て牌を横に並べるか、縦にするか検討 */
+.player-area-left > .player-game-elements { flex-direction: row-reverse; align-items: center; justify-content: center; }
+.player-area-right > .player-game-elements { flex-direction: row; align-items: center; justify-content: center; }
+
+/* 左右プレイヤーのエリア全体の幅を制限する場合 */
+.player-area-left, .player-area-right { max-width: 100px; /* 例 */ }
 
 .player-info { font-size: 0.9em; margin-bottom: 5px; text-align: center; }
 .is-current-turn { border: 2px solid gold; }
@@ -109,6 +122,17 @@ function emitAction(actionType) {
     margin-top: 5px;
     display: flex;
     gap: 5px;
-    flex-wrap: wrap; /* ボタンが多い場合に折り返す */
+    flex-wrap: wrap;
+    justify-content: center; /* ボタンを中央揃え */
+}
+
+/* アクションボタンの向き調整 */
+.player-actions-left, .player-actions-right {
+  flex-direction: column; /* 左右プレイヤーのボタンは縦に並べる */
+  align-items: flex-start; /* 左寄せ */
+  gap: 3px;
+}
+.player-actions-left button, .player-actions-right button {
+  width: 100%; /* ボタン幅をコンテナに合わせる */
 }
 </style>

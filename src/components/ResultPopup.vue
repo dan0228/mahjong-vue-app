@@ -5,8 +5,8 @@
       <div class="result-section round-info" style="text-align: center; margin-bottom: 15px;">
         <p class="round-main-info">{{ roundWindDisplay }}{{ resultDetails.roundNumber }}局 {{ resultDetails.honba }}本場</p>
       </div>
-      <h2>{{ resultTitle }}</h2>
-      <div class="result-section round-info-details"> <!-- クラス名変更の提案 -->
+      <h2 v-if="!isDrawResult">{{ resultTitle }}</h2>
+      <div v-if="!isDrawResult" class="result-section round-info-details"> <!-- 和了時のみ表示 -->
         <div class="dora-display">
           <span class="dora-label">ドラ</span>
           <div class="dora-tiles">
@@ -33,7 +33,7 @@
         </div>
       </div>
 
-      <div class="result-section winning-hand-info">
+      <div v-if="!isDrawResult" class="result-section winning-hand-info"> <!-- 和了時のみ表示 -->
         <h3>和了手牌</h3>
         <div class="hand-display">
           <!-- 元々持っていた4牌 -->
@@ -47,7 +47,7 @@
         </div>
       </div>
 
-      <div class="result-section yaku-info">
+      <div v-if="!isDrawResult" class="result-section yaku-info"> <!-- 和了時のみ表示 -->
         <h3>成立役</h3>
         <ul>
           <li v-for="(yaku, index) in resultDetails.yakuList" :key="index">
@@ -63,8 +63,12 @@
           {{ resultDetails.scoreName ? resultDetails.scoreName : (resultDetails.score ? `${resultDetails.score}点` : '') }}
         </p>
       </div>
-
-      <div class="result-section score-changes">
+      <div v-if="isDrawResult" class="result-section draw-info"> <!-- 流局時のみ表示 -->
+        <h2>流局</h2>
+        <p>{{ message }}</p>
+        <!-- 必要に応じてノーテン罰符などの情報を表示 -->
+      </div>
+      <div class="result-section score-changes"> <!-- 点数変動は常に表示 -->
         <h3>点数変動</h3>
         <div v-for="player in gameStore.players" :key="player.id" class="player-score-change">
           <span>{{ player.name }}: {{ gameStore.getPlayerById(player.id)?.score ?? player.score }}点 </span>
@@ -74,7 +78,7 @@
         </div>
       </div>
 
-      <button @click="proceedToNext">次の局へ</button>
+      <button @click="proceedToNext">次へ</button>
     </div>
   </div>
 </template>
@@ -111,11 +115,17 @@ function proceedToNext() {
   emit('proceed');
 }
 const gameStore = useGameStore();
-
+const isDrawResult = computed(() => {
+  // resultDetails.yakuList が存在し、かつ空配列の場合は明確に流局と判断
+  // message に "流局" が含まれる場合も流局とみなす (フォールバック)
+  return (props.resultDetails && Array.isArray(props.resultDetails.yakuList) && props.resultDetails.yakuList.length === 0) ||
+         (props.message && props.message.includes('流局')); // messageによる判定も残す
+});
 const resultTitle = computed(() => {
+  if (isDrawResult.value) return '流局'; // 流局の場合はタイトルも変更
   if (!props.resultDetails || !props.resultDetails.pointChanges) return '局結果';
   const winnerId = Object.keys(props.resultDetails.pointChanges).find(
-    playerId => props.resultDetails.pointChanges[playerId] > 0 && props.resultDetails.yakuList && props.resultDetails.yakuList.length > 0
+    playerId => props.resultDetails.pointChanges[playerId] > 0 // 点数が増加したプレイヤーを探す
   );
   const winner = winnerId ? gameStore.getPlayerById(winnerId) : null;
   return winner ? `${winner.name} の和了` : '局結果';

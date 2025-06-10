@@ -70,8 +70,18 @@ const playerEligibility = computed(() => gameStore.playerActionEligibility[props
 // 自分のターンのアクション
 const canDeclareTsumoAgari = computed(() => gameStore.currentTurnPlayerId === props.player.id && playerEligibility.value.canTsumoAgari);
 const canDeclareRiichi = computed(() => gameStore.currentTurnPlayerId === props.player.id && playerEligibility.value.canRiichi);
-const canDeclareAnkan = computed(() => gameStore.currentTurnPlayerId === props.player.id && gameStore.canDeclareAnkan[props.player.id] !== null);
-const canDeclareKakan = computed(() => gameStore.currentTurnPlayerId === props.player.id && gameStore.canDeclareKakan[props.player.id] !== null);
+const canDeclareAnkan = computed(() => {
+  const ankanInfo = gameStore.canDeclareAnkan[props.player.id];
+  // ankanInfo が true または牌オブジェクトの配列で要素がある場合にtrue
+  return gameStore.currentTurnPlayerId === props.player.id &&
+         (ankanInfo === true || (Array.isArray(ankanInfo) && ankanInfo.length > 0));
+});
+const canDeclareKakan = computed(() => {
+  const kakanInfo = gameStore.canDeclareKakan[props.player.id];
+  // kakanInfo が true または牌オブジェクトの配列で要素がある場合にtrue
+  return gameStore.currentTurnPlayerId === props.player.id &&
+         (kakanInfo === true || (Array.isArray(kakanInfo) && kakanInfo.length > 0));
+});
 
 // 他家のアクションに対する応答
 const canDeclareRon = computed(() => playerEligibility.value.canRon && gameStore.waitingForPlayerResponses.includes(props.player.id));
@@ -84,8 +94,15 @@ function emitAction(actionType) {
     let tileData = null;
     if (actionType === 'pon') tileData = playerEligibility.value.canPon;
     else if (actionType === 'minkan') tileData = playerEligibility.value.canMinkan;
-    // 暗槓・加槓の場合は、GameBoard側でUI選択を挟む想定
-
+    // 暗槓・加槓の場合、UIで選択された牌を渡す必要がある。
+    // ここでは仮に、ストアが単一の牌オブジェクトを返しているか、
+    // GameBoard側で選択UIを呼び出す前のトリガーとして機能すると想定。
+    // より具体的には、カンする牌を選択するUIを別途呼び出し、その結果を渡す。
+    else if (actionType === 'ankan') {
+        // TODO: 暗槓する牌を選択するUIを呼び出し、tileDataにセットする
+    } else if (actionType === 'kakan') {
+        // TODO: 加槓する牌を選択するUIを呼び出し、tileDataにセットする
+    }
     emit('action-declared', { playerId: props.player.id, actionType, tile: tileData });
 }
 </script>

@@ -17,8 +17,8 @@ export function getAllTiles() {
 // 萬子、筒子、索子 (1-9) - 各4枚
 //  [SUITS.MANZU, SUITS.PINZU, SUITS.SOZU].forEach(suit => { 検証用にコメントアウト
   [SUITS.MANZU].forEach(suit => {
-    for (let rank = 1; rank <= 3; rank++) {
-      for (let i = 0; i < 12; i++) {
+    for (let rank = 1; rank <= 5; rank++) { // 検証用。本来は9
+      for (let i = 0; i < 7; i++) { //検証用。本来は4
         tiles.push({
           suit,
           rank,
@@ -1381,12 +1381,12 @@ export function checkYonhaiWin(hand5tiles, winTile, isTsumo, gameContext = {}) {
       } else if (calculatedFans >= BAIMAN_FANS_THRESHOLD) { // 倍満
         score = isParent ? MANGAN_BASE_OYA * 2 : MANGAN_BASE_KO * 2;
       } else if (calculatedFans >= HANEMAN_FANS_THRESHOLD) { // 跳満
-        score = isParent ? 16000 : 12000; // 親16000点, 子12000点
+        score = isParent ? 18000 : 12000; // 親18000点, 子12000点
       } else if (calculatedFans >= MANGAN_FANS_THRESHOLD) { // 満貫
         // 4翻かつ平和+ツモの場合は0点とする特殊ルール
         const isPinfuTsumo4Han = calculatedFans === 4 &&
-                                 resultYakuList.some(y => y.name === YONHAI_YAKU.PINFU.name) &&
-                                 resultYakuList.some(y => y.name === YONHAI_YAKU.TSUMO.name);
+                                resultYakuList.some(y => y.name === YONHAI_YAKU.PINFU.name) &&
+                                resultYakuList.some(y => y.name === YONHAI_YAKU.TSUMO.name);
         if (isPinfuTsumo4Han) {
           score = 0; // 特殊ルールにより0点
         } else {

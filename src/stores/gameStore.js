@@ -14,10 +14,29 @@ export const GAME_PHASES = {
   // 必要に応じて他のフェーズを追加
 };
 
+// 現在のプレイヤーをスコアでランク付けし、順位を付与する関数
+function getRankedPlayers(players) {
+    // スコアでプレイヤーを降順にソート
+    const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+
+    // 順位を付与
+    const rankedPlayers = [];
+    let currentRank = 1;
+    for (let i = 0; i < sortedPlayers.length; i++) {
+        if (i > 0 && sortedPlayers[i].score < sortedPlayers[i - 1].score) {
+            currentRank = i + 1;
+        }
+        rankedPlayers.push({
+            ...sortedPlayers[i],
+            rank: currentRank
+        });
+    }
+    return rankedPlayers;
+}
 export const useGameStore = defineStore('game', {
   state: () => ({
     players: [
-      { id: 'player1', name: '自分', hand: [], discards: [], melds: [], isDealer: false, score: 25000, seatWind: null },
+      { id: 'player1', name: '自家', hand: [], discards: [], melds: [], isDealer: false, score: 25000, seatWind: null },
       { id: 'player2', name: '上家', hand: [], discards: [], melds: [], isDealer: false, score: 25000, seatWind: null },
       { id: 'player3', name: '対面', hand: [], discards: [], melds: [], isDealer: false, score: 25000, seatWind: null },
       { id: 'player4', name: '下家', hand: [], discards: [], melds: [], isDealer: false, score: 25000, seatWind: null }
@@ -34,7 +53,11 @@ export const useGameStore = defineStore('game', {
     showResultPopup: false,
     resultMessage: '',
     showFinalResultPopup: false,
-    finalResultMessage: '', // または最終結果オブジェクト
+    finalResultDetails: { // 最終結果の詳細情報 (構造化)
+      rankedPlayers: [],
+      consecutiveWins: 0,
+    },
+    consecutiveWins: 0, // ユーザープレイヤーの連勝数
     currentRound: { wind: 'east', number: 1 }, // 例: 東1局
     honba: 0, // 本場
     riichiSticks: 0, // 供託リーチ棒
@@ -81,6 +104,10 @@ export const useGameStore = defineStore('game', {
     // 必ずしも state に持つ必要はないが、デバッグやUI表示用に持つことも可能。
     // ここでは handleAgari で直接判定する方針とする。
     gameMode: 'allManual', // 'allManual', 'vsCPU', 'online'
+    shouldAdvanceRound: false, // 次の局に進むかどうかのフラグ
+    nextDealerIndex: null,     // 次の局の親のインデックス
+    consecutiveWins: 0, // ユーザープレイヤーの連勝数
+    shouldEndGameAfterRound: false, // この局の後にゲームを終了するか
   }),
   actions: {
     initializeGame() {
@@ -104,6 +131,7 @@ export const useGameStore = defineStore('game', {
       });
       this.rinshanKaihouChance = false;
       this.lastActionPlayerId = null;
+      this.shouldEndGameAfterRound = false; // ゲーム開始時にリセット
       // ゲームモードに応じて初期設定を変更する場合、ここで this.gameMode を参照できる
       // 例: if (this.gameMode === 'vsCPU') { /* CPUプレイヤーのセットアップ */ }
 
@@ -379,54 +407,146 @@ export const useGameStore = defineStore('game', {
       // TODO: 実際の親のテンパイ判定ロジックをここに組み込む
       // isDealerTenpai = mahjongLogic.checkYonhaiTenpai(dealerPlayer.hand).isTenpai;
       const dealerPlayer = this.players[this.dealerIndex];
+      // agariResultDetails をリセットまたは流局用に設定
+      // これにより、ResultPopup が前回の和了情報を表示するのを防ぐ
+      this.agariResultDetails = {
+        roundWind: this.currentRound.wind,
+        roundNumber: this.currentRound.number,
+        honba: this.honba,
+        doraIndicators: [...this.doraIndicators],
+        uraDoraIndicators: [], // 流局時は裏ドラなし
+        winningHand: [],
+        agariTile: null,
+        yakuList: [], // 流局なので役リストは空
+        totalFans: 0,
+        fu: 0,
+        score: 0,
+        scoreName: null,
+        pointChanges: {}, // 点数変動もリセット (ノーテン罰符は別途計算・設定)
+      };
+
+      // 各プレイヤーのテンパイ状態を判定
+      const tenpaiStates = this.players.map(player => {
+        const context = this.createGameContextForPlayer(player, false); // ツモ和了ではないので isTsumo は false
+        return {
+          id: player.id,
+          isTenpai: mahjongLogic.checkYonhaiTenpai(player.hand, context).isTenpai,
+        };
+      });
+
+      const tenpaiPlayers = tenpaiStates.filter(p => p.isTenpai);
+      const notenPlayers = tenpaiStates.filter(p => !p.isTenpai);
+      const pointChanges = {};
+      this.players.forEach(p => pointChanges[p.id] = 0);
+
+      if (tenpaiPlayers.length > 0 && tenpaiPlayers.length < 4) { // 全員テンパイ・全員ノーテン以外
+        const totalPayment = 3000; // ノーテン罰符の総額
+        let paymentPerNoten = 0;
+        let incomePerTenpai = 0;
+
+        if (tenpaiPlayers.length === 1) { // 1人テンパイ
+          paymentPerNoten = 1000;
+          incomePerTenpai = 3000;
+        } else if (tenpaiPlayers.length === 2) { // 2人テンパイ
+          paymentPerNoten = 1500;
+          incomePerTenpai = 1500;
+        } else if (tenpaiPlayers.length === 3) { // 3人テンパイ
+          paymentPerNoten = 3000; // ノーテンの1人が3000点支払う
+          incomePerTenpai = 1000;
+        }
+
+        notenPlayers.forEach(notenPlayer => {
+          pointChanges[notenPlayer.id] -= paymentPerNoten;
+          this.players.find(p => p.id === notenPlayer.id).score -= paymentPerNoten;
+        });
+        tenpaiPlayers.forEach(tenpaiPlayer => {
+          pointChanges[tenpaiPlayer.id] += incomePerTenpai;
+          this.players.find(p => p.id === tenpaiPlayer.id).score += incomePerTenpai;
+        });
+      }
+      this.agariResultDetails.pointChanges = pointChanges; // 計算した点数変動をセット
+
+      // 箱下チェック (誰かの点数が0未満になったらゲーム終了)
+      const playerBelowZero = this.players.find(p => p.score < 0);
+      if (playerBelowZero && this.gamePhase !== GAME_PHASES.GAME_OVER) {
+        console.log(`Player ${playerBelowZero.name} has gone below 0 points (${playerBelowZero.score}) due to noten penalty. Game ends.`);
+        this.gamePhase = GAME_PHASES.GAME_OVER;
+        this.shouldEndGameAfterRound = true; // 次のラウンド準備時にゲーム終了をトリガー
+      }
+
       const gameCtxForTenpai = {
         playerWind: dealerPlayer.seatWind, // PLAYER_WINDS.EAST など、mahjongLogicからインポート
-        roundWind: this.currentRound.wind === 'east' ? mahjongLogic.PLAYER_WINDS.EAST : mahjongLogic.PLAYER_WINDS.SOUTH,
+        roundWind: this.currentRound.wind === 'east' ? mahjongLogic.PLAYER_WINDS.EAST : mahjongLogic.PLAYER_WINDS.SOUTH, // 東場のみ
         doraIndicators: this.doraIndicators,
         // isRiichi: dealerPlayer.isRiichi, // リーチ状態も渡す場合
         // melds: dealerPlayer.melds, // 鳴きも考慮する場合
+        // 四牌麻雀のテンパイ判定に必要なその他の情報
+        isParent: true, // 親のテンパイ判定なので
       };
-      const tenpaiResult = mahjongLogic.checkYonhaiTenpai(dealerPlayer.hand, gameCtxForTenpai);
-      const isDealerTenpai = tenpaiResult.isTenpai;
+      const isDealerTenpai = tenpaiPlayers.some(p => p.id === dealerPlayer.id && p.isTenpai); // dealerPlayerがテンパイリストに含まれるか
       console.log('[handleRyuukyoku] isDealerTenpai value:', isDealerTenpai); // デバッグ用ログ追加
 
+      // 東4局かつ親がテンパイの場合の終局条件を判定
+      let shouldEndGameDueToEast4DealerTenpai = false;
+      if (this.currentRound.wind === 'east' && this.currentRound.number === 4 && isDealerTenpai) {
+          // 東4局で親がテンパイ かつ 親がトップであるかチェック
+          const rankedPlayers = getRankedPlayers(this.players); // 点数変動後の順位を取得
+          const dealerRank = rankedPlayers.find(p => p.id === dealerPlayer.id)?.rank;
+          if (dealerRank === 1) {
+              shouldEndGameDueToEast4DealerTenpai = true; // 親がトップなら終局
+          }
+      }
 
-      if (isDealerTenpai) {
+      if (shouldEndGameDueToEast4DealerTenpai || (isDealerTenpai && this.currentRound.wind === 'east' && this.currentRound.number === 4)) {
+         // 東4局で親がテンパイかつトップの場合、または箱下で既に終局フラグが立っている場合
+         // shouldEndGameDueToEast4DealerTenpai の条件に箱下チェックも含めるか、shouldEndGameAfterRound を優先するか検討
+         // ここでは shouldEndGameDueToEast4DealerTenpai が true の場合のみ終局条件として扱う
+         if (shouldEndGameDueToEast4DealerTenpai) {
+            this.resultMessage = `親（${dealerPlayer.name}）がテンパイでトップのため終局します。`;
+            this.honba = 0; // 終局なので本場はリセット
+            this.nextDealerIndex = (this.dealerIndex + 1) % this.players.length; // 形式的に親流れ
+            this.shouldAdvanceRound = true; // 局を進めてゲーム終了へ
+            this.shouldEndGameAfterRound = true; // ゲーム終了をトリガー
+         } else {
+            // 東4局だが親がテンパイだがトップではない場合 -> 連荘
+            this.resultMessage = `親（${dealerPlayer.name}）がテンパイでトップでないため連荘します。`;
+            this.honba++; // 連荘なので本場プラス
+            this.nextDealerIndex = this.dealerIndex; // 親は継続
+            this.shouldAdvanceRound = false;
+            this.shouldEndGameAfterRound = false; // ゲーム終了しない
+         }
+      } else if (isDealerTenpai) { // 東4局以外で親がテンパイ
+        this.resultMessage = `親（${dealerPlayer.name}）がテンパイのため連荘します。`;
         this.honba++; // 本場を増やす
-        this.resultMessage = `流局しました。\n親（${dealerPlayer.name}）がテンパイのため連荘します。\n次局: 東${this.currentRound.number}局 ${this.honba}本場`;
-        // dealerIndex は変更しない (親は継続)
-      } else {
+        this.nextDealerIndex = this.dealerIndex; // 親は継続
+        this.shouldAdvanceRound = false;
+      } else { // 親がノーテン
+        this.resultMessage = `親（${this.players[this.dealerIndex].name}）がノーテンのため親流れです。`;
         this.honba = 0; // 本場をリセット
-        this.currentRound.number++; // 次の局へ
-        // 親を次のプレイヤーに移動
-        const oldDealerIndex = this.dealerIndex;
-        this.dealerIndex = (this.dealerIndex + 1) % this.players.length;
-        
-        // isDealerフラグを更新
-        this.players.forEach((player, index) => {
-          player.isDealer = (index === this.dealerIndex);
-        });
-        // 新しい親に風を再割り当て
-        const playersWithNewDealerWinds = mahjongLogic.assignPlayerWinds(
-          this.players,
-          this.dealerIndex,
-          this.players.length
-        );
-        this.players = playersWithNewDealerWinds; // ストアのプレイヤー情報を更新
-
-        const newDealerPlayer = this.players[this.dealerIndex];
-        // 東4局で親がノーテンの場合は、次の局の案内は最終リザルトで処理されるため、ここでは表示しない
-        if (this.currentRound.wind === 'east' && this.currentRound.number === 4) {
-          this.resultMessage = `流局しました。\n親（${this.players[oldDealerIndex].name}）がノーテンのため親流れです。\n最終結果を表示します。`;
-        } else {
-          this.resultMessage = `流局しました。\n親（${this.players[oldDealerIndex].name}）がノーテンのため親流れです。\n次局: 東${this.currentRound.number}局 ${newDealerPlayer.name}が親です。`;
-        }      }
-
-      // TODO: ノーテン罰符の処理をここに追加
-
+        this.nextDealerIndex = (this.dealerIndex + 1) % this.players.length; // 親流れ
+        this.shouldAdvanceRound = true;
+      }
+      // 箱下による終局フラグが既に立っている場合は、メッセージに追記
+      if (this.shouldEndGameAfterRound && !shouldEndGameDueToEast4DealerTenpai) { // 東4局親トップ以外での箱下終局
+           const playerBelowZero = this.players.find(p => p.score < 0);
+           if (playerBelowZero) {
+               this.resultMessage += `\n${playerBelowZero.name} の持ち点が0点未満になったため終局します。`;
+           }
+      }
       this.showResultPopup = true; // リザルトポップアップを表示
     },
     prepareNextRound() {
+      // dealerIndex を nextDealerIndex で更新
+      if (this.nextDealerIndex !== null) {
+        this.dealerIndex = this.nextDealerIndex;
+        this.nextDealerIndex = null; // 使用後はクリア
+      }
+
+      if (this.shouldEndGameAfterRound) {
+        this.handleGameEnd();
+        return; // ゲーム終了なので、次の局の準備は行わない
+      }
+
       this.showResultPopup = false;
       this.resultMessage = '';
       this.drawnTile = null;
@@ -439,14 +559,32 @@ export const useGameStore = defineStore('game', {
         this.canDeclarePon[p.id] = null; this.canDeclareMinkan[p.id] = null;
       });
       // turnCount, playerTurnCount も initializeGame でリセットされる
+      if (this.shouldAdvanceRound) {
+        this.currentRound.number++;
+        // isDealerフラグと席風を新しい親に基づいて更新
+        this.players.forEach((player, index) => {
+          player.isDealer = (index === this.dealerIndex);
+        });
+        const playersWithNewWinds = mahjongLogic.assignPlayerWinds(
+          this.players,
+          this.dealerIndex,
+          this.players.length
+        );
+        this.players = playersWithNewWinds;
+      }
+      this.shouldAdvanceRound = false; // フラグをリセット
 
       // ゲーム終了条件のチェック (東4局終了)
       // TODO: 誰かが飛んだ場合の終了条件も追加する
-      if (this.currentRound.wind === 'east' && this.currentRound.number > 4) {
+      // shouldEndGameAfterRound フラグで既に判定しているので、ここでのチェックは補助的
+      if (this.currentRound.wind === 'east' && this.currentRound.number > 4 && !this.shouldEndGameAfterRound) {
+        // 親が和了して東4局が終了した場合も考慮 (shouldAdvanceRound が false でも局数が4を超えていれば終了)
         this.handleGameEnd();
         return;
       }
-      this.initializeGame(); // 次の局の準備 (山牌生成、配牌など)
+      // dealerIndex が更新された状態で initializeGame を呼び出す
+      // initializeGame 内で、現在の dealerIndex を元に親や風が設定される
+      this.initializeGame();
     },
     setGameMode(mode) {
       this.gameMode = mode; // 'allManual', 'vsCPU', 'online'
@@ -954,13 +1092,89 @@ export const useGameStore = defineStore('game', {
         player.score += this.riichiSticks * 1000;
         pointChanges[agariPlayerId] += this.riichiSticks * 1000;
         this.riichiSticks = 0;
+        
+        // 箱下チェック (誰かの点数が0未満になったらゲーム終了)
+        const playerBelowZero = this.players.find(p => p.score < 0);
+        if (playerBelowZero && this.gamePhase !== GAME_PHASES.GAME_OVER) {
+          console.log(`Player ${playerBelowZero.name} has gone below 0 points (${playerBelowZero.score}). Game ends.`);
+          // this.gamePhase = GAME_PHASES.GAME_OVER; // すぐには変更しない
+          this.shouldEndGameAfterRound = true; // 次のラウンド準備時にゲーム終了をトリガー
+        }
 
         // isDealerHola の設定など、局の継続/終了に関わるフラグもここで設定
         if (player.isDealer) {
+          if (this.currentRound.wind === 'east' && this.currentRound.number === 4) {
+            this.resultMessage += `\n親が和了しましたが、東4局のため終局します。`;
+            this.honba = 0; // 終局なので本場はリセット
+            this.nextDealerIndex = (this.dealerIndex + 1) % this.players.length; // 形式的に親流れ
+            this.shouldAdvanceRound = true; // 局を進めてゲーム終了へ
+            this.shouldEndGameAfterRound = true; // 東4局親和了でもゲーム終了
+          } else {
+            this.resultMessage += `\n親が和了したため連荘します。`;
             this.honba++; // 親和了で本場プラス (連荘)
+            this.nextDealerIndex = this.dealerIndex; // 親は継続
+            this.shouldAdvanceRound = false;
+          }
         } else {
-            // 子和了で親流れ、本場リセットのロジックは prepareNextRound で局を進める際に行う
+            this.resultMessage += `\n子が和了したため親流れです。`;
+            this.honba = 0; // 子和了で本場リセット
+            this.nextDealerIndex = (this.dealerIndex + 1) % this.players.length; // 親流れ
+            this.shouldAdvanceRound = true;
         }
+        // shouldEndGameAfterRound が true の場合、ResultPopup のボタンで prepareNextRound が呼ばれ、そこで handleGameEnd が呼ばれる
+        if (this.shouldEndGameAfterRound) {
+            this.resultMessage += ` (最終局)`; // メッセージに最終局であることを示唆
+        }
+
+        // 東4局かつ親が和了した場合の終局条件を判定
+        let shouldEndGameDueToEast4DealerWin = false;
+        if (this.currentRound.wind === 'east' && this.currentRound.number === 4 && player.isDealer) {
+            // 東4局で親が和了 かつ 親がトップであるかチェック
+            const rankedPlayers = getRankedPlayers(this.players); // 点数変動後の順位を取得
+            const dealerRank = rankedPlayers.find(p => p.id === player.id)?.rank;
+            if (dealerRank === 1) {
+                shouldEndGameDueToEast4DealerWin = true; // 親がトップなら終局
+            }
+        }
+
+        // 局の継続/終了に関わるフラグを設定
+        if (shouldEndGameDueToEast4DealerWin || (player.isDealer && this.currentRound.wind === 'east' && this.currentRound.number === 4)) {
+           // 東4局で親が和了かつトップの場合、または箱下で既に終局フラグが立っている場合
+           // shouldEndGameDueToEast4DealerWin の条件に箱下チェックも含めるか、shouldEndGameAfterRound を優先するか検討
+           // ここでは shouldEndGameDueToEast4DealerWin が true の場合のみ終局条件として扱う
+           if (shouldEndGameDueToEast4DealerWin) {
+              this.resultMessage += `\n親が和了しました。東4局終了、親がトップのため終局します。`;
+              this.honba = 0; // 終局なので本場はリセット
+              this.nextDealerIndex = (this.dealerIndex + 1) % this.players.length; // 形式的に親流れ
+              this.shouldAdvanceRound = true; // 局を進めてゲーム終了へ
+              this.shouldEndGameAfterRound = true; // ゲーム終了をトリガー
+           } else {
+              // 東4局で親が和了だがトップではない場合 -> 連荘
+              this.resultMessage += `\n親が和了しました。東4局ですが、親がトップでないため連荘します。`;
+              this.honba++; // 連荘なので本場プラス
+              this.nextDealerIndex = this.dealerIndex; // 親は継続
+              this.shouldAdvanceRound = false;
+              this.shouldEndGameAfterRound = false; // ゲーム終了しない
+           }
+        } else if (player.isDealer) { // 東4局以外で親が和了
+            this.resultMessage += `\n親が和了したため連荘します。`;
+            this.honba++; // 親和了で本場プラス (連荘)
+            this.nextDealerIndex = this.dealerIndex; // 親は継続
+            this.shouldAdvanceRound = false;
+        } else { // 子が和了
+            this.resultMessage += `\n子が和了したため親流れです。`;
+            this.honba = 0; // 子和了で本場リセット
+            this.nextDealerIndex = (this.dealerIndex + 1) % this.players.length; // 親流れ
+            this.shouldAdvanceRound = true;
+        }
+
+        // 箱下による終局フラグが既に立っている場合は、メッセージに追記
+        if (this.shouldEndGameAfterRound && !shouldEndGameDueToEast4DealerWin) { // 東4局親トップ以外での箱下終局
+             const playerBelowZero = this.players.find(p => p.score < 0);
+             if (playerBelowZero) {
+                 this.resultMessage += `\n${playerBelowZero.name} の持ち点が0点未満になったため終局します。`;
+             }
+            }
       } else {
         console.log(`[handleAgari] ${player.name} の和了宣言は役がありませんでした。または和了形ではありません。`);
         // チョンボ処理など
@@ -969,14 +1183,25 @@ export const useGameStore = defineStore('game', {
     handleGameEnd() {
       this.gamePhase = GAME_PHASES.GAME_OVER;
       console.log('gameStore: Game has ended.');
-      // 最終結果メッセージを生成 (例: 各プレイヤーの最終スコアと順位)
       // プレイヤーをスコア順にソート
       const sortedPlayers = [...this.players].sort((a, b) => b.score - a.score);
-      let resultText = "ゲーム終了！\n\n最終結果:\n";
-      sortedPlayers.forEach((player, index) => { // 各プレイヤーの最終スコアと順位を表示
-        resultText += `${index + 1}. ${player.name} (${player.seatWind || ''}): ${player.score}点\n`;
-      });
-      this.finalResultMessage = resultText;
+      // ユーザープレイヤー ('player1') が1位か判定し、連勝数を更新
+      const myPlayer = sortedPlayers.find(p => p.id === 'player1'); // 仮に 'player1' がユーザープレイヤー
+      if (myPlayer && sortedPlayers[0].id === myPlayer.id) {
+        this.consecutiveWins++; // 1位なら連勝数をインクリメント
+      } else {
+        this.consecutiveWins = 0; // 1位でなければ連勝数をリセット
+      }
+
+      // 最終結果の詳細情報をセット
+      this.finalResultDetails = {
+        rankedPlayers: sortedPlayers.map((player, index) => ({
+          rank: index + 1,
+          name: player.name,
+          score: player.score,
+        })),
+        consecutiveWins: this.consecutiveWins,
+      };
       this.showFinalResultPopup = true;
     },
     returnToTitle() {
@@ -1011,7 +1236,10 @@ export const useGameStore = defineStore('game', {
       this.showResultPopup = false; // ポップアップ関連もリセット
       this.resultMessage = '';
       this.showFinalResultPopup = false; // 最終リザルトポップアップもリセット
-      this.finalResultMessage = '';    // 最終リザルトメッセージもリセット
+      this.finalResultDetails = { // 最終リザルト詳細もリセット
+        rankedPlayers: [],
+        consecutiveWins: 0,
+      };
       this.currentRound = { wind: 'east', number: 1 };
       this.honba = 0;
       this.riichiSticks = 0;
@@ -1034,6 +1262,8 @@ export const useGameStore = defineStore('game', {
         this.riichiDiscardOptions = [];
         this.actionResponseQueue = [];
       });
+      this.shouldEndGameAfterRound = false; // タイトルに戻るのでリセット
+      this.consecutiveWins = 0; // タイトルに戻る場合は連勝数をリセット
       // isInitialized フラグなどがあればそれもリセット
     },
     getters: {

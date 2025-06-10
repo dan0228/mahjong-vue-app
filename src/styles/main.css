@@ -1,0 +1,24 @@
+/* src/assets/main.css (または既存のグローバルCSSファイル) */
+body, html, #app {
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none;    /* Firefox */
+  -ms-user-select: none;     /* Internet Explorer/Edge */
+  user-select: none;         /* Standard syntax */
+}
+
+/* 特定の要素（例: input や textarea）では選択を許可したい場合 */
+input, textarea {
+  -webkit-user-select: auto;
+  -moz-user-select: auto;
+  -ms-user-select: auto;
+  user-select: auto;
+}
+
+img {
+  -webkit-user-drag: none; /* Safari */
+  -khtml-user-drag: none;  /* Konqueror HTML */
+  -moz-user-drag: none;    /* Firefox */
+  -o-user-drag: none;      /* Opera */
+  user-drag: none;         /* Standard syntax */
+  pointer-events: none;    /* クリックイベントなども無効化する場合 */
+}

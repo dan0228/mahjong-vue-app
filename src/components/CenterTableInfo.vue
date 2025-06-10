@@ -10,7 +10,7 @@
     </div>
     <div class="scores">
       <!-- GameBoard.vue の表示順 (自分、右、対面、左) に合わせてプレイヤー情報を表示 -->
-      <div v-for="player in orderedPlayersForDisplay" :key="player.id" class="player-score">
+      <div v-for="player in orderedPlayers" :key="player.id" class="player-score">
         <span class="player-name">
           {{ getPlayerDisplayLabel(player) }}:
         </span>
@@ -35,8 +35,9 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, defineProps } from 'vue';
 import { useGameStore } from '@/stores/gameStore';
+import { getTileImageUrl, tileToString } from '@/utils/tileUtils'; // インポート
 
 const gameStore = useGameStore();
 
@@ -53,10 +54,11 @@ const dealer = computed(() => {
   return null;
 });
 
-// GameBoard.vue の表示順に合わせてプレイヤーを並び替える
-const orderedPlayersForDisplay = computed(() => {
-  const playerOrder = ['player1', 'player2', 'player3', 'player4']; // 自分(下)、右、対面(上)、左
-  return playerOrder.map(id => gameStore.players.find(p => p.id === id)).filter(Boolean);
+const props = defineProps({
+  orderedPlayers: { // GameBoardから渡される表示順のプレイヤーリスト
+    type: Array,
+    required: true
+  }
 });
 
 // 表示用のプレイヤーラベルを取得する関数
@@ -65,29 +67,11 @@ function getPlayerDisplayLabel(player) {
   // GameBoard.vue でのプレイヤー位置割り当てロジックに基づいて名前を返す
   // player.name を基本とし、必要に応じて seatWind や isDealer を追加表示
   // ここでは player.name をそのまま使うか、固定的な位置名を使うか選択
-  // 例:
-  if (player.id === 'player1') return `${player.name}(下)`;
-  if (player.id === 'player2') return `${player.name}(右)`;
-  if (player.id === 'player3') return `${player.name}(上)`;
-  if (player.id === 'player4') return `${player.name}(左)`;
-  return player.name;
+  // GameBoardから渡されるorderedPlayersの順序自体が位置を示唆するため、
+  // ここではplayer.nameと風のみで十分かもしれません。
+  return `${player.name}`;
   // もしくは、席風を重視する場合
   // return `${player.name} (${player.seatWind || '風未定'})`;
-}
-
-// Tile.vue や PlayerHand.vue と共通の牌画像取得ロジック
-function getTileImageUrl(tile) {
-  if (tile && tile.suit && tile.rank) {
-    return `/assets/images/tiles/${tile.suit}${tile.rank}.png`; // 適切なパスに修正
-  }
-  return `/assets/images/tiles/ura.png`; // 不明な牌やエラー時
-}
-
-function tileToString(tile) {
-  if (tile && tile.suit && tile.rank){
-    return `${tile.suit}${tile.rank}`;
-  }
-  return '不明';
 }
 </script>
 

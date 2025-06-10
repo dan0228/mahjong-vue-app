@@ -1,11 +1,26 @@
 <template>
   <div v-if="show" class="popup-overlay">
     <div class="popup-content">
-      <h2>最終結果</h2>
-      <pre class="result-text">{{ message }}</pre>
+      <h2>終局</h2>
+      <div class="final-results-list">
+        <div v-for="player in finalResultDetails.rankedPlayers" :key="player.name" class="player-rank-item">
+          <span class="rank">{{ player.rank }}位</span>
+          <span class="player-name">{{ player.name }}</span>
+          <span class="score">{{ player.score }}点</span>
+        </div>
+      </div>
+      <p class="consecutive-wins">
+        {{ finalResultDetails.consecutiveWins }}連勝中！
+      </p>
       <div class="actions">
-        <button @click="startNewGame">新しいゲームを開始</button>
-        <button @click="backToTitle">タイトルに戻る</button>
+        <button @click="startNewGame" class="action-button">
+          <span>新しいゲームを開始</span>
+          <span>(連勝継続)</span>
+        </button>
+        <button @click="backToTitle" class="action-button">
+          <span>タイトルに戻る</span>
+          <span>(連勝リセット)</span>
+        </button>
       </div>
     </div>
   </div>
@@ -19,9 +34,11 @@ const props = defineProps({
     type: Boolean,
     required: true,
   },
-  message: {
-    type: String,
-    default: '最終結果はありません。',
+  finalResultDetails: { // gameStore.finalResultDetails を想定
+    type: Object,
+    required: true,
+    // rankedPlayers: [{ rank, name, score }], consecutiveWins: number
+    default: () => ({ rankedPlayers: [], consecutiveWins: 0 }), // デフォルト値をオブジェクトに変更
   },
 });
 
@@ -64,43 +81,65 @@ function backToTitle() {
   color: #333;
   font-size: 1.8em;
 }
-.result-text {
+.final-results-list {
   margin-bottom: 25px;
   color: #444;
   font-size: 1.1em;
-  text-align: left;
-  white-space: pre-wrap; /* メッセージ内の改行を有効にする */
   background-color: #f9f9f9;
   padding: 15px;
   border-radius: 5px;
   max-height: 300px;
   overflow-y: auto;
 }
+.player-rank-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  border-bottom: 1px dashed #eee;
+}
+.player-rank-item:last-child {
+  border-bottom: none;
+}
+.rank { font-weight: bold; width: 40px; text-align: left;}
+.player-name { flex-grow: 1; text-align: left; margin-left: 10px;}
+.score { font-weight: bold; color: #007bff; width: 80px; text-align: right;}
+.consecutive-wins {
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #ff9800; /* オレンジ色 */
+  margin-top: 15px;
+  margin-bottom: 25px;
+}
 .actions {
   display: flex;
   justify-content: space-around;
   gap: 15px;
 }
-.actions button {
+.action-button { /* actions button から action-button にクラス名を変更 */
   padding: 12px 25px;
   border: none;
   border-radius: 5px;
   cursor: pointer;
   font-size: 1em;
   transition: background-color 0.2s ease;
+  display: flex; /* テキストを縦に並べるため */
+  flex-direction: column; /* テキストを縦に並べるため */
+  align-items: center; /* テキストを中央揃え */
+  justify-content: center; /* テキストを中央揃え */
+  line-height: 1.2; /* 行間調整 */
 }
-.actions button:first-child { /* 新しいゲームを開始 */
+.action-button:first-child { /* 新しいゲームを開始 */
   background-color: #4CAF50;
   color: white;
 }
-.actions button:first-child:hover {
+.action-button:first-child:hover {
   background-color: #45a049;
 }
-.actions button:last-child { /* タイトルに戻る */
+.action-button:last-child { /* タイトルに戻る */
   background-color: #f44336;
   color: white;
 }
-.actions button:last-child:hover {
+.action-button:last-child:hover {
   background-color: #da190b;
 }
 </style>

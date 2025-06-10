@@ -9,7 +9,7 @@
           <PlayerArea :player="playerAtLeft" position="left" :is-my-hand="determineIsMyHand(playerAtLeft.id)" :drawn-tile-display="drawnTileForPlayer(playerAtLeft.id)" :can-discard="canPlayerDiscard(playerAtLeft.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
         </div>
         <div class="center-table">
-          <CenterTableInfo />
+          <CenterTableInfo :ordered-players="orderedPlayersForDisplay" />
         </div>
         <div class="player-area-container right-player-container" v-if="playerAtRight">
           <PlayerArea :player="playerAtRight" position="right" :is-my-hand="determineIsMyHand(playerAtRight.id)" :drawn-tile-display="drawnTileForPlayer(playerAtRight.id)" :can-discard="canPlayerDiscard(playerAtRight.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
@@ -18,22 +18,6 @@
       <div class="player-area-container bottom-player-container" v-if="playerAtBottom">
         <PlayerArea :player="playerAtBottom" position="bottom" :is-my-hand="determineIsMyHand(playerAtBottom.id)" :drawn-tile-display="drawnTileForPlayer(playerAtBottom.id)" :can-discard="canPlayerDiscard(playerAtBottom.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
       </div>
-      <!-- アクションボタンエリア -->
-      <!-- <div class="game-actions-panel"> -->
-        <!-- 自分のターンのアクションボタン -->
-        <!-- <button v-if="canDeclareTsumoAgari" @click="handleDeclareTsumoAgari">ツモ</button>
-        <button v-if="canDeclareRiichi" @click="handleDeclareRiichi">リーチ</button>
-        <button v-if="canDeclareAnkan" @click="handleDeclareAnkan">暗槓</button>
-        <button v-if="canDeclareKakan" @click="handleDeclareKakan">加槓</button> -->
-
-        <!-- 他家の打牌/加槓に対するアクションボタン -->
-        <!-- <button v-if="canPlayerDeclareRon(playerAtBottom?.id)" @click="handleDeclareRon">ロン</button> -->
-        <!-- <button v-if="canPlayerDeclarePon(playerAtBottom?.id)" @click="handleDeclarePon">ポン</button> -->
-        <!-- <button v-if="canPlayerDeclareMinkan(playerAtBottom?.id)" @click="handleDeclareMinkan">カン</button> -->
-
-        <!-- スキップボタン (他家のアクション待ち、または自分のカン宣言後など) -->
-        <!-- <button v-if="showSkipButton" @click="handleSkipAction">スキップ</button> -->
-      <!-- </div> -->
       <ResultPopup
         :show="gameStore.showResultPopup"
         :message="gameStore.resultMessage"
@@ -43,7 +27,7 @@
       />
       <FinalResultPopup
         :show="gameStore.showFinalResultPopup"
-        :message="gameStore.finalResultMessage"
+        :final-result-details="gameStore.finalResultDetails"
         @start-new-game="handleStartNewGameFromFinalResult"
         @back-to-title="handleBackToTitleFromFinalResult"
       />
@@ -252,13 +236,20 @@ function onAnkanSelected(tile) { // モーダルからのイベント
     } else if (actionType === 'riichi') {
       gameStore.declareRiichi(playerId);
     } else if (actionType === 'ankan') {
-      // TODO: 暗槓の牌選択UIを呼び出すか、ストアが候補を返す
-      const ankanTile = gameStore.canDeclareAnkan[playerId]; // 仮
-      if (ankanTile) gameStore.declareAnkan(playerId, ankanTile);
+      // PlayerAreaから渡されるtileは、暗槓の場合は選択された牌そのものであるべき
+      // ストアの canDeclareAnkan[playerId] が候補リストを返す場合、
+      // PlayerArea側で選択UIを出すか、GameBoardが仲介してモーダルを出す
+      if (tile) { // tile に選択された暗槓牌が渡ってくる想定
+        gameStore.declareAnkan(playerId, tile);
+      } else {
+        console.error("暗槓する牌が選択されていません。");
+      }
     } else if (actionType === 'kakan') {
-      // TODO: 加槓の牌選択UIを呼び出すか、ストアが候補を返す
-      const kakanTile = gameStore.canDeclareKakan[playerId]; // 仮
-      if (kakanTile) gameStore.declareKakan(playerId, kakanTile);
+      if (tile) { // tile に選択された加槓牌が渡ってくる想定
+        gameStore.declareKakan(playerId, tile);
+      } else {
+        console.error("加槓する牌が選択されていません。");
+      }
     } else if (actionType === 'ron') {
       gameStore.playerDeclaresCall(playerId, 'ron', gameStore.lastDiscardedTile); // ロン対象牌は lastDiscardedTile
     } else if (actionType === 'pon') {
@@ -268,78 +259,8 @@ function onAnkanSelected(tile) { // モーダルからのイベント
     }
   }
 
-  // TODO: promptAnkanTileUI と promptKakanTileUI は実際のUI選択ロジックに置き換える
-  // これらは handlePlayerAction 内で、actionType が 'ankan' や 'kakan' の場合に呼び出される
-  function promptAnkanTileUI() {
-    // プレイヤーの手牌とツモ牌から暗槓可能な牌を提示し、選択させるUIロジック
-    // gameStore.canDeclareAnkanForCurrentPlayer が具体的な牌オブジェクトならそれを使用
-    console.warn("暗槓する牌を選択するUIが必要です。");
-    // TODO: 実際のモーダルや選択UIを実装し、ユーザーの選択結果を返すようにする
-    // 仮で、ストアが保持している情報（ツモ牌での暗槓を優先）を返す
-    if (gameStore.canDeclareAnkanForCurrentPlayer && gameStore.canDeclareAnkanForCurrentPlayer !== true) {
-        return gameStore.canDeclareAnkanForCurrentPlayer;
-    }
-    // 手牌4枚の暗槓の候補を探す (簡易版)
-    const player = playerAtBottom.value;
-    if (player) {
-        const counts = {};
-        player.hand.forEach(t => {
-            const key = mahjongLogic.getTileKey(t);
-            counts[key] = (counts[key] || 0) + 1;
-        });
-        for (const key in counts) {
-            if (counts[key] === 4) {
-                return player.hand.find(t => mahjongLogic.getTileKey(t) === key);
-            }
-        }
-    }
-    return null;
-  }
-
-  function promptKakanTileUI() {
-    // プレイヤーのポンしている牌と手牌/ツモ牌から加槓可能な牌を提示し、選択させるUIロジック
-    console.warn("加槓する牌を選択するUIが必要です。");
-    // TODO: 実際のモーダルや選択UIを実装し、ユーザーの選択結果を返すようにする
-    // 仮で、ストアが保持している情報（ツモ牌での加槓を優先）を返す
-    // 手牌からの加槓候補を探す (簡易版)
-    const player = playerAtBottom.value;
-    if (player) {
-        for (const meld of player.melds) {
-            if (meld.type === 'pon') {
-                const kakanCandidate = player.hand.find(hTile => mahjongLogic.getTileKey(hTile) === mahjongLogic.getTileKey(meld.tiles[0]));
-                if (kakanCandidate) return kakanCandidate;
-            }
-        }
-    }
-    return null;
-  }
-
   // ゲームコンテキスト生成のヘルパー関数 (重複を避けるため)
   // ストアから必要な情報を集めてコンテキストオブジェクトを作成
-  function createGameContextForPlayer(player, isTsumo, agariTile = null) { // agariTile を追加
-      if (!player) return null;
-      return {
-          playerWind: player.seatWind,
-          roundWind: gameStore.currentRound.wind === 'east' ? mahjongLogic.PLAYER_WINDS.EAST : mahjongLogic.PLAYER_WINDS.SOUTH, // 現在は東場のみ
-          doraIndicators: gameStore.doraIndicators,
-          uraDoraIndicators: player.isRiichi ? gameStore.uraDoraIndicators : [], // 裏ドラはリーチ時のみ
-          turnCount: gameStore.turnCount, // 全体の巡目
-          playerTurnCount: gameStore.playerTurnCount[player.id], // そのプレイヤーの巡目
-          isRiichi: player.isRiichi,
-          isDoubleRiichi: player.isDoubleRiichi,
-          isIppatsu: gameStore.isIppatsuChance[player.id], // 一発チャンス中か
-          isHaitei: isTsumo && gameStore.wall.length === 0, // 海底ツモ
-          isHoutei: !isTsumo && gameStore.wall.length === 0 && agariTile && gameStore.lastDiscardedTile && agariTile.id === gameStore.lastDiscardedTile.id, // 河底ロン
-          isChankan: gameStore.isChankanChance && agariTile && gameStore.chankanTile && agariTile.id === gameStore.chankanTile.id, // 槍槓チャンス中か
-          isTenho: player.isDealer && player.playerTurnCount[player.id] === 0 && isTsumo, // 天和
-          isChiho: !player.isDealer && player.playerTurnCount[player.id] === 0 && isTsumo, // 地和
-          // isRenho: !player.isDealer && player.playerTurnCount[player.id] === 0 && !isTsumo && gameStore.turnCount < gameStore.players.length && gameStore.players.every(p => p.melds.length === 0), // 人和 (四牌麻雀での定義を確認)
-          melds: player.melds,
-          isParent: player.isDealer,
-          remainingTilesCount: gameStore.wall.length,
-          // その他、役判定に必要な情報があれば追加 (例: lastDiscardedTile, chankanTile, deadWall)
-      };
-  }
 
   function handleCloseResultPopup() {
     // ポップアップを閉じるだけの場合 (基本的には proceed を使う)

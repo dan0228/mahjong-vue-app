@@ -117,7 +117,7 @@
 <style scoped>
   /* RulePopup.vue と同様のスタイルを使用できます */
   .popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-  .popup-content { background-color: white; padding: 20px; border-radius: 8px; max-width: 90%; max-height: 85vh; overflow-y: auto; text-align: center; }
+  .popup-content { background-color: white; padding: 20px; border-radius: 8px; max-width: 90%; max-height: 85vh; overflow-y: auto; text-align: center; font-family: 'Helvetica Neue', Arial, sans-serif; /* フォントを元に戻す */ }
   .yaku-section { margin-bottom: 15px; }
   .yaku-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
   .yaku-table th, .yaku-table td { border: 1px solid #ddd; padding: 6px; text-align: left; }

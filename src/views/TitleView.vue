@@ -1,13 +1,17 @@
 <template>
   <div class="title-screen">
-    <h1>四牌麻雀</h1>
+    <div class="title-background-image"></div>
+    <h1>
+      <span class="main-title">よんじゃん！</span>
+      <span class="sub-title">~ 4牌で楽しむ本格麻雀 ~</span>
+    </h1>
     <nav class="menu">
       <ul>
+        <li><button @click="startGame('vsCPU')" disabled>ねこAI対戦 (準備中)</button></li>
+        <li><button @click="startGame('online')" disabled>オンライン対戦 (準備中)</button></li>
         <li><button @click="startGame('allManual')">全操作モード</button></li>
-        <li><button @click="startGame('vsCPU')" disabled>CPU対戦 (未実装)</button></li>
-        <li><button @click="startGame('online')" disabled>オンライン対戦 (未実装)</button></li>
-        <li><button @click="showRulesPopup = true">ルール</button></li>
-        <li><button @click="showYakuListPopup = true">役一覧</button></li>
+        <li><button @click="showRulesPopup = true">ルール 📖</button></li>
+        <li><button @click="showYakuListPopup = true">役一覧 🀄</button></li>
       </ul>
     </nav>
 
@@ -40,6 +44,8 @@ function startGame(mode) {
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap');
+
 .title-screen {
   display: flex;
   flex-direction: column;
@@ -48,22 +54,49 @@ function startGame(mode) {
   height: 100vh; /* 画面全体の高さを使用 */
   text-align: center;
   background: linear-gradient(135deg, #f5f7fa 0%, #a1f39a 100%); /* 背景に薄いグラデーション */
-  font-family: 'Helvetica Neue', Arial, sans-serif; /* モダンなフォントに変更 */
+  font-family: 'M PLUS Rounded 1c', 'Helvetica Neue', Arial, sans-serif; /* 新しいフォントを適用 */
+}
+
+.title-background-image {
+  width: 400px; /* 背景画像の幅 (調整してください) */
+  height: 260px; /* 背景画像の高さ (調整してください) */
+  background-image: url('/assets/images/back/title_back.png');
+  background-size: 100% auto; /* 画像をコンテナに合わせてリサイズ */
+  background-repeat: no-repeat;
+  background-position: center;
+  margin-bottom: -50px; /* 画像とタイトルの間のスペース */
 }
 
 h1 {
-  font-size: 5em; /* 少し大きく */
-  margin-bottom: 30px; /* メニューとの間隔を調整 */
-  color: #0f1338; /* 少し濃いめの色に */
-  text-shadow: 10px 10px 2px rgba(0,0,0,0.1); /* わずかなテキストシャドウ */
+  margin-top: -30px; /* タイトルを少し下に移動 */
+  margin-bottom: 0px; /* メニューとの間隔を調整 */
+  color: #B14B3F; /* 文字色を変更 */
+  /* 縁取りを追加 */
+  -webkit-text-stroke: 1.2px rgb(0, 0, 0); /* Safari, Chrome */
+  /* text-shadowで擬似的に縁取り*/
+  text-shadow:
+    -1.5px -1.5px 0 white, 1.5px -1.5px 0 white, -1.5px 1.5px 0 white, 1.5px 1.5px 0 white, /* 4方向の白い影 */
+    1px 1px 1px rgba(0,0,0,0.4); /* 元のドロップシャドウ */
+  padding: 0px; /* 文字の周りの余白を調整 */
+  line-height: 1.1; /* 行間を調整 */
 }
 
+.main-title {
+  display: block; /* 改行のため */
+  font-size: 2em; /* メインタイトルのフォントサイズ */
+  margin-left: 20px;
+  font-weight: 700; /* 少し太めに */
+}
+.sub-title {
+  display: block; /* 改行のため */
+  font-size: 0.9em; /* サブタイトルのフォントサイズ */
+  margin-top: 1px; /* メインタイトルとの間隔 */
+  color: #50927c; /* サブタイトルの色をメインより少し薄く (例) */
+}
 .menu ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+  list-style: none; /* リストマーカー（点）を削除 */
+  padding: 0; /* デフォルトのパディングを削除 */
 }
-
 .menu li {
   margin-bottom: 15px;
 }
@@ -80,12 +113,14 @@ h1 {
   border-radius: 5px; /* 元の角丸 */
   transition: background-color 0.2s ease-in-out, transform 0.1s ease;
   box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08); /* ボタンに影を追加 */
+  border-radius: 8px;
+  background: linear-gradient(#ffffff, #fff3e6);
 }
 
 
 .menu button:hover:not(:disabled) {
   background-color: #4CAF50; /* 元のホバー時の背景色 */
-  color: white; /* 元のホバー時の文字色 */
+  color: #39440c; /* 元のホバー時の文字色 */
   transform: translateY(-2px); /* ホバー時に少し浮き上がる効果 */
 }
 

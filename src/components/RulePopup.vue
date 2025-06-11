@@ -71,6 +71,7 @@ defineEmits(['close']);
   border-radius: 8px;
   max-width: 80%;
   max-height: 85vh; /* ポップアップの最大高さを画面の85%に制限 */
+  font-family: 'Helvetica Neue', Arial, sans-serif; /* フォントを元に戻す */
   overflow-y: auto; /* 内容が多い場合にスクロール可能にする */
 }
 .popup-content h2 {

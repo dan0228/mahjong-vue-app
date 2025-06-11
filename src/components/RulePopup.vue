@@ -2,7 +2,7 @@
   <div class="popup-overlay" @click.self="$emit('close')">
     <div class="popup-content">
       <h2>ルール</h2>
-      <p>手牌4枚+1枚の1面子1雀頭で和了できる麻雀</p>
+      <p>手牌4枚+1枚の1面子1雀頭</p>
       <table class="rules-table">
         <tbody>
           <tr>

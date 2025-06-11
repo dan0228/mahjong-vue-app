@@ -54,12 +54,16 @@ function startGame(mode) {
   min-height: 100vh; /* 画面全体の最小の高さをビューポートに合わせる */
   text-align: center;
   background: linear-gradient(135deg, #f5f7fa 0%, #a1f39a 100%); /* 背景に薄いグラデーション */
-  font-family: 'M PLUS Rounded 1c', 'Helvetica Neue', Arial, sans-serif; /* 新しいフォントを適用 */
+  font-family: 'M PLUS Rounded 1c', 'Helvetica Neue', Arial, sans-serif;
+  overflow-x: hidden; /* 横方向のスクロールを禁止して、はみ出しを隠す */
+  box-sizing: border-box; /* padding や border を width/height に含める */
 }
 
 .title-background-image {
-  width: 400px; /* 背景画像の幅 (調整してください) */
-  height: 260px; /* 背景画像の高さ (調整してください) */
+  width: 90vw; /* 画面幅の90%を最大幅とする */
+  max-width: 400px; /* PC表示時の最大幅を制限 */
+  height: auto; /* 高さは幅に応じて自動調整 */
+  aspect-ratio: 400 / 260; /* 元の画像の縦横比を維持 (400/260 は例) */
   background-image: url('/assets/images/back/title_back.png');
   background-size: 100% auto; /* 画像をコンテナに合わせてリサイズ */
   background-repeat: no-repeat;
@@ -68,7 +72,7 @@ function startGame(mode) {
 }
 
 h1 {
-  margin-top: -30px; /* タイトルを少し下に移動 */
+  margin-top: -40px; /* 背景画像との重なりを調整 */
   margin-bottom: 0px; /* メニューとの間隔を調整 */
   color: #B14B3F; /* 文字色を変更 */
   /* 縁取りを追加 */
@@ -78,19 +82,20 @@ h1 {
     -1.5px -1.5px 0 white, 1.5px -1.5px 0 white, -1.5px 1.5px 0 white, 1.5px 1.5px 0 white, /* 4方向の白い影 */
     1px 1px 1px rgba(0,0,0,0.4); /* 元のドロップシャドウ */
   padding: 0px; /* 文字の周りの余白を調整 */
-  line-height: 1.1; /* 行間を調整 */
+  line-height: 1.2; /* 行間を調整 */
+  width: 100%; /* h1が横にはみ出さないように */
 }
 
 .main-title {
   display: block; /* 改行のため */
-  font-size: 1.8em; /* メインタイトルのフォントサイズ */
+  font-size: clamp(1.5em, 8vw, 1.8em); /* 画面幅に応じてフォントサイズを調整 */
   margin-left: 20px;
   white-space: nowrap; /* 「よんじゃん！」が途中で改行されないようにする */
   font-weight: 700; /* 少し太めに */
 }
 .sub-title {
   display: block; /* 改行のため */
-  font-size: 0.9em; /* サブタイトルのフォントサイズ */
+  font-size: clamp(0.8em, 4vw, 0.9em); /* 画面幅に応じてフォントサイズを調整 */
   margin-top: 1px; /* メインタイトルとの間隔 */
   color: #50927c; /* サブタイトルの色をメインより少し薄く (例) */
 }
@@ -103,7 +108,8 @@ h1 {
 }
 
 .menu button {
-  width: 280px; /* ボタンの幅を統一 */
+  width: 80vw; /* 画面幅の80%を最大幅とする */
+  max-width: 280px; /* PC表示時の最大幅を制限 */
   padding: 10px 20px; /* パディング調整 */
   font-size: 1.2em;
   cursor: pointer;

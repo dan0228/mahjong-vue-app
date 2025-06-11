@@ -51,7 +51,7 @@ function startGame(mode) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100vh; /* 画面全体の高さを使用 */
+  min-height: 100vh; /* 画面全体の最小の高さをビューポートに合わせる */
   text-align: center;
   background: linear-gradient(135deg, #f5f7fa 0%, #a1f39a 100%); /* 背景に薄いグラデーション */
   font-family: 'M PLUS Rounded 1c', 'Helvetica Neue', Arial, sans-serif; /* 新しいフォントを適用 */
@@ -85,6 +85,7 @@ h1 {
   display: block; /* 改行のため */
   font-size: 1.8em; /* メインタイトルのフォントサイズ */
   margin-left: 20px;
+  white-space: nowrap; /* 「よんじゃん！」が途中で改行されないようにする */
   font-weight: 700; /* 少し太めに */
 }
 .sub-title {

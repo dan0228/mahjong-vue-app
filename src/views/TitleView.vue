@@ -83,7 +83,7 @@ h1 {
 
 .main-title {
   display: block; /* 改行のため */
-  font-size: 2em; /* メインタイトルのフォントサイズ */
+  font-size: 1.8em; /* メインタイトルのフォントサイズ */
   margin-left: 20px;
   font-weight: 700; /* 少し太めに */
 }
@@ -103,7 +103,7 @@ h1 {
 
 .menu button {
   width: 280px; /* ボタンの幅を統一 */
-  padding: 15px 20px; /* パディング調整 */
+  padding: 10px 20px; /* パディング調整 */
   font-size: 1.2em;
   cursor: pointer;
   border: none; /* ボーダーを削除 */

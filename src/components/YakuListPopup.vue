@@ -125,11 +125,13 @@
   .yaku-example {
     display: flex;
     align-items: center;
-    gap: 2px; /* 牌同士の間隔 */
+    gap: 1px; /* 牌同士の間隔を少し詰める */
+    overflow-x: auto; /* 横幅が足りない場合にスクロール可能にする */
+    min-width: 0; /* flexアイテムが縮小できるようにする */
   }
   .tile-image-small {
-    width: 20px; /* 例の牌画像の幅 */
-    height: auto; /* 高さは自動調整 */
+    width: 18px; /* 例の牌画像の幅を少し小さく */
+    height: 25px; /* 高さを固定して揃える (アスペクト比に応じて調整) */
     vertical-align: middle;
   }
   .last-drawn-tile-spacer {

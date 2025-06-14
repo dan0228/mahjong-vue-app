@@ -291,7 +291,9 @@ function onAnkanSelected(tile) { // モーダルからのイベント
     border: 2px solid #333;
     margin: 0; /* マージンを削除 */
     padding: 10px;
-    background-color: #f0f0f0; /* ボードの薄い灰色の背景 */
+    background-image: url('/assets/images/back/mat.png'); /* 背景画像をマットに変更 */
+    background-size: cover; /* 画面全体を覆うように調整 */
+    background-position: center; /* 画像を中央に配置 */
     position: relative; /* ポップアップなどの基準点になる可能性 */
     box-sizing: border-box; /* paddingとborderをwidth/heightに含める */
   }

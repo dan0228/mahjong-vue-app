@@ -53,10 +53,12 @@ function startGame(mode) {
   justify-content: center;
   min-height: 100vh; /* 画面全体の最小の高さをビューポートに合わせる */
   text-align: center;
-  background: linear-gradient(135deg, #f5f7fa 0%, #a1f39a 100%); /* 背景に薄いグラデーション */
+  background: linear-gradient(135deg, #f5f7fa 0%, #a1f39a 50%, #f5f7fa 100%); /* グラデーションの色と位置を調整 */
+  background-size: 200% 200%; /* グラデーションのサイズを大きくして動かす範囲を確保 */
   font-family: 'M PLUS Rounded 1c', 'Helvetica Neue', Arial, sans-serif;
   overflow-x: hidden; /* 横方向のスクロールを禁止して、はみ出しを隠す */
   box-sizing: border-box; /* padding や border を width/height に含める */
+  animation: gradientDrift 20s ease infinite; /* グラデーションを動かすアニメーション */
 }
 
 .title-background-image {
@@ -72,7 +74,7 @@ function startGame(mode) {
 }
 
 h1 {
-  margin-top: -40px; /* 背景画像との重なりを調整 */
+  margin-top: -30px; /* 背景画像との重なりを調整 */
   margin-bottom: 0px; /* メニューとの間隔を調整 */
   color: #B14B3F; /* 文字色を変更 */
   /* 縁取りを追加 */
@@ -92,6 +94,7 @@ h1 {
   margin-left: 20px;
   white-space: nowrap; /* 「よんじゃん！」が途中で改行されないようにする */
   font-weight: 700; /* 少し太めに */
+  animation: pop 10s infinite ease-in-out; /* ポヨン感アニメーションを適用 */
 }
 .sub-title {
   display: block; /* 改行のため */
@@ -99,6 +102,7 @@ h1 {
   margin-top: 1px; /* メインタイトルとの間隔 */
   color: #50927c; /* サブタイトルの色をメインより少し薄く (例) */
 }
+
 .menu ul {
   list-style: none; /* リストマーカー（点）を削除 */
   padding: 0; /* デフォルトのパディングを削除 */
@@ -119,6 +123,7 @@ h1 {
   color: #586810; /* 元の文字色 */
   border-radius: 5px; /* 元の角丸 */
   transition: background-color 0.2s ease-in-out, transform 0.1s ease;
+  animation: subtleFloat 2s ease-in-out infinite; /* ゆらぎアニメーションを適用 */
   box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08); /* ボタンに影を追加 */
   border-radius: 8px;
   background: linear-gradient(#ffffff, #fff3e6);
@@ -141,5 +146,23 @@ h1 {
   color: #ccc; /* 元の無効化文字色 */
   cursor: not-allowed;
   box-shadow: none; /* 無効化ボタンの影はなし */
+  animation: none; /* 無効化されたボタンはアニメーションしない */
 }
+
+@keyframes pop {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+
+@keyframes gradientDrift {
+  0% { background-position: 0 0; }
+  50% { background-position: 100% 100%; }
+  100% { background-position: 0 0; }
+}
+
+@keyframes subtleFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); } /* わずかに上に移動 */
+}
+
 </style>

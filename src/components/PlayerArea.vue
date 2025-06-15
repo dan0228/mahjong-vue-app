@@ -107,11 +107,12 @@ function emitAction(actionType) {
   display: flex;
   flex-direction: column; /* 基本は縦積み */
   align-items: center;
-  /* background-color: rgba(128, 128, 128, 0.1); */ /* デバッグ用背景色 */
+  position: relative; /* アクションボタンの絶対配置の基準 */
 }
 .player-game-elements {
   display: flex;
   width: 100%;
+  /* アクションボタンが絶対配置になるため、このエリアがボタンと重ならないようにマージン調整が必要な場合がある */
 }
 
 .player-area-bottom > .player-game-elements { flex-direction: column; align-items: center; }
@@ -129,8 +130,12 @@ function emitAction(actionType) {
   width: fit-content; /* このコンテナも内容に合わせる */
 }
 
-/* 左右プレイヤーのエリア全体の幅を制限する場合 */
-.player-area-left, .player-area-right { max-width: 100px; /* 例 */ }
+/* 左右プレイヤーのエリア全体の幅を内容に合わせる */
+.player-area-left, .player-area-right {
+  /* max-width: 100px; */ /* この行をコメントアウトまたは削除 */
+  width: fit-content; /* 幅を内容に合わせる */
+}
+
 
 .player-info { font-size: 0.9em; margin-bottom: 5px; text-align: center; }
 .melds-area { display: flex; gap: 5px; margin-top: 5px; }
@@ -142,6 +147,24 @@ function emitAction(actionType) {
     gap: 5px;
     flex-wrap: wrap;
     justify-content: center; /* ボタンを中央揃え */
+    position: absolute; /* 他の要素のレイアウトフローから切り離す */
+    z-index: 10; /* 他の要素より手前に表示 */
+    background-color: rgba(0,0,0,0.1); /* ボタンエリアの背景を少し暗くして視認性向上 (任意) */
+    padding: 5px;
+    border-radius: 4px;
+}
+
+/* 各ポジションごとのアクションボタンの位置調整 */
+.player-actions-bottom {
+  bottom: -40px; /* 手牌エリアの下に配置 (値はボタンの高さに応じて調整) */
+  left: 50%;
+  transform: translateX(-50%);
+}
+.player-actions-top {
+  top: -40px; /* 手牌エリアの上に配置 (値はボタンの高さに応じて調整) */
+  left: 50%;
+  transform: translateX(-50%);
+  flex-direction: row-reverse; /* ボタンの並び順を反転させる場合 */
 }
 
 /* アクションボタンの向き調整 */
@@ -149,6 +172,16 @@ function emitAction(actionType) {
   flex-direction: column; /* 左右プレイヤーのボタンは縦に並べる */
   align-items: flex-start; /* 左寄せ */
   gap: 3px;
+}
+.player-actions-left {
+  left: -80px; /* 手牌エリアの左に配置 (値はボタンの幅に応じて調整) */
+  top: 50%;
+  transform: translateY(-50%);
+}
+.player-actions-right {
+  right: -80px; /* 手牌エリアの右に配置 (値はボタンの幅に応じて調整) */
+  top: 50%;
+  transform: translateY(-50%);
 }
 .player-actions-left button, .player-actions-right button {
   width: 100%; /* ボタン幅をコンテナに合わせる */

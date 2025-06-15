@@ -29,7 +29,6 @@ export function getAllTiles() {
     }
   });
 
-/*
   // 字牌 (東南西北白發中) - 各4枚
   Object.values(JIHAI_TYPES).forEach(rank => {
     for (let i = 0; i < 4; i++) {
@@ -41,7 +40,7 @@ export function getAllTiles() {
       idCounter++;
     }
   });
-*/
+
   return tiles;
 }
 

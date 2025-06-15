@@ -90,11 +90,20 @@
   /* プレイヤーの位置に応じた手牌の向き調整 */
   .player-hand-container.position-bottom,
   .player-hand-container.position-top {
-    flex-direction: column; /* 上下プレイヤーは手牌とツモ牌を縦に */
+    align-items: flex-start; /* 手牌とツモ牌の上端を揃える */
   }
-  .player-hand-container.position-left,
+  .player-hand-container.position-bottom { flex-direction: row; }
+  .player-hand-container.position-top {
+    flex-direction: row-reverse; /* 対面はツモ牌が手牌の左(画面上)に来るように逆順 */
+  }
+  .player-hand-container.position-left {
+    flex-direction: column; /* 左プレイヤーは手牌エリアとツモ牌エリアを縦に */
+    width: fit-content;
+    padding: 0;
+    align-items: center;
+  }
   .player-hand-container.position-right {
-    flex-direction: row; /* 左右プレイヤーは手牌とツモ牌を横に */
+    flex-direction: column-reverse; /* 右プレイヤーはツモ牌が手牌の上(画面上)に来るように逆順 */
     width: fit-content; /* コンテナの幅を内容に合わせる */
     padding: 0; /* 左右プレイヤーのコンテナのpaddingを0に */
     align-items: center;
@@ -109,7 +118,7 @@
   .player-hand {
     display: flex;
     gap: 0px; /* 牌同士の間隔 */
-    padding: 5px;
+    padding: 0; /* 牌自体の間隔はgapで制御するので、paddingは0に */
     min-height: 62px; /* 牌の高さ + paddingなど */
   }
 
@@ -118,25 +127,47 @@
   .position-right .player-hand {
     flex-direction: column;
     min-height: auto;
-    padding: 0; /* 左右プレイヤーの手牌エリアのパディングを削除 */
   }
 
   .drawn-tile-area {
-    margin-left: auto; /* 手牌とツモ牌の間隔 */
+    display: flex; /* 内部の.tileを正しく配置するため */
   }
-  .position-left .drawn-tile-area,
+  .position-top .drawn-tile-area {
+    margin-left: 0; /* 左側に配置されるので左マージンは不要 */
+    margin-right: 15px; /* 手牌との間に右マージンを設定 */
+  }
+  .position-bottom .drawn-tile-area {
+    margin-left: 15px; /* 自家は手牌の右にツモ牌 */
+  }
+  .position-left .drawn-tile-area {
+    margin-left: 0; /* 縦並びなので左マージンは不要 */
+    margin-top: 15px; /* 手牌エリアの下にツモ牌エリアを配置するためのマージン */
+  }
   .position-right .drawn-tile-area {
-    margin-left: 0;
+    margin-left: 0; /* 縦並びなので左マージンは不要 */
+    margin-bottom: 15px; /* 手牌エリアとの間に下マージンを設定 (column-reverseのため) */
   }
 
   .tile {
-    width: 50px; /* 牌の幅を大きく */
-    height: auto; /* 牌の高さを大きく */
     display: flex;
     justify-content: center;
     align-items: center;
     position: relative; /* ラベル表示のため */
   }
+
+    /* 自家・対面の牌サイズ */
+  .player-hand-container.position-bottom .tile,
+  .player-hand-container.position-top .tile {
+    width: 50px;  /* 牌の幅 */
+    height: 70px; /* 牌の高さ (実際の画像アスペクト比に合わせて調整) */
+  }
+  /* 左右プレイヤーの牌サイズ (90度回転するため幅と高さが逆転) */
+  .player-hand-container.position-left .tile,
+  .player-hand-container.position-right .tile {
+    width: 70px;  /* 回転後の表示幅 (元の牌の高さに相当) */
+    height: 50px; /* 回転後の表示高さ (元の牌の幅に相当) */
+  }
+
   /* 牌の画像の向き */
   .player-hand-container.position-top .tile img {
     transform: rotate(180deg);
@@ -172,9 +203,10 @@
   }
 
   .tile img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
+    width: 50px;  /* 牌の回転前の幅を指定 */
+    height: 70px; /* 牌の回転前の高さを指定 (実際の画像のアスペクト比に合わせて調整) */
+    object-fit: contain; /* アスペクト比は維持する */
+    display: block; /* 画像下の余分なスペースを取り除く場合がある */
   }
 
   .tile.my-tile.selectable:hover { /* isMyHand と canDiscard が true の場合 */

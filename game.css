@@ -1,0 +1,948 @@
+body,
+html {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #000000;
+    font-family: Arial, sans-serif;
+    text-align: center;
+}
+
+* {
+    -webkit-user-select: none;
+    /* Safari */
+    -ms-user-select: none;
+    /* IE 10 and IE 11 */
+    user-select: none;
+    /* Standard syntax */
+}
+
+#app-container {
+    /* アプリ全体を囲むコンテナ */
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    background-image: url('../Picture/mat.png');
+    background-size: cover;
+    background-repeat: no-repeat;
+    border: none;
+    overflow: hidden;
+}
+
+#left-edge {
+    position: absolute;
+    background-image: url('../Picture/left_frame.png');
+    background-color: transparent;
+    background-size: contain;
+    background-repeat: no-repeat;
+    border: none;
+    top: 50%;
+    left: -2%;
+    transform: translate(-5%, -50%);
+    width: 10%;
+    padding-top: 60%;
+}
+
+#right-edge {
+    position: absolute;
+    background-image: url('../Picture/right_frame.png');
+    background-color: transparent;
+    background-size: contain;
+    background-repeat: no-repeat;
+    border: none;
+    top: 50%;
+    left: 93%;
+    transform: translate(-5%, -50%);
+    width: 10%;
+    padding-top: 60%;
+}
+
+.tile {
+    width: 10%;
+    height: 14%;
+}
+
+.tile img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    cursor: pointer;
+}
+
+.discarded-tile {
+    width: 100%;
+    height: 100%;
+}
+
+.player-container {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.player {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.player-hand {
+    position: absolute;
+    display: flex;
+    flex-wrap: nowrap;
+    width: 58%;
+}
+
+.player-discarded {
+    position: absolute;
+    display: flex;
+    flex-wrap: wrap;
+    width: 27%;
+
+    /* 各プレイヤーの捨て牌エリアの位置を調整 */
+    &#bottom-discarded {
+        top: 25%;
+        left: 30%;
+    }
+
+    &#left-discarded {
+        top: -140%;
+        left: 33%;
+    }
+
+    &#right-discarded {
+        top: -140%;
+        right: 40%;
+    }
+
+    &#top-discarded {
+        top: -295%;
+        left: 30%;
+    }
+}
+
+/* 捨て牌を3行9列に配置 */
+.player-discarded .discarded-tile {
+    width: calc(100% / 9.5);
+    margin-bottom: -3px;
+}
+
+/* ツモ牌の左側に隙間を追加 */
+.player-hand .tile.tsumo-tile {
+    margin-left: 10px;
+}
+
+/* プレイヤーの位置指定 */
+#bottom-player {
+    position: absolute;
+    left: 60%;
+    bottom: 14%;
+    transform: translateX(-50%);
+    width: 100%;
+    padding-top: calc(30% * (9 / 16));
+}
+
+#bottom-hand {
+    left: 25%;
+    bottom: -47%;
+}
+
+#left-player {
+    position: absolute;
+    left: -77%;
+    top: 151%;
+    transform: translateY(-50%) rotate(90deg);
+    transform-origin: bottom right;
+    width: 100%;
+    padding-top: calc(11.5% * (9 / 16));
+}
+
+#left-hand {
+    left: 25%;
+    bottom: -90%;
+}
+
+#right-player {
+    position: absolute;
+    right: -77%;
+    top: 115.5%;
+    transform: translateY(-50%) rotate(-90deg);
+    transform-origin: bottom left;
+    width: 100%;
+    padding-top: calc(11.5% * (9 / 16));
+}
+
+#right-hand {
+    left: 25%;
+    bottom: -90%;
+}
+
+#top-player {
+    position: absolute;
+    top: 3.6%;
+    left: 40%;
+    transform: translateX(-50%) rotate(180deg);
+    transform-origin: bottom center;
+    width: 100%;
+    padding-top: calc(6.7% * (9 / 16));
+}
+
+#top-hand {
+    left: 25%;
+    bottom: -150%;
+}
+
+.tile.manzu {
+    color: red;
+}
+
+.tile.pinzu {
+    color: blue;
+}
+
+.tile.sozu {
+    color: green;
+}
+
+/* ツモボタンのスタイル */
+#bottom-tsumo-button,
+#left-tsumo-button,
+#right-tsumo-button,
+#top-tsumo-button {
+    background-image: url('../Picture/tsumo.png');
+    background-color: transparent;
+    background-size: contain;
+    background-repeat: no-repeat;
+    border: none;
+    cursor: pointer;
+    display: block;
+    width: 10%;
+    height: 10%;
+}
+
+/* ロンボタンのスタイル */
+#bottom-ron-button,
+#left-ron-button,
+#right-ron-button,
+#top-ron-button {
+    background-image: url('../Picture/ron.png');
+    background-color: transparent;
+    background-size: contain;
+    background-repeat: no-repeat;
+    border: none;
+    cursor: pointer;
+    display: block;
+    width: 10%;
+    height: 10%;
+}
+
+/* カンボタンのスタイル */
+#bottom-kan-button,
+#left-kan-button,
+#right-kan-button,
+#top-kan-button {
+    background-image: url('../Picture/kan.png');
+    background-color: transparent;
+    background-size: contain;
+    background-repeat: no-repeat;
+    border: none;
+    cursor: pointer;
+    display: block;
+    width: 10%;
+    height: 10%;
+}
+
+#bottom-ron-button,
+#bottom-tsumo-button,
+#bottom-kan-button {
+    position: absolute;
+    top: 76%;
+    left: 66%;
+}
+
+#left-ron-button,
+#left-tsumo-button,
+#left-kan-button {
+    position: absolute;
+    top: 83%;
+    left: 20%;
+}
+
+#right-ron-button,
+#right-tsumo-button,
+#right-kan-button {
+    position: absolute;
+    top: 8%;
+    left: 69.5%;
+}
+
+#top-ron-button,
+#top-tsumo-button,
+#top-kan-button {
+    position: absolute;
+    top: 14.5%;
+    left: 24%;
+}
+
+/* スキップボタンのスタイル */
+#bottom-skip-button,
+#left-skip-button,
+#right-skip-button,
+#top-skip-button {
+    background-image: url('../Picture/skip.png');
+    background-color: transparent;
+    background-size: contain;
+    background-repeat: no-repeat;
+    border: none;
+    cursor: pointer;
+    display: block;
+    width: 10%;
+    height: 10%;
+}
+
+#bottom-skip-button {
+    position: absolute;
+    top: 91%;
+    left: 65.5%;
+}
+
+#left-skip-button {
+    position: absolute;
+    top: 82.5%;
+    left: 12%;
+}
+
+#right-skip-button {
+    position: absolute;
+    top: 9%;
+    left: 78%;
+}
+
+#top-skip-button {
+    position: absolute;
+    top: -0.5%;
+    left: 24.5%;
+}
+
+/* ポンボタンのスタイル */
+#bottom-pon-button,
+#left-pon-button,
+#right-pon-button,
+#top-pon-button {
+    background-image: url('../Picture/pon.png');
+    background-color: transparent;
+    background-size: contain;
+    background-repeat: no-repeat;
+    border: none;
+    cursor: pointer;
+    display: block;
+    width: 10%;
+    height: 10%;
+}
+
+#bottom-pon-button {
+    position: absolute;
+    top: 83%;
+    left: 66%;
+}
+
+#left-pon-button {
+    position: absolute;
+    top: 83%;
+    left: 16%;
+}
+
+#right-pon-button {
+    position: absolute;
+    top: 8%;
+    left: 73.4%;
+}
+
+#top-pon-button {
+    position: absolute;
+    top: 7.5%;
+    left: 24%;
+}
+
+/* リーチボタンのスタイル */
+#bottom-riichi-button,
+#left-riichi-button,
+#right-riichi-button,
+#top-riichi-button {
+    background-image: url('../Picture/riichi.png');
+    background-color: transparent;
+    background-size: contain;
+    background-repeat: no-repeat;
+    border: none;
+    cursor: pointer;
+    display: block;
+    width: 10%;
+    height: 10%;
+}
+
+#bottom-riichi-button {
+    position: absolute;
+    top: 83%;
+    left: 65.5%;
+}
+
+#left-riichi-button {
+    position: absolute;
+    top: 82%;
+    left: 16%;
+}
+
+#right-riichi-button {
+    position: absolute;
+    top: 8.7%;
+    left: 73.4%;
+}
+
+#top-riichi-button {
+    position: absolute;
+    top: 7.5%;
+    left: 24.5%;
+}
+
+/* 左側プレイヤーのボタン、点数、フリテン表示、鳴き牌は回転 */
+#left-tsumo-button,
+#left-ron-button,
+#left-kan-button,
+#left-skip-button,
+#left-pon-button,
+#left-riichi-button,
+#left-score-1,
+#left-score-2,
+#left-score-3,
+#left-score-4,
+#left-score-5,
+#left-furiten,
+#left-melds,
+#left-riichi-tenbou {
+    transform: rotate(90deg);
+}
+
+/* 右側プレイヤーのボタン、点数、フリテン表示、鳴き牌は回転 */
+#right-tsumo-button,
+#right-ron-button,
+#right-kan-button,
+#right-skip-button,
+#right-pon-button,
+#right-riichi-button,
+#right-score-1,
+#right-score-2,
+#right-score-3,
+#right-score-4,
+#right-score-5,
+#right-furiten,
+#right-melds,
+#right-riichi-tenbou {
+    transform: rotate(-90deg);
+}
+
+/* 上側プレイヤーのボタン、点数、フリテン表示、鳴き牌は回転 */
+#top-tsumo-button,
+#top-ron-button,
+#top-kan-button,
+#top-skip-button,
+#top-pon-button,
+#top-riichi-button,
+#top-score-1,
+#top-score-2,
+#top-score-3,
+#top-score-4,
+#top-score-5,
+#top-furiten,
+#top-melds,
+#top-riichi-tenbou {
+    transform: rotate(180deg);
+}
+
+/* ゲーム情報エリアのスタイル */
+#game-info-image {
+    position: absolute;
+    top: 35.5%;
+    left: 42%;
+    background-color: transparent;
+    background-size: contain;
+    background-repeat: no-repeat;
+    border: none;
+    display: block;
+    width: 16.5%;
+    height: auto;
+}
+
+/* 場数のスタイル */
+#round-image {
+    position: absolute;
+    top: 43.6%;
+    left: 46.7%;
+    background-color: transparent;
+    background-size: contain;
+    background-repeat: no-repeat;
+    border: none;
+    display: block;
+    width: 6.8%;
+    height: auto;
+}
+
+/* 残り牌数の各桁の画像のサイズを調整 */
+#remaining-tiles-hundreds {
+    position: absolute;
+    top: 51.7%;
+    left: 49.4%;
+    width: 1.1%;
+    height: auto;
+}
+
+#remaining-tiles-tens {
+    position: absolute;
+    top: 51.7%;
+    left: 50.7%;
+    width: 1.1%;
+    height: auto;
+}
+
+#remaining-tiles-ones {
+    position: absolute;
+    top: 51.7%;
+    left: 52%;
+    width: 1.1%;
+    height: auto;
+}
+
+/* 供託表示のスタイル */
+#zan-tenbou-image {
+    position: absolute;
+    top: 48.5%;
+    left: 47.4%;
+    background-image: url('../Picture/zan_1000.png');
+    background-color: transparent;
+    background-size: contain;
+    background-repeat: no-repeat;
+    border: none;
+    display: block;
+    width: 10%;
+    height: 2.5%;
+}
+
+/* 供託の各桁の画像のサイズを調整 */
+#riichi-deposit-ones {
+    position: absolute;
+    top: 48%;
+    left: 51.6%;
+    width: 1.25%;
+    height: auto;
+}
+
+/* リーチしたときに表示する千点棒 */
+#left-riichi-tenbou,
+#right-riichi-tenbou,
+#top-riichi-tenbou,
+#bottom-riichi-tenbou {
+    position: absolute;
+    background-image: url('../Picture/tenbou1000.png');
+    background-color: transparent;
+    background-size: contain;
+    background-repeat: no-repeat;
+    border: none;
+    width: 7.5%;
+    height: 7.5%;
+}
+
+#left-riichi-tenbou {
+    top: 46.1%;
+    left: 38.7%;
+}
+
+#bottom-riichi-tenbou {
+    top: 60.1%;
+    left: 46.5%;
+}
+
+#right-riichi-tenbou {
+    top: 46.1%;
+    left: 54.4%;
+}
+
+#top-riichi-tenbou {
+    top: 32.2%;
+    left: 46.5%;
+}
+
+/* ミュートボタンのスタイル */
+#mute-button {
+    position: absolute;
+    top: 91%;
+    left: 92.8%;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    border: none;
+    cursor: pointer;
+    display: block;
+    width: 10%;
+    height: 10%;
+}
+
+#mute-button img {
+    width: 50%;
+    height: 70%;
+}
+
+/* プレイヤーの点数表示 */
+#left-score-1 {
+    top: -4.8%;
+    left: -31.6%;
+}
+
+#left-score-2 {
+    top: -2.8%;
+    left: -31.6%;
+}
+
+#left-score-3 {
+    top: -0.8%;
+    left: -31.6%;
+}
+
+#left-score-4 {
+    top: 1.2%;
+    left: -31.6%;
+}
+
+#left-score-5 {
+    top: 3.2%;
+    left: -31.6%;
+}
+
+#right-score-1 {
+    top: 4.8%;
+    left: 32.2%;
+}
+
+#right-score-2 {
+    top: 2.8%;
+    left: 32.2%;
+}
+
+#right-score-3 {
+    top: 0.8%;
+    left: 32.2%;
+}
+
+#right-score-4 {
+    top: -1.2%;
+    left: 32.2%;
+}
+
+#right-score-5 {
+    top: -3.2%;
+    left: 32.2%;
+}
+
+#top-score-1 {
+    top: -56.4%;
+    left: 3%;
+}
+
+#top-score-2 {
+    top: -56.4%;
+    left: 2%;
+}
+
+#top-score-3 {
+    top: -56.4%;
+    left: 1%;
+}
+
+#top-score-4 {
+    top: -56.4%;
+    left: 0%;
+}
+
+#top-score-5 {
+    top: -56.4%;
+    left: -1%;
+}
+
+#bottom-score-1 {
+    top: 56.5%;
+    left: -2%;
+}
+
+#bottom-score-2 {
+    top: 56.5%;
+    left: -1%;
+}
+
+#bottom-score-3 {
+    top: 56.5%;
+    left: 0%;
+}
+
+#bottom-score-4 {
+    top: 56.5%;
+    left: 1%;
+}
+
+#bottom-score-5 {
+    top: 56.5%;
+    left: 2%;
+}
+
+#left-score-1,
+#left-score-2,
+#left-score-3,
+#left-score-4,
+#left-score-5,
+#right-score-1,
+#right-score-2,
+#right-score-3,
+#right-score-4,
+#right-score-5,
+#top-score-1,
+#top-score-2,
+#top-score-3,
+#top-score-4,
+#top-score-5,
+#bottom-score-1,
+#bottom-score-2,
+#bottom-score-3,
+#bottom-score-4,
+#bottom-score-5 {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.player-score img {
+    position: absolute;
+    width: 1%;
+    height: auto;
+}
+
+/* フリテンのスタイル */
+#bottom-furiten,
+#left-furiten,
+#right-furiten,
+#top-furiten {
+    position: absolute;
+    background-image: url('../Picture/furiten.png');
+    background-color: transparent;
+    background-size: contain;
+    background-repeat: no-repeat;
+    border: none;
+    width: 10%;
+    padding-top: 60%;
+}
+
+#bottom-furiten {
+    top: 87.5%;
+    left: 26%;
+}
+
+#left-furiten {
+    top: -37%;
+    left: -11%;
+}
+
+#right-furiten {
+    top: 30%;
+    left: 101%;
+}
+
+#top-furiten {
+    top: -95%;
+    left: 64%;
+}
+
+/* ポン、カン牌のスタイル*/
+.meld {
+    display: flex;
+    flex-direction: row;
+    width: 40%;
+}
+
+#bottom-melds {
+    position: absolute;
+    top: 90.5%;
+    left: 75%;
+    width: 100%;
+}
+
+#left-melds {
+    position: absolute;
+    top: 140%;
+    left: -38%;
+    width: 100%;
+}
+
+#right-melds {
+    position: absolute;
+    top: -50%;
+    left: 38%;
+    width: 100%;
+}
+
+#top-melds {
+    position: absolute;
+    top: 0%;
+    left: -74%;
+    width: 100%;
+}
+
+/* ポン、カン牌を回転させる */
+.horizontal {
+    transform: rotate(90deg);
+    margin-top: 5px;
+    margin-left: 5px;
+    margin-right: 9px;
+}
+
+/* 加カン牌のサイズを設定する */
+.horizontal img[src*="_double.png"] {
+    width: 200%;
+    margin-left: -100%;
+}
+
+/* 王牌のスタイル */
+#wall-tiles {
+    position: absolute;
+    top: 12%;
+    left: 8%;
+    width: 100%;
+}
+
+#wall-tiles img {
+    width: 4%;
+    float: left;
+}
+
+/* ドラ表示牌のスタイル */
+#dora-tiles {
+    position: absolute;
+    top: 12%;
+    left: 8%;
+    width: 100%;
+}
+
+#dora-tiles img {
+    width: 4%;
+    float: left;
+}
+
+/* 戻るボタンのスタイル */
+#back-to-title-button {
+    position: absolute;
+    background-image: url('../Picture/buckToTitle.png');
+    background-color: transparent;
+    background-size: contain;
+    background-repeat: no-repeat;
+    border: none;
+    top: 1%;
+    left: 95.5%;
+    cursor: pointer;
+    display: block;
+    width: 7%;
+    height: 7%;
+}
+
+/* リーチしたときに捨てられない牌のスタイル */
+.disabled-tile img {
+    opacity: 80%;
+}
+
+/* リーチしたときに横向きにする牌のスタイル*/
+.riichi-first-discard {
+    transform: rotate(90deg);
+    margin-top: 1px;
+    margin-left: 3px;
+    margin-right: 6px;
+}
+
+/* リザルトのスタイル */
+.result-dora {
+    display: flex;
+    justify-content: space-around;
+    overflow-x: hidden;
+}
+
+.doraWanpai-tiles {
+    display: flex;
+    justify-content: left;
+    width: 420%;
+    padding: 38%;
+}
+
+.uraDoraWanpai-tiles {
+    display: flex;
+    justify-content: right;
+    width: 75%;
+    padding: 6%;
+    margin-left: 30px;
+}
+
+.result-hand {
+    display: flex;
+    justify-content: space-around;
+    overflow-x: hidden;
+}
+
+.winning-hand {
+    display: flex;
+    justify-content: left;
+    width: 150%;
+    margin-top: 25px;
+    margin-left: 100px;
+}
+
+.winning-meld {
+    display: flex;
+    justify-content: left;
+    width: 150%;
+    margin-top: 25px;
+    margin-left: 0px;
+}
+
+.winning-hand .last-tile {
+    margin-left: -15px;
+}
+
+.doraWanpai-info,
+.uraDoraWanpia-info,
+.hand-info,
+.meld-info {
+    width: 100%;
+}
+
+.result-info {
+    display: flex;
+    justify-content: space-around;
+    overflow-x: hidden;
+}
+
+.yaku-info {
+    display: flex;
+    justify-content: left;
+    width: 100%;
+    margin-left: 20px;
+    white-space: nowrap;
+}
+
+.score-info {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    flex-direction: column;
+    text-align: center;
+    margin-left: 35px;
+}
+
+/* 宣言のスタイル */
+.declaration-image {
+    width: 80%;
+    position: absolute;
+}

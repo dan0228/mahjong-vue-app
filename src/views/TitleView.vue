@@ -1,7 +1,10 @@
 <template>
   <div class="title-screen">
-    <div class="title-background-image"></div>
-    <h1>
+    <div class="title-background-container">
+      <div class="title-background-image base-image"></div>
+      <div class="title-background-image eye-blink-image"></div>
+    </div>
+    <h1 class="title-text">
       <span class="main-title">よんじゃん！</span>
       <span class="sub-title">~ 4牌で楽しむ本格麻雀 ~</span>
     </h1>
@@ -53,29 +56,71 @@ function startGame(mode) {
   justify-content: center;
   min-height: 100vh; /* 画面全体の最小の高さをビューポートに合わせる */
   text-align: center;
-  background: linear-gradient(135deg, #f5f7fa 0%, #a1f39a 50%, #f5f7fa 100%); /* グラデーションの色と位置を調整 */
-  background-size: 200% 200%; /* グラデーションのサイズを大きくして動かす範囲を確保 */
+  position: relative; /* 子要素のz-indexを有効にするため */
   font-family: 'M PLUS Rounded 1c', 'Helvetica Neue', Arial, sans-serif;
   overflow-x: hidden; /* 横方向のスクロールを禁止して、はみ出しを隠す */
   box-sizing: border-box; /* padding や border を width/height に含める */
-  animation: gradientDrift 20s ease infinite; /* グラデーションを動かすアニメーション */
 }
 
-.title-background-image {
+.title-screen::before { /* 最背面の画像用疑似要素 */
+  content: "";
+  position: absolute;
+  top: 60%; left: 0; right: 0; bottom: 0%;
+  background-image: url('/assets/images/back/back_hai.png');
+  background-repeat: no-repeat;
+  background-position: center center; 
+  background-size: auto 100%; /* 高さを100%に合わせて、幅は自動調整 */
+  opacity: 0.9; /* 画像の透明度を調整 */
+  z-index: -1; 
+}
+
+.title-screen::after { /* グラデーション用疑似要素 */
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(135deg, #f5f7fa 0%, #a1f39a 50%, #f5f7fa 100%);
+  background-size: 200% 200%;
+  animation: gradientDrift 20s ease infinite; /* グラデーションを動かすアニメーション */
+  z-index: -2; 
+}
+
+.title-background-container {
   width: 90vw; /* 画面幅の90%を最大幅とする */
   max-width: 400px; /* PC表示時の最大幅を制限 */
   height: auto; /* 高さは幅に応じて自動調整 */
   aspect-ratio: 400 / 260; /* 元の画像の縦横比を維持 (400/260 は例) */
-  background-image: url('/assets/images/back/title_back.png');
-  background-size: 100% auto; /* 画像をコンテナに合わせてリサイズ */
-  background-repeat: no-repeat;
-  background-position: center;
+  position: relative; /* 子要素の絶対配置の基準 */
+  z-index: 1; /* グラデーションより手前に来るように */
   margin-bottom: -50px; /* 画像とタイトルの間のスペース */
 }
 
-h1 {
+.title-background-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: 100% auto; /* 画像をコンテナに合わせてリサイズ */
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.base-image {
+  background-image: url('/assets/images/back/title_back.png');
+  z-index: 1; /* ベース画像を下に */
+}
+
+.eye-blink-image {
+  background-image: url('/assets/images/back/title_back_eye.png');
+  z-index: 2; /* 瞬き画像を上に */
+  opacity: 0; /* 通常は非表示 */
+  animation: blink-opacity 5s infinite step-start; /* 透明度で瞬きを制御 */
+}
+
+.title-text { /* h1タグからクラスに変更 */
   margin-top: -30px; /* 背景画像との重なりを調整 */
   margin-bottom: 0px; /* メニューとの間隔を調整 */
+  position: relative; /* z-indexを有効にするため */
   color: #B14B3F; /* 文字色を変更 */
   /* 縁取りを追加 */
   -webkit-text-stroke: 1.2px rgb(0, 0, 0); /* Safari, Chrome */
@@ -86,6 +131,7 @@ h1 {
   padding: 0px; /* 文字の周りの余白を調整 */
   line-height: 1.2; /* 行間を調整 */
   width: 100%; /* h1が横にはみ出さないように */
+  z-index: 1; /* グラデーションより手前に来るように */
 }
 
 .main-title {
@@ -106,6 +152,8 @@ h1 {
 .menu ul {
   list-style: none; /* リストマーカー（点）を削除 */
   padding: 0; /* デフォルトのパディングを削除 */
+  position: relative; /* z-indexを有効にするため */
+  z-index: 1; /* グラデーションより手前に来るように */
 }
 .menu li {
   margin-bottom: 15px;
@@ -147,6 +195,15 @@ h1 {
   cursor: not-allowed;
   box-shadow: none; /* 無効化ボタンの影はなし */
   animation: none; /* 無効化されたボタンはアニメーションしない */
+}
+
+@keyframes blink-opacity {
+  0%, 90% { /* ほとんどの時間は透明 (ベース画像が見える) */
+    opacity: 0;
+  }
+  90.1%, 95% { /* 短い間だけ不透明 (瞬き画像が見える) */
+    opacity: 1;
+  }
 }
 
 @keyframes pop {

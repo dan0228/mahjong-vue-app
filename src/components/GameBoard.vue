@@ -15,6 +15,12 @@
           <PlayerArea :player="playerAtRight" position="right" :is-my-hand="determineIsMyHand(playerAtRight.id)" :drawn-tile-display="drawnTileForPlayer(playerAtRight.id)" :can-discard="canPlayerDiscard(playerAtRight.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
         </div>
       </div>
+      <div class="discard-piles-main-area">
+        <DiscardPile v-if="playerAtLeft" :tiles="playerAtLeft.discards" position="left" class="discard-pile-wrapper left-discard" />
+        <DiscardPile v-if="playerAtTop" :tiles="playerAtTop.discards" position="top" class="discard-pile-wrapper top-discard" />
+        <DiscardPile v-if="playerAtRight" :tiles="playerAtRight.discards" position="right" class="discard-pile-wrapper right-discard" />
+        <DiscardPile v-if="playerAtBottom" :tiles="playerAtBottom.discards" position="bottom" class="discard-pile-wrapper bottom-discard" />
+      </div>
       <div class="player-area-container bottom-player-container" v-if="playerAtBottom">
         <PlayerArea :player="playerAtBottom" position="bottom" :is-my-hand="determineIsMyHand(playerAtBottom.id)" :drawn-tile-display="drawnTileForPlayer(playerAtBottom.id)" :can-discard="canPlayerDiscard(playerAtBottom.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
       </div>
@@ -283,58 +289,92 @@ function onAnkanSelected(tile) { // モーダルからのイベント
 </script>
   
 <style scoped>
-  .game-board {
+.game-board {
+  display: flex;
+  flex-direction: column;
+  width: 100vw; /* 画面幅全体を利用 */
+  height: 100vh; /* 画面高さ全体を利用 */
+  border: 2px solid #333;
+  margin: 0; /* マージンを削除 */
+  padding: 10px;
+  background-image: url('/assets/images/back/mat.png'); /* 背景画像をマットに変更 */
+  background-size: cover; /* 画面全体を覆うように調整 */
+  background-position: center; /* 画像を中央に配置 */
+  position: relative; /* ポップアップなどの基準点になる可能性 */
+  box-sizing: border-box; /* paddingとborderをwidth/heightに含める */
+}
+
+.player-area-container {
+    /* 各プレイヤーエリアコンテナのスタイル (必要に応じて) */
     display: flex;
-    flex-direction: column;
-    width: 100vw; /* 画面幅全体を利用 */
-    height: 100vh; /* 画面高さ全体を利用 */
-    border: 2px solid #333;
-    margin: 0; /* マージンを削除 */
-    padding: 10px;
-    background-image: url('/assets/images/back/mat.png'); /* 背景画像をマットに変更 */
-    background-size: cover; /* 画面全体を覆うように調整 */
-    background-position: center; /* 画像を中央に配置 */
-    position: relative; /* ポップアップなどの基準点になる可能性 */
-    box-sizing: border-box; /* paddingとborderをwidth/heightに含める */
-  }
-  
-  .player-area-container {
-     /* 各プレイヤーエリアコンテナのスタイル (必要に応じて) */
-     display: flex;
-    /* 縦画面では各プレイヤーエリアが縦に積まれるため、個別の order は不要になることが多い */
-    /* 必要に応じて flex-grow や min-height を設定 */
-  }
-  .top-player-container {
-    /* 対面プレイヤーのエリア */
-    flex-grow: 1; min-height: 100px;
-    justify-content: center; /* PlayerAreaを中央に配置 */
-    align-items: center; /* PlayerAreaを垂直中央に配置 */
-  }
-  .middle-row {
-    /* 左右プレイヤーと中央テーブルを配置する行 */
-    display: flex;
-    justify-content: space-between;
-    align-items: center; /* 中央揃え */
-    flex-grow: 2;
-    margin: 5px 0;
-  }
-  .left-player-container, .right-player-container {
-    /* 左右プレイヤーのエリア */
-    width: 25%; display: flex; justify-content: center;
-  }
-  .bottom-player-container {
-    /* 自分プレイヤーのエリア */
-    flex-grow: 3; min-height: 150px;
-    justify-content: center; /* PlayerAreaを中央に配置 */
-    align-items: center; /* PlayerAreaを垂直中央に配置 */
-  }
-  
-  .center-table {
-    padding: 10px;
-    flex-grow: 1;
-    margin: 0 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+  /* 縦画面では各プレイヤーエリアが縦に積まれるため、個別の order は不要になることが多い */
+  /* 必要に応じて flex-grow や min-height を設定 */
+}
+.top-player-container {
+  /* 対面プレイヤーのエリア */
+  flex-grow: 1; min-height: 100px;
+  justify-content: center; /* PlayerAreaを中央に配置 */
+  align-items: center; /* PlayerAreaを垂直中央に配置 */
+}
+.middle-row {
+  /* 左右プレイヤーと中央テーブルを配置する行 */
+  display: flex;
+  justify-content: space-between;
+  align-items: center; /* 中央揃え */
+  flex-grow: 2;
+  margin: 5px 0;
+}
+.left-player-container, .right-player-container {
+  /* 左右プレイヤーのエリア */
+  width: 25%; display: flex; justify-content: center;
+}
+.bottom-player-container {
+  /* 自分プレイヤーのエリア */
+  flex-grow: 3; min-height: 150px;
+  justify-content: center; /* PlayerAreaを中央に配置 */
+  align-items: center; /* PlayerAreaを垂直中央に配置 */
+}
+
+.center-table {
+  padding: 10px;
+  flex-grow: 1;
+  margin: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.discard-piles-main-area {
+  position: absolute; /* 親要素(.game-board)を基準に絶対配置 */
+  /* 例えば、画面の中央やや下寄りに配置する場合 */
+  top: 50%; /* 上から60%の位置 */
+  left: 50%;
+  transform: translate(-50%, -50%); /* 要素自身の中心を基準点に合わせる */
+  width: 100%; /* 画面幅の80%程度の幅を持つようにする (調整可能) */
+  max-width: 500px; /* 最大幅も設定しておくと良いでしょう */
+  display: grid;
+  grid-template-areas:
+    ". top ."
+    "left . right"
+    ". bottom .";
+  grid-template-columns: auto 1fr auto; /* 各捨て牌エリアの幅は内容に合わせ、中央のスペースで調整 */
+  grid-template-rows: auto auto auto;
+  justify-items: center; /* グリッドアイテムを水平中央に配置 */
+  align-items: center; /* グリッドアイテムを垂直中央に配置 */
+  gap: 5px; /* 捨て牌エリア間の隙間 */
+}
+.discard-pile-wrapper {
+  /* 各DiscardPileコンポーネントのラッパーのスタイル（必要に応じて） */
+}
+.top-discard {
+  grid-area: top;
+}
+.left-discard {
+  grid-area: left;
+}
+.right-discard {
+  grid-area: right;
+}
+.bottom-discard {
+  grid-area: bottom;
+}
 </style>

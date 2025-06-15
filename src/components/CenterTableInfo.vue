@@ -1,34 +1,75 @@
 <template>
   <div class="center-table-info">
-    <div class="round-info">
-      <span>{{ roundWind }}{{ roundNumber }}局</span>
-      <span>{{ honbaCount }}本場</span>
-      <span>供託: {{ riichiSticksCount }}</span>
-    </div>
-    <div v-if="dealer" class="dealer-info">
-      <span>現在の親: {{ dealer.name }} ({{ dealer.seatWind }})</span>
-    </div>
-    <div class="scores">
-      <!-- GameBoard.vue の表示順 (自分、右、対面、左) に合わせてプレイヤー情報を表示 -->
-      <div v-for="player in orderedPlayers" :key="player.id" class="player-score">
-        <span class="player-name">
-          {{ getPlayerDisplayLabel(player) }}:
-        </span>
-        <span class="score-value">{{ player.score }}</span>
-        <span v-if="player.isDealer && player.id !== dealer?.id" class="dealer-indicator-small"> (親)</span>
-        <span v-if="player.seatWind && player.id !== dealer?.id" class="wind-indicator-small">
-           ({{ player.seatWind }})
-        </span>
+    <div v-if="centerImageSrc" class="center-image-container">
+      <img :src="centerImageSrc" :alt="centerImageAltText" class="center-info-image" />
+      <img v-if="riichiStickBaseImageSrc" :src="riichiStickBaseImageSrc" alt="供託棒ベース" class="riichi-stick-base-image" />
+      <div class="riichi-stick-count-images">
+        <img v-if="riichiStickCountImage1Src" :src="riichiStickCountImage1Src" alt="供託本数1桁目" class="riichi-stick-count-digit" />
+        <img v-if="riichiStickCountImage2Src" :src="riichiStickCountImage2Src" alt="供託本数2桁目" class="riichi-stick-count-digit" />
       </div>
+      <div class="remaining-tiles-count-images">
+        <img v-if="remainingTilesImage1Src" :src="remainingTilesImage1Src" alt="残り牌数1桁目" class="remaining-tiles-count-digit" />
+        <img v-if="remainingTilesImage2Src" :src="remainingTilesImage2Src" alt="残り牌数2桁目" class="remaining-tiles-count-digit" />
+        <img v-if="remainingTilesImage3Src" :src="remainingTilesImage3Src" alt="残り牌数3桁目" class="remaining-tiles-count-digit" />
+      </div>
+      <!-- 自家の点数表示を画像コンテナ内に移動 -->
+      <div v-if="orderedPlayers[0]" class="player-score-image-container bottom-player-score">
+        <img v-if="bottomPlayerScoreInfo.sign" :src="bottomPlayerScoreInfo.sign" alt="符号" class="score-sign-image" />
+        <img v-for="(src, index) in bottomPlayerScoreInfo.digits" :key="`digit-${index}-${src}`" :src="src" :alt="`数字${index}`" class="score-digit-image" />
+      </div>
+      <!-- 下家(画面左)の点数表示 -->
+      <div v-if="orderedPlayers[3]" class="player-score-image-container side-player-score left-player-score">
+        <img v-if="leftPlayerScoreInfo.sign" :src="leftPlayerScoreInfo.sign" alt="符号" class="score-sign-image" />
+        <img v-for="(src, index) in leftPlayerScoreInfo.digits" :key="`left-digit-${index}-${src}`" :src="src" :alt="`数字${index}`" class="score-digit-image" />
+      </div>
+      <!-- 対面の点数表示 -->
+      <div v-if="orderedPlayers[2]" class="player-score-image-container vertical-player-score top-player-score">
+        <img v-if="topPlayerScoreInfo.sign" :src="topPlayerScoreInfo.sign" alt="符号" class="score-sign-image" />
+        <img v-for="(src, index) in topPlayerScoreInfo.digits" :key="`top-digit-${index}-${src}`" :src="src" :alt="`数字${index}`" class="score-digit-image" />
+      </div>
+      <!-- 上家の点数表示 -->
+      <div v-if="orderedPlayers[1]" class="player-score-image-container side-player-score right-player-score">
+        <img v-if="rightPlayerScoreInfo.sign" :src="rightPlayerScoreInfo.sign" alt="符号" class="score-sign-image" />
+        <img v-for="(src, index) in rightPlayerScoreInfo.digits" :key="`right-digit-${index}-${src}`" :src="src" :alt="`数字${index}`" class="score-digit-image" />
+      </div>
+      <!-- リーチ棒表示 -->
+      <img v-if="orderedPlayers[0]?.isRiichi" src="/assets/images/tenbo/tenbou1000.png" alt="自家リーチ棒" class="riichi-stick-image bottom-riichi-stick" />
+      <img v-if="orderedPlayers[3]?.isRiichi" src="/assets/images/tenbo/tenbou1000.png" alt="下家リーチ棒" class="riichi-stick-image left-riichi-stick" />
+      <img v-if="orderedPlayers[2]?.isRiichi" src="/assets/images/tenbo/tenbou1000.png" alt="対面リーチ棒" class="riichi-stick-image top-riichi-stick" />
+      <img v-if="orderedPlayers[1]?.isRiichi" src="/assets/images/tenbo/tenbou1000.png" alt="上家リーチ棒" class="riichi-stick-image right-riichi-stick" />
+      <img v-if="roundIndicatorImageSrc" :src="roundIndicatorImageSrc" alt="局表示" class="round-indicator-image" />
     </div>
-    <div class="game-state-info">
-      <span>残り牌山: {{ remainingTiles }}</span>
-      <div class="dora-indicators">
-        <span>ドラ表示:</span>
-        <div v-for="(tile, index) in doraTiles" :key="index" class="tile">
-          <img :src="getTileImageUrl(tile)" :alt="tileToString(tile)" />
+    <div v-else class="info-text-container">
+      <div class="round-info">
+        <span>{{ roundWind }}{{ roundNumber }}局</span>
+        <span>{{ honbaCount }}本場</span>
+        <span>供託: {{ riichiSticksCount }}</span>
+      </div>
+      <div v-if="dealer" class="dealer-info">
+        <span>現在の親: {{ dealer.name }} ({{ dealer.seatWind }})</span>
+      </div>
+      <div class="scores">
+        <!-- GameBoard.vue の表示順 (自分、右、対面、左) に合わせてプレイヤー情報を表示 -->
+        <div v-for="player in orderedPlayers" :key="player.id" class="player-score">
+          <span class="player-name">
+            {{ getPlayerDisplayLabel(player) }}:
+          </span>
+          <span class="score-value">{{ player.score }}</span>
+          <span v-if="player.isDealer && player.id !== dealer?.id" class="dealer-indicator-small"> (親)</span>
+          <span v-if="player.seatWind && player.id !== dealer?.id" class="wind-indicator-small">
+            ({{ player.seatWind }})
+          </span>
         </div>
-        <span v-if="!doraTiles || doraTiles.length === 0">(なし)</span>
+      </div>
+      <div class="game-state-info">
+        <span>残り牌山: {{ remainingTiles }}</span>
+        <div class="dora-indicators">
+          <span>ドラ表示:</span>
+          <div v-for="(tile, index) in doraTiles" :key="index" class="tile">
+            <img :src="getTileImageUrl(tile)" :alt="tileToString(tile)" />
+          </div>
+          <span v-if="!doraTiles || doraTiles.length === 0">(なし)</span>
+        </div>
       </div>
     </div>
   </div>
@@ -61,6 +102,139 @@ const props = defineProps({
   }
 });
 
+const centerImageSrc = computed(() => {
+  if (!dealer.value || !props.orderedPlayers || props.orderedPlayers.length === 0) {
+    return null;
+  }
+  const dealerId = dealer.value.id;
+  const bottomPlayerId = props.orderedPlayers[0]?.id; // 自家 (画面下)
+  const rightPlayerId = props.orderedPlayers[1]?.id;  // 上家 (画面右)
+  const topPlayerId = props.orderedPlayers[2]?.id;    // 対面 (画面上)
+  const leftPlayerId = props.orderedPlayers[3]?.id;   // 下家 (画面左)
+
+  if (dealerId === bottomPlayerId) {
+    return '/assets/images/info/info_bottom.png';
+  } else if (dealerId === rightPlayerId) {
+    return '/assets/images/info/info_right.png';
+  } else if (dealerId === topPlayerId) {
+    return '/assets/images/info/info_top.png';
+  } else if (dealerId === leftPlayerId) {
+    return '/assets/images/info/info_left.png';
+  }
+  return null; // 上記以外の場合は画像なし (テキスト情報を表示)
+});
+
+const centerImageAltText = computed(() => {
+  if (!dealer.value || !props.orderedPlayers || props.orderedPlayers.length === 0) {
+    return '中央情報';
+  }
+  const dealerId = dealer.value.id;
+  const bottomPlayerId = props.orderedPlayers[0]?.id;
+  const rightPlayerId = props.orderedPlayers[1]?.id;
+  const topPlayerId = props.orderedPlayers[2]?.id;
+  const leftPlayerId = props.orderedPlayers[3]?.id;
+
+  if (dealerId === bottomPlayerId) return '自家が親';
+  if (dealerId === rightPlayerId) return '下家が親'; // 画面上は右
+  if (dealerId === topPlayerId) return '対面が親';
+  if (dealerId === leftPlayerId) return '上家が親'; // 画面上は左
+  return '親情報';
+});
+
+const roundIndicatorImageSrc = computed(() => {
+  const wind = gameStore.currentRound.wind;
+  const number = gameStore.currentRound.number;
+  if (wind === 'east' && number >= 1 && number <= 4) {
+    return `/assets/images/info/ton${number}.png`;
+  }
+  return null; // 東場以外や該当なしの場合は表示しない
+});
+
+// 供託棒のベース画像 (zan_1000.png) は常に表示
+const riichiStickBaseImageSrc = computed(() => {
+  return '/assets/images/info/zan_1000.png';
+});
+
+// 供託本数の1桁目の画像パス
+const riichiStickCountImage1Src = computed(() => {
+  const count = gameStore.riichiSticks;
+  if (count >= 0 && count <= 9) {
+    return `/assets/images/number/${count}w.png`;
+  } else if (count >= 10) {
+    const firstDigit = Math.floor(count / 10);
+    return `/assets/images/number/${firstDigit}w.png`;
+  }
+  return null; // 0未満や不正な値の場合は表示しない
+});
+
+// 供託本数の2桁目の画像パス (10本以上の場合のみ)
+const riichiStickCountImage2Src = computed(() => {
+  const count = gameStore.riichiSticks;
+  if (count >= 10) {
+    const secondDigit = count % 10;
+    return `/assets/images/number/${secondDigit}w.png`;
+  }
+  return null; // 10本未満の場合は2桁目は表示しない
+});
+
+// 残り牌数を3桁の数字文字列配列に変換 (例: 4 -> ['0', '0', '4'])
+const remainingTilesDigits = computed(() => {
+  const count = gameStore.remainingWallTilesCount;
+  if (count < 0) return ['0', '0', '0']; // マイナスは000と表示
+  const s = String(count).padStart(3, '0');
+  return [s[0], s[1], s[2]];
+});
+
+// 残り牌数の各桁の画像パス
+const remainingTilesImage1Src = computed(() => {
+  if (!remainingTilesDigits.value) return null;
+  return `/assets/images/number/${remainingTilesDigits.value[0]}ao.png`;
+});
+const remainingTilesImage2Src = computed(() => {
+  if (!remainingTilesDigits.value) return null;
+  return `/assets/images/number/${remainingTilesDigits.value[1]}ao.png`;
+});
+const remainingTilesImage3Src = computed(() => {
+  if (!remainingTilesDigits.value) return null;
+  return `/assets/images/number/${remainingTilesDigits.value[2]}ao.png`;
+});
+
+// プレイヤーのスコアを画像表示用にフォーマットする共通関数
+function formatScoreForImage(player) {
+  if (!player) return { sign: null, digits: [] };
+  let score = player.score;
+  const signImage = score < 0 ? '/assets/images/number/-.png' : null;
+  if (score < 0) {
+    score = Math.abs(score);
+  }
+  const scoreStr = String(score);
+  const digitImages = [];
+  for (const digitChar of scoreStr) {
+    digitImages.push(`/assets/images/number/${digitChar}.png`);
+  }
+  return { sign: signImage, digits: digitImages.slice(-6) };
+}
+
+// 自家の点数表示用画像情報を生成
+const bottomPlayerScoreInfo = computed(() => {
+  return formatScoreForImage(props.orderedPlayers[0]);
+});
+
+// 下家(画面左)の点数表示用画像情報を生成
+const leftPlayerScoreInfo = computed(() => {
+  return formatScoreForImage(props.orderedPlayers[3]);
+});
+
+// 対面(画面上)の点数表示用画像情報を生成
+const topPlayerScoreInfo = computed(() => {
+  return formatScoreForImage(props.orderedPlayers[2]);
+});
+
+// 上家(画面右)の点数表示用画像情報を生成
+const rightPlayerScoreInfo = computed(() => {
+  return formatScoreForImage(props.orderedPlayers[1]);
+});
+
 // 表示用のプレイヤーラベルを取得する関数
 function getPlayerDisplayLabel(player) {
   if (!player) return '';
@@ -78,12 +252,26 @@ function getPlayerDisplayLabel(player) {
 <style scoped>
 .center-table-info {
   display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  /* 親要素が .center-table なので、そのサイズに依存する */
+  width: 100%; /* 親要素いっぱいに広がる */
+  height: 100%; /* 親要素いっぱいに広がる */
+  position: relative; /* .center-image-container の絶対配置の基準 */
+  overflow: hidden; /* はみ出した画像要素を隠す */
+}
+.center-image-container {
+  position: relative; /* 子要素の絶対配置の基準 */
+  width: 180px;  /* 例: スマホでの表示幅 */
+  height: 180px; /* 例: info_bottom.png のアスペクト比に合わせた高さ */
+}
+.info-text-container {
+  display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  padding: 10px;
   background-color: rgba(200, 200, 200, 0.8);
-  border-radius: 8px;
   font-size: 0.9em;
   color: #333;
 }
@@ -119,5 +307,150 @@ function getPlayerDisplayLabel(player) {
 .tile img {
   width: 25px; /* ドラ表示牌のサイズ調整 */
   height: auto;
+}
+.center-info-image {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); /* 中央揃え */
+  width: 100%; /* 親コンテナに対する幅の割合 (調整可能) */
+  height: 100%;
+  object-fit: contain;
+  z-index: 1;
+}
+.round-indicator-image {
+  position: absolute;
+  /* 親画像 (.center-info-image) の中央を基準に配置する例 */
+  /* top, left, transform で微調整 */
+  top: 50%;
+  left: 50%;
+  transform: translate(-59%, -128%); /* まず中央に配置 */
+  width: 40%; /* 適切なサイズに調整 */
+  height: auto;
+  z-index: 2; /* 親画像より手前に表示 */
+  object-fit: contain; /* 画像のアスペクト比を保つ */
+}
+.riichi-stick-base-image {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-85%, -95%); /* 位置調整 */
+  width: 27%; /* 適切なサイズに調整 */
+  height: auto;
+  z-index: 2; /* 親画像より手前に表示 (round-indicator-image と同じか、必要なら調整) */
+  object-fit: contain;
+}
+.riichi-stick-count-images {
+  position: absolute;
+  display: flex; /* 数字画像を横に並べる */
+  top: 50%;
+  left: 50%;
+  /* zan_1000.png の上に重ねるように位置を調整 */
+  transform: translate(8%, -97%); /* 位置調整*/
+  z-index: 3; /* 供託棒ベース画像より手前 */
+}
+.riichi-stick-count-digit {
+  width: 14%; /* 適切なサイズに調整 (zan_1000.png の幅に対する割合など) */
+  height: auto;
+  object-fit: contain;
+  /* 必要に応じてマージン調整 */
+}
+.remaining-tiles-count-images {
+  position: absolute;
+  display: flex;
+  top: 50%;
+  left: 50%;
+  transform: translate(-17%, 22%); /* 位置調整*/
+  z-index: 3; /* 他の重なり合う画像より手前になるように調整 */
+}
+.remaining-tiles-count-digit {
+  width: 14%; /* 適切なサイズに調整 */
+  height: auto;
+  object-fit: contain;
+  margin: 0 1px; /* 数字間のわずかなスペース */
+}
+.player-score-image-container {
+  position: absolute; /* .center-image-container を基準に配置 */
+  display: flex;
+  align-items: center;
+  justify-content: flex-end; /* 数字画像を右詰めに */
+  height: 100%; /* 画像の高さに合わせる */
+  z-index: 4; /* 他の情報画像より手前、または同等に調整 */
+}
+.vertical-player-score { /* 自家・対面用 */
+  min-width: calc(18px * 6 + 10px); /* 6桁分の目安幅 + 符号分 */
+}
+.side-player-score { /* 上家・下家用 */
+  min-width: calc(14px * 6 + 8px); /* 少し小さめの目安幅 */
+}
+.bottom-player-score { /* 自家点数用の追加位置調整 */
+  bottom: -26%; /* コンテナ下部からの位置 */
+  right: 35%;  /* コンテナ右部からの位置 */
+}
+.left-player-score { /* 下家(画面左)点数用の追加位置調整 */
+  top: -16%;
+  left: -63%;
+  transform: translateY(-50%) rotate(90deg);
+}
+.top-player-score { /* 対面(画面上)点数用の追加位置調整 */
+  top: -32%;
+  left: 63%;
+  transform: translateX(-50%) rotate(180deg);
+}
+.right-player-score { /* 上家(画面右)点数用の追加位置調整 */
+  top: 108%;
+  right: -53%;
+  transform: translateY(-50%) rotate(-90deg);
+}
+.vertical-player-score .score-sign-image {
+  width: 10%; /* 対面の符号画像の幅 */
+}
+.side-player-score .score-sign-image {
+  width: 4%; /* 上家・下家の符号画像の幅*/
+}
+.bottom-player-score .score-digit-image {
+  width: 10%; /* 自家の数字画像の幅を小さく調整 */
+}
+.score-sign-image { /* 共通スタイル */
+  height: auto;
+  object-fit: contain;
+  margin-right: 1px; /* 符号と数字の間 */
+}
+.vertical-player-score .score-digit-image {
+  width: 10%; /* 対面の数字画像の幅 */
+}
+.side-player-score .score-digit-image {
+  width: 4%; /* 上家・下家の数字画像の幅 */
+}
+.score-digit-image { /* 共通スタイル */
+  height: auto;
+  object-fit: contain;
+}
+.riichi-stick-image {
+  position: absolute;
+  width: 43%; /* 適切なサイズに調整 (center-image-containerの幅に対する割合) */
+  height: auto;
+  object-fit: contain;
+  z-index: 4; /* 点数表示と同等か、少し手前/奥に調整 */
+}
+.bottom-riichi-stick {
+  bottom: 11.5%; /* 自家点数表示の上あたり */
+  left: 48%;
+  transform: translateX(-50%);
+}
+.left-riichi-stick {
+  top: 48%;
+  left: -13.5%; /* 上家点数表示の右あたり */
+  transform: translateY(-50%) rotate(90deg);
+}
+.top-riichi-stick {
+  top: 5%; /* 対面点数表示の下あたり */
+  left: 47%;
+  transform: translateX(-50%) rotate(180deg);
+}
+.right-riichi-stick {
+  top: 48%;
+  right: -9%; /* 下家点数表示の左あたり */
+  transform: translateY(-50%) rotate(-90deg);
 }
 </style>

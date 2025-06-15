@@ -1,11 +1,6 @@
 <template>
   <div :class="['player-area', positionClass, { 'is-current-turn': isCurrentTurn }]">
-    <div class="player-info">
-      <p>{{ player.name }} ({{ player.seatWind }}) {{ player.score }}点</p>
-      <p v-if="player.isRiichi">リーチ</p>
-    </div>
     <div :class="['player-game-elements', positionClass + '-elements']">
-      <DiscardPile :tiles="player.discards" :position="position"/>
       <PlayerHand
         :player="player"
         :is-my-hand="isMyHand"
@@ -42,7 +37,6 @@
 <script setup>
 import { defineProps, defineEmits, computed } from 'vue';
 import PlayerHand from './PlayerHand.vue';
-import DiscardPile from './DiscardPile.vue';
 import { useGameStore } from '@/stores/gameStore';
 import { getTileImageUrl, tileToString } from '@/utils/tileUtils'; // 共通ユーティリティ
 
@@ -109,7 +103,6 @@ function emitAction(actionType) {
 
 <style scoped>
 .player-area {
-  border: 1px dashed #666;
   padding: 5px;
   display: flex;
   flex-direction: column; /* 基本は縦積み */
@@ -123,15 +116,23 @@ function emitAction(actionType) {
 
 .player-area-bottom > .player-game-elements { flex-direction: column; align-items: center; }
 .player-area-top > .player-game-elements { flex-direction: column-reverse; align-items: center; }
-/* 左右プレイヤーは手牌と捨て牌を横に並べるか、縦にするか検討 */
-.player-area-left > .player-game-elements { flex-direction: row-reverse; align-items: center; justify-content: center; }
-.player-area-right > .player-game-elements { flex-direction: row; align-items: center; justify-content: center; }
+.player-area-left > .player-game-elements {
+  flex-direction: row-reverse;
+  align-items: center;
+  /* justify-content: center; は width: fit-content の場合、効果が薄れる */
+  width: fit-content; /* このコンテナも内容に合わせる */
+}
+.player-area-right > .player-game-elements {
+  flex-direction: row;
+  align-items: center;
+  /* justify-content: center; は width: fit-content の場合、効果が薄れる */
+  width: fit-content; /* このコンテナも内容に合わせる */
+}
 
 /* 左右プレイヤーのエリア全体の幅を制限する場合 */
 .player-area-left, .player-area-right { max-width: 100px; /* 例 */ }
 
 .player-info { font-size: 0.9em; margin-bottom: 5px; text-align: center; }
-.is-current-turn { border: 2px solid gold; }
 .melds-area { display: flex; gap: 5px; margin-top: 5px; }
 .meld { display: flex; }
 .meld-tile img { width: 20px; height: 30px; }

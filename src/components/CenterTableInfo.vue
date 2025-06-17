@@ -38,6 +38,15 @@
       <img v-if="orderedPlayers[2]?.isRiichi" src="/assets/images/tenbo/tenbou1000.png" alt="対面リーチ棒" class="riichi-stick-image top-riichi-stick" />
       <img v-if="orderedPlayers[1]?.isRiichi" src="/assets/images/tenbo/tenbou1000.png" alt="上家リーチ棒" class="riichi-stick-image right-riichi-stick" />
       <img v-if="roundIndicatorImageSrc" :src="roundIndicatorImageSrc" alt="局表示" class="round-indicator-image" />
+      <!-- 王牌ドラ表示エリア -->
+      <div v-if="deadWallDisplayTiles.length > 0" class="dead-wall-display-area">
+        <div v-for="(tilePair, pairIndex) in deadWallDisplayTiles" :key="`deadwall-pair-${pairIndex}`" class="dead-wall-tile-pair">
+          <!-- 下の牌 (奥側) -->
+          <img :src="getTileImageUrl(tilePair.bottom)" :alt="tileToString(tilePair.bottom)" class="dead-wall-tile dead-wall-bottom-tile" />
+          <!-- 上の牌 (手前側) -->
+          <img :src="getTileImageUrl(tilePair.top)" :alt="tileToString(tilePair.top)" class="dead-wall-tile dead-wall-top-tile" />
+        </div>
+      </div>
     </div>
     <div v-else class="info-text-container">
       <div class="round-info">
@@ -235,6 +244,36 @@ const rightPlayerScoreInfo = computed(() => {
   return formatScoreForImage(props.orderedPlayers[1]);
 });
 
+// 王牌表示用の算出プロパティ
+const deadWallDisplayTiles = computed(() => {
+  const deadWall = gameStore.deadWall;
+  const doraIndicator = gameStore.doraIndicators && gameStore.doraIndicators.length > 0 ? gameStore.doraIndicators[0] : null;
+  const displayPairs = [];
+  const numPairsToDisplay = 4; // 表示する牌のペアの数 (実質4牌分)
+  const tilesPerPair = 2;
+  const totalTilesToConsider = numPairsToDisplay * tilesPerPair; // 8牌分考慮
+
+  if (!deadWall || deadWall.length < totalTilesToConsider) {
+    // 王牌が足りない場合は、表示できる分だけ裏向きで表示するか、何も表示しない
+    // ここでは、足りない場合は空にする
+    return [];
+  }
+
+  for (let i = 0; i < numPairsToDisplay; i++) {
+    const bottomTileIndex = i * tilesPerPair;
+    const topTileIndex = bottomTileIndex + 1;
+
+    if (i === 0 && doraIndicator) { // 左端のペアで、ドラ表示牌がある場合
+      // ドラ表示牌を上の牌とし、下の牌も同じ（または王牌の構造から取得）
+      displayPairs.push({ bottom: doraIndicator, top: doraIndicator });
+    } else { // ドラ表示牌以外、またはドラ表示牌がない場合
+      // 裏向きの牌を表示
+      displayPairs.push({ bottom: { type: 'ura' }, top: { type: 'ura' } });
+    }
+  }
+  return displayPairs;
+});
+
 // 表示用のプレイヤーラベルを取得する関数
 function getPlayerDisplayLabel(player) {
   if (!player) return '';
@@ -259,7 +298,6 @@ function getPlayerDisplayLabel(player) {
   width: 100%; /* 親要素いっぱいに広がる */
   height: 100%; /* 親要素いっぱいに広がる */
   position: relative; /* .center-image-container の絶対配置の基準 */
-  overflow: hidden; /* はみ出した画像要素を隠す */
 }
 .center-image-container {
   position: relative; /* 子要素の絶対配置の基準 */
@@ -451,5 +489,40 @@ function getPlayerDisplayLabel(player) {
   top: 50%;
   right: -14%; /* 下家点数表示の左あたり */
   transform: translateY(-50%) rotate(-90deg);
+}
+
+.dead-wall-display-area {
+  position: absolute;
+  bottom: -55%;
+  left: -50%;
+  transform: rotate(45deg); /* 表示全体を右に45度傾ける */
+  transform-origin: bottom left; /* 回転の基点を左下にする */
+  display: flex;
+  z-index: 5; /* 他の情報より手前に表示 */
+}
+
+.dead-wall-tile-pair {
+  position: relative; /* 重ねる牌の基準 */
+  width: 28px;  /* 表示上の牌の幅 */
+  height: 40px; /* 表示上の牌の高さ */
+}
+
+.dead-wall-tile {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  box-sizing: border-box;
+}
+
+.dead-wall-bottom-tile {
+  top: 1px; /* 少し下にずらして重ね感を出す */
+  left: 1px; /* 少し右にずらして重ね感を出す */
+  z-index: 1;
+}
+.dead-wall-top-tile {
+  top: 0;
+  left: 0;
+  z-index: 2; /* 上の牌を手前に */
 }
 </style>

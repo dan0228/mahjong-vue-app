@@ -109,10 +109,23 @@
     align-items: center;
   }
 
-  .my-turn-active .selectable:hover {
-    transform: translateY(-5px);
-    border-color: #ffcc00; /* 選択可能な牌のホバー時のボーダー */
-    cursor: pointer;
+  /* ホバー時の共通スタイル */
+  .tile.my-tile.selectable:hover {
+    cursor: pointer; /* selectable な牌にホバーしたらカーソル変更 */
+  }
+
+  /* 各ポジションごとのホバー時の動き */
+  .player-hand-container.position-bottom .tile.my-tile.selectable:hover {
+    transform: translateY(-5px); /* 上に動く */
+  }
+  .player-hand-container.position-right .tile.my-tile.selectable:hover {
+    transform: translateX(-5px); /* 画面から見て左に動く */
+  }
+  .player-hand-container.position-top .tile.my-tile.selectable:hover {
+    transform: translateY(5px); /* 画面から見て下に動く */
+  }
+  .player-hand-container.position-left .tile.my-tile.selectable:hover {
+    transform: translateX(5px); /* 画面から見て右に動く */
   }
 
   .player-hand {
@@ -153,19 +166,24 @@
     justify-content: center;
     align-items: center;
     position: relative; /* ラベル表示のため */
+    transition: transform 0.05s ease-out; /* ホバー時の動きを滑らかに */
   }
 
-    /* 自家・対面の牌サイズ */
-  .player-hand-container.position-bottom .tile,
-  .player-hand-container.position-top .tile {
+    /* 自家の牌サイズ */
+  .player-hand-container.position-bottom .tile{
     width: 50px;  /* 牌の幅 */
     height: 70px; /* 牌の高さ (実際の画像アスペクト比に合わせて調整) */
+  }
+  /* 対面の牌サイズ */
+  .player-hand-container.position-top .tile {
+    width: 30px;  /* imgのwidthに合わせる */
+    height: 42px; /* imgのheightに合わせる */
   }
   /* 左右プレイヤーの牌サイズ (90度回転するため幅と高さが逆転) */
   .player-hand-container.position-left .tile,
   .player-hand-container.position-right .tile {
-    width: 70px;  /* 回転後の表示幅 (元の牌の高さに相当) */
-    height: 50px; /* 回転後の表示高さ (元の牌の幅に相当) */
+    width: 42px;  /* 回転後の表示幅 (imgのheightに合わせる) */
+    height: 30px; /* 回転後の表示高さ (imgのwidthに合わせる) */
   }
 
   /* 牌の画像の向き */
@@ -178,10 +196,6 @@
   .player-hand-container.position-right .tile img {
     transform: rotate(-90deg);
   }
-
-  /* .tile.my-tile {*/
-    /* 自分の手牌はデフォルトでポインターなし。canDiscardがtrueの時だけホバーエフェクト */
-  /*}*/
 
   .drawn-tile-label {
     position: absolute;
@@ -203,15 +217,21 @@
   }
 
   .tile img {
-    width: 50px;  /* 牌の回転前の幅を指定 */
-    height: 70px; /* 牌の回転前の高さを指定 (実際の画像のアスペクト比に合わせて調整) */
     object-fit: contain; /* アスペクト比は維持する */
     display: block; /* 画像下の余分なスペースを取り除く場合がある */
   }
 
-  .tile.my-tile.selectable:hover { /* isMyHand と canDiscard が true の場合 */
-  transform: translateY(-5px);
-  cursor: pointer;
+    /* 自家の牌画像サイズ */
+  .player-hand-container.position-bottom .tile img {
+    width: 50px;
+    height: 70px;
+  }
+  /* 左右と対面の牌画像サイズ */
+  .player-hand-container.position-top .tile img,
+  .player-hand-container.position-left .tile img,
+  .player-hand-container.position-right .tile img {
+    width: 30px;  /* 牌の回転前の幅を指定 (小さく) */
+    height: 42px; /* 牌の回転前の高さを指定 (小さく) */
   }
 
   .tile.my-tile:not(.selectable) { /* isMyHand は true だが canDiscard が false の場合 */

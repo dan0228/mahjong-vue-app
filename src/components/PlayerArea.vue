@@ -156,32 +156,42 @@ function emitAction(actionType) {
 
 /* 各ポジションごとのアクションボタンの位置調整 */
 .player-actions-bottom {
-  bottom: -40px; /* 手牌エリアの下に配置 (値はボタンの高さに応じて調整) */
-  left: 50%;
-  transform: translateX(-50%);
+  /* 自家: 手牌の右上 */
+  top: -50%; /* 親エリアの上端から少し内側など、調整が必要 */
+  right: -20%; /* 親エリアの右端から少し内側など、調整が必要 */
+  /* transform: translate(X, Y); で微調整も可能 */
+  flex-direction: row; /* ボタンを横に並べる */
+  justify-content: flex-end;
+  align-items: flex-start;
 }
 .player-actions-top {
-  top: -40px; /* 手牌エリアの上に配置 (値はボタンの高さに応じて調整) */
-  left: 50%;
-  transform: translateX(-50%);
-  flex-direction: row-reverse; /* ボタンの並び順を反転させる場合 */
+  /* 対面: 画面から見て手牌の左下 */
+  bottom: -40%;
+  left: -20%;
+  flex-direction: row; /* ボタンを横に並べる */
+  justify-content: flex-start;
+  align-items: flex-end;
 }
 
 /* アクションボタンの向き調整 */
 .player-actions-left, .player-actions-right {
   flex-direction: column; /* 左右プレイヤーのボタンは縦に並べる */
-  align-items: flex-start; /* 左寄せ */
   gap: 3px;
 }
 .player-actions-left {
-  left: -80px; /* 手牌エリアの左に配置 (値はボタンの幅に応じて調整) */
-  top: 50%;
-  transform: translateY(-50%);
+  /* 左側: 画面から見て手牌の右下 */
+  bottom: -10%;
+  right: -90%;
+  /* transform: translate(X, Y); で微調整も可能 */
+  align-items: flex-end; /* ボタンを右寄せ */
+  justify-content: flex-end; /* ボタンを下寄せ */
 }
 .player-actions-right {
-  right: -80px; /* 手牌エリアの右に配置 (値はボタンの幅に応じて調整) */
-  top: 50%;
-  transform: translateY(-50%);
+  /* 右側: 画面から見て手牌の左上 */
+  top: -10%;
+  left: -90%;
+  align-items: flex-start; /* ボタンを左寄せ */
+  justify-content: flex-start; /* ボタンを上寄せ */
 }
 .player-actions-left button, .player-actions-right button {
   width: 100%; /* ボタン幅をコンテナに合わせる */

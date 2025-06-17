@@ -310,29 +310,45 @@ function onAnkanSelected(tile) { // モーダルからのイベント
   /* 縦画面では各プレイヤーエリアが縦に積まれるため、個別の order は不要になることが多い */
   /* 必要に応じて flex-grow や min-height を設定 */
 }
+.top-player-container, .bottom-player-container {
+  width: 100%; /* コンテナの幅を画面幅に合わせる */
+}
 .top-player-container {
   /* 対面プレイヤーのエリア */
-  flex-grow: 1; min-height: 100px;
+  flex-grow: 0;
+  margin-bottom: -150px; /* 中央情報部分との間隔を調整 (負の値も可) */
+  max-height: 50px; /* 対面エリアの最大高さ (手牌の数やサイズに応じて調整) */
+  max-width: 200px; /* 対面エリアの最大幅 (手牌の数やサイズに応じて調整) */
+  margin-left: auto; /* max-width時に中央寄せ */
+  margin-right: auto; /* max-width時に中央寄せ */
   justify-content: center; /* PlayerAreaを中央に配置 */
   align-items: center; /* PlayerAreaを垂直中央に配置 */
 }
 .middle-row {
   /* 左右プレイヤーと中央テーブルを配置する行 */
   display: flex;
-  justify-content: space-between;
+  justify-content: space-between; /* 要素間にスペースを均等に配置 */
   align-items: center; /* 中央揃え */
-  flex-grow: 2;
-  margin: 5px 0;
+  flex-grow: 1;
+  width: 100%; /* 親要素いっぱいに広がるように */
+  max-height: 600px; /* middle-rowの最大高さを設定 (任意) */
+  max-width: 500px; /* middle-row全体の最大幅を設定 (任意) */
+  margin-left: auto; /* max-width時に中央寄せ */
+  margin-right: auto; /* max-width時に中央寄せ */
 }
 .left-player-container, .right-player-container {
   /* 左右プレイヤーのエリア */
-  width: 25%; display: flex; justify-content: center;
+  width: 25px; /* 内容に合わせる */ display: flex; justify-content: center;
 }
 .bottom-player-container {
   /* 自分プレイヤーのエリア */
-  flex-grow: 3; min-height: 150px;
-  justify-content: center; /* PlayerAreaを中央に配置 */
-  align-items: center; /* PlayerAreaを垂直中央に配置 */
+  flex-grow: 0;
+  max-height: 65px;
+  justify-content: center; /* PlayerAreaを水平中央に配置 */
+  align-items: flex-start; /* PlayerAreaをコンテナの上端に配置 */
+  max-width: 100px; /* 自家・対面エリアの最大幅 (手牌の数やサイズに応じて調整) */
+  margin-left: auto; /* max-width時に中央寄せ */
+  margin-right: auto; /* max-width時に中央寄せ */;
 }
 
 .center-table {

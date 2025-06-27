@@ -306,7 +306,6 @@ export const useGameStore = defineStore('game', {
         } else {
             discardedTileActual = this.drawnTile;
         }
-        player.discards.push(discardedTileActual);
         this.drawnTile = null;
         console.log(`gameStore: Player ${player.id} discarded drawn tile: ${discardedTileActual?.id}`);
       } else {
@@ -317,17 +316,26 @@ export const useGameStore = defineStore('game', {
         }
         discardedTileActual = player.hand.splice(tileIndex, 1)[0];
         // リーチ宣言後の手牌からの打牌の場合、ツモ牌は既に手牌に加えられているか、別途処理が必要
-        if (this.gamePhase !== GAME_PHASES.AWAITING_RIICHI_DISCARD) {
-            const tileAddedToHand = this.drawnTile; // 手牌に加えるツモ牌を一時保存
-            player.hand.push(tileAddedToHand); // ツモ牌を手牌に加える
+        // ツモ牌がある場合は、手牌から捨てる前に手牌に加える
+        if (this.drawnTile && this.gamePhase !== GAME_PHASES.AWAITING_RIICHI_DISCARD) { // リーチ宣言後の打牌ではツモ牌は既に手牌にあるか、捨てられる牌そのもの
+            player.hand.push(this.drawnTile); // ツモ牌を手牌に加える
             player.hand = mahjongLogic.sortHand(player.hand); // 手牌をソート
-            console.log(`gameStore: Player ${player.id} discarded from hand: ${discardedTileActual?.id}, added drawn tile ${tileAddedToHand?.id} to hand. Hand size: ${player.hand.length}`);
-        } else {
+            console.log(`gameStore: Player ${player.id} discarded from hand: ${discardedTileActual?.id}, added drawn tile ${this.drawnTile?.id} to hand. Hand size: ${player.hand.length}`);
+        } else if (this.gamePhase === GAME_PHASES.AWAITING_RIICHI_DISCARD) {
              console.log(`gameStore: Player ${player.id} (Riichi) discarded from hand: ${discardedTileActual?.id}. Hand size: ${player.hand.length}`);
         }
         this.drawnTile = null;
       }
 
+      // 捨て牌をdiscards配列に追加します。
+      // Vueのリアクティビティが変更を確実に検知できるように、配列を直接変更するのではなく、
+      // 新しい配列を生成して置き換える方法を取ります。
+      if (discardedTileActual) {
+        player.discards = [...player.discards, discardedTileActual];
+      } else {
+        console.error("Discard failed: discardedTileActual is undefined. Cannot update discards.");
+        return; // 捨て牌が確定しなかったので処理を中断
+      }
       this.lastDiscardedTile = discardedTileActual;
       // リーチ宣言後の打牌の場合、テンパイ維持チェック
       if (this.gamePhase === GAME_PHASES.AWAITING_RIICHI_DISCARD) {

@@ -29,6 +29,8 @@ import { useRouter } from 'vue-router';
 import { useGameStore } from '@/stores/gameStore';
 import RulePopup from '@/components/RulePopup.vue';
 import YakuListPopup from '@/components/YakuListPopup.vue';
+import { computed } from 'vue';
+const isDesktop = computed(() => !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
 
 const router = useRouter();
 const gameStore = useGameStore();

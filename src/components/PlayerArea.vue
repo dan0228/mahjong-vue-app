@@ -120,19 +120,16 @@ function emitAction(actionType) {
 .player-area-left > .player-game-elements {
   flex-direction: row-reverse;
   align-items: center;
-  /* justify-content: center; は width: fit-content の場合、効果が薄れる */
   width: fit-content; /* このコンテナも内容に合わせる */
 }
 .player-area-right > .player-game-elements {
   flex-direction: row;
   align-items: center;
-  /* justify-content: center; は width: fit-content の場合、効果が薄れる */
   width: fit-content; /* このコンテナも内容に合わせる */
 }
 
 /* 左右プレイヤーのエリア全体の幅を内容に合わせる */
 .player-area-left, .player-area-right {
-  /* max-width: 100px; */ /* この行をコメントアウトまたは削除 */
   width: fit-content; /* 幅を内容に合わせる */
 }
 

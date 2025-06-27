@@ -298,6 +298,8 @@ function getPlayerDisplayLabel(player) {
   width: 100%; /* 親要素いっぱいに広がる */
   height: 100%; /* 親要素いっぱいに広がる */
   position: relative; /* .center-image-container の絶対配置の基準 */
+  transform: scale(0.8); /* 全体を80%に縮小 (調整可能) */
+  transform-origin: center center; /* 中央を基準に縮小 */
 }
 .center-image-container {
   position: relative; /* 子要素の絶対配置の基準 */
@@ -493,9 +495,8 @@ function getPlayerDisplayLabel(player) {
 
 .dead-wall-display-area {
   position: absolute;
-  bottom: -55%;
-  left: -50%;
-  transform: rotate(45deg); /* 表示全体を右に45度傾ける */
+  bottom: 100%;
+  left: 18%;
   transform-origin: bottom left; /* 回転の基点を左下にする */
   display: flex;
   z-index: 5; /* 他の情報より手前に表示 */
@@ -516,8 +517,8 @@ function getPlayerDisplayLabel(player) {
 }
 
 .dead-wall-bottom-tile {
-  top: 1px; /* 少し下にずらして重ね感を出す */
-  left: 1px; /* 少し右にずらして重ね感を出す */
+  top: 2px; /* 少し下にずらして重ね感を出す */
+  left: 2px; /* 少し右にずらして重ね感を出す */
   z-index: 1;
 }
 .dead-wall-top-tile {

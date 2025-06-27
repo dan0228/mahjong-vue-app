@@ -176,14 +176,14 @@
   }
   /* 対面の牌サイズ */
   .player-hand-container.position-top .tile {
-    width: 30px;  /* imgのwidthに合わせる */
-    height: 42px; /* imgのheightに合わせる */
+    width: 24px;  /* imgのwidthに合わせる */
+    height: 35px; /* imgのheightに合わせる */
   }
   /* 左右プレイヤーの牌サイズ (90度回転するため幅と高さが逆転) */
   .player-hand-container.position-left .tile,
   .player-hand-container.position-right .tile {
-    width: 42px;  /* 回転後の表示幅 (imgのheightに合わせる) */
-    height: 30px; /* 回転後の表示高さ (imgのwidthに合わせる) */
+    width: 35px;  /* 回転後の表示幅 (imgのheightに合わせる) */
+    height: 24px; /* 回転後の表示高さ (imgのwidthに合わせる) */
   }
 
   /* 牌の画像の向き */
@@ -230,8 +230,8 @@
   .player-hand-container.position-top .tile img,
   .player-hand-container.position-left .tile img,
   .player-hand-container.position-right .tile img {
-    width: 30px;  /* 牌の回転前の幅を指定 (小さく) */
-    height: 42px; /* 牌の回転前の高さを指定 (小さく) */
+    width: 24px;  /* 牌の回転前の幅を指定 (小さく) */
+    height: 35px; /* 牌の回転前の高さを指定 (小さく) */
   }
 
   .tile.my-tile:not(.selectable) { /* isMyHand は true だが canDiscard が false の場合 */

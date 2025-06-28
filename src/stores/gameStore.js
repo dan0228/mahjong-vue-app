@@ -86,6 +86,7 @@ export const useGameStore = defineStore('game', {
     isFuriTen: {}, // { [playerId: string]: boolean } 永続的なフリテン（現物）
     activeActionPlayerId: null, // 応答をアクティブに待っているプレイヤーのID
     riichiDiscardOptions: [], // リーチ宣言後に捨てられる牌のIDリスト
+    isDeclaringRiichi: {}, // リーチ宣言中かどうかのフラグ { [playerId: string]: boolean }
     // 和了結果の詳細情報
     agariResultDetails: {
       roundWind: null, // 例: 'east'
@@ -130,6 +131,7 @@ export const useGameStore = defineStore('game', {
         this.riichiDiscardOptions = [];
         this.actionResponseQueue = [];
         this.isFuriTen[player.id] = false;
+        this.isDeclaringRiichi[player.id] = false; // リーチ宣言状態もリセット
         this.activeActionPlayerId = null;
         this.anyPlayerMeldInFirstRound = false; // 局開始時にリセット
       });
@@ -183,6 +185,7 @@ export const useGameStore = defineStore('game', {
         player.discards = []; // 捨て牌をリセット
         player.melds = []; // 副露
         player.isRiichi = false; // リーチ状態をリセット
+        player.isDeclaringRiichi = false; // リーチ宣言状態もリセット
         player.isDoubleRiichi = false; // ダブルリーチ状態をリセット
         // player.isIppatsu は isIppatsuChance で管理
       });
@@ -279,63 +282,61 @@ export const useGameStore = defineStore('game', {
     },
     discardTile(playerId, tileIdToDiscard, isFromDrawnTile) {
       const player = this.players.find(p => p.id === playerId);
-      // 打牌可能な条件: プレイヤーが存在し、打牌待ちフェーズであること。
-      if (!player || (this.gamePhase !== GAME_PHASES.AWAITING_DISCARD && this.gamePhase !== GAME_PHASES.AWAITING_RIICHI_DISCARD) || (!isFromDrawnTile && !this.drawnTile && this.gamePhase !== GAME_PHASES.AWAITING_RIICHI_DISCARD)) {
+      if (!player || (this.gamePhase !== GAME_PHASES.AWAITING_DISCARD && this.gamePhase !== GAME_PHASES.AWAITING_RIICHI_DISCARD)) {
         console.warn('gameStore: Cannot discard tile now. Conditions not met.', { playerId: player?.id, phase: this.gamePhase, isFromDrawnTile, drawnTile: this.drawnTile });
         return;
       }
 
       let discardedTileActual;
 
-      if (isFromDrawnTile) {
-        // リーチ宣言後のツモ切りもここに含まれる
-        if (!this.drawnTile || (this.drawnTile.id !== tileIdToDiscard && this.gamePhase !== GAME_PHASES.AWAITING_RIICHI_DISCARD)) {
-          console.error('Mismatch: Trying to discard drawn tile, but IDs do not match or no drawn tile.');
-          return; // ツモ牌と指定された牌が一致しない場合はエラー
-        }
-        // リーチ宣言後の打牌選択の場合、this.drawnTile が捨てられる牌とは限らない
-        if (this.gamePhase === GAME_PHASES.AWAITING_RIICHI_DISCARD) {
-            // 捨てようとしている牌が this.drawnTile か手牌のどちらか
-            if (this.drawnTile && this.drawnTile.id === tileIdToDiscard) {
-                discardedTileActual = this.drawnTile;
-            } else {
-                const tileIndex = player.hand.findIndex(t => t.id === tileIdToDiscard);
-                if (tileIndex === -1) {
-                    console.error('Riichi discard: Tile to discard not found in hand or drawn tile:', tileIdToDiscard);
-                    return;
-                }
-                discardedTileActual = player.hand.splice(tileIndex, 1)[0];
-                // リーチ宣言時はツモ牌を手牌に加える処理が別途必要
-            }
-        } else {
-            discardedTileActual = this.drawnTile;
-        }
-        this.drawnTile = null;
-        console.log(`gameStore: Player ${player.id} discarded drawn tile: ${discardedTileActual?.id}`);
-      } else {
-        const tileIndex = player.hand.findIndex(t => t.id === tileIdToDiscard);
-        if (tileIndex === -1) {
-          console.error('Tile to discard not found in hand:', tileIdToDiscard);
+      // --- リーチ後の打牌処理 ---
+      if (this.gamePhase === GAME_PHASES.AWAITING_RIICHI_DISCARD) {
+        const fullHand = [...player.hand, this.drawnTile];
+        const discardIndex = fullHand.findIndex(t => t && t.id === tileIdToDiscard);
+
+        if (discardIndex === -1) {
+          console.error('Riichi discard: Tile to discard not found in hand or drawn tile:', tileIdToDiscard);
           return;
         }
-        discardedTileActual = player.hand.splice(tileIndex, 1)[0];
-        // リーチ宣言後の手牌からの打牌の場合、ツモ牌は既に手牌に加えられているか、別途処理が必要
-        // ツモ牌がある場合は、手牌から捨てる前に手牌に加える
-        if (this.drawnTile && this.gamePhase !== GAME_PHASES.AWAITING_RIICHI_DISCARD) { // リーチ宣言後の打牌ではツモ牌は既に手牌にあるか、捨てられる牌そのもの
-            player.hand.push(this.drawnTile); // ツモ牌を手牌に加える
-            player.hand = mahjongLogic.sortHand(player.hand); // 手牌をソート
-            // 手牌が変わったのでフリテン状態を更新
-            this.updateFuriTenState(player.id);
-            console.log(`gameStore: Player ${player.id} discarded from hand: ${discardedTileActual?.id}, added drawn tile ${this.drawnTile?.id} to hand. Hand size: ${player.hand.length}`);
-        } else if (this.gamePhase === GAME_PHASES.AWAITING_RIICHI_DISCARD) {
-             console.log(`gameStore: Player ${player.id} (Riichi) discarded from hand: ${discardedTileActual?.id}. Hand size: ${player.hand.length}`);
+
+        // テンパイを維持できるかチェックするために、一時的な手牌を作成
+        const tempFullHand = [...fullHand];
+        const tempDiscardedTile = tempFullHand.splice(discardIndex, 1)[0];
+        const handAfterDiscard = tempFullHand;
+
+        const tenpaiCheck = mahjongLogic.checkYonhaiTenpai(handAfterDiscard, this.createGameContextForPlayer(player, false));
+        if (!tenpaiCheck.isTenpai) {
+          console.warn(`Player ${player.id} tried to discard ${tempDiscardedTile.id} after Riichi, but it breaks Tenpai. Aborting.`);
+          return; // テンパイが崩れるので打牌を中止
         }
+
+        // テンパイが維持されるので、打牌を確定させる
+        discardedTileActual = tempDiscardedTile;
+        player.hand = mahjongLogic.sortHand(handAfterDiscard);
         this.drawnTile = null;
+      } else { // --- 通常の打牌処理 ---
+        if (isFromDrawnTile) {
+          if (!this.drawnTile || this.drawnTile.id !== tileIdToDiscard) {
+            console.error('Mismatch: Trying to discard drawn tile, but IDs do not match or no drawn tile.');
+            return;
+          }
+          discardedTileActual = this.drawnTile;
+          this.drawnTile = null;
+        } else {
+          const tileIndex = player.hand.findIndex(t => t.id === tileIdToDiscard);
+          if (tileIndex === -1) {
+            console.error('Tile to discard not found in hand:', tileIdToDiscard);
+            return;
+          }
+          discardedTileActual = player.hand.splice(tileIndex, 1)[0];
+            if (this.drawnTile) {
+              player.hand.push(this.drawnTile); // ツモ牌を手牌に加える
+              player.hand = mahjongLogic.sortHand(player.hand); // 手牌をソート
+            }
+          this.drawnTile = null;
+        }
       }
 
-      // 捨て牌をdiscards配列に追加します。
-      // Vueのリアクティビティが変更を確実に検知できるように、配列を直接変更するのではなく、
-      // 新しい配列を生成して置き換える方法を取ります。
       if (discardedTileActual) {
         player.discards = [...player.discards, discardedTileActual];
       } else {
@@ -343,24 +344,15 @@ export const useGameStore = defineStore('game', {
         return; // 捨て牌が確定しなかったので処理を中断
       }
       this.lastDiscardedTile = discardedTileActual;
-      // リーチ宣言後の打牌の場合、テンパイ維持チェック
-      if (this.gamePhase === GAME_PHASES.AWAITING_RIICHI_DISCARD) {
-        const currentHandAfterDiscard = [...player.hand]; // 既に discardedTileActual は手牌から取り除かれている
-        const tenpaiCheck = mahjongLogic.checkYonhaiTenpai(currentHandAfterDiscard, this.createGameContextForPlayer(player, false));
-        if (!tenpaiCheck.isTenpai) {
-          console.warn(`Player ${player.id} tried to discard ${discardedTileActual.id} after Riichi, but it breaks Tenpai. Reverting.`);
-          // 打牌を元に戻す (UI側での選択制限でここまで来ないのが理想)
-          player.hand.push(discardedTileActual); // 捨てた牌を手牌に戻す
-          player.hand = mahjongLogic.sortHand(player.hand);
-          return; // 打牌処理を中断
-        }
-      }
       this.turnCount++; // 総ターン数をインクリメント
       this.lastActionPlayerId = player.id;
       this.rinshanKaihouChance = false; // 打牌したら嶺上開花の権利は消える
 
       // 自分の打牌で自分の一発チャンスは消える。
-      this.isIppatsuChance[player.id] = false;
+      // ただし、リーチ宣言時の打牌では消えない（ここから一発が始まるため）
+      if (this.gamePhase !== GAME_PHASES.AWAITING_RIICHI_DISCARD) {
+        this.isIppatsuChance[player.id] = false;
+      }
       this.isChankanChance = false; // 打牌されたら槍槓のチャンスはなくなる
       // 他のプレイヤーのアクション可能性をチェック
       this.waitingForPlayerResponses = []; // 応答待ちリストを初期化
@@ -392,10 +384,12 @@ export const useGameStore = defineStore('game', {
         }
       });
 
-      if (!canAnyoneAct) {
+      // 誰もアクションできず、かつリーチ宣言中でもない場合のみ、即座に次のターンへ
+      if (!canAnyoneAct && !this.isDeclaringRiichi[player.id]) {
         this.gamePhase = GAME_PHASES.PLAYER_TURN;
         this.moveToNextPlayer();
       } else {
+        // 誰かがアクション可能、またはリーチ宣言中の場合は、応答待ちフェーズに入る
         this.gamePhase = GAME_PHASES.AWAITING_ACTION_RESPONSE;
         this.playerResponses = {}; // 応答状態をリセット
         this.setNextActiveResponder(); // 応答を待つ最初のプレイヤーを設定
@@ -621,17 +615,12 @@ export const useGameStore = defineStore('game', {
         console.warn("Cannot declare Riichi now.");
         return;
       }
-      if (this.playerTurnCount[playerId] === 1 && this.turnCount < this.players.length) { // melds.length === 0 は既にチェック済み
-        player.isDoubleRiichi = true;
-        console.log(`gameStore: Player ${playerId} declared Double Riichi.`);
-      } else {
-        player.isRiichi = true;
-        console.log(`gameStore: Player ${playerId} declared Riichi.`);
-      }
+      // リーチを宣言したことを一時的に記録する
+      this.isDeclaringRiichi[playerId] = true;
+      console.log(`gameStore: Player ${playerId} is declaring Riichi.`);
+
       // リーチ宣言後、次の自分のツモまでは一発のチャンス
       this.isIppatsuChance[playerId] = true;
-      this.riichiSticks++;
-      player.score -= 1000; // リーチ棒供託
       this.playerActionEligibility[playerId] = {}; // リーチしたので他のアクションはリセット
       // リーチ宣言後、捨てる牌を選択させるフェーズに移行
       this.gamePhase = GAME_PHASES.AWAITING_RIICHI_DISCARD;
@@ -716,6 +705,23 @@ export const useGameStore = defineStore('game', {
       // 全員応答済みならアクション処理へ
       this.processPendingActions();
     },
+    _finalizeRiichi(playerId) {
+      const player = this.players.find(p => p.id === playerId);
+      if (!player || !this.isDeclaringRiichi[playerId]) return;
+
+      console.log(`Riichi by ${player.id} is successful.`);
+
+      // ダブルリーチか判定
+      if (this.playerTurnCount[player.id] === 1 && this.turnCount < this.players.length) {
+        player.isDoubleRiichi = true;
+      } else {
+        player.isRiichi = true;
+      }
+      this.isDeclaringRiichi[playerId] = false; // 一時フラグをクリア
+
+      player.score -= 1000;
+      this.riichiSticks++;
+    },
     processPendingActions() {
       console.log("gameStore: All players responded or Kakan response period ended. Processing actions:", JSON.parse(JSON.stringify(this.actionResponseQueue)));
 
@@ -731,6 +737,19 @@ export const useGameStore = defineStore('game', {
           this.drawRinshanAfterKakan(this.currentTurnPlayerId);
         }
       } else if (this.gamePhase === GAME_PHASES.AWAITING_ACTION_RESPONSE) {
+        // --- リーチ成立判定 ---
+        const discarder = this.players.find(p => p.id === this.lastActionPlayerId);
+        if (discarder && this.isDeclaringRiichi[discarder.id]) {
+          const hasRon = this.actionResponseQueue.some(a => a.actionType === 'ron');
+          if (hasRon) {
+            // ロンされたのでリーチは不成立
+            console.log(`Riichi by ${discarder.id} was aborted due to Ron call.`);
+            this.isDeclaringRiichi[discarder.id] = false;
+          } else {
+            // ロンされなかったのでリーチ成立
+            this._finalizeRiichi(discarder.id);
+          }
+        }
         // 通常の打牌に対するアクション処理
         if (this.actionResponseQueue.length > 0) {
           this.actionResponseQueue.sort((a, b) => b.priority - a.priority);
@@ -924,7 +943,8 @@ export const useGameStore = defineStore('game', {
 
       // 手牌が変わったのでフリテン状態を更新
       this.updateFuriTenState(playerId);
-      this.isIppatsuChance[playerId] = false; // 自分の暗カンは自分の一発を消す
+      // 鳴き（暗槓含む）が入ったので、全プレイヤーの一発は消える
+      this.players.forEach(p => this.isIppatsuChance[p.id] = false);
       this.playerActionEligibility[playerId] = {}; // 暗カンしたのでアクションリセット
 
       this.isChankanChance = false;
@@ -1050,6 +1070,14 @@ export const useGameStore = defineStore('game', {
         return;
       }
 
+      // --- 裏ドラ判定 ---
+      if (player.isRiichi || player.isDoubleRiichi) {
+        this.uraDoraIndicators = mahjongLogic.getUraDoraIndicators(this.deadWall, this.doraIndicators);
+        console.log('[handleAgari] Revealed Ura-Dora indicators:', this.uraDoraIndicators.map(t => t?.id));
+      } else {
+        this.uraDoraIndicators = []; // リーチ和了でなければ裏ドラはなし
+      }
+
       // 和了時の手牌を準備 (ツモならそのまま、ロンなら和了牌を加える)
       // 注意: 四牌麻雀では和了時に5枚になる。ツモった牌は this.drawnTile にある想定。
       // ロン牌は agariTile として渡される。
@@ -1064,11 +1092,6 @@ export const useGameStore = defineStore('game', {
 
       if (winResult.isWin) {
         console.log(`[handleAgari] ${player.name} が和了しました！`, winResult);
-        if (player.isRiichi || player.isDoubleRiichi) {
-        // mahjongLogic.checkYonhaiWin が返した実際の裏ドラ表示牌をセットする
-        // 例: this.uraDoraIndicators = winResult.revealedUraDora || [];
-        // もし mahjongLogic.revealUraDora のような関数を別途呼ぶならここで呼ぶ
-        }
         // 点数移動の計算 (仮のロジック)
         const pointChanges = {};
         this.players.forEach(p => pointChanges[p.id] = 0);
@@ -1259,6 +1282,7 @@ export const useGameStore = defineStore('game', {
         player.seatWind = null; // seatWind もリセット
         player.isRiichi = false;
         player.isDoubleRiichi = false;
+        player.isDeclaringRiichi = false;
         this.isIppatsuChance[player.id] = false;
       });
 
@@ -1299,6 +1323,7 @@ export const useGameStore = defineStore('game', {
         this.riichiDiscardOptions = [];
         this.actionResponseQueue = [];
         this.isFuriTen = {};
+        this.isDeclaringRiichi[p.id] = false;
         this.activeActionPlayerId = null;
       });
       this.shouldEndGameAfterRound = false; // タイトルに戻るのでリセット
@@ -1344,11 +1369,11 @@ export const useGameStore = defineStore('game', {
           isHoutei: !isTsumo && this.wall.length === 0 && agariTile && this.lastDiscardedTile && agariTile.id === this.lastDiscardedTile.id,
           isChankan: this.isChankanChance && agariTile && this.chankanTile && agariTile.id === this.chankanTile.id,
           isTenho: player.isDealer && (this.playerTurnCount[player.id] || 0) === 1 && isTsumo && this.turnCount === 0 && (player.melds || []).length === 0, // 自身の鳴きなし
-          isChiho: !player.isDealer && (this.playerTurnCount[player.id] || 0) === 1 && isTsumo && this.turnCount < this.players.length && this.players.every(p => (p.melds || []).length === 0), // 全員の鳴きなし
+          isChiho: !player.isDealer && (this.playerTurnCount[player.id] || 0) === 1 && isTsumo && this.turnCount < this.players.length && !this.anyPlayerMeldInFirstRound,
+          isRenho: !player.isDealer && !isTsumo && (this.playerTurnCount[player.id] || 0) === 0 && this.turnCount < this.players.length && !this.anyPlayerMeldInFirstRound,
           melds: player.melds,
           isParent: player.isDealer,
           remainingTilesCount: this.wall.length,
-          // isRenho: ... (人和の定義による)
           currentPlayerTurnCount: this.playerTurnCount[player.id] || 0 // 現在のプレイヤーのツモ回数を追加
       };
     }

@@ -167,7 +167,7 @@ function emitAction(actionType) {
 }
 .player-actions-top {
   /* 対面: 画面から見て手牌の左下 */
-  bottom: -20%;
+  bottom: -80%;
   left: 0%;
   flex-direction: row; /* ボタンを横に並べる */
   justify-content: flex-start;

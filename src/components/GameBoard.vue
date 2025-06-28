@@ -197,9 +197,10 @@
 
   // 渡されたプレイヤーIDが打牌可能か判定
   function canPlayerDiscard(playerId) {
-    return gameStore.currentTurnPlayerId === playerId && gameStore.gamePhase === GAME_PHASES.AWAITING_DISCARD;
+    // 通常の打牌待ち、またはリーチ後の打牌選択待ちの場合に打牌可能
+    return gameStore.currentTurnPlayerId === playerId && 
+           (gameStore.gamePhase === GAME_PHASES.AWAITING_DISCARD || gameStore.gamePhase === GAME_PHASES.AWAITING_RIICHI_DISCARD);
   }
-
   onMounted(() => {
     // ゲームの初期化処理などをストア経由で実行
     // 例: プレイヤー情報の設定、山牌の準備、配牌など
@@ -217,7 +218,7 @@
     console.log('Selected tile for discard:', payload.tile, 'Is from drawn:', payload.isFromDrawnTile);
     // どのプレイヤーの操作かに関わらず、現在のターンプレイヤーが打牌可能な状態であれば実行
     // PlayerHand が can-discard プロパティ経由で適切なプレイヤーのターンであること保証すると想定
-    if (gameStore.currentTurnPlayerId && gameStore.gamePhase === 'awaitingDiscard') {
+    if (gameStore.currentTurnPlayerId && (gameStore.gamePhase === 'awaitingDiscard' || gameStore.gamePhase === 'awaitingRiichiDiscard')) {
       gameStore.discardTile(gameStore.currentTurnPlayerId, payload.tile.id, payload.isFromDrawnTile); // 誰が打牌したか渡す
     } else {
       console.log("It's not your turn or you cannot discard now.");
@@ -465,8 +466,8 @@ function onAnkanSelected(tile) { // モーダルからのイベント
 
 .cat-icon-left {
   /* 左プレイヤーの手牌の上部 */
-  top: -105px; /* コンテナの上端から少し上にずらす */
-  left: 110%; /* コンテナの水平中央に配置 */
+  top: -108px; /* コンテナの上端から少し上にずらす */
+  left: 108%; /* コンテナの水平中央に配置 */
   transform: translateX(-50%); /* 中央揃えのための調整 */
 }
 
@@ -479,8 +480,8 @@ function onAnkanSelected(tile) { // モーダルからのイベント
 
 .cat-icon-right {
   /* 右プレイヤーの手牌の上部 */
-  top: -105px; /* コンテナの上端から少し上にずらす */
-  right: -1050%; /* コンテナの水平中央に配置 */
+  top: -108px; /* コンテナの上端から少し上にずらす */
+  right: -1045%; /* コンテナの水平中央に配置 */
   transform: translateX(-50%); /* 中央揃えのための調整 */
 }
 

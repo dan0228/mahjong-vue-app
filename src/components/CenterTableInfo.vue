@@ -33,10 +33,10 @@
         <img v-for="(src, index) in rightPlayerScoreInfo.digits" :key="`right-digit-${index}-${src}`" :src="src" :alt="`数字${index}`" class="score-digit-image" />
       </div>
       <!-- リーチ棒表示 -->
-      <img v-if="orderedPlayers[0]?.isRiichi" src="/assets/images/tenbo/tenbou1000.png" alt="自家リーチ棒" class="riichi-stick-image bottom-riichi-stick" />
-      <img v-if="orderedPlayers[3]?.isRiichi" src="/assets/images/tenbo/tenbou1000.png" alt="上家リーチ棒" class="riichi-stick-image left-riichi-stick" />
-      <img v-if="orderedPlayers[2]?.isRiichi" src="/assets/images/tenbo/tenbou1000.png" alt="対面リーチ棒" class="riichi-stick-image top-riichi-stick" />
-      <img v-if="orderedPlayers[1]?.isRiichi" src="/assets/images/tenbo/tenbou1000.png" alt="下家リーチ棒" class="riichi-stick-image right-riichi-stick" />
+      <img v-if="orderedPlayers[0]?.isRiichi || orderedPlayers[0]?.isDoubleRiichi" src="/assets/images/tenbo/tenbou1000.png" alt="自家リーチ棒" class="riichi-stick-image bottom-riichi-stick" />
+      <img v-if="orderedPlayers[3]?.isRiichi || orderedPlayers[3]?.isDoubleRiichi" src="/assets/images/tenbo/tenbou1000.png" alt="上家リーチ棒" class="riichi-stick-image left-riichi-stick" />
+      <img v-if="orderedPlayers[2]?.isRiichi || orderedPlayers[2]?.isDoubleRiichi" src="/assets/images/tenbo/tenbou1000.png" alt="対面リーチ棒" class="riichi-stick-image top-riichi-stick" />
+      <img v-if="orderedPlayers[1]?.isRiichi || orderedPlayers[1]?.isDoubleRiichi" src="/assets/images/tenbo/tenbou1000.png" alt="下家リーチ棒" class="riichi-stick-image right-riichi-stick" />
       <img v-if="roundIndicatorImageSrc" :src="roundIndicatorImageSrc" alt="局表示" class="round-indicator-image" />
       <!-- 王牌ドラ表示エリア -->
       <div v-if="deadWallDisplayTiles.length > 0" class="dead-wall-display-area">

@@ -54,17 +54,9 @@ const props = defineProps({
 .discard-pile-top .tile img {
   transform: rotate(180deg); /* 対面は180度回転 */
 }
-.discard-pile-left {
-  /* 左プレイヤーの捨て牌 */
-  grid-template-columns: repeat(9, 1fr);
-  grid-auto-flow: row dense;
-  direction: ltr; /* 左から右へ */
-  align-content: start; /* 複数行をコンテナの上部に詰める */
-  width: calc(9 * 15px + 2 * 2px); /* 牌9枚分の幅 */
-  height: calc(3 * 20px + 2 * 2px); /* 牌3行分の高さ */
-}
+/* 左右プレイヤーの捨て牌は同じレイアウトなのでスタイルを共通化 */
+.discard-pile-left,
 .discard-pile-right {
-  /* 右プレイヤーの捨て牌 (自家と同じ3行9列のレイアウト) */
   grid-template-columns: repeat(9, 1fr); /* 3行9列 */
   grid-auto-flow: row dense;
   direction: ltr; /* 左から右へ */

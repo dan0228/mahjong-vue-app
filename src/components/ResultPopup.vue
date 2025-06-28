@@ -20,14 +20,14 @@
           <span class="dora-label">裏ドラ</span>
           <div class="dora-tiles">
             <template v-if="isRiichiAgari">
-              <!-- リーチ時は実際の裏ドラを表示 -->
+              <!-- リーチ和了時は、明らかになった裏ドラ表示牌を表示 -->
               <img v-for="(tile, index) in resultDetails.uraDoraIndicators" :key="'ura-revealed-'+tile.id + '-' + index" :src="getTileImageUrl(tile)" :alt="tileToString(tile)" class="tile-image-small"/>
               <!-- 裏ドラの残りを裏向きで表示 (最大4つまで) -->
               <img v-for="n in Math.max(0, 4 - (resultDetails.uraDoraIndicators?.length || 0))" :key="'ura-hidden-riichi-' + n" :src="getTileImageUrl({type: 'ura'})" alt="裏ドラ" class="tile-image-small"/>
             </template>
             <template v-else>
-              <!-- リーチでない場合は全て裏向きで4つ表示 -->
-              <img v-for="n in 4" :key="'ura-hidden-no-riichi-' + n" :src="getTileImageUrl({type: 'ura'})" alt="裏ドラ" class="tile-image-small"/>
+              <!-- リーチ和了でない場合は、表ドラの数だけ裏向きで表示 -->
+              <img v-for="n in (resultDetails.doraIndicators?.length || 0)" :key="'ura-hidden-no-riichi-' + n" :src="getTileImageUrl({type: 'ura'})" alt="裏ドラ" class="tile-image-small"/>
             </template>
           </div>
         </div>
@@ -152,8 +152,10 @@ const isRiichiAgari = computed(() => {
   // gameStore から和了プレイヤーのリーチ状態を取得する必要がある
   // ここでは resultDetails に isRiichi フラグが含まれていると仮定するか、
   // winner オブジェクトからリーチ状態を参照する
-  const winnerId = Object.keys(props.resultDetails.pointChanges).find(playerId => props.resultDetails.pointChanges[playerId] > 0);
-  return winnerId ? gameStore.getPlayerById(winnerId)?.isRiichi || gameStore.getPlayerById(winnerId)?.isDoubleRiichi : false;
+  const winnerId = Object.keys(props.resultDetails.pointChanges || {}).find(playerId => props.resultDetails.pointChanges[playerId] > 0);
+  if (!winnerId) return false;
+  const winner = gameStore.getPlayerById(winnerId);
+  return winner?.isRiichi || winner?.isDoubleRiichi;
 });
 
 

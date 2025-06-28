@@ -7,7 +7,7 @@
         <div
           v-for="tile in playerDisplayHand"
           :key="tile.id"
-          :class="['tile', { 'my-tile': isMyHand, 'selectable': canSelectTile(tile, false) && isMyHand && canDiscard, 'disabled': !canSelectTile(tile, false) && isMyHand && gameStore.gamePhase === 'awaitingRiichiDiscard' }]"
+          :class="getTileClasses(tile, false)"
           @click="selectTile(tile, false)"
         >
           <img :src="getTileImageUrl(tile)" :alt="tileToString(tile)" />
@@ -15,7 +15,7 @@
       </div>
       <div v-if="isMyHand && drawnTileDisplay" class="drawn-tile-area player-hand">
         <div
-          :class="['tile', 'my-tile', 'drawn-tile', { 'selectable': canSelectTile(drawnTileDisplay, true) && canDiscard, 'disabled': !canSelectTile(drawnTileDisplay, true) && gameStore.gamePhase === 'awaitingRiichiDiscard' }]"
+          :class="getTileClasses(drawnTileDisplay, true)"
           @click="selectTile(drawnTileDisplay, true)"
         >
           <img :src="getTileImageUrl(drawnTileDisplay)" :alt="tileToString(drawnTileDisplay)" />
@@ -29,16 +29,15 @@
   import { useGameStore } from '@/stores/gameStore'; // gameStore をインポート
   import { getTileImageUrl, tileToString } from '@/utils/tileUtils'; // 共通ユーティリティをインポート
   const props = defineProps({
-    player: { // handTiles から player オブジェクト全体を受け取るように変更
+    player: {
       type: Object,
-      default: () => null
+      required: true
     },
     isMyHand: {
       type: Boolean,
       default: false
     },
-    // gameStoreから渡されるツモ牌 (自分の手番で、かつツモった後のみ表示)
-    drawnTileDisplay: { // 名前を drawnTileDisplay に変更して、ストアの drawnTile と区別
+    drawnTileDisplay: {
       type: Object,
       default: null
     },
@@ -51,9 +50,6 @@
       type: String,
       default: 'bottom'
     }
-    // PlayerArea から渡される
-    // PlayerHand 自身では使用しない場合は削除するか、レイアウト調整に使用する
-    // position: { type: String, default: 'bottom' } // 未使用なら削除
   });
 
   const emit = defineEmits(['tile-selected']);
@@ -61,7 +57,7 @@
 
   // player プロパティから手牌を取得する算出プロパティ
   const playerDisplayHand = computed(() => {
-    return props.player ? props.player.hand : [];
+    return props.player?.hand || [];
   });
 
   function canSelectTile(tile, isFromDrawnTile) {
@@ -78,6 +74,23 @@
     if (canSelectTile(tile, isFromDrawnTile)) { // canSelectTile で選択可否を判定
       emit('tile-selected', { tile, isFromDrawnTile });
     }
+  }
+
+    // 牌のCSSクラスを動的に生成するヘルパー関数
+  function getTileClasses(tile, isDrawnTile) {
+    const isSelectable = canSelectTile(tile, isDrawnTile);
+    const isRiichiPhase = gameStore.gamePhase === 'awaitingRiichiDiscard';
+
+    return [
+      'tile',
+      {
+        'my-tile': props.isMyHand,
+        'drawn-tile': isDrawnTile,
+        'selectable': isSelectable,
+        // 自分の手番で、リーチ中で、かつ選択できない牌を無効化する
+        'disabled': props.canDiscard && isRiichiPhase && !isSelectable,
+      }
+    ];
   }
 </script>
 

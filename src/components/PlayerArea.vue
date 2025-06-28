@@ -19,17 +19,17 @@
     </div>
     <!-- アクションボタンエリア -->
     <div v-if="isMyHand || gameStore.gameMode === 'allManual'" :class="['player-actions', `player-actions-${position}`]">
-       <!-- ツモ番のアクション -->
-        <button v-if="canDeclareTsumoAgari" @click="emitAction('tsumoAgari')">ツモ</button>
-        <button v-if="canDeclareRiichi" @click="emitAction('riichi')">リーチ</button>
-        <button v-if="canDeclareAnkan" @click="emitAction('ankan')">暗槓</button>
-        <button v-if="canDeclareKakan" @click="emitAction('kakan')">加槓</button>
+        <!-- ツモ番のアクション -->
+        <img v-if="canDeclareTsumoAgari" src="/assets/images/button/tsumo_button.png" alt="ツモ" class="action-image-button" @click="emitAction('tsumoAgari')" />
+        <img v-if="canDeclareRiichi" src="/assets/images/button/riichi_button.png" alt="リーチ" class="action-image-button" @click="emitAction('riichi')" />
+        <img v-if="canDeclareAnkan" src="/assets/images/button/kan_button.png" alt="暗槓" class="action-image-button" @click="emitAction('ankan')" />
+        <img v-if="canDeclareKakan" src="/assets/images/button/kan_button.png" alt="加槓" class="action-image-button" @click="emitAction('kakan')" />
         <!-- 他家の打牌/加槓に対するアクション -->
-        <button v-if="canDeclareRon" @click="emitAction('ron')">ロン</button>
-        <button v-if="canDeclarePon" @click="emitAction('pon')">ポン</button>
-        <button v-if="canDeclareMinkan" @click="emitAction('minkan')">カン</button>
+        <img v-if="canDeclareRon" src="/assets/images/button/ron_button.png" alt="ロン" class="action-image-button" @click="emitAction('ron')" />
+        <img v-if="canDeclarePon" src="/assets/images/button/pon_button.png" alt="ポン" class="action-image-button" @click="emitAction('pon')" />
+        <img v-if="canDeclareMinkan" src="/assets/images/button/kan_button.png" alt="カン" class="action-image-button" @click="emitAction('minkan')" />
         <!-- スキップボタン -->
-        <button v-if="showSkipButton" @click="emitAction('skip')">スキップ</button>
+        <img v-if="showSkipButton" src="/assets/images/button/skip_button.png" alt="スキップ" class="action-image-button" @click="emitAction('skip')" />
     </div>
   </div>
 </template>
@@ -38,6 +38,7 @@
 import { defineProps, defineEmits, computed } from 'vue';
 import PlayerHand from './PlayerHand.vue';
 import { useGameStore } from '@/stores/gameStore';
+import { GAME_PHASES } from '@/stores/gameStore';
 import { getTileImageUrl, tileToString } from '@/utils/tileUtils'; // 共通ユーティリティ
 
 const props = defineProps({
@@ -61,28 +62,32 @@ function onTileSelected(payload) {
 
 const playerEligibility = computed(() => gameStore.playerActionEligibility[props.player.id] || {});
 
-// 自分のターンのアクション
-const canDeclareTsumoAgari = computed(() => gameStore.currentTurnPlayerId === props.player.id && playerEligibility.value.canTsumoAgari);
-const canDeclareRiichi = computed(() => gameStore.currentTurnPlayerId === props.player.id && playerEligibility.value.canRiichi);
-const canDeclareAnkan = computed(() => {
-  const ankanInfo = gameStore.canDeclareAnkan[props.player.id];
-  // ankanInfo が true または牌オブジェクトの配列で要素がある場合にtrue
+// 自分のターンで、かつ打牌前のアクション（ツモ和了、リーチ、カン）が可能なフェーズか
+const isMyTurnAndCanActBeforeDiscard = computed(() => {
   return gameStore.currentTurnPlayerId === props.player.id &&
-         (ankanInfo === true || (Array.isArray(ankanInfo) && ankanInfo.length > 0));
+         (gameStore.gamePhase === GAME_PHASES.AWAITING_DISCARD || gameStore.gamePhase === GAME_PHASES.AWAITING_RIICHI_DISCARD);
+});
+
+// 自分のターンのアクション
+const canDeclareTsumoAgari = computed(() => isMyTurnAndCanActBeforeDiscard.value && playerEligibility.value.canTsumoAgari);
+const canDeclareRiichi = computed(() => isMyTurnAndCanActBeforeDiscard.value && playerEligibility.value.canRiichi);
+const canDeclareAnkan = computed(() => {
+  if (!isMyTurnAndCanActBeforeDiscard.value) return false;
+  const ankanInfo = gameStore.canDeclareAnkan[props.player.id];
+  return ankanInfo === true || (Array.isArray(ankanInfo) && ankanInfo.length > 0);
 });
 const canDeclareKakan = computed(() => {
+  if (!isMyTurnAndCanActBeforeDiscard.value) return false;
   const kakanInfo = gameStore.canDeclareKakan[props.player.id];
-  // kakanInfo が true または牌オブジェクトの配列で要素がある場合にtrue
-  return gameStore.currentTurnPlayerId === props.player.id &&
-         (kakanInfo === true || (Array.isArray(kakanInfo) && kakanInfo.length > 0));
+  return kakanInfo === true || (Array.isArray(kakanInfo) && kakanInfo.length > 0);
 });
 
 // 他家のアクションに対する応答
-const canDeclareRon = computed(() => playerEligibility.value.canRon && gameStore.waitingForPlayerResponses.includes(props.player.id));
-const canDeclarePon = computed(() => playerEligibility.value.canPon && gameStore.waitingForPlayerResponses.includes(props.player.id));
-const canDeclareMinkan = computed(() => playerEligibility.value.canMinkan && gameStore.waitingForPlayerResponses.includes(props.player.id));
+const canDeclareRon = computed(() => gameStore.activeActionPlayerId === props.player.id && playerEligibility.value.canRon);
+const canDeclarePon = computed(() => gameStore.activeActionPlayerId === props.player.id && playerEligibility.value.canPon);
+const canDeclareMinkan = computed(() => gameStore.activeActionPlayerId === props.player.id && playerEligibility.value.canMinkan);
 
-const showSkipButton = computed(() => gameStore.waitingForPlayerResponses.includes(props.player.id));
+const showSkipButton = computed(() => gameStore.activeActionPlayerId === props.player.id);
 
 function emitAction(actionType) {
     let tileData = null;
@@ -145,8 +150,7 @@ function emitAction(actionType) {
     flex-wrap: wrap;
     justify-content: center; /* ボタンを中央揃え */
     position: absolute; /* 他の要素のレイアウトフローから切り離す */
-    z-index: 10; /* 他の要素より手前に表示 */
-    background-color: rgba(0,0,0,0.1); /* ボタンエリアの背景を少し暗くして視認性向上 (任意) */
+    z-index: 30; /* 他の要素より手前に表示 */
     padding: 5px;
     border-radius: 4px;
 }
@@ -154,8 +158,8 @@ function emitAction(actionType) {
 /* 各ポジションごとのアクションボタンの位置調整 */
 .player-actions-bottom {
   /* 自家: 手牌の右上 */
-  top: -50%; /* 親エリアの上端から少し内側など、調整が必要 */
-  right: -20%; /* 親エリアの右端から少し内側など、調整が必要 */
+  top: -60%; /* 親エリアの上端から少し内側など、調整が必要 */
+  right: -30%; /* 親エリアの右端から少し内側など、調整が必要 */
   /* transform: translate(X, Y); で微調整も可能 */
   flex-direction: row; /* ボタンを横に並べる */
   justify-content: flex-end;
@@ -163,8 +167,8 @@ function emitAction(actionType) {
 }
 .player-actions-top {
   /* 対面: 画面から見て手牌の左下 */
-  bottom: -40%;
-  left: -20%;
+  bottom: -20%;
+  left: 0%;
   flex-direction: row; /* ボタンを横に並べる */
   justify-content: flex-start;
   align-items: flex-end;
@@ -177,20 +181,34 @@ function emitAction(actionType) {
 }
 .player-actions-left {
   /* 左側: 画面から見て手牌の右下 */
-  bottom: -10%;
-  right: -90%;
+  bottom: 70%;
+  right: -230%;
   /* transform: translate(X, Y); で微調整も可能 */
   align-items: flex-end; /* ボタンを右寄せ */
   justify-content: flex-end; /* ボタンを下寄せ */
 }
 .player-actions-right {
   /* 右側: 画面から見て手牌の左上 */
-  top: -10%;
-  left: -90%;
+  top: 0%;
+  left: -230%;
   align-items: flex-start; /* ボタンを左寄せ */
   justify-content: flex-start; /* ボタンを上寄せ */
 }
-.player-actions-left button, .player-actions-right button {
-  width: 100%; /* ボタン幅をコンテナに合わせる */
+.action-image-button {
+  /* ボタン画像を適切なサイズに調整 */
+  width: 100px; /* 例: 幅60px (調整可能) */
+  height: auto; /* 高さは自動 */
+  cursor: pointer;
+  transition: transform 0.15s ease, filter 0.15s ease;
+  pointer-events: auto; /* クリックイベントを確実に受け取るようにする */
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.25)); /* 初期状態で少し影をつける */
+}
+.action-image-button:hover {
+  transform: translateY(-3px); /* 少し上に浮き上がる */
+  filter: drop-shadow(0 5px 5px rgba(0, 0, 0, 0.35)); /* ホバー時により濃い影をつける */
+}
+.action-image-button:active {
+  transform: translateY(-1px); /* クリック時に少し沈む */
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.2)); /* 影を少し弱める */
 }
 </style>

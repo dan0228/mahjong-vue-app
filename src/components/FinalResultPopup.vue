@@ -73,6 +73,7 @@ function backToTitle() {
   min-width: 350px;
   max-width: 90%;
   text-align: center;
+  transform: scale(0.85); /* ポップアップ全体を縮小して画面に収める */
   box-shadow: 0 5px 20px rgba(0,0,0,0.25);
 }
 .popup-content h2 {
@@ -120,7 +121,7 @@ function backToTitle() {
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  font-size: 1em;
+  font-size: 0.9em;
   transition: background-color 0.2s ease;
   display: flex; /* テキストを縦に並べるため */
   flex-direction: column; /* テキストを縦に並べるため */

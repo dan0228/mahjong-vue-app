@@ -17,7 +17,7 @@
         <img v-if="bottomPlayerScoreInfo.sign" :src="bottomPlayerScoreInfo.sign" alt="符号" class="score-sign-image" />
         <img v-for="(src, index) in bottomPlayerScoreInfo.digits" :key="`digit-${index}-${src}`" :src="src" :alt="`数字${index}`" class="score-digit-image" />
       </div>
-      <!-- 下家(画面左)の点数表示 -->
+      <!-- 上家(画面左)の点数表示 -->
       <div v-if="orderedPlayers[3]" class="player-score-image-container side-player-score left-player-score">
         <img v-if="leftPlayerScoreInfo.sign" :src="leftPlayerScoreInfo.sign" alt="符号" class="score-sign-image" />
         <img v-for="(src, index) in leftPlayerScoreInfo.digits" :key="`left-digit-${index}-${src}`" :src="src" :alt="`数字${index}`" class="score-digit-image" />
@@ -27,16 +27,16 @@
         <img v-if="topPlayerScoreInfo.sign" :src="topPlayerScoreInfo.sign" alt="符号" class="score-sign-image" />
         <img v-for="(src, index) in topPlayerScoreInfo.digits" :key="`top-digit-${index}-${src}`" :src="src" :alt="`数字${index}`" class="score-digit-image" />
       </div>
-      <!-- 上家の点数表示 -->
+      <!-- 下家(画面右)の点数表示 -->
       <div v-if="orderedPlayers[1]" class="player-score-image-container side-player-score right-player-score">
         <img v-if="rightPlayerScoreInfo.sign" :src="rightPlayerScoreInfo.sign" alt="符号" class="score-sign-image" />
         <img v-for="(src, index) in rightPlayerScoreInfo.digits" :key="`right-digit-${index}-${src}`" :src="src" :alt="`数字${index}`" class="score-digit-image" />
       </div>
       <!-- リーチ棒表示 -->
       <img v-if="orderedPlayers[0]?.isRiichi" src="/assets/images/tenbo/tenbou1000.png" alt="自家リーチ棒" class="riichi-stick-image bottom-riichi-stick" />
-      <img v-if="orderedPlayers[3]?.isRiichi" src="/assets/images/tenbo/tenbou1000.png" alt="下家リーチ棒" class="riichi-stick-image left-riichi-stick" />
+      <img v-if="orderedPlayers[3]?.isRiichi" src="/assets/images/tenbo/tenbou1000.png" alt="上家リーチ棒" class="riichi-stick-image left-riichi-stick" />
       <img v-if="orderedPlayers[2]?.isRiichi" src="/assets/images/tenbo/tenbou1000.png" alt="対面リーチ棒" class="riichi-stick-image top-riichi-stick" />
-      <img v-if="orderedPlayers[1]?.isRiichi" src="/assets/images/tenbo/tenbou1000.png" alt="上家リーチ棒" class="riichi-stick-image right-riichi-stick" />
+      <img v-if="orderedPlayers[1]?.isRiichi" src="/assets/images/tenbo/tenbou1000.png" alt="下家リーチ棒" class="riichi-stick-image right-riichi-stick" />
       <img v-if="roundIndicatorImageSrc" :src="roundIndicatorImageSrc" alt="局表示" class="round-indicator-image" />
       <!-- 王牌ドラ表示エリア -->
       <div v-if="deadWallDisplayTiles.length > 0" class="dead-wall-display-area">
@@ -117,9 +117,9 @@ const centerImageSrc = computed(() => {
   }
   const dealerId = dealer.value.id;
   const bottomPlayerId = props.orderedPlayers[0]?.id; // 自家 (画面下)
-  const rightPlayerId = props.orderedPlayers[1]?.id;  // 上家 (画面右)
+  const rightPlayerId = props.orderedPlayers[1]?.id;  // 下家 (画面右)
   const topPlayerId = props.orderedPlayers[2]?.id;    // 対面 (画面上)
-  const leftPlayerId = props.orderedPlayers[3]?.id;   // 下家 (画面左)
+  const leftPlayerId = props.orderedPlayers[3]?.id;   // 上家 (画面左)
 
   if (dealerId === bottomPlayerId) {
     return '/assets/images/info/info_bottom.png';
@@ -229,7 +229,7 @@ const bottomPlayerScoreInfo = computed(() => {
   return formatScoreForImage(props.orderedPlayers[0]);
 });
 
-// 下家(画面左)の点数表示用画像情報を生成
+// 上家(画面左)の点数表示用画像情報を生成
 const leftPlayerScoreInfo = computed(() => {
   return formatScoreForImage(props.orderedPlayers[3]);
 });
@@ -239,7 +239,7 @@ const topPlayerScoreInfo = computed(() => {
   return formatScoreForImage(props.orderedPlayers[2]);
 });
 
-// 上家(画面右)の点数表示用画像情報を生成
+// 下家(画面右)の点数表示用画像情報を生成
 const rightPlayerScoreInfo = computed(() => {
   return formatScoreForImage(props.orderedPlayers[1]);
 });
@@ -426,7 +426,7 @@ function getPlayerDisplayLabel(player) {
   bottom: -29.5%; /* コンテナ下部からの位置 */
   right: 31%;  /* コンテナ右部からの位置 */
 }
-.left-player-score { /* 下家(画面左)点数用の追加位置調整 */
+.left-player-score { /* 上家(画面左)点数用の追加位置調整 */
   top: -13%;
   left: -62%;
   transform: translateY(-50%) rotate(90deg);
@@ -436,7 +436,7 @@ function getPlayerDisplayLabel(player) {
   left: 65%;
   transform: translateX(-50%) rotate(180deg);
 }
-.right-player-score { /* 上家(画面右)点数用の追加位置調整 */
+.right-player-score { /* 下家(画面右)点数用の追加位置調整 */
   top: 114%;
   right: -62%;
   transform: translateY(-50%) rotate(-90deg);
@@ -495,7 +495,7 @@ function getPlayerDisplayLabel(player) {
 
 .dead-wall-display-area {
   position: absolute;
-  bottom: 100%;
+  bottom: 150%;
   left: 18%;
   transform-origin: bottom left; /* 回転の基点を左下にする */
   display: flex;
@@ -504,8 +504,8 @@ function getPlayerDisplayLabel(player) {
 
 .dead-wall-tile-pair {
   position: relative; /* 重ねる牌の基準 */
-  width: 28px;  /* 表示上の牌の幅 */
-  height: 40px; /* 表示上の牌の高さ */
+  width: 34px;  /* 表示上の牌の幅 */
+  height: 42px; /* 表示上の牌の高さ */
 }
 
 .dead-wall-tile {

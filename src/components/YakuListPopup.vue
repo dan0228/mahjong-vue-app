@@ -62,7 +62,9 @@
           </tbody>
         </table>
       </div>
-      <button @click="$emit('close')">閉じる</button>
+      <div class="close-button-container">
+        <button @click="$emit('close')" class="close-button">閉じる</button>
+      </div>
     </div>
   </div>
 </template>
@@ -117,7 +119,16 @@
 <style scoped>
   /* RulePopup.vue と同様のスタイルを使用できます */
   .popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-  .popup-content { background-color: white; padding: 20px; border-radius: 8px; max-width: 90%; max-height: 85vh; overflow-y: auto; text-align: center; font-family: 'Helvetica Neue', Arial, sans-serif; /* フォントを元に戻す */ }
+  .popup-content {
+    background-color: white;
+    padding: 20px; border-radius: 8px;
+    max-width: 90%; max-height: 85vh;
+    overflow-y: auto; text-align: center;
+    font-family: 'Helvetica Neue', Arial, sans-serif; /* フォントを元に戻す */
+    font-size: small;
+    transform: scale(0.85); /* ポップアップ全体を縮小して画面に収める */
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
   .yaku-section { margin-bottom: 15px; }
   .yaku-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
   .yaku-table th, .yaku-table td { border: 1px solid #ddd; padding: 6px; text-align: left; }
@@ -145,5 +156,18 @@
     margin-left: 3px;
     margin-top: 6px; 
     /* 必要に応じてマージンや transform-origin を調整 */
+  }
+    .close-button-container {
+    margin-top: 20px;
+    text-align: center;
+  }
+  .close-button {
+    padding: 8px 25px;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
   }
 </style>

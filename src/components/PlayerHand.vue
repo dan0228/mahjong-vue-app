@@ -84,6 +84,7 @@
 <style scoped>
   .player-hand-container {
     display: flex;
+    position: relative; /* ツモ牌の絶対配置の基準 */
     align-items: flex-start; /* 手牌とツモ牌の上端を揃える */
   }
 
@@ -144,21 +145,27 @@
 
   .drawn-tile-area {
     display: flex; /* 内部の.tileを正しく配置するため */
+    position: absolute; /* 手牌の位置に影響を与えないように絶対配置 */
   }
   .position-top .drawn-tile-area {
-    margin-left: 0; /* 左側に配置されるので左マージンは不要 */
-    margin-right: 15px; /* 手牌との間に右マージンを設定 */
+    right: 100%; /* 手牌エリアの左側に配置 */
+    top: 0;
+    margin-right: 7px; /* 手牌との間に右マージンを設定 */
   }
   .position-bottom .drawn-tile-area {
-    margin-left: 15px; /* 自家は手牌の右にツモ牌 */
+    left: 100%; /* 手牌エリアの右側に配置 */
+    top: 0;
+    margin-left: 10px; /* 自家は手牌の右にツモ牌 */
   }
   .position-left .drawn-tile-area {
-    margin-left: 0; /* 縦並びなので左マージンは不要 */
-    margin-top: 15px; /* 手牌エリアの下にツモ牌エリアを配置するためのマージン */
+    top: 100%; /* 手牌エリアの下に配置 */
+    left: 0;
+    margin-top: 7px; /* 手牌エリアの下にツモ牌エリアを配置するためのマージン */
   }
   .position-right .drawn-tile-area {
-    margin-left: 0; /* 縦並びなので左マージンは不要 */
-    margin-bottom: 15px; /* 手牌エリアとの間に下マージンを設定 (column-reverseのため) */
+    bottom: 100%; /* 手牌エリアの上に配置 */
+    left: 0;
+    margin-bottom: 7px; /* 手牌エリアとの間に下マージンを設定 (column-reverseのため) */
   }
 
   .tile {

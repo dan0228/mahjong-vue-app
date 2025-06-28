@@ -15,8 +15,8 @@ export function getAllTiles() {
   let idCounter = 0;
 
 // 萬子、筒子、索子 (1-9) - 各4枚
-  [SUITS.MANZU, SUITS.PINZU, SUITS.SOZU].forEach(suit => { // 検証用にコメントアウト
-//  [SUITS.MANZU].forEach(suit => {
+//  [SUITS.MANZU, SUITS.PINZU, SUITS.SOZU].forEach(suit => { // 検証用にコメントアウト
+  [SUITS.MANZU].forEach(suit => {
     for (let rank = 1; rank <= 9; rank++) { // 検証用。本来は9
       for (let i = 0; i < 4; i++) { //検証用。本来は4
         tiles.push({
@@ -144,7 +144,7 @@ export function sortHand(hand) {
 }
 
 /**
- * プレイヤーに席風を割り当てます。親が東、その上家が南、対面が西、下家が北となります。
+ * プレイヤーに席風を割り当てます。親が東、その下家が南、対面が西、上家が北となります。
  * @param {Array<Object>} players - プレイヤーオブジェクトの配列。各オブジェクトには `seatWind` プロパティが追加されます。
  * @param {number} dealerIndex - 親（東家）となるプレイヤーのインデックス。
  * @param {number} playerCount - プレイヤーの総数 (デフォルトは4)。
@@ -346,7 +346,7 @@ function formatTileForGameJs(tile) {
  * @param {Object} tile - { suit: 'm', rank: 1 }
  * @returns {string} 例: "m1"
  */
-function getTileKey(tile) {
+export function getTileKey(tile) {
   if (!tile) return '';
   return `${tile.suit}${tile.rank}`;
 }

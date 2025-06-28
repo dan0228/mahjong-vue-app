@@ -43,7 +43,9 @@
           </tr>
         </tbody>
       </table>
-      <button @click="$emit('close')">閉じる</button>
+      <div class="close-button-container">
+        <button @click="$emit('close')" class="close-button">閉じる</button>
+      </div>
     </div>
   </div>
 </template>
@@ -72,7 +74,12 @@ defineEmits(['close']);
   max-width: 80%;
   max-height: 85vh; /* ポップアップの最大高さを画面の85%に制限 */
   font-family: 'Helvetica Neue', Arial, sans-serif; /* フォントを元に戻す */
+  font-size: small; /* フォントサイズを小さくして全体を縮小 */
   overflow-y: auto; /* 内容が多い場合にスクロール可能にする */
+  transform: scale(0.85); /* ポップアップ全体を縮小して画面に収める */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 .popup-content h2 {
   margin-top: 0;
@@ -104,5 +111,18 @@ defineEmits(['close']);
 }
 .rule-description {
   color: #444;
+}
+.close-button-container {
+  margin-top: 20px;
+  text-align: center;
+}
+.close-button {
+  padding: 8px 25px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1em;
 }
 </style>

@@ -1,36 +1,36 @@
 <template>
-  <div class="title-screen">
-    <div class="title-background-container">
-      <div class="title-background-image base-image"></div>
-      <div class="title-background-image eye-blink-image"></div>
-    </div>
-    <h1 class="title-text">
-      <span class="main-title">よんじゃん！</span>
-      <span class="sub-title">~ 4牌で楽しむ本格麻雀 ~</span>
-    </h1>
-    <nav class="menu">
-      <ul>
-        <li><button @click="startGame('vsCPU')" disabled>ねこAI対戦 (準備中)</button></li>
-        <li><button @click="startGame('online')" disabled>オンライン対戦 (準備中)</button></li>
-        <li><button @click="startGame('allManual')">全操作モード</button></li>
-        <li><button @click="showRulesPopup = true">ルール 📖</button></li>
-        <li><button @click="showYakuListPopup = true">役一覧 🀄</button></li>
-      </ul>
-    </nav>
+  <div class="title-view-container">
+    <div class="title-screen" :style="scalerStyle">
+      <div class="title-background-container">
+        <div class="title-background-image base-image"></div>
+        <div class="title-background-image eye-blink-image"></div>
+      </div>
+      <h1 class="title-text">
+        <span class="main-title">よんじゃん！</span>
+        <span class="sub-title">~ 4牌で楽しむ本格麻雀 ~</span>
+      </h1>
+      <nav class="menu">
+        <ul>
+          <li><button @click="startGame('vsCPU')" disabled>ねこAI対戦 (準備中)</button></li>
+          <li><button @click="startGame('online')" disabled>オンライン対戦 (準備中)</button></li>
+          <li><button @click="startGame('allManual')">全操作モード</button></li>
+          <li><button @click="showRulesPopup = true">ルール 📖</button></li>
+          <li><button @click="showYakuListPopup = true">役一覧 🀄</button></li>
+        </ul>
+      </nav>
 
-    <RulePopup v-if="showRulesPopup" @close="showRulesPopup = false" />
-    <YakuListPopup v-if="showYakuListPopup" @close="showYakuListPopup = false" />
+      <RulePopup v-if="showRulesPopup" @close="showRulesPopup = false" />
+      <YakuListPopup v-if="showYakuListPopup" @close="showYakuListPopup = false" />
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { useGameStore } from '@/stores/gameStore';
 import RulePopup from '@/components/RulePopup.vue';
 import YakuListPopup from '@/components/YakuListPopup.vue';
-import { computed } from 'vue';
-const isDesktop = computed(() => !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
 
 const router = useRouter();
 const gameStore = useGameStore();
@@ -38,27 +38,60 @@ const gameStore = useGameStore();
 const showRulesPopup = ref(false);
 const showYakuListPopup = ref(false);
 
+// --- Scaling Logic ---
+const DESIGN_WIDTH = 360;
+const DESIGN_HEIGHT = 640;
+const scaleFactor = ref(1);
+const scalerStyle = computed(() => ({
+  transform: `translate(-50%, -50%) scale(${scaleFactor.value})`
+}));
+
+const updateScaleFactor = () => {
+  const currentWidth = window.innerWidth;
+  const currentHeight = window.innerHeight;
+  const scaleX = currentWidth / DESIGN_WIDTH;
+  const scaleY = currentHeight / DESIGN_HEIGHT;
+  scaleFactor.value = Math.min(scaleX, scaleY);
+};
+
+onMounted(() => {
+  updateScaleFactor();
+  window.addEventListener('resize', updateScaleFactor);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', updateScaleFactor);
+});
+
 function startGame(mode) {
   gameStore.setGameMode(mode);
-  // ゲーム開始前に状態をリセットまたは初期化する処理が必要な場合、ここかストアの initializeGame で行う
-  // 例えば、前回のゲームのプレイヤー情報などが残っている場合など。
-  // gameStore.resetGame(); // 必要であれば
-  gameStore.gamePhase = 'waitingToStart'; // GameBoard側で初期化をトリガーするため
+  gameStore.resetGameForNewSession();
   router.push('/game');
 }
 </script>
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap');
+.title-view-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-image: url('/assets/images/back/back_out.png');
+  background-repeat: repeat;
+}
 
 .title-screen {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 360px;
+  height: 640px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 100vh; /* 画面全体の最小の高さをビューポートに合わせる */
   text-align: center;
-  position: relative; /* 子要素のz-indexを有効にするため */
   font-family: 'M PLUS Rounded 1c', 'Helvetica Neue', Arial, sans-serif;
   overflow-x: hidden; /* 横方向のスクロールを禁止して、はみ出しを隠す */
   box-sizing: border-box; /* padding や border を width/height に含める */
@@ -76,19 +109,8 @@ function startGame(mode) {
   z-index: -1; 
 }
 
-.title-screen::after { /* グラデーション用疑似要素 */
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: linear-gradient(135deg, #f5f7fa 0%, #a1f39a 50%, #f5f7fa 100%);
-  background-size: 200% 200%;
-  animation: gradientDrift 20s ease infinite; /* グラデーションを動かすアニメーション */
-  z-index: -2; 
-}
-
 .title-background-container {
-  width: 90vw; /* 画面幅の90%を最大幅とする */
-  max-width: 400px; /* PC表示時の最大幅を制限 */
+  width: 320px; /* 固定幅に設定 (360pxの約90%) */
   height: auto; /* 高さは幅に応じて自動調整 */
   aspect-ratio: 400 / 260; /* 元の画像の縦横比を維持 (400/260 は例) */
   position: relative; /* 子要素の絶対配置の基準 */
@@ -120,7 +142,7 @@ function startGame(mode) {
 }
 
 .title-text { /* h1タグからクラスに変更 */
-  margin-top: -30px; /* 背景画像との重なりを調整 */
+  margin-top: -20px; /* 背景画像との重なりを調整 */
   margin-bottom: 0px; /* メニューとの間隔を調整 */
   position: relative; /* z-indexを有効にするため */
   color: #B14B3F; /* 文字色を変更 */
@@ -138,7 +160,7 @@ function startGame(mode) {
 
 .main-title {
   display: block; /* 改行のため */
-  font-size: clamp(1.5em, 8vw, 1.8em); /* 画面幅に応じてフォントサイズを調整 */
+  font-size: 1.8em; /* 固定サイズに変更 */
   margin-left: 20px;
   white-space: nowrap; /* 「よんじゃん！」が途中で改行されないようにする */
   font-weight: 700; /* 少し太めに */
@@ -146,7 +168,7 @@ function startGame(mode) {
 }
 .sub-title {
   display: block; /* 改行のため */
-  font-size: clamp(0.8em, 4vw, 0.9em); /* 画面幅に応じてフォントサイズを調整 */
+  font-size: 0.9em; /* 固定サイズに変更 */
   margin-top: 1px; /* メインタイトルとの間隔 */
   color: #50927c; /* サブタイトルの色をメインより少し薄く (例) */
 }
@@ -162,8 +184,7 @@ function startGame(mode) {
 }
 
 .menu button {
-  width: 80vw; /* 画面幅の80%を最大幅とする */
-  max-width: 280px; /* PC表示時の最大幅を制限 */
+  width: 280px; /* 固定幅に設定 */
   padding: 10px 20px; /* パディング調整 */
   font-size: 1.2em;
   cursor: pointer;
@@ -211,12 +232,6 @@ function startGame(mode) {
 @keyframes pop {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.04); }
-}
-
-@keyframes gradientDrift {
-  0% { background-position: 0 0; }
-  50% { background-position: 100% 100%; }
-  100% { background-position: 0 0; }
 }
 
 @keyframes subtleFloat {

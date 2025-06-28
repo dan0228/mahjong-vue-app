@@ -2,6 +2,11 @@
     <div class="game-board">
       <!-- :styleで動的にtransformを適用 -->
       <div class="game-board-scaler" :style="scalerStyle">
+      <!-- ルール・役一覧ボタン -->
+      <div class="game-board-top-left-buttons">
+        <img src="/assets/images/button/rule_button.png" alt="ルール" @click="showRulesPopup = true" class="info-button-image" />
+        <img src="/assets/images/button/yaku_button.png" alt="役一覧" @click="showYakuListPopup = true" class="info-button-image" />
+      </div>
       <!-- タイトルへ戻るボタン -->
       <div class="game-board-header" v-if="showReturnButton">
         <img 
@@ -14,12 +19,17 @@
 
       <!-- 画面の一番下に表示 -->
       <div class="player-area-container bottom-player-container" v-if="playerAtBottom">
+        <!-- フリテン表示 -->
+        <img v-if="isMyPlayerInFuriTen" src="/assets/images/status/furiten.png" alt="フリテン" class="furiten-indicator" />
         <PlayerArea :player="playerAtBottom" position="bottom" :is-my-hand="determineIsMyHand(playerAtBottom.id)" :drawn-tile-display="drawnTileForPlayer(playerAtBottom.id)" :can-discard="canPlayerDiscard(playerAtBottom.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
       </div>
 
       <!-- 中央エリア (左右プレイヤーと中央テーブル) -->
       <div class="middle-row">
         <div class="player-area-container left-player-container" v-if="playerAtLeft">
+          <img src="/assets/images/info/cat_icon_1.png" alt="Cat Icon 1" class="cat-icon cat-icon-left" />
+          <img src="/assets/images/info/cat_icon_2.png" alt="Cat Icon 1" class="cat-icon cat-icon-top" />
+          <img src="/assets/images/info/cat_icon_3.png" alt="Cat Icon 1" class="cat-icon cat-icon-right" />
           <PlayerArea :player="playerAtLeft" position="left" :is-my-hand="determineIsMyHand(playerAtLeft.id)" :drawn-tile-display="drawnTileForPlayer(playerAtLeft.id)" :can-discard="canPlayerDiscard(playerAtLeft.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
         </div>
         <div class="center-table">
@@ -42,7 +52,7 @@
            <DiscardPile v-if="playerAtTop" :tiles="playerAtTop.discards" position="top" class="discard-pile-top-player" />
          </div>
       </div>
-
+      
       <!-- 左の捨て牌エリア (絶対配置) -->
       <div class="left-discard-container">
         <DiscardPile v-if="playerAtLeft" :tiles="playerAtLeft.discards" position="left" class="discard-pile-left-player" />
@@ -66,6 +76,8 @@
         @start-new-game="handleStartNewGameFromFinalResult"
         @back-to-title="handleBackToTitleFromFinalResult"
       />
+      <RulePopup v-if="showRulesPopup" @close="showRulesPopup = false" />
+      <YakuListPopup v-if="showYakuListPopup" @close="showYakuListPopup = false" />
       </div> <!-- End of game-board-scaler -->
     </div>
 </template>
@@ -80,6 +92,8 @@
   import PlayerArea from './PlayerArea.vue';
   import ResultPopup from './ResultPopup.vue';
   import FinalResultPopup from './FinalResultPopup.vue';
+  import RulePopup from './RulePopup.vue';
+  import YakuListPopup from './YakuListPopup.vue';
   // import Wall from './Wall.vue'; // 将来的に使用
   import * as mahjongLogic from '@/services/mahjongLogic'; // 役判定などに使う場合 (例: checkYonhaiWin, canRiichi)
   import { GAME_PHASES } from '@/stores/gameStore'; // gameStoreからフェーズ定数をインポート
@@ -90,6 +104,8 @@
   const ankanOptions = ref([]); // ストアから渡される暗槓可能な牌のリスト
   const showKakanModal = ref(false);
   const kakanOptions = ref([]); // ストアから渡される加槓可能な牌のリスト
+  const showRulesPopup = ref(false);
+  const showYakuListPopup = ref(false);
 
   // --- Scaling Logic ---
   const DESIGN_WIDTH = 360; // ベースとなるデザインの幅 (9:16のアスペクト比)
@@ -140,6 +156,11 @@
       return { name: dealer.name, seatWind: dealer.seatWind };
     }
     return { name: null, seatWind: null };
+  });
+
+  const isMyPlayerInFuriTen = computed(() => {
+    if (!playerAtBottom.value) return false;
+    return !!gameStore.isFuriTen[playerAtBottom.value.id];
   });
 
   const gameMode = computed(() => gameStore.gameMode);
@@ -365,7 +386,8 @@ function onAnkanSelected(tile) { // モーダルからのイベント
   width: 100vw; /* ビューポートの幅全体を使用 */
   height: 100vh; /* ビューポートの高さ全体を使用 */
   overflow: hidden; /* スケーリングではみ出した部分を隠す */
-  background-color: black; /* 黒い帯の背景色 */
+  background-image: url('/assets/images/back/back_out.png'); /* 背景画像を敷き詰める */
+  background-repeat: repeat; /* 画像を繰り返し表示 */
   box-sizing: border-box;
   border: 2px solid #333; /* 外側のボーダー */
 }
@@ -381,6 +403,26 @@ function onAnkanSelected(tile) { // モーダルからのイベント
   background-position: center;
   display: flex; /* 内部の flex レイアウトを維持 */
   flex-direction: column-reverse; /* 内部の flex レイアウトを維持 */
+  border: 1px solid #740e017e; /* 赤茶色の枠線 */
+  box-sizing: border-box; /* 枠線をwidth/heightに含める */
+}
+
+.game-board-top-left-buttons {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 20;
+  display: flex;
+  gap: 8px;
+}
+.info-button-image {
+  width: 50px;
+  height: auto;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.info-button-image:hover {
+  opacity: 0.8;
 }
 
 .game-board-header {
@@ -401,12 +443,53 @@ function onAnkanSelected(tile) { // モーダルからのイベント
   opacity: 0.8; /* ホバー時に少し透明にするエフェクト (任意) */
 }
 
+.cat-icon {
+  position: absolute;
+  width: 80px; /* アイコンのサイズ */
+  height: 80px; /* アイコンのサイズ */
+  object-fit: contain;
+  z-index: 15; /* 他のUI要素より手前に表示 */
+}
+
+.furiten-indicator {
+  position: absolute;
+  /* 手牌の前に表示されるように調整 */
+  bottom: 80px; /* 手牌の高さや位置に応じて調整 */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px; /* 画像サイズに合わせて調整 */
+  height: auto;
+  z-index: 40; /* 手牌や他のUIより手前に */
+  pointer-events: none; /* 画像がクリックを妨げないように */
+}
+
+.cat-icon-left {
+  /* 左プレイヤーの手牌の上部 */
+  top: -105px; /* コンテナの上端から少し上にずらす */
+  left: 110%; /* コンテナの水平中央に配置 */
+  transform: translateX(-50%); /* 中央揃えのための調整 */
+}
+
+.cat-icon-top {
+  /* 対面プレイヤーの手牌の上部 */
+  top: -255px; /* コンテナの上端から少し上にずらす */
+  left: 530%; /* コンテナの水平中央に配置 */
+  transform: translateX(-50%); /* 中央揃えのための調整 */
+}
+
+.cat-icon-right {
+  /* 右プレイヤーの手牌の上部 */
+  top: -105px; /* コンテナの上端から少し上にずらす */
+  right: -1050%; /* コンテナの水平中央に配置 */
+  transform: translateX(-50%); /* 中央揃えのための調整 */
+}
 
 .player-area-container {
     /* 各プレイヤーエリアコンテナのスタイル (必要に応じて) */
     display: flex;
   /* 縦画面では各プレイヤーエリアが縦に積まれるため、個別の order は不要になることが多い */
   /* 必要に応じて flex-grow や min-height を設定 */
+  position: relative; /* アイコンの絶対配置の基準 */
 }
 .top-player-container, .bottom-player-container {
   width: 100%; /* コンテナの幅を画面幅に合わせる */
@@ -414,8 +497,7 @@ function onAnkanSelected(tile) { // モーダルからのイベント
 .top-player-container {
   /* 対面プレイヤーのエリア */
   flex-grow: 0; /* 高さは内容に合わせる */
-  margin-bottom: -70px; /* 上の要素（middle-row）との間隔を狭める */
-  max-height: 0px; /* 対面エリアの最大高さ (手牌の数やサイズに応じて調整) */
+  margin-bottom: -140px; /* 上の要素（middle-row）との間隔を狭める */
   max-width: 200px; /* 対面エリアの最大幅 (手牌の数やサイズに応じて調整) */
   margin-left: auto; /* max-width時に中央寄せ */
   margin-right: auto; /* max-width時に中央寄せ */
@@ -452,6 +534,7 @@ function onAnkanSelected(tile) { // モーダルからのイベント
   margin-left: auto; /* max-width時に中央寄せ */
   margin-right: auto; /* max-width時に中央寄せ */;
   z-index: 10; /* 他の要素より手前に表示 */
+  padding-bottom: 0px; /* この値を調整して手牌の位置を上下に動かします。値を大きくすると上に、小さくすると下に移動します。 */
 }
 
 .center-table {
@@ -475,7 +558,7 @@ function onAnkanSelected(tile) { // モーダルからのイベント
   /* 対面の捨て牌エリア */
   display: flex;
   position: absolute; /* 親のtop-player-containerを基準に絶対配置 */
-  bottom: 405px; /* 下端を固定 (調整) */
+  bottom: -87px; /* 下端を固定 (調整) */
   left: 50%;
   transform: translateX(-50%);
 }

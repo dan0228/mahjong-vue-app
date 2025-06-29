@@ -1,11 +1,12 @@
 <template>
   <div v-if="show" class="popup-overlay">
     <div class="popup-content">
-      <h2>終局</h2>
+      <h2>最終結果</h2>
       <div class="final-results-list">
         <div v-for="player in finalResultDetails.rankedPlayers" :key="player.name" class="player-rank-item">
           <span class="rank">{{ player.rank }}位</span>
-          <span class="player-name">{{ player.name }}</span>
+          <span class="player-name">{{ player.name }}</span>          
+          <img v-if="getPlayerIcon(player.id)" :src="getPlayerIcon(player.id)" alt="Player Icon" class="player-icon" />
           <span class="score">{{ player.score }}点</span>
         </div>
       </div>
@@ -37,8 +38,8 @@ const props = defineProps({
   finalResultDetails: { // gameStore.finalResultDetails を想定
     type: Object,
     required: true,
-    // rankedPlayers: [{ rank, name, score }], consecutiveWins: number
-    default: () => ({ rankedPlayers: [], consecutiveWins: 0 }), // デフォルト値をオブジェクトに変更
+    // rankedPlayers: [{ id, rank, name, score }], consecutiveWins: number
+    default: () => ({ rankedPlayers: [], consecutiveWins: 0 }),
   },
 });
 
@@ -50,6 +51,14 @@ function startNewGame() {
 
 function backToTitle() {
   emit('back-to-title');
+}
+
+function getPlayerIcon(playerId) {
+  if (playerId === 'player1') return '/assets/images/info/hito_icon_1.png'; // あなた
+  if (playerId === 'player2') return '/assets/images/info/cat_icon_3.png'; // くろ
+  if (playerId === 'player3') return '/assets/images/info/cat_icon_2.png'; // たま
+  if (playerId === 'player4') return '/assets/images/info/cat_icon_1.png'; // とら
+  return null;
 }
 </script>
 
@@ -94,16 +103,37 @@ function backToTitle() {
 }
 .player-rank-item {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
   padding: 5px 0;
   border-bottom: 1px dashed #eee;
 }
 .player-rank-item:last-child {
   border-bottom: none;
 }
-.rank { font-weight: bold; width: 40px; text-align: left;}
-.player-name { flex-grow: 1; text-align: left; margin-left: 10px;}
-.score { font-weight: bold; color: #007bff; width: 80px; text-align: right;}
+.rank { 
+  font-weight: bold; 
+  width: 40px; 
+  text-align: left;
+  flex-shrink: 0;
+}
+.player-name { 
+  flex-grow: 1; 
+  text-align: left; 
+  margin-left: 10px;
+}
+.player-icon {
+  width: 60px;
+  height: 60px;
+  margin: 0 30px;
+  flex-shrink: 0;
+}
+.score { 
+  font-weight: bold; 
+  color: #007bff; 
+  width: 80px; 
+  text-align: right;
+  flex-shrink: 0;
+}
 .consecutive-wins {
   font-size: 1.2em;
   font-weight: bold;

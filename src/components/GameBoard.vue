@@ -76,6 +76,9 @@
         @start-new-game="handleStartNewGameFromFinalResult"
         @back-to-title="handleBackToTitleFromFinalResult"
       />
+      <img v-if="ronAnimationState" src="/assets/images/status/ron.png" :class="['ron-indicator', `ron-indicator-${ronAnimationState.position}`]" alt="ロン" />
+      <img v-if="riichiAnimationState" src="/assets/images/status/riichi.png" :class="['ron-indicator', `ron-indicator-${riichiAnimationState.position}`]" alt="リーチ" />
+      <img v-if="tsumoAnimationState" src="/assets/images/status/tsumo.png" :class="['ron-indicator', `ron-indicator-${tsumoAnimationState.position}`]" alt="ツモ" />
       <RulePopup v-if="showRulesPopup" @close="showRulesPopup = false" />
       <YakuListPopup v-if="showYakuListPopup" @close="showYakuListPopup = false" />
       </div> <!-- End of game-board-scaler -->
@@ -106,6 +109,9 @@
   const kakanOptions = ref([]); // ストアから渡される加槓可能な牌のリスト
   const showRulesPopup = ref(false);
   const showYakuListPopup = ref(false);
+  const ronAnimationState = ref(null);
+  const riichiAnimationState = ref(null);
+  const tsumoAnimationState = ref(null);
 
   // --- Scaling Logic ---
   const DESIGN_WIDTH = 360; // ベースとなるデザインの幅 (9:16のアスペクト比)
@@ -215,6 +221,10 @@
   });
 
   function handleTileSelection(payload) { // payload は { tile: Object, isFromDrawnTile: Boolean }
+    // リーチアニメーションが表示されている場合、牌を選択した時点で非表示にする
+    if (riichiAnimationState.value) {
+      riichiAnimationState.value = null;
+    }
     console.log('Selected tile for discard:', payload.tile, 'Is from drawn:', payload.isFromDrawnTile);
     // どのプレイヤーの操作かに関わらず、現在のターンプレイヤーが打牌可能な状態であれば実行
     // PlayerHand が can-discard プロパティ経由で適切なプレイヤーのターンであること保証すると想定
@@ -303,9 +313,37 @@ function onAnkanSelected(tile) { // モーダルからのイベント
     const { playerId, actionType, tile } = payload;
     if (actionType === 'skip') {
       gameStore.playerSkipsCall(playerId);
-    } else if (actionType === 'tsumoAgari') {
-      gameStore.handleAgari(playerId, gameStore.drawnTile, true);
+    } else if (actionType === 'tsumoAgari') {      
+      const playerIndex = orderedPlayersForDisplay.value.findIndex(p => p.id === playerId);
+      let positionClass = '';
+      if (playerIndex === 0) positionClass = 'bottom';
+      else if (playerIndex === 1) positionClass = 'right';
+      else if (playerIndex === 2) positionClass = 'top';
+      else if (playerIndex === 3) positionClass = 'left';
+      
+      if (positionClass) {
+        tsumoAnimationState.value = { position: positionClass };
+      }
+      setTimeout(() => {
+        gameStore.handleAgari(playerId, gameStore.drawnTile, true);
+      }, 1000); // 1秒のディレイ
     } else if (actionType === 'riichi') {
+      const playerIndex = orderedPlayersForDisplay.value.findIndex(p => p.id === playerId);
+      let positionClass = '';
+      if (playerIndex === 0) positionClass = 'bottom';
+      else if (playerIndex === 1) positionClass = 'right';
+      else if (playerIndex === 2) positionClass = 'top';
+      else if (playerIndex === 3) positionClass = 'left';
+
+      if (positionClass) {
+        riichiAnimationState.value = { position: positionClass };
+        // 手前のプレイヤー以外は1秒で表示を消す
+        if (positionClass !== 'bottom') {
+          setTimeout(() => {
+            riichiAnimationState.value = null;
+          }, 1000);
+        }
+      }
       gameStore.declareRiichi(playerId);
     } else if (actionType === 'ankan') {
       // PlayerAreaから渡されるtileは、暗槓の場合は選択された牌そのものであるべき
@@ -323,7 +361,21 @@ function onAnkanSelected(tile) { // モーダルからのイベント
         console.error("加槓する牌が選択されていません。");
       }
     } else if (actionType === 'ron') {
-      gameStore.playerDeclaresCall(playerId, 'ron', gameStore.lastDiscardedTile); // ロン対象牌は lastDiscardedTile
+      // ロンを宣言したプレイヤーの画面上の位置を特定
+      const playerIndex = orderedPlayersForDisplay.value.findIndex(p => p.id === playerId);
+      let positionClass = '';
+      if (playerIndex === 0) positionClass = 'bottom';
+      else if (playerIndex === 1) positionClass = 'right';
+      else if (playerIndex === 2) positionClass = 'top';
+      else if (playerIndex === 3) positionClass = 'left';
+      
+      if (positionClass) {
+        ronAnimationState.value = { position: positionClass };
+      }
+
+      setTimeout(() => {
+        gameStore.playerDeclaresCall(playerId, 'ron', gameStore.lastDiscardedTile);
+      }, 1000); // 1秒のディレイ
     } else if (actionType === 'pon') {
       gameStore.playerDeclaresCall(playerId, 'pon', tile); // ポン対象牌は PlayerArea から渡される
     } else if (actionType === 'minkan') {
@@ -336,24 +388,39 @@ function onAnkanSelected(tile) { // モーダルからのイベント
 
   function handleCloseResultPopup() {
     // ポップアップを閉じるだけの場合 (基本的には proceed を使う)
+    ronAnimationState.value = null; // アニメーションをクリア
+    tsumoAnimationState.value = null;
+    riichiAnimationState.value = null;
     gameStore.showResultPopup = false;
   }
 
   function handleProceedToNextRound() {
+    ronAnimationState.value = null; // アニメーションをクリア
+    tsumoAnimationState.value = null;
+    riichiAnimationState.value = null;
     gameStore.prepareNextRound();
   }
 
   function handleStartNewGameFromFinalResult() {
+    ronAnimationState.value = null; // アニメーションをクリア
+    tsumoAnimationState.value = null;
+    riichiAnimationState.value = null;
     gameStore.resetGameForNewSession(); // 状態を完全にリセット
     gameStore.initializeGame(); // 新しいゲームを開始
   }
 
   function handleBackToTitleFromFinalResult() {
+    ronAnimationState.value = null; // アニメーションをクリア
+    tsumoAnimationState.value = null;
+    riichiAnimationState.value = null;
     gameStore.returnToTitle();
     router.push('/'); // タイトル画面のパス (router/index.jsで定義) に遷移
   }
 
   function returnToTitle() {
+    ronAnimationState.value = null; // アニメーションをクリア
+    tsumoAnimationState.value = null;
+    riichiAnimationState.value = null;
     gameStore.resetGameForNewSession();
     router.push('/');
   }
@@ -406,6 +473,45 @@ function onAnkanSelected(tile) { // モーダルからのイベント
   flex-direction: column-reverse; /* 内部の flex レイアウトを維持 */
   border: 1px solid #740e017e; /* 赤茶色の枠線 */
   box-sizing: border-box; /* 枠線をwidth/heightに含める */
+}
+.ron-indicator {
+  position: absolute;
+  width: 200px; /* 画像サイズは適宜調整 */
+  height: auto;
+  z-index: 50; /* 他の要素より手前に表示 */
+  pointer-events: none; /* 画像がクリックを妨げないように */
+  /* 中央揃えのための基本transform */
+  transform: translate(-50%, -50%);
+  animation: ron-pop-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes ron-pop-in {
+  from {
+    transform: translate(-50%, -50%) scale(0.5);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+}
+
+/* 各プレイヤーの位置に合わせた表示位置 */
+.ron-indicator-bottom {
+  top: 75%;
+  left: 50%;
+}
+.ron-indicator-top {
+  top: 35%;
+  left: 50%;
+}
+.ron-indicator-left {
+  top: 50%;
+  left: 22%;
+}
+.ron-indicator-right {
+  top: 53%;
+  left: 78%;
 }
 
 .game-board-top-left-buttons {

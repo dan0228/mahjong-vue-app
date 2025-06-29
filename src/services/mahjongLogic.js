@@ -1319,14 +1319,17 @@ export function checkYonhaiWin(hand5tiles, winTile, isTsumo, gameContext = {}) {
 
     let score = 0;
     const isParent = gameContext.isParent || false;
-    const calculatedFans = yakuResult.fans;
-    const calculatedYakumanPower = yakuResult.yakumanPower;
+    let calculatedFans = yakuResult.fans;
+    let calculatedYakumanPower = yakuResult.yakumanPower;
     let isWinResult = false; 
     let resultYakuList = [];
     let resultIsYakuman = false;
+    let resultYakumanPower = calculatedYakumanPower;
+    let scoreName = null;
 
     const MANGAN_BASE_KO = 8000;
     const MANGAN_BASE_OYA = 12000;
+    const KAZOE_YAKUMAN_FANS_THRESHOLD = 13;
 
     if (calculatedYakumanPower > 0) { // 役満の場合
       isWinResult = true;
@@ -1336,7 +1339,16 @@ export function checkYonhaiWin(hand5tiles, winTile, isTsumo, gameContext = {}) {
       // 役満は満貫の4倍が基本
       const yakumanUnitScore = isParent ? MANGAN_BASE_OYA * 4 : MANGAN_BASE_KO * 4;
       score = yakumanUnitScore * calculatedYakumanPower; // N倍役満に対応
+      scoreName = calculatedYakumanPower >= 2 ? `${calculatedYakumanPower}倍役満` : "役満";
 
+    } else if (calculatedFans >= KAZOE_YAKUMAN_FANS_THRESHOLD) { // 数え役満の場合
+      isWinResult = true;
+      resultIsYakuman = true;
+      resultYakumanPower = 1; // 1倍役満として扱う
+      resultYakuList = yakuResult.yaku; // 通常役のリストはそのまま
+      const yakumanUnitScore = isParent ? MANGAN_BASE_OYA * 4 : MANGAN_BASE_KO * 4;
+      score = yakumanUnitScore;
+      scoreName = "数え役満";
     } else if (calculatedFans > 0) { // 通常役の場合
       isWinResult = true;
       resultIsYakuman = false;
@@ -1350,10 +1362,13 @@ export function checkYonhaiWin(hand5tiles, winTile, isTsumo, gameContext = {}) {
 
       if (calculatedFans >= SANBAIMAN_FANS_THRESHOLD) { // 三倍満
         score = isParent ? MANGAN_BASE_OYA * 3 : MANGAN_BASE_KO * 3;
+        scoreName = "三倍満";
       } else if (calculatedFans >= BAIMAN_FANS_THRESHOLD) { // 倍満
         score = isParent ? MANGAN_BASE_OYA * 2 : MANGAN_BASE_KO * 2;
+        scoreName = "倍満";
       } else if (calculatedFans >= HANEMAN_FANS_THRESHOLD) { // 跳満
         score = isParent ? 18000 : 12000; // 親18000点, 子12000点
+        scoreName = "跳満";
       } else if (calculatedFans >= MANGAN_FANS_THRESHOLD) { // 満貫
         // 4翻かつ平和+ツモの場合は0点とする特殊ルール
         const isPinfuTsumo4Han = calculatedFans === 4 &&
@@ -1367,6 +1382,7 @@ export function checkYonhaiWin(hand5tiles, winTile, isTsumo, gameContext = {}) {
       } else {
         // 満貫未満の場合は点数移動なし (score は 0 のまま)
         score = 0;
+        scoreName = null;
       }
     } else {
       // 役なし (calculateYonhaiYaku で yakuResult.fans と yakumanPower が 0 になるため)
@@ -1380,7 +1396,8 @@ export function checkYonhaiWin(hand5tiles, winTile, isTsumo, gameContext = {}) {
         score: score, // 満貫未満なら0, それ以上なら計算後の点数
         fans: calculatedFans, 
         isYakuman: resultIsYakuman,
-        yakumanPower: calculatedYakumanPower 
+        yakumanPower: resultYakumanPower,
+        scoreName: scoreName
       };
     }
   }
@@ -1427,35 +1444,4 @@ export function checkYonhaiTenpai(hand4tiles, gameContext = {}) { // gameContext
       return true;
   });
   return { isTenpai: uniqueWaits.length > 0, waits: uniqueWaits };
-}
-
-/**
- * 翻数や役満情報から点数名（満貫、跳満など）を取得します。
- * @param {number} fans - 翻数
- * @param {boolean} isYakuman - 役満かどうか
- * @param {number} yakumanPower - N倍役満の場合のN
- * @returns {string|null} 点数名、該当なしの場合はnull
- */
-export function getScoreName(fans, isYakuman, yakumanPower) {
-  if (isYakuman) {
-    if (yakumanPower >= 2) return `${yakumanPower}倍役満`;
-    return "役満";
-  }
-
-  // 四牌麻雀の満貫以上の閾値 (通常の麻雀と異なる場合があるため要確認)
-  const MANGAN_FANS_THRESHOLD = 4;     // 4翻以上で満貫
-  const HANEMAN_FANS_THRESHOLD = 6;    // 6翻以上で跳満
-  const BAIMAN_FANS_THRESHOLD = 8;     // 8翻以上で倍満
-  const SANBAIMAN_FANS_THRESHOLD = 11; // 11翻以上で三倍満
-
-  if (fans >= SANBAIMAN_FANS_THRESHOLD) {
-    return "三倍満";
-  } else if (fans >= BAIMAN_FANS_THRESHOLD) {
-    return "倍満";
-  } else if (fans >= HANEMAN_FANS_THRESHOLD) {
-    return "跳満";
-  } else if (fans >= MANGAN_FANS_THRESHOLD) {
-    return "満貫";
-  }
-  return null; // 満貫未満の場合は特定の名称なし
 }

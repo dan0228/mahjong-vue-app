@@ -416,50 +416,48 @@ function getPlayerDisplayLabel(player) {
   height: 100%; /* 画像の高さに合わせる */
   z-index: 4; /* 他の情報画像より手前、または同等に調整 */
 }
-.vertical-player-score { /* 自家・対面用 */
-  min-width: calc(18px * 6 + 10px); /* 6桁分の目安幅 + 符号分 */
-}
-.side-player-score { /* 上家・下家用 */
-  min-width: calc(14px * 6 + 8px); /* 少し小さめの目安幅 */
+.player-score-image-container.side-player-score {
+  /* 5桁+符号が入る十分な固定幅を設定 */
+  width: 85px;
 }
 .bottom-player-score { /* 自家点数用の追加位置調整 */
   bottom: -29.5%; /* コンテナ下部からの位置 */
   right: 31%;  /* コンテナ右部からの位置 */
 }
 .left-player-score { /* 上家(画面左)点数用の追加位置調整 */
-  top: -13%;
-  left: -62%;
-  transform: translateY(-50%) rotate(90deg);
+  top: 57%; /* 垂直方向は中央のまま */
+  left: -4.5%; /* 左端からの距離を固定 */
+  transform: translateY(-50%) rotate(90deg); /* 垂直中央揃えと回転 */
+  justify-content: flex-start; /* 左揃え（回転後は上揃え） */
 }
 .top-player-score { /* 対面(画面上)点数用の追加位置調整 */
   top: -31%;
-  left: 65%;
+  left: 50%;
   transform: translateX(-50%) rotate(180deg);
 }
 .right-player-score { /* 下家(画面右)点数用の追加位置調整 */
-  top: 114%;
-  right: -62%;
-  transform: translateY(-50%) rotate(-90deg);
-}
-.vertical-player-score .score-sign-image {
-  width: 10%; /* 対面の符号画像の幅 */
-}
-.side-player-score .score-sign-image {
-  width: 4.1%; /* 上家・下家の符号画像の幅*/
-}
-.bottom-player-score .score-digit-image {
-  width: 10%; /* 自家の数字画像の幅を小さく調整 */
+  top: 43%; /* 垂直方向は中央のまま */
+  right: -4.5%; /* 右端からの距離を固定 */
+  transform: translateY(-50%) rotate(-90deg); /* 垂直中央揃えと回転 */
+  justify-content: flex-start; /* 右揃え（回転後は上揃え） */
 }
 .score-sign-image { /* 共通スタイル */
   height: auto;
   object-fit: contain;
-  margin-right: 1px; /* 符号と数字の間 */
+  margin-right: 0px; /* 符号と数字の間 */
 }
+.bottom-player-score .score-sign-image, .vertical-player-score .score-sign-image {
+  width: 12.5px; /* 固定幅に変更 */
+}
+.bottom-player-score .score-digit-image,
 .vertical-player-score .score-digit-image {
-  width: 10%; /* 対面の数字画像の幅 */
+  width: 12.5px; /* 固定幅に変更 */
 }
 .side-player-score .score-digit-image {
-  width: 4.1%; /* 上家・下家の数字画像の幅 */
+  width: 12.5px; /* 固定幅に変更 */
+}
+.side-player-score .score-sign-image {
+  width: 12.5px; /* 固定幅に変更 */
 }
 .score-digit-image { /* 共通スタイル */
   height: auto;

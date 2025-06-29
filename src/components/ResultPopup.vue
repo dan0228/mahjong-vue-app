@@ -1,11 +1,14 @@
 <template>
-  <div v-if="show" class="popup-overlay" @click.self="closePopup">
+  <div v-if="show" class="popup-overlay">
     <div class="popup-content">
 
       <div class="result-section round-info" style="text-align: center; margin-bottom: 15px;">
         <p class="round-main-info">{{ roundWindDisplay }}{{ resultDetails.roundNumber }}局 {{ resultDetails.honba }}本場</p>
       </div>
-      <h2 v-if="!isDrawResult">{{ resultTitle }}</h2>
+      <div v-if="!isDrawResult" class="winner-title-container">
+        <img v-if="winnerIconSrc" :src="winnerIconSrc" alt="Winner Icon" class="winner-icon" />
+        <h2>{{ resultTitle }}</h2>
+      </div>
       <div v-if="!isDrawResult" class="result-section round-info-details"> <!-- 和了時のみ表示 -->
         <div class="dora-display">
           <span class="dora-label">ドラ</span>
@@ -20,14 +23,13 @@
           <span class="dora-label">裏ドラ</span>
           <div class="dora-tiles">
             <template v-if="isRiichiAgari">
-              <!-- リーチ和了時は、明らかになった裏ドラ表示牌を表示 -->
-              <img v-for="(tile, index) in resultDetails.uraDoraIndicators" :key="'ura-revealed-'+tile.id + '-' + index" :src="getTileImageUrl(tile)" :alt="tileToString(tile)" class="tile-image-small"/>
-              <!-- 裏ドラの残りを裏向きで表示 (最大4つまで) -->
-              <img v-for="n in Math.max(0, 4 - (resultDetails.uraDoraIndicators?.length || 0))" :key="'ura-hidden-riichi-' + n" :src="getTileImageUrl({type: 'ura'})" alt="裏ドラ" class="tile-image-small"/>
+              <!-- リーチ和了時は、表ドラの数だけ裏ドラを表示（めくれている分＋裏向き） -->
+              <img v-for="(tile, index) in resultDetails.uraDoraIndicators" :key="'ura-revealed-'+tile.id + '-' + index" :src="getTileImageUrl(tile)" :alt="tileToString(tile)" class="tile-image-small" />
+              <img v-for="n in Math.max(0, 4 - (resultDetails.uraDoraIndicators?.length || 0))" :key="'ura-hidden-riichi-' + n" :src="getTileImageUrl({type: 'ura'})" alt="裏ドラ" class="tile-image-small" />
             </template>
             <template v-else>
-              <!-- リーチ和了でない場合は、表ドラの数だけ裏向きで表示 -->
-              <img v-for="n in (resultDetails.doraIndicators?.length || 0)" :key="'ura-hidden-no-riichi-' + n" :src="getTileImageUrl({type: 'ura'})" alt="裏ドラ" class="tile-image-small"/>
+              <!-- リーチなし和了や流局時は、4牌分を裏向きで表示 -->
+              <img v-for="n in 4" :key="'ura-hidden-no-riichi-' + n" :src="getTileImageUrl({type: 'ura'})" alt="裏ドラ" class="tile-image-small"/>
             </template>
           </div>
         </div>
@@ -59,8 +61,12 @@
           </li>
         </ul>
         <p class="total-score">
-          <span v-if="!isYakumanResult && resultDetails.totalFans > 0">{{ resultDetails.totalFans }}翻 </span>
-          {{ resultDetails.scoreName ? resultDetails.scoreName : (resultDetails.score ? `${resultDetails.score}点` : '') }}
+          <span v-if="isKazoeYakuman">
+            {{ resultDetails.totalFans }}翻
+          </span>
+          <span v-else-if="!isYakumanResult && resultDetails.totalFans > 0">
+            {{ resultDetails.totalFans }}翻
+          </span>          {{ resultDetails.scoreName ? resultDetails.scoreName : (resultDetails.score ? `${resultDetails.score}点` : '') }}
         </p>
       </div>
       <div v-if="isDrawResult" class="result-section draw-info"> <!-- 流局時のみ表示 -->
@@ -144,20 +150,35 @@ const resultTitle = computed(() => {
   return '和了結果';
 });
 
-const isYakumanResult = computed(() => {
-  return props.resultDetails.scoreName && props.resultDetails.scoreName.includes('役満');
-});
-
 const isRiichiAgari = computed(() => {
-  // gameStore から和了プレイヤーのリーチ状態を取得する必要がある
-  // ここでは resultDetails に isRiichi フラグが含まれていると仮定するか、
-  // winner オブジェクトからリーチ状態を参照する
   const winnerId = Object.keys(props.resultDetails.pointChanges || {}).find(playerId => props.resultDetails.pointChanges[playerId] > 0);
   if (!winnerId) return false;
   const winner = gameStore.getPlayerById(winnerId);
   return winner?.isRiichi || winner?.isDoubleRiichi;
 });
 
+const winnerIconSrc = computed(() => {
+  if (isDrawResult.value) return null;
+
+  const winnerId = Object.keys(props.resultDetails.pointChanges || {}).find(playerId => props.resultDetails.pointChanges[playerId] > 0);
+  if (!winnerId) return null;
+
+  // player1 (あなた) の場合は hito_icon_1.png を表示
+  if (winnerId === 'player1') return '/assets/images/info/hito_icon_1.png'; // あなた
+  if (winnerId === 'player2') return '/assets/images/info/cat_icon_3.png'; // くろ
+  if (winnerId === 'player3') return '/assets/images/info/cat_icon_2.png'; // たま
+  if (winnerId === 'player4') return '/assets/images/info/cat_icon_1.png'; // とら
+
+  return null;
+});
+
+const isYakumanResult = computed(() => {
+  return props.resultDetails.scoreName && props.resultDetails.scoreName.includes('役満');
+});
+
+const isKazoeYakuman = computed(() => {
+  return props.resultDetails.scoreName === '数え役満';
+});
 
 const originalHandWithoutAgariTile = computed(() => {
   if (!props.resultDetails.winningHand || !props.resultDetails.agariTile) {
@@ -213,8 +234,14 @@ function getPointChangeClass(change) {
   border-radius: 8px;
   max-width: 80%;
   text-align: center;
-  transform: scale(0.85); /* ポップアップ全体を縮小して画面に収める */
+  transform: scale(0.75); /* ポップアップ全体を縮小して画面に収める */
   box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+.winner-title-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 .popup-content h2 { margin-top: 0; color: #333; }
 .popup-content h3 { margin-top: 15px; margin-bottom: 8px; color: #444; border-bottom: 1px solid #eee; padding-bottom: 5px;}
@@ -252,6 +279,12 @@ function getPointChangeClass(change) {
 }
 .point-increase { color: green; }
 .point-decrease { color: red; }
+
+.winner-icon {
+  width: 55px;
+  height: 55px;
+  margin-bottom: 15px;
+}
 
 .popup-content button {
   padding: 10px 20px;

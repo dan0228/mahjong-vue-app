@@ -36,10 +36,10 @@ function getRankedPlayers(players) {
 export const useGameStore = defineStore('game', {
   state: () => ({
     players: [
-      { id: 'player1', name: '自家', hand: [], discards: [], melds: [], isDealer: false, score: 25000, seatWind: null },
-      { id: 'player2', name: '下家', hand: [], discards: [], melds: [], isDealer: false, score: 25000, seatWind: null },
-      { id: 'player3', name: '対面', hand: [], discards: [], melds: [], isDealer: false, score: 25000, seatWind: null },
-      { id: 'player4', name: '上家', hand: [], discards: [], melds: [], isDealer: false, score: 25000, seatWind: null }
+      { id: 'player1', name: 'あなた', hand: [], discards: [], melds: [], isDealer: false, score: 25000, seatWind: null },
+      { id: 'player2', name: 'くろ　', hand: [], discards: [], melds: [], isDealer: false, score: 25000, seatWind: null },
+      { id: 'player3', name: 'たま　', hand: [], discards: [], melds: [], isDealer: false, score: 25000, seatWind: null },
+      { id: 'player4', name: 'とら　', hand: [], discards: [], melds: [], isDealer: false, score: 25000, seatWind: null }
     ],
     wall: [], // 山牌
     deadWall: [], // 王牌 (嶺上牌、ドラ表示牌など)
@@ -1145,7 +1145,7 @@ export const useGameStore = defineStore('game', {
           totalFans: winResult.fans,
           fu: winResult.fu || 0, // 符 (四牌麻雀では簡略化されることが多い)
           score: winResult.score,
-          scoreName: mahjongLogic.getScoreName(winResult.fans, winResult.isYakuman, winResult.yakumanPower), // 役満名や満貫などの名称
+          scoreName: winResult.scoreName, // 役満名や満貫などの名称
           pointChanges: pointChanges,
         };
         // TODO: 供託リーチ棒の処理 (和了者が取得)
@@ -1256,6 +1256,7 @@ export const useGameStore = defineStore('game', {
       // 最終結果の詳細情報をセット
       this.finalResultDetails = {
         rankedPlayers: sortedPlayers.map((player, index) => ({
+          id: player.id,
           rank: index + 1,
           name: player.name,
           score: player.score,

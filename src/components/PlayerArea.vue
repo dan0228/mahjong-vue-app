@@ -35,7 +35,7 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits, computed } from 'vue';
+import { defineProps, defineEmits, computed, ref, watch } from 'vue';
 import PlayerHand from './PlayerHand.vue';
 import { useGameStore } from '@/stores/gameStore';
 import { GAME_PHASES } from '@/stores/gameStore';
@@ -53,6 +53,13 @@ const emit = defineEmits(['tile-selected', 'action-declared']);
 
 const gameStore = useGameStore();
 
+const actionInProgress = ref(false);
+
+// ゲームの状態が変化したら、アクションボタンを再表示できるようにする
+watch(() => [gameStore.gamePhase, gameStore.activeActionPlayerId, gameStore.currentTurnPlayerId], () => {
+  actionInProgress.value = false;
+}, { deep: true });
+
 const positionClass = computed(() => `player-area-${props.position}`);
 const isCurrentTurn = computed(() => gameStore.currentTurnPlayerId === props.player.id);
 
@@ -69,27 +76,30 @@ const isMyTurnAndCanActBeforeDiscard = computed(() => {
 });
 
 // 自分のターンのアクション
-const canDeclareTsumoAgari = computed(() => isMyTurnAndCanActBeforeDiscard.value && playerEligibility.value.canTsumoAgari);
-const canDeclareRiichi = computed(() => isMyTurnAndCanActBeforeDiscard.value && playerEligibility.value.canRiichi);
+const canDeclareTsumoAgari = computed(() => !actionInProgress.value && isMyTurnAndCanActBeforeDiscard.value && playerEligibility.value.canTsumoAgari);
+const canDeclareRiichi = computed(() => !actionInProgress.value && isMyTurnAndCanActBeforeDiscard.value && playerEligibility.value.canRiichi);
 const canDeclareAnkan = computed(() => {
-  if (!isMyTurnAndCanActBeforeDiscard.value) return false;
+  if (actionInProgress.value || !isMyTurnAndCanActBeforeDiscard.value) return false;
   const ankanInfo = gameStore.canDeclareAnkan[props.player.id];
   return ankanInfo === true || (Array.isArray(ankanInfo) && ankanInfo.length > 0);
 });
 const canDeclareKakan = computed(() => {
-  if (!isMyTurnAndCanActBeforeDiscard.value) return false;
+  if (actionInProgress.value || !isMyTurnAndCanActBeforeDiscard.value) return false;
   const kakanInfo = gameStore.canDeclareKakan[props.player.id];
   return kakanInfo === true || (Array.isArray(kakanInfo) && kakanInfo.length > 0);
 });
 
 // 他家のアクションに対する応答
-const canDeclareRon = computed(() => gameStore.activeActionPlayerId === props.player.id && playerEligibility.value.canRon);
-const canDeclarePon = computed(() => gameStore.activeActionPlayerId === props.player.id && playerEligibility.value.canPon);
-const canDeclareMinkan = computed(() => gameStore.activeActionPlayerId === props.player.id && playerEligibility.value.canMinkan);
+const canDeclareRon = computed(() => !actionInProgress.value && gameStore.activeActionPlayerId === props.player.id && playerEligibility.value.canRon);
+const canDeclarePon = computed(() => !actionInProgress.value && gameStore.activeActionPlayerId === props.player.id && playerEligibility.value.canPon);
+const canDeclareMinkan = computed(() => !actionInProgress.value && gameStore.activeActionPlayerId === props.player.id && playerEligibility.value.canMinkan);
 
-const showSkipButton = computed(() => gameStore.activeActionPlayerId === props.player.id);
+const showSkipButton = computed(() => !actionInProgress.value && gameStore.activeActionPlayerId === props.player.id);
 
 function emitAction(actionType) {
+    // ボタンが押されたら、すぐに非表示にする
+    actionInProgress.value = true;
+    
     let tileData = null;
     if (actionType === 'pon') tileData = playerEligibility.value.canPon;
     else if (actionType === 'minkan') tileData = playerEligibility.value.canMinkan;

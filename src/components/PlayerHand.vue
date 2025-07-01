@@ -63,10 +63,17 @@
   function canSelectTile(tile, isFromDrawnTile) {
     if (!props.isMyHand || !props.canDiscard || !tile) return false;
 
+    // リーチ宣言直後の打牌選択
     if (gameStore.gamePhase === 'awaitingRiichiDiscard') {
       return gameStore.riichiDiscardOptions.includes(tile.id);
     }
-    // 通常の打牌時は常に選択可能 (canDiscard で制御されている前提)
+    // リーチ中の通常のツモ
+    if (props.player.isRiichi || props.player.isDoubleRiichi) {
+      // リーチ後はツモった牌しか捨てられない
+      return isFromDrawnTile;
+    }
+
+    // 通常の打牌時は常に選択可能
     return true;
   }
 

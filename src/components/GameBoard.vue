@@ -20,16 +20,14 @@
       <!-- 画面の一番下に表示 -->
       <div class="player-area-container bottom-player-container" v-if="playerAtBottom">
         <!-- フリテン表示 -->
-        <img v-if="isMyPlayerInFuriTen" src="/assets/images/status/furiten.png" alt="フリテン" class="furiten-indicator" />
+        <img v-if="isMyPlayerInFuriTen" src="/assets/images/status/furiten.png" alt="フリテン" class="furiten-indicator bottom-furiten" />
         <PlayerArea :player="playerAtBottom" position="bottom" :is-my-hand="determineIsMyHand(playerAtBottom.id)" :drawn-tile-display="drawnTileForPlayer(playerAtBottom.id)" :can-discard="canPlayerDiscard(playerAtBottom.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
       </div>
 
       <!-- 中央エリア (左右プレイヤーと中央テーブル) -->
       <div class="middle-row">
         <div class="player-area-container left-player-container" v-if="playerAtLeft">
-          <img src="/assets/images/info/cat_icon_1.png" alt="Cat Icon 1" class="cat-icon cat-icon-left" />
-          <img src="/assets/images/info/cat_icon_2.png" alt="Cat Icon 1" class="cat-icon cat-icon-top" />
-          <img src="/assets/images/info/cat_icon_3.png" alt="Cat Icon 1" class="cat-icon cat-icon-right" />
+          <img v-if="isLeftPlayerInFuriTen" src="/assets/images/status/furiten.png" alt="フリテン" class="furiten-indicator left-furiten" />
           <PlayerArea :player="playerAtLeft" position="left" :is-my-hand="determineIsMyHand(playerAtLeft.id)" :drawn-tile-display="drawnTileForPlayer(playerAtLeft.id)" :can-discard="canPlayerDiscard(playerAtLeft.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
         </div>
         <div class="center-table">
@@ -40,13 +38,15 @@
           </div>
         </div>
         <div class="player-area-container right-player-container" v-if="playerAtRight">
-          <PlayerArea :player="playerAtRight" position="right" :is-my-hand="determineIsMyHand(playerAtRight.id)" :drawn-tile-display="drawnTileForPlayer(playerAtRight.id)" :can-discard="canPlayerDiscard(playerAtRight.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
+         <img v-if="isRightPlayerInFuriTen" src="/assets/images/status/furiten.png" alt="フリテン" class="furiten-indicator right-furiten" />
+         <PlayerArea :player="playerAtRight" position="right" :is-my-hand="determineIsMyHand(playerAtRight.id)" :drawn-tile-display="drawnTileForPlayer(playerAtRight.id)" :can-discard="canPlayerDiscard(playerAtRight.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
         </div>
       </div>
 
       <!-- 画面の一番上に表示 -->
       <div class="player-area-container top-player-container" v-if="playerAtTop">
          <PlayerArea :player="playerAtTop" position="top" :is-my-hand="determineIsMyHand(playerAtTop.id)" :drawn-tile-display="drawnTileForPlayer(playerAtTop.id)" :can-discard="canPlayerDiscard(playerAtTop.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
+         <img v-if="isTopPlayerInFuriTen" src="/assets/images/status/furiten.png" alt="フリテン" class="furiten-indicator top-furiten" />
          <!-- 対面の捨て牌エリア (対面手牌のすぐ下) -->
          <div class="top-discard-container">
            <DiscardPile v-if="playerAtTop" :tiles="playerAtTop.discards" position="top" class="discard-pile-top-player" />
@@ -76,6 +76,9 @@
         @start-new-game="handleStartNewGameFromFinalResult"
         @back-to-title="handleBackToTitleFromFinalResult"
       />
+      <img src="/assets/images/info/cat_icon_1.png" alt="Cat Icon 1" class="cat-icon cat-icon-left" />
+      <img src="/assets/images/info/cat_icon_2.png" alt="Cat Icon 2" class="cat-icon cat-icon-top" />
+      <img src="/assets/images/info/cat_icon_3.png" alt="Cat Icon 3" class="cat-icon cat-icon-right" />
       <img v-if="ronAnimationState" src="/assets/images/status/ron.png" :class="['ron-indicator', `ron-indicator-${ronAnimationState.position}`]" alt="ロン" />
       <img v-if="riichiAnimationState" src="/assets/images/status/riichi.png" :class="['ron-indicator', `ron-indicator-${riichiAnimationState.position}`]" alt="リーチ" />
       <img v-if="tsumoAnimationState" src="/assets/images/status/tsumo.png" :class="['ron-indicator', `ron-indicator-${tsumoAnimationState.position}`]" alt="ツモ" />
@@ -166,7 +169,26 @@
 
   const isMyPlayerInFuriTen = computed(() => {
     if (!playerAtBottom.value) return false;
-    return !!gameStore.isFuriTen[playerAtBottom.value.id];
+    const playerId = playerAtBottom.value.id;
+    return !!(gameStore.isFuriTen[playerId] || gameStore.isDoujunFuriTen[playerId]);
+  });
+
+    const isTopPlayerInFuriTen = computed(() => {
+    if (!playerAtTop.value) return false;
+    const playerId = playerAtTop.value.id;
+    return !!(gameStore.isFuriTen[playerId] || gameStore.isDoujunFuriTen[playerId]);
+  });
+
+  const isLeftPlayerInFuriTen = computed(() => {
+    if (!playerAtLeft.value) return false;
+    const playerId = playerAtLeft.value.id;
+    return !!(gameStore.isFuriTen[playerId] || gameStore.isDoujunFuriTen[playerId]);
+  });
+
+  const isRightPlayerInFuriTen = computed(() => {
+    if (!playerAtRight.value) return false;
+    const playerId = playerAtRight.value.id;
+    return !!(gameStore.isFuriTen[playerId] || gameStore.isDoujunFuriTen[playerId]);
   });
 
   const gameMode = computed(() => gameStore.gameMode);
@@ -560,35 +582,56 @@ function onAnkanSelected(tile) { // モーダルからのイベント
 
 .furiten-indicator {
   position: absolute;
-  /* 手牌の前に表示されるように調整 */
-  bottom: 80px; /* 手牌の高さや位置に応じて調整 */
-  left: 50%;
-  transform: translateX(-50%);
   width: 100px; /* 画像サイズに合わせて調整 */
   height: auto;
   z-index: 40; /* 手牌や他のUIより手前に */
   pointer-events: none; /* 画像がクリックを妨げないように */
 }
 
+.bottom-furiten {
+  /* 手牌の前に表示されるように調整 */
+  bottom: 120px; /* 手牌の高さや位置に応じて調整 */
+  left: 58%;
+  transform: translateX(-50%);
+}
+
+.top-furiten {
+  /* 対面プレイヤーの手牌の上あたり */
+  top: 90px; /* 手牌の上からの距離 */
+  left: 50%;
+  transform: translateX(-50%) rotate(180deg); /* 180度回転 */
+}
+
+.left-furiten {
+  /* 左プレイヤーの手牌の左あたり */
+  top: 50%;
+  left: 10px; /* 手牌の左からの距離 */
+  transform: translateY(-50%) rotate(90deg); /* 90度回転 */
+}
+
+.right-furiten {
+  /* 右プレイヤーの手牌の右あたり */
+  top: 50%;
+  right: 10px; /* 手牌の右からの距離 */
+  transform: translateY(-50%) rotate(-90deg); /* -90度回転 */
+}
+
 .cat-icon-left {
-  /* 左プレイヤーの手牌の上部 */
-  top: -108px; /* コンテナの上端から少し上にずらす */
-  left: 108%; /* コンテナの水平中央に配置 */
-  transform: translateX(-50%); /* 中央揃えのための調整 */
+  top: 215px;
+  left: 40px;
+  transform: translate(-50%, -50%);
 }
 
 .cat-icon-top {
-  /* 対面プレイヤーの手牌の上部 */
-  top: -255px; /* コンテナの上端から少し上にずらす */
-  left: 530%; /* コンテナの水平中央に配置 */
-  transform: translateX(-50%); /* 中央揃えのための調整 */
+  top: 70px;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .cat-icon-right {
-  /* 右プレイヤーの手牌の上部 */
-  top: -108px; /* コンテナの上端から少し上にずらす */
-  right: -1045%; /* コンテナの水平中央に配置 */
-  transform: translateX(-50%); /* 中央揃えのための調整 */
+  top: 215px;
+  left: 320px;
+  transform: translate(-50%, -50%);
 }
 
 .player-area-container {
@@ -626,10 +669,11 @@ function onAnkanSelected(tile) { // モーダルからのイベント
 }
 .left-player-container, .right-player-container {
   /* 左右プレイヤーのエリア */
-  width: 35px; /* 内容に合わせる */ 
+  width: 35px; /* 手牌の幅に合わせる */ 
   display: flex; 
   justify-content: center;
   z-index: 10; /* 他の要素より手前に表示 */
+  flex-shrink: 0; /* コンテナが縮まないようにする */
 }
 .bottom-player-container {
   /* 自分プレイヤーのエリア */
@@ -642,6 +686,7 @@ function onAnkanSelected(tile) { // モーダルからのイベント
   margin-right: auto; /* max-width時に中央寄せ */;
   z-index: 10; /* 他の要素より手前に表示 */
   padding-bottom: 0px; /* この値を調整して手牌の位置を上下に動かします。値を大きくすると上に、小さくすると下に移動します。 */
+  left: -30px;
 }
 
 .center-table {

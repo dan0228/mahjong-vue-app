@@ -11,9 +11,9 @@
       />
     </div>
     <div v-if="player.melds && player.melds.length > 0" class="melds-area">
-        <div v-for="(meld, index) in player.melds" :key="index" class="meld">
-          <span v-for="tile in meld.tiles" :key="tile.id" class="meld-tile">
-            <img :src="getTileImageUrl(tile)" :alt="tileToString(tile)" />
+        <div v-for="(meld, meldIndex) in player.melds" :key="meldIndex" class="meld">
+          <span v-for="(tile, tileIndex) in meld.tiles" :key="tile.id + '-' + tileIndex" :class="['meld-tile', getMeldTileRotationClass(meld, tileIndex)]">
+            <img :src="getMeldTileImage(meld, tile, tileIndex)" :alt="getMeldTileAlt(meld, tile, tileIndex)" class="meld-tile-image" />
           </span>
         </div>
     </div>
@@ -108,11 +108,96 @@ function emitAction(actionType) {
     // GameBoard側で選択UIを呼び出す前のトリガーとして機能すると想定。
     // より具体的には、カンする牌を選択するUIを別途呼び出し、その結果を渡す。
     else if (actionType === 'ankan') {
-        // TODO: 暗槓する牌を選択するUIを呼び出し、tileDataにセットする
+        const ankanOptions = gameStore.canDeclareAnkan[props.player.id];
+        if (Array.isArray(ankanOptions) && ankanOptions.length === 1) {
+            // 選択肢が1つしかないので、それを自動的に選択
+            tileData = ankanOptions[0];
+        } else {
+            // 選択肢が複数ある、またはUIでの選択が必要な場合
+            // GameBoardに選択を促すイベントを投げる (tileDataはnullのまま)
+            console.log("Multiple ankan options, UI selection needed.");
+        }
     } else if (actionType === 'kakan') {
         // TODO: 加槓する牌を選択するUIを呼び出し、tileDataにセットする
     }
     emit('action-declared', { playerId: props.player.id, actionType, tile: tileData });
+}
+
+function getMeldTileRotationClass(meld, tileIndex) {
+  // ポンと明槓以外は対象外
+  if (meld.type !== 'pon' && meld.type !== 'minkan') return '';
+
+  const players = gameStore.players;
+  const myPlayerId = props.player.id;
+  const fromPlayerId = meld.from;
+
+  const myIndex = players.findIndex(p => p.id === myPlayerId);
+  const fromIndex = players.findIndex(p => p.id === fromPlayerId);
+
+  if (myIndex === -1 || fromIndex === -1) return '';
+
+  // 鳴いた相手の相対位置を計算 (1:右(下家), 2:対面, 3:左(上家))
+  const relativePosition = (fromIndex - myIndex + players.length) % players.length;
+
+  let rotatedTileIndex = -1;
+  if (meld.type === 'pon') {
+    // ポン: プレイヤーの視点から見て、どの牌を横にするか
+    if (relativePosition === 1) { // 右(下家)から
+      rotatedTileIndex = 2; // 右端の牌
+    } else if (relativePosition === 2) { // 対面から
+      rotatedTileIndex = 1; // 真ん中の牌
+    } else if (relativePosition === 3) { // 左(上家)から
+      rotatedTileIndex = 0; // 左端の牌
+    }
+  } else if (meld.type === 'minkan') {
+    // 明槓: プレイヤーの視点から見て、どの牌を横にするか
+    if (relativePosition === 1) { // 右(下家)から
+      rotatedTileIndex = 3; // 一番右の牌
+    } else if (relativePosition === 2) { // 対面から
+      rotatedTileIndex = 1; // 左から2番目の牌
+    } else if (relativePosition === 3) { // 左(上家)から
+      rotatedTileIndex = 0; // 一番左の牌
+    }
+  }
+
+  // 対面プレイヤーの場合、牌の並びが視覚的に逆になるため、左右の解釈を入れ替える
+  if (props.position === 'top') {
+    const lastIndex = meld.tiles.length - 1;
+    if (rotatedTileIndex === 0) {
+      rotatedTileIndex = lastIndex;
+    } else if (rotatedTileIndex === lastIndex) {
+      rotatedTileIndex = 0;
+    }
+    // 中央の牌(index 1)は反転不要
+  }
+
+  // 右プレイヤーの場合のみ、牌の並びが視覚的に逆になるため、上下の解釈を入れ替える
+  if (props.position === 'right') {
+    const lastIndex = meld.tiles.length - 1;
+    if (rotatedTileIndex === 0) {
+      rotatedTileIndex = lastIndex;
+    } else if (rotatedTileIndex === lastIndex) {
+      rotatedTileIndex = 0;
+    }
+  }
+
+  // tileIndexが回転対象のインデックスと一致すればクラスを返す
+  return tileIndex === rotatedTileIndex ? 'rotated-meld-tile' : '';
+}
+
+function getMeldTileImage(meld, tile, tileIndex) {
+  // 暗槓の場合、真ん中の2枚を裏向きにする
+  if (meld.type === 'ankan' && (tileIndex === 1 || tileIndex === 2)) {
+    return getTileImageUrl(null); // tileUtilsのgetTileImageUrlはnullで裏向き画像を返す
+  }
+  return getTileImageUrl(tile);
+}
+
+function getMeldTileAlt(meld, tile, tileIndex) {
+  if (meld.type === 'ankan' && (tileIndex === 1 || tileIndex === 2)) {
+    return '裏向きの牌';
+  }
+  return tileToString(tile);
 }
 </script>
 
@@ -145,14 +230,138 @@ function emitAction(actionType) {
 
 /* 左右プレイヤーのエリア全体の幅を内容に合わせる */
 .player-area-left, .player-area-right {
-  width: fit-content; /* 幅を内容に合わせる */
+  width: 100%; /* 親コンテナの幅に合わせる */
 }
 
 
 .player-info { font-size: 0.9em; margin-bottom: 5px; text-align: center; }
-.melds-area { display: flex; gap: 5px; margin-top: 5px; }
-.meld { display: flex; }
-.meld-tile img { width: 20px; height: 30px; }
+.melds-area {
+  display: flex;
+  gap: 10px; /* 面子間のスペース */
+  position: absolute;
+  z-index: 20;
+}
+.meld {
+  display: flex;
+  gap: 0px; /* 牌同士はくっつける */
+  /* ポンとカンで表示位置がずれないように、コンテナのサイズをカン(4牌)に合わせる */
+}
+.player-area-bottom .meld,
+.player-area-top .meld {
+  min-width: 107px; /* (牌24px * 3) + (横向き牌35px) = 107px */
+}
+.player-area-bottom .meld {
+  justify-content: flex-end; /* ポン(3牌)の場合に右に寄せる */
+}
+.player-area-top .meld {
+  justify-content: flex-start; /* ポン(3牌)の場合に左に寄せる */
+}
+.player-area-left .meld {
+  min-height: 107px; /* (牌24px * 3) + (横向き牌35px) = 107px */
+}
+.player-area-right .meld {
+  min-height: 107px;
+  justify-content: flex-end; /* ポン(3牌)の場合に下に寄せる */
+}
+.player-area-left .meld,
+.player-area-right .meld {
+  flex-direction: column;
+}
+.player-area-left .meld-tile,
+.player-area-right .meld-tile {
+  width: 28px;  /* 回転後の牌の幅 (画像の高さに合わせる) */
+  height: 20px; /* 回転後の牌の高さ (画像の幅に合わせる) */
+}
+.player-area-bottom .meld-tile{
+  width: 28px;  /* 回転後の牌の幅 (画像の高さに合わせる) */
+  height: 20px; /* 回転後の牌の高さ (画像の幅に合わせる) */
+}
+.meld-tile {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+/* 自家(手前)の鳴き牌コンテナは少し大きく */
+.player-area-bottom .meld-tile {
+  width: auto; /* 幅は画像に合わせる */
+  height: 42px; /* 高さを指定 */
+}
+/* 各プレイヤーの面子エリアの位置と向き */
+.player-area-bottom .melds-area {
+  flex-direction: row-reverse; /* 右から左に面子を追加 */
+  bottom: 0%;
+  right: -170px;
+  margin-bottom: 5px;
+}
+.player-area-top .melds-area {
+  flex-direction: row; /* 左から右に面子を追加 */
+  top: 0%;
+  left:-150px;
+  margin-top: 5px;
+}
+.player-area-left .melds-area {
+  flex-direction: column; /* 上から下に面子を追加 */
+  top: 100px;
+  left: 7%; /* 手牌エリアの右側に配置 */
+  margin-left: 5px; /* 手牌との間に少しスペースを空ける */
+}
+.player-area-right .melds-area {
+  flex-direction: column-reverse; /* 下から上に面子を追加 */
+  top: -260px; /* 垂直方向の中央に配置 */
+  right: 20%; /* 手牌エリアの左側に配置 */
+  margin-right: 5px; /* 手牌との間に少しスペースを空ける */
+}
+
+/* 牌の基本サイズと向き */
+.meld-tile-image {
+  width: 20px;
+  height: 28px;
+  display: block;
+}
+/* 自家(手前)の鳴き牌画像は大きく */
+.player-area-bottom .meld-tile-image {
+  width: 25px;
+  height: 34px;
+}
+.player-area-top .meld-tile-image { transform: rotate(180deg); }
+.player-area-left .meld-tile-image { transform: rotate(90deg); }
+.player-area-right .meld-tile-image { transform: rotate(-90deg); }
+
+/* ポンで横にする牌のスタイル */
+.rotated-meld-tile {
+  /* 横向きの牌は少しずらして重ねる */
+  position: relative;
+}
+.player-area-bottom .rotated-meld-tile {
+  /* 横向きの牌のコンテナは、牌の高さ分の幅を持つ */
+  width: 34px; /* 新しい牌の高さに合わせる */
+  bottom: -5px; /* 位置を微調整 */
+}
+.player-area-top .rotated-meld-tile {
+  /* 横向きの牌のコンテナは、牌の高さ分の幅を持つ */
+  width: 28px;
+  bottom: 5px;
+}
+.player-area-bottom .rotated-meld-tile .meld-tile-image,
+.player-area-top .rotated-meld-tile .meld-tile-image {
+  transform: rotate(90deg);
+}
+.player-area-left .rotated-meld-tile{
+  /* 縦向きの牌のコンテナは、牌の高さ分の高さを持つ */
+  width: 20px;  /* 縦向きの牌の幅 */
+  height: 28px; /* 縦向きの牌の高さ */
+}
+.player-area-right .rotated-meld-tile {
+  /* 縦向きの牌のコンテナは、牌の高さ分の高さを持つ */
+  width: 20px;  /* 縦向きの牌の幅 */
+  height: 28px; /* 縦向きの牌の高さ */
+  left: 8px;
+}
+.player-area-left .rotated-meld-tile .meld-tile-image,
+.player-area-right .rotated-meld-tile .meld-tile-image {
+  transform: none; /* 左右プレイヤーの場合は回転をリセットして縦置きにする */
+}
+
 .player-actions {
     margin-top: 5px;
     display: flex;
@@ -191,7 +400,7 @@ function emitAction(actionType) {
 }
 .player-actions-left {
   /* 左側: 画面から見て手牌の右下 */
-  bottom: 70%;
+  bottom: 0%;
   right: -230%;
   /* transform: translate(X, Y); で微調整も可能 */
   align-items: flex-end; /* ボタンを右寄せ */
@@ -206,7 +415,7 @@ function emitAction(actionType) {
 }
 .action-image-button {
   /* ボタン画像を適切なサイズに調整 */
-  width: 100px; /* 例: 幅60px (調整可能) */
+  width: 84px; /* 例: 幅60px (調整可能) */
   height: auto; /* 高さは自動 */
   cursor: pointer;
   transition: transform 0.15s ease, filter 0.15s ease;

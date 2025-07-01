@@ -247,27 +247,18 @@ const rightPlayerScoreInfo = computed(() => {
 // 王牌表示用の算出プロパティ
 const deadWallDisplayTiles = computed(() => {
   const deadWall = gameStore.deadWall;
-  const doraIndicator = gameStore.doraIndicators && gameStore.doraIndicators.length > 0 ? gameStore.doraIndicators[0] : null;
+  const revealedDoraIndicators = gameStore.doraIndicators;
   const displayPairs = [];
   const numPairsToDisplay = 4; // 表示する牌のペアの数 (実質4牌分)
-  const tilesPerPair = 2;
-  const totalTilesToConsider = numPairsToDisplay * tilesPerPair; // 8牌分考慮
-
-  if (!deadWall || deadWall.length < totalTilesToConsider) {
-    // 王牌が足りない場合は、表示できる分だけ裏向きで表示するか、何も表示しない
-    // ここでは、足りない場合は空にする
-    return [];
-  }
 
   for (let i = 0; i < numPairsToDisplay; i++) {
-    const bottomTileIndex = i * tilesPerPair;
-    const topTileIndex = bottomTileIndex + 1;
-
-    if (i === 0 && doraIndicator) { // 左端のペアで、ドラ表示牌がある場合
-      // ドラ表示牌を上の牌とし、下の牌も同じ（または王牌の構造から取得）
-      displayPairs.push({ bottom: doraIndicator, top: doraIndicator });
-    } else { // ドラ表示牌以外、またはドラ表示牌がない場合
-      // 裏向きの牌を表示
+    // この位置に表示すべきドラ表示牌があるかチェック
+    if (revealedDoraIndicators && i < revealedDoraIndicators.length) {
+      const doraIndicator = revealedDoraIndicators[i];
+      // ドラ表示牌を上の牌とし、下の牌は裏向きで表示
+      displayPairs.push({ bottom: { type: 'ura' }, top: doraIndicator });
+    } else {
+      // 表示すべきドラがない場合は、上下ともに裏向きの牌を表示
       displayPairs.push({ bottom: { type: 'ura' }, top: { type: 'ura' } });
     }
   }

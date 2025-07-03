@@ -76,12 +76,9 @@
         @start-new-game="handleStartNewGameFromFinalResult"
         @back-to-title="handleBackToTitleFromFinalResult"
       />
-      <img src="/assets/images/info/cat_icon_1.png" alt="Cat Icon 1" class="cat-icon cat-icon-left" />
-      <img src="/assets/images/info/cat_icon_2.png" alt="Cat Icon 2" class="cat-icon cat-icon-top" />
-      <img src="/assets/images/info/cat_icon_3.png" alt="Cat Icon 3" class="cat-icon cat-icon-right" />
-      <img v-if="ronAnimationState" src="/assets/images/status/ron.png" :class="['ron-indicator', `ron-indicator-${ronAnimationState.position}`]" alt="ロン" />
+      <img v-if="animationDisplay && animationDisplay.type === 'ron'" src="/assets/images/status/ron.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`]" alt="ロン" />
       <img v-if="riichiAnimationState" src="/assets/images/status/riichi.png" :class="['ron-indicator', `ron-indicator-${riichiAnimationState.position}`]" alt="リーチ" />
-      <img v-if="tsumoAnimationState" src="/assets/images/status/tsumo.png" :class="['ron-indicator', `ron-indicator-${tsumoAnimationState.position}`]" alt="ツモ" />
+      <img v-if="animationDisplay && animationDisplay.type === 'tsumo'" src="/assets/images/status/tsumo.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`]" alt="ツモ" />
       <RulePopup v-if="showRulesPopup" @close="showRulesPopup = false" />
       <YakuListPopup v-if="showYakuListPopup" @close="showYakuListPopup = false" />
       </div> <!-- End of game-board-scaler -->
@@ -89,7 +86,7 @@
 </template>
   
 <script setup>
-  import { computed, onMounted, ref, onBeforeUnmount } from 'vue';
+  import { computed, onMounted, ref, onBeforeUnmount, watch } from 'vue';
   import { useRouter } from 'vue-router';
   import PlayerHand from './PlayerHand.vue';
   import { useGameStore } from '@/stores/gameStore';
@@ -112,9 +109,7 @@
   const kakanOptions = ref([]); // ストアから渡される加槓可能な牌のリスト
   const showRulesPopup = ref(false);
   const showYakuListPopup = ref(false);
-  const ronAnimationState = ref(null);
   const riichiAnimationState = ref(null);
-  const tsumoAnimationState = ref(null);
 
   // --- Scaling Logic ---
   const DESIGN_WIDTH = 360; // ベースとなるデザインの幅 (9:16のアスペクト比)
@@ -124,6 +119,23 @@
     transform: `translate(-50%, -50%) scale(${scaleFactor.value})`
   }));
 
+  // ストアのアニメーション状態を監視して、表示用の位置情報を計算する
+  const animationDisplay = computed(() => {
+    const state = gameStore.animationState;
+    if (!state.type || !state.playerId) {
+      return null;
+    }
+
+    const playerIndex = orderedPlayersForDisplay.value.findIndex(p => p.id === state.playerId);
+    let position = '';
+    if (playerIndex === 0) position = 'bottom';
+    else if (playerIndex === 1) position = 'right';
+    else if (playerIndex === 2) position = 'top';
+    else if (playerIndex === 3) position = 'left';
+
+    return { type: state.type, position };
+  });
+
   const showReturnButton = computed(() => {
     return (gameStore.gameMode === 'allManual' || gameStore.gameMode === 'vsCPU') &&
            !gameStore.showResultPopup &&
@@ -132,10 +144,12 @@
   // ユーザー自身のプレイヤーID (全操作モードでは 'player1' を仮定)
   // 将来的にはログイン機能やモード選択に応じて設定されるべき
   const myPlayerId = computed(() => {
-      // 全操作モードでは player1 を操作対象とする
-      if (gameStore.gameMode === 'allManual') return 'player1';
-      // TODO: CPU対戦やオンライン対戦の場合は、ストアに保持されたユーザー自身のIDを返す
-      return gameStore.myActualPlayerId; // 例: ストアに myActualPlayerId を持つ
+    // 全操作モードとCPU対戦モードでは、'player1'を操作プレイヤーと仮定
+    if (gameStore.gameMode === 'allManual' || gameStore.gameMode === 'vsCPU') {
+      return 'player1';
+    }
+    // TODO: オンライン対戦の場合は、ストアに保持されたユーザー自身のIDを返す
+    return gameStore.myActualPlayerId; // 例: ストアに myActualPlayerId を持つ
   });
 
   // プレイヤーの表示順序を動的に計算する (自分を下家として表示)
@@ -176,20 +190,24 @@
     const isTopPlayerInFuriTen = computed(() => {
     if (!playerAtTop.value) return false;
     const playerId = playerAtTop.value.id;
-    return !!(gameStore.isFuriTen[playerId] || gameStore.isDoujunFuriTen[playerId]);
+    // 全操作モードの場合のみAIのフリテンを表示
+    return gameStore.gameMode === 'allManual' && !!(gameStore.isFuriTen[playerId] || gameStore.isDoujunFuriTen[playerId]);
   });
 
   const isLeftPlayerInFuriTen = computed(() => {
     if (!playerAtLeft.value) return false;
     const playerId = playerAtLeft.value.id;
-    return !!(gameStore.isFuriTen[playerId] || gameStore.isDoujunFuriTen[playerId]);
+    // 全操作モードの場合のみAIのフリテンを表示
+    return gameStore.gameMode === 'allManual' && !!(gameStore.isFuriTen[playerId] || gameStore.isDoujunFuriTen[playerId]);
   });
 
   const isRightPlayerInFuriTen = computed(() => {
     if (!playerAtRight.value) return false;
     const playerId = playerAtRight.value.id;
-    return !!(gameStore.isFuriTen[playerId] || gameStore.isDoujunFuriTen[playerId]);
+    // 全操作モードの場合のみAIのフリテンを表示
+    return gameStore.gameMode === 'allManual' && !!(gameStore.isFuriTen[playerId] || gameStore.isDoujunFuriTen[playerId]);
   });
+
 
   const gameMode = computed(() => gameStore.gameMode);
 
@@ -335,20 +353,8 @@ function onAnkanSelected(tile) { // モーダルからのイベント
     const { playerId, actionType, tile } = payload;
     if (actionType === 'skip') {
       gameStore.playerSkipsCall(playerId);
-    } else if (actionType === 'tsumoAgari') {      
-      const playerIndex = orderedPlayersForDisplay.value.findIndex(p => p.id === playerId);
-      let positionClass = '';
-      if (playerIndex === 0) positionClass = 'bottom';
-      else if (playerIndex === 1) positionClass = 'right';
-      else if (playerIndex === 2) positionClass = 'top';
-      else if (playerIndex === 3) positionClass = 'left';
-      
-      if (positionClass) {
-        tsumoAnimationState.value = { position: positionClass };
-      }
-      setTimeout(() => {
-        gameStore.handleAgari(playerId, gameStore.drawnTile, true);
-      }, 1000); // 1秒のディレイ
+    } else if (actionType === 'tsumoAgari') {
+      gameStore.handleAgari(playerId, gameStore.drawnTile, true);
     } else if (actionType === 'riichi') {
       const playerIndex = orderedPlayersForDisplay.value.findIndex(p => p.id === playerId);
       let positionClass = '';
@@ -383,21 +389,9 @@ function onAnkanSelected(tile) { // モーダルからのイベント
         console.error("加槓する牌が選択されていません。");
       }
     } else if (actionType === 'ron') {
-      // ロンを宣言したプレイヤーの画面上の位置を特定
-      const playerIndex = orderedPlayersForDisplay.value.findIndex(p => p.id === playerId);
-      let positionClass = '';
-      if (playerIndex === 0) positionClass = 'bottom';
-      else if (playerIndex === 1) positionClass = 'right';
-      else if (playerIndex === 2) positionClass = 'top';
-      else if (playerIndex === 3) positionClass = 'left';
-      
-      if (positionClass) {
-        ronAnimationState.value = { position: positionClass };
-      }
-
       setTimeout(() => {
         gameStore.playerDeclaresCall(playerId, 'ron', gameStore.lastDiscardedTile);
-      }, 1000); // 1秒のディレイ
+      }, 0); // 0秒のディレイ
     } else if (actionType === 'pon') {
       gameStore.playerDeclaresCall(playerId, 'pon', tile); // ポン対象牌は PlayerArea から渡される
     } else if (actionType === 'minkan') {
@@ -410,38 +404,28 @@ function onAnkanSelected(tile) { // モーダルからのイベント
 
   function handleCloseResultPopup() {
     // ポップアップを閉じるだけの場合 (基本的には proceed を使う)
-    ronAnimationState.value = null; // アニメーションをクリア
-    tsumoAnimationState.value = null;
     riichiAnimationState.value = null;
     gameStore.showResultPopup = false;
   }
 
   function handleProceedToNextRound() {
-    ronAnimationState.value = null; // アニメーションをクリア
-    tsumoAnimationState.value = null;
     riichiAnimationState.value = null;
     gameStore.prepareNextRound();
   }
 
   function handleStartNewGameFromFinalResult() {
-    ronAnimationState.value = null; // アニメーションをクリア
-    tsumoAnimationState.value = null;
     riichiAnimationState.value = null;
     gameStore.resetGameForNewSession(); // 状態を完全にリセット
     gameStore.initializeGame(); // 新しいゲームを開始
   }
 
   function handleBackToTitleFromFinalResult() {
-    ronAnimationState.value = null; // アニメーションをクリア
-    tsumoAnimationState.value = null;
     riichiAnimationState.value = null;
     gameStore.returnToTitle();
     router.push('/'); // タイトル画面のパス (router/index.jsで定義) に遷移
   }
 
   function returnToTitle() {
-    ronAnimationState.value = null; // アニメーションをクリア
-    tsumoAnimationState.value = null;
     riichiAnimationState.value = null;
     gameStore.resetGameForNewSession();
     router.push('/');

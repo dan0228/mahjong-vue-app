@@ -11,7 +11,7 @@
       </h1>
       <nav class="menu">
         <ul>
-          <li><button @click="startGame('vsCPU')" disabled>ねこAI対戦 (準備中)</button></li>
+          <li><button @click="startGame('vsCPU')">ねこAI対戦</button></li>
           <li><button @click="startGame('online')" disabled>オンライン対戦 (準備中)</button></li>
           <li><button @click="startGame('allManual')">全操作モード</button></li>
           <li><button @click="showRulesPopup = true">ルール 📖</button></li>

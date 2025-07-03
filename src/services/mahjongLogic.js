@@ -263,16 +263,32 @@ export function checkCanAnkan(hand, drawnTile) {
  * 加槓が可能かチェックします。
  * @param {Array<Object>} hand 手牌
  * @param {Array<Object>} melds 既存の鳴き
- * @param {Object} tileToKakan 加槓しようとする牌 (手牌にあるもの)
- * @returns {boolean} 加槓可能ならtrue
+ * @param {Object|null} drawnTile ツモった牌 (nullの場合もある)
+ * @returns {Array<Object>} 加槓可能な牌の配列。可能でなければ空配列。
  */
-export function checkCanKakan(hand, melds, tileToKakan) {
-    if (!tileToKakan) return false;
-    // 手牌に加槓する牌があるか
-    if (!hand.some(tile => getTileKey(tile) === getTileKey(tileToKakan))) return false;
-    // 既存のポンがあるか
-    return melds.some(meld => meld.type === 'pon' && getTileKey(meld.tiles[0]) === getTileKey(tileToKakan));
-}
+export function checkCanKakan(hand, melds, drawnTile) {
+    const kakanableTiles = [];
+    if (!melds || melds.length === 0) {
+        return kakanableTiles;
+    }
+
+    const fullHand = drawnTile ? [...hand, drawnTile] : [...hand];
+    if (fullHand.length === 0) {
+        return kakanableTiles;
+    }
+
+    const ponMelds = melds.filter(meld => meld.type === 'pon');
+
+    for (const ponMeld of ponMelds) {
+        const ponKey = getTileKey(ponMeld.tiles[0]);
+        // 手牌（ツモ牌含む）の中に、ポンしている牌と同じ牌があるか探す
+        const tileInHand = fullHand.find(tile => getTileKey(tile) === ponKey);
+        if (tileInHand && !kakanableTiles.some(t => getTileKey(t) === ponKey)) {
+            kakanableTiles.push(tileInHand);
+        }
+    }
+
+    return kakanableTiles;}
 
 // --- 四牌麻雀用ロジック ---
 

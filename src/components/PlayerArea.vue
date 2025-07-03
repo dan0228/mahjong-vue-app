@@ -12,8 +12,17 @@
     </div>
     <div v-if="player.melds && player.melds.length > 0" class="melds-area">
         <div v-for="(meld, meldIndex) in player.melds" :key="meldIndex" class="meld">
-          <span v-for="(tile, tileIndex) in meld.tiles" :key="tile.id + '-' + tileIndex" :class="['meld-tile', getMeldTileRotationClass(meld, tileIndex)]">
+          <!-- 加槓の場合は、ベースとなるポン(3牌)を表示し、4枚目は重ねて表示する -->
+          <span v-for="(tile, tileIndex) in (meld.type === 'kakan' ? meld.tiles.slice(0, 3) : meld.tiles)"
+                :key="tile.id + '-' + tileIndex"
+                :class="['meld-tile', getMeldTileRotationClass(meld, tileIndex)]">
+
             <img :src="getMeldTileImage(meld, tile, tileIndex)" :alt="getMeldTileAlt(meld, tile, tileIndex)" class="meld-tile-image" />
+            <!-- 加槓の場合、横向きの牌の上に4枚目を重ねる -->
+            <img v-if="meld.type === 'kakan' && getMeldTileRotationClass(meld, tileIndex) === 'rotated-meld-tile'"
+                 :src="getTileImageUrl(meld.tiles[3])"
+                 :alt="tileToString(meld.tiles[3])"
+                 class="meld-tile-image kakan-added-tile" />
           </span>
         </div>
     </div>
@@ -85,8 +94,8 @@ const canDeclareAnkan = computed(() => {
 });
 const canDeclareKakan = computed(() => {
   if (actionInProgress.value || !isMyTurnAndCanActBeforeDiscard.value) return false;
-  const kakanInfo = gameStore.canDeclareKakan[props.player.id];
-  return kakanInfo === true || (Array.isArray(kakanInfo) && kakanInfo.length > 0);
+  const kakanOptions = gameStore.canDeclareKakan[props.player.id];
+  return Array.isArray(kakanOptions) && kakanOptions.length > 0;
 });
 
 // 他家のアクションに対する応答
@@ -118,14 +127,21 @@ function emitAction(actionType) {
             console.log("Multiple ankan options, UI selection needed.");
         }
     } else if (actionType === 'kakan') {
-        // TODO: 加槓する牌を選択するUIを呼び出し、tileDataにセットする
+        const kakanOptions = gameStore.canDeclareKakan[props.player.id];
+        if (Array.isArray(kakanOptions) && kakanOptions.length === 1) {
+            // 選択肢が1つしかないので、それを自動的に選択
+            tileData = kakanOptions[0];
+        } else {
+            // 選択肢が複数ある場合はUIでの選択が必要
+            console.log("Multiple kakan options, UI selection needed.");
+        }
     }
     emit('action-declared', { playerId: props.player.id, actionType, tile: tileData });
 }
 
 function getMeldTileRotationClass(meld, tileIndex) {
   // ポンと明槓以外は対象外
-  if (meld.type !== 'pon' && meld.type !== 'minkan') return '';
+  if (meld.type !== 'pon' && meld.type !== 'minkan' && meld.type !== 'kakan') return '';
 
   const players = gameStore.players;
   const myPlayerId = props.player.id;
@@ -140,7 +156,7 @@ function getMeldTileRotationClass(meld, tileIndex) {
   const relativePosition = (fromIndex - myIndex + players.length) % players.length;
 
   let rotatedTileIndex = -1;
-  if (meld.type === 'pon') {
+  if (meld.type === 'pon' || meld.type === 'kakan') {
     // ポン: プレイヤーの視点から見て、どの牌を横にするか
     if (relativePosition === 1) { // 右(下家)から
       rotatedTileIndex = 2; // 右端の牌
@@ -162,7 +178,8 @@ function getMeldTileRotationClass(meld, tileIndex) {
 
   // 対面プレイヤーの場合、牌の並びが視覚的に逆になるため、左右の解釈を入れ替える
   if (props.position === 'top') {
-    const lastIndex = meld.tiles.length - 1;
+    // ポンと加槓は3牌、明槓は4牌を基準に反転させる
+    const lastIndex = (meld.type === 'pon' || meld.type === 'kakan') ? 2 : 3;
     if (rotatedTileIndex === 0) {
       rotatedTileIndex = lastIndex;
     } else if (rotatedTileIndex === lastIndex) {
@@ -173,11 +190,21 @@ function getMeldTileRotationClass(meld, tileIndex) {
 
   // 右プレイヤーの場合のみ、牌の並びが視覚的に逆になるため、上下の解釈を入れ替える
   if (props.position === 'right') {
-    const lastIndex = meld.tiles.length - 1;
-    if (rotatedTileIndex === 0) {
-      rotatedTileIndex = lastIndex;
-    } else if (rotatedTileIndex === lastIndex) {
-      rotatedTileIndex = 0;
+    if (meld.type === 'pon' || meld.type === 'kakan') {
+      // ポンと加槓は3牌構成として反転 (0番目と2番目を入れ替える)
+      if (rotatedTileIndex === 0) {
+        rotatedTileIndex = 2;
+      } else if (rotatedTileIndex === 2) {
+        rotatedTileIndex = 0;
+      }
+    } else if (meld.type === 'minkan') {
+      // 明槓は4牌構成として反転
+      const lastIndex = 3; // 4牌なので最後のインデックスは3
+      if (rotatedTileIndex === 0) {
+        rotatedTileIndex = lastIndex;
+      } else if (rotatedTileIndex === lastIndex) {
+        rotatedTileIndex = 0;
+      }
     }
   }
 
@@ -213,19 +240,34 @@ function getMeldTileAlt(meld, tile, tileIndex) {
   display: flex;
   width: 100%;
   /* アクションボタンが絶対配置になるため、このエリアがボタンと重ならないようにマージン調整が必要な場合がある */
+  /* アクションボタンの基準位置を安定させるため、手牌エリアに最小サイズを設定 */
 }
 
-.player-area-bottom > .player-game-elements { flex-direction: column; align-items: center; }
-.player-area-top > .player-game-elements { flex-direction: column-reverse; align-items: center; }
+.player-area-bottom > .player-game-elements {
+  flex-direction: column;
+  align-items: center;
+  min-width: 200px; /* 手牌4枚分 (50px * 4) */
+  min-height: 70px; /* 牌の高さ */
+}
+.player-area-top > .player-game-elements {
+  flex-direction: column-reverse;
+  align-items: center;
+  min-width: 96px; /* 手牌4枚分 (24px * 4) */
+  min-height: 35px; /* 牌の高さ */
+}
 .player-area-left > .player-game-elements {
   flex-direction: row-reverse;
   align-items: center;
   width: fit-content; /* このコンテナも内容に合わせる */
+  min-width: 35px; /* 牌の幅 */
+  min-height: 96px; /* 手牌4枚分 (24px * 4) */
 }
 .player-area-right > .player-game-elements {
   flex-direction: row;
   align-items: center;
   width: fit-content; /* このコンテナも内容に合わせる */
+  min-width: 35px; /* 牌の幅 */
+  min-height: 96px; /* 手牌4枚分 (24px * 4) */
 }
 
 /* 左右プレイヤーのエリア全体の幅を内容に合わせる */
@@ -290,24 +332,24 @@ function getMeldTileAlt(meld, tile, tileIndex) {
 .player-area-bottom .melds-area {
   flex-direction: row-reverse; /* 右から左に面子を追加 */
   bottom: 0%;
-  right: -170px;
+  right: -100px;
   margin-bottom: 5px;
 }
 .player-area-top .melds-area {
   flex-direction: row; /* 左から右に面子を追加 */
   top: 0%;
-  left:-150px;
+  left:-100px;
   margin-top: 5px;
 }
 .player-area-left .melds-area {
   flex-direction: column; /* 上から下に面子を追加 */
-  top: 100px;
+  top: 120px;
   left: 7%; /* 手牌エリアの右側に配置 */
   margin-left: 5px; /* 手牌との間に少しスペースを空ける */
 }
 .player-area-right .melds-area {
   flex-direction: column-reverse; /* 下から上に面子を追加 */
-  top: -260px; /* 垂直方向の中央に配置 */
+  top: -230px; /* 垂直方向の中央に配置 */
   right: 20%; /* 手牌エリアの左側に配置 */
   margin-right: 5px; /* 手牌との間に少しスペースを空ける */
 }
@@ -360,6 +402,38 @@ function getMeldTileAlt(meld, tile, tileIndex) {
 .player-area-left .rotated-meld-tile .meld-tile-image,
 .player-area-right .rotated-meld-tile .meld-tile-image {
   transform: none; /* 左右プレイヤーの場合は回転をリセットして縦置きにする */
+}
+
+.kakan-added-tile {
+  position: absolute;
+  z-index: 1; /* ベースの牌より手前に表示 */
+}
+
+/* --- 各プレイヤーの加槓した牌の位置調整 --- */
+
+/* 自家(下)の加槓牌の位置 */
+.player-area-bottom .kakan-added-tile {
+  top: -22px;  /* 上にずらす量 (マイナス値を大きくすると、より上に) */
+  left: 4px;  /* 右にずらす量 */
+}
+
+/* 対面(上)の加槓牌の位置 */
+.player-area-top .kakan-added-tile {
+  top: 20px;   /* 下にずらす量 */
+  left: 4px; /* 左にずらす量 (マイナス値を大きくすると、より左に) */
+}
+
+/* 左家の加槓牌の位置 */
+.player-area-left .kakan-added-tile{
+  top: 0px;   /* 縦方向にずらす量 */
+  left: 20px;  /* 横方向にずらす量 */
+
+}
+
+/* 右家の加槓牌の位置 */
+.player-area-right .kakan-added-tile {
+  top: 0px;   /* 縦方向にずらす量 */
+  left: -20px;  /* 横方向にずらす量 */
 }
 
 .player-actions {

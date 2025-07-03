@@ -111,6 +111,10 @@ export const useGameStore = defineStore('game', {
     nextDealerIndex: null,     // 次の局の親のインデックス
     shouldEndGameAfterRound: false, // この局の後にゲームを終了するか
     pendingKanDoraReveal: false, // カン成立後、打牌時にドラをめくるためのフラグ
+    animationState: { // アニメーション表示用の状態
+      type: null, // 'ron', 'tsumo', 'riichi'
+      playerId: null,
+    },
   }),
   actions: {
     initializeGame() {
@@ -136,6 +140,7 @@ export const useGameStore = defineStore('game', {
         this.activeActionPlayerId = null;
         this.anyPlayerMeldInFirstRound = false; // 局開始時にリセット
         this.pendingKanDoraReveal = false; // フラグをリセット
+        this.animationState = { type: null, playerId: null }; // アニメーション状態をリセット
       });
       this.rinshanKaihouChance = false;
       this.lastActionPlayerId = null;
@@ -283,11 +288,17 @@ export const useGameStore = defineStore('game', {
             }
             this.playerActionEligibility[currentPlayer.id].canRiichi = canRiichi;
 
-            const ankanOptions = mahjongLogic.checkCanAnkan(currentPlayer.hand, this.drawnTile);
-            this.canDeclareAnkan[currentPlayer.id] = ankanOptions.length > 0 ? ankanOptions : null;
-
-            const kakanable = mahjongLogic.checkCanKakan(currentPlayer.hand, currentPlayer.melds, this.drawnTile);
-            this.canDeclareKakan[currentPlayer.id] = kakanable ? (this.drawnTile || true) : null;
+            // 海底牌では暗槓・加槓はできない
+            if (this.wall.length > 0) {
+              const ankanOptions = mahjongLogic.checkCanAnkan(currentPlayer.hand, this.drawnTile);
+              this.canDeclareAnkan[currentPlayer.id] = ankanOptions.length > 0 ? ankanOptions : null;
+              const kakanOptions = mahjongLogic.checkCanKakan(currentPlayer.hand, currentPlayer.melds, this.drawnTile);
+              this.canDeclareKakan[currentPlayer.id] = kakanOptions.length > 0 ? kakanOptions : null;
+              // AI対戦モードで、かつ現在のプレイヤーがAIの場合、自動で打牌処理を呼び出す
+              if (this.gameMode === 'vsCPU' && currentPlayer.id !== 'player1') {
+                this.handleAiDiscard();
+              }
+            }
           }
         }
       } else {
@@ -408,8 +419,8 @@ export const useGameStore = defineStore('game', {
           } else {
             eligibility.canRon = mahjongLogic.checkCanRon(p.hand, this.lastDiscardedTile, gameCtxForRon).isWin;
           }
-          // リーチ中のプレイヤーはポンと明槓はできない
-          if (!p.isRiichi && !p.isDoubleRiichi) {
+          // 河底牌ではポン・明槓はできず、リーチ中のプレイヤーも同様にできない
+          if (this.wall.length > 0 && !p.isRiichi && !p.isDoubleRiichi) {
             eligibility.canPon = mahjongLogic.checkCanPon(p.hand, this.lastDiscardedTile) ? this.lastDiscardedTile : null;
             eligibility.canMinkan = mahjongLogic.checkCanMinkan(p.hand, this.lastDiscardedTile) ? this.lastDiscardedTile : null;
           }
@@ -606,6 +617,7 @@ export const useGameStore = defineStore('game', {
       this.resultMessage = '';
       this.drawnTile = null;
       this.lastDiscardedTile = null;
+      this.animationState = { type: null, playerId: null }; // アニメーション状態をリセット
       // リーチ棒は供託されたままなのでリセットしない
       if (this.isChankanChance) this.isChankanChance = false; // 局をまたぐ槍槓はない
       this.chankanTile = null;
@@ -713,7 +725,12 @@ export const useGameStore = defineStore('game', {
          return;
       }
 
-      console.log(`gameStore: Player ${playerId} declares ${actionType} with tile ${tile?.id}.`);
+      // ロン宣言の場合、対象の牌はUIから渡されたものではなく、ストアが保持する牌（捨て牌 or 槍槓牌）を正とする
+      const tileForAction = actionType === 'ron'
+        ? (this.isChankanChance ? this.chankanTile : this.lastDiscardedTile)
+        : tile;
+
+      console.log(`gameStore: Player ${playerId} declares ${actionType} with tile ${tileForAction?.id}.`);
       this.playerResponses[playerId] = actionType;
       this.playerActionEligibility[playerId] = {}; // アクション宣言したので他のアクションは不可に
 
@@ -722,7 +739,7 @@ export const useGameStore = defineStore('game', {
       else if (actionType === 'minkan') priority = 2;
       else if (actionType === 'pon') priority = 1;
 
-      this.actionResponseQueue.push({ playerId, actionType, tile, priority });
+      this.actionResponseQueue.push({ playerId, actionType, tile: tileForAction, priority });
 
       // ロンが宣言されても、他のプレイヤーのロン宣言（ダブロン/トリロン）を待つため、すぐには処理しない。
       // 次の応答者に移る。
@@ -741,6 +758,12 @@ export const useGameStore = defineStore('game', {
         if (this.waitingForPlayerResponses.includes(checkPlayerId) && !this.playerResponses[checkPlayerId]) {
           this.activeActionPlayerId = checkPlayerId;
           console.log(`[setNextActiveResponder] Next active responder is ${checkPlayerId}`);
+
+          // ねこAI対戦モードで、応答者がAIの場合、自動で応答処理を呼び出す
+          if (this.gameMode === 'vsCPU' && checkPlayerId !== 'player1') {
+            this.handleAiResponse(checkPlayerId);
+          }
+
           return; // 見つかったら終了
         }
       }
@@ -929,7 +952,6 @@ export const useGameStore = defineStore('game', {
       player.melds.push({ type: 'minkan', tiles: [tileToKan, tileToKan, tileToKan, tileToKan], from: targetPlayerId });
       
       this.currentTurnPlayerId = playerId;
-      this.playerActionEligibility[playerId] = {}; 
       this.lastDiscardedTile = null;
       this.players.forEach(p => this.isDoujunFuriTen[p.id] = false); // 鳴きが入ったので同巡フリテンは解除
       this.players.forEach(p => this.isIppatsuChance[p.id] = false);
@@ -948,10 +970,10 @@ export const useGameStore = defineStore('game', {
       if (this.deadWall.length > 0) {
         this.drawnTile = mahjongLogic.drawRinshanTile(this.deadWall); // 修正: mahjongLogicから呼び出し
         this.rinshanKaihouChance = true;
-        console.log(`gameStore: Player ${playerId} drew Rinshan tile: ${this.drawnTile?.id}`);
         this.pendingKanDoraReveal = true; // 打牌後にドラをめくるフラグを立てる
+        this._handlePostRinshanDraw(playerId);
         console.log(`gameStore: Player ${playerId} drew Rinshan tile: ${this.drawnTile?.id}. Pending Kan Dora reveal.`);
-        this.gamePhase = GAME_PHASES.AWAITING_DISCARD; // 打牌待ち
+        this.gamePhase = GAME_PHASES.AWAITING_DISCARD;
       } else {
         console.warn("Cannot draw Rinshan tile, dead wall is empty.");
         this.gamePhase = GAME_PHASES.AWAITING_DISCARD; // 打牌は必要
@@ -990,9 +1012,6 @@ export const useGameStore = defineStore('game', {
       this.updateFuriTenState(playerId);
       // 鳴き（暗槓含む）が入ったので、全プレイヤーの同巡フリテンは解除
       this.players.forEach(p => this.isDoujunFuriTen[p.id] = false);
-      // 鳴き（暗槓含む）が入ったので、全プレイヤーの一発は消える
-      this.players.forEach(p => this.isIppatsuChance[p.id] = false);
-      this.playerActionEligibility[playerId] = {}; // 暗カンしたのでアクションリセット
 
       this.isChankanChance = false;
       this.players.forEach(p => {
@@ -1013,6 +1032,7 @@ export const useGameStore = defineStore('game', {
             const newDoraIndicator = mahjongLogic.revealDora(this.deadWall);
             if (newDoraIndicator && !this.doraIndicators.find(d => d.id === newDoraIndicator.id)) this.doraIndicators.push(newDoraIndicator);
         }
+        this._handlePostRinshanDraw(playerId);
         this.gamePhase = GAME_PHASES.AWAITING_DISCARD;
       } else {
         console.warn("Cannot draw Rinshan tile, dead wall is empty.");
@@ -1022,30 +1042,31 @@ export const useGameStore = defineStore('game', {
     // 加カン宣言
     declareKakan(playerId, tileToKakan) {
       const player = this.players.find(p => p.id === playerId);
-      // 加カンする牌は手牌にあるもの (多くの場合ツモ牌ではない)
       // リーチ後は加槓できない
       if (player && (player.isRiichi || player.isDoubleRiichi)) {
         console.warn(`Player ${playerId} is in Riichi and cannot declare Kakan.`);
         return;
       }
-      const canKakan = mahjongLogic.checkCanKakan(player.hand, player.melds, tileToKakan);
-      if (!player || !canKakan) {
-        console.error("Kakan declaration invalid. Conditions not met.");
+      if (!player || !tileToKakan) {
+        console.error("Kakan declaration invalid. Player or tile not found.");
         return;
       }
       console.log(`gameStore: Player ${playerId} declares Kakan with ${tileToKakan.id}`);
       // 既存のポンをカンに更新
       const ponMeldIndex = player.melds.findIndex(m => m.type === 'pon' && mahjongLogic.getTileKey(m.tiles[0]) === mahjongLogic.getTileKey(tileToKakan));
+      if (ponMeldIndex === -1) {
+        console.error("Kakan failed: Corresponding Pon meld not found.");
+        return;
+      }
       player.melds[ponMeldIndex].type = 'kakan'; // または 'chakan'
       player.melds[ponMeldIndex].tiles.push(tileToKakan); // 4枚目の牌を追加
-      // 手牌から加カンした牌を1枚取り除く
-      const tileIndexInHand = player.hand.findIndex(t => mahjongLogic.getTileKey(t) === mahjongLogic.getTileKey(tileToKakan));
-      if (tileIndexInHand > -1) {
-        player.hand.splice(tileIndexInHand, 1);
-      }
-      // 加カンに使用した牌がツモ牌だった場合 (ありえるか？通常は手牌から)
-      if (this.drawnTile && mahjongLogic.getTileKey(this.drawnTile) === mahjongLogic.getTileKey(tileToKakan)) {
+      // ツモ牌で加カンした場合はツモ牌を消費、そうでなければ手牌から削除
+      const kakanKey = mahjongLogic.getTileKey(tileToKakan);
+      if (this.drawnTile && mahjongLogic.getTileKey(this.drawnTile) === kakanKey) {
           this.drawnTile = null;
+      } else {
+        const tileIndexInHand = player.hand.findIndex(t => mahjongLogic.getTileKey(t) === kakanKey);
+        if (tileIndexInHand > -1) player.hand.splice(tileIndexInHand, 1);
       }
 
       // 手牌が変わったのでフリテン状態を更新
@@ -1053,19 +1074,22 @@ export const useGameStore = defineStore('game', {
       this.isChankanChance = true; // 他家は槍槓のチャンス
       this.chankanTile = tileToKakan;
       this.waitingForPlayerResponses = []; // 槍槓応答待ちリストを初期化
+      this.playerResponses = {}; // 応答状態をリセット
       this.players.forEach(p => {
         if (p.id !== playerId) {
           const gameCtxForChankanRon = this.createGameContextForPlayer(p, false, this.chankanTile);
           const canChankanRon = mahjongLogic.checkCanRon(p.hand, this.chankanTile, gameCtxForChankanRon).isWin;
-          this.playerActionEligibility[p.id] = { canRon: canChankanRon };
-          if (canChankanRon) this.waitingForPlayerResponses.push(p.id);
+          // フリテンでない場合のみ槍槓可能
+          if (canChankanRon && !this.isFuriTen[p.id] && !this.isDoujunFuriTen[p.id]) {
+            this.playerActionEligibility[p.id] = { canRon: true };
+            this.waitingForPlayerResponses.push(p.id);
+          } else {
+            this.playerActionEligibility[p.id] = { canRon: false };
+          }
         }
       });
       this.lastActionPlayerId = playerId;
 
-      // UI側で他プレイヤーがロン/スキップを選択するのを待つ。
-      // 全員がスキップ、または誰かがロンを宣言したら processPendingActions が呼ばれる
-      this.gamePhase = GAME_PHASES.AWAITING_KAKAN_RESPONSE; // 仮のフェーズ
       // 鳴き（加槓含む）が入ったので、全プレイヤーの同巡フリテンは解除
       this.players.forEach(p => this.isDoujunFuriTen[p.id] = false);
       this.players.forEach(p => this.isIppatsuChance[p.id] = false); // 加カンは一発を消す
@@ -1075,7 +1099,14 @@ export const useGameStore = defineStore('game', {
       if (this.turnCount < this.players.length) {
         this.anyPlayerMeldInFirstRound = true;
       }
+      // 常に他プレイヤーの応答待ちフェーズに入り、次の応答者を設定する
+      // 応答待ちリストが空の場合、setNextActiveResponderは最終的にprocessPendingActionsを呼び出し、
+      // そこで嶺上牌がツモられる
+      this.gamePhase = GAME_PHASES.AWAITING_KAKAN_RESPONSE;
+      this.setNextActiveResponder();
+      console.log(`gameStore: Player ${playerId} declared Kakan. Checking for Chankan response from: ${this.waitingForPlayerResponses.join(', ') || 'no one'}.`);
     },
+    
     // 加カン後、槍槓されなかった場合に嶺上牌をツモるアクション
     drawRinshanAfterKakan(playerId) {
       if (this.currentTurnPlayerId !== playerId || this.gamePhase !== GAME_PHASES.AWAITING_KAKAN_RESPONSE) { // AWAITING_ACTION_RESPONSE は不要
@@ -1099,12 +1130,9 @@ export const useGameStore = defineStore('game', {
       if (this.deadWall.length > 0) {
         this.drawnTile = mahjongLogic.drawRinshanTile(this.deadWall); // 修正: mahjongLogicから呼び出し
         this.rinshanKaihouChance = true;
-        console.log(`gameStore: Player ${playerId} drew Rinshan tile after Kakan: ${this.drawnTile?.id}`);
-        if (this.deadWall.length > 0) {
-            const newDoraIndicator = mahjongLogic.revealDora(this.deadWall);
-            if (newDoraIndicator && !this.doraIndicators.find(d => d.id === newDoraIndicator.id)) this.doraIndicators.push(newDoraIndicator); // 重複追加を防ぐ
-        }
-        this.playerActionEligibility[playerId] = {}; // 嶺上ツモしたのでアクションリセット
+        this.pendingKanDoraReveal = true; // 打牌後にドラをめくるフラグを立てる
+        this._handlePostRinshanDraw(playerId);
+        console.log(`gameStore: Player ${playerId} drew Rinshan tile after Kakan: ${this.drawnTile?.id}. Pending Kan Dora reveal.`);
         this.gamePhase = GAME_PHASES.AWAITING_DISCARD;
       } else {
         console.warn("Cannot draw Rinshan tile, dead wall is empty.");
@@ -1140,6 +1168,9 @@ export const useGameStore = defineStore('game', {
       const winResult = mahjongLogic.checkYonhaiWin(handForWin, agariTile, isTsumo, gameCtxForWin);
 
       if (winResult.isWin) {
+        // 和了アニメーションの状態を即座に設定
+        this.animationState = { type: isTsumo ? 'tsumo' : 'ron', playerId: agariPlayerId };
+
         console.log(`[handleAgari] ${player.name} が和了しました！`, winResult);
         // 点数移動の計算 (仮のロジック)
         const pointChanges = {};
@@ -1181,7 +1212,6 @@ export const useGameStore = defineStore('game', {
         
         this.gamePhase = GAME_PHASES.ROUND_END;
         this.resultMessage = `${player.name} の和了！ ${winResult.yaku.map(y => y.name).join(' ')} ${winResult.isYakuman ? '' : (winResult.fans + '翻')} ${winResult.score}点`;
-        this.showResultPopup = true; // 局の結果ポップアップを表示
         this.agariResultDetails = {
           roundWind: this.currentRound.wind,
           roundNumber: this.currentRound.number,
@@ -1197,6 +1227,10 @@ export const useGameStore = defineStore('game', {
           scoreName: winResult.scoreName, // 役満名や満貫などの名称
           pointChanges: pointChanges,
         };
+        // アニメーション表示から1秒後にリザルトポップアップを表示
+        setTimeout(() => {
+          this.showResultPopup = true;
+        }, 1000);
         // TODO: 供託リーチ棒の処理 (和了者が取得)
         player.score += this.riichiSticks * 1000;
         pointChanges[agariPlayerId] += this.riichiSticks * 1000;
@@ -1375,6 +1409,7 @@ export const useGameStore = defineStore('game', {
         this.activeActionPlayerId = null;
       });
       this.shouldEndGameAfterRound = false; // タイトルに戻るのでリセット
+      this.animationState = { type: null, playerId: null }; // アニメーション状態をリセット
       this.pendingKanDoraReveal = false; // フラグをリセット
       // isInitialized フラグなどがあればそれもリセット
     },
@@ -1424,6 +1459,104 @@ export const useGameStore = defineStore('game', {
           remainingTilesCount: this.wall.length,
           currentPlayerTurnCount: this.playerTurnCount[player.id] || 0 // 現在のプレイヤーのツモ回数を追加
       };
+    }
+    ,
+    _handlePostRinshanDraw(playerId) {
+      const player = this.players.find(p => p.id === playerId);
+      if (!player || !this.drawnTile) return;
+
+      // 鳴きが入ったので、全プレイヤーの一発は消える
+      this.players.forEach(p => this.isIppatsuChance[p.id] = false);
+
+      // ツモ和了可能かチェック (嶺上開花)
+      const gameContextForTsumo = this.createGameContextForPlayer(player, true);
+      const tsumoWinResult = mahjongLogic.checkYonhaiWin([...player.hand, this.drawnTile], this.drawnTile, true, gameContextForTsumo);
+      
+      // アクションの選択肢を初期化
+      const eligibility = {};
+      eligibility.canTsumoAgari = tsumoWinResult.isWin;
+
+      // リーチ中でなければ、さらにカンができるかチェック
+      if (!player.isRiichi && !player.isDoubleRiichi) {
+          // 海底牌では暗槓・加槓はできない
+          if (this.wall.length > 0) {
+              const ankanOptions = mahjongLogic.checkCanAnkan(player.hand, this.drawnTile);
+              eligibility.canAnkan = ankanOptions.length > 0 ? ankanOptions : null;
+
+              const kakanOptions = mahjongLogic.checkCanKakan(player.hand, player.melds, this.drawnTile);
+              eligibility.canKakan = kakanOptions.length > 0 ? kakanOptions : null;
+          }
+      }
+      
+      this.playerActionEligibility[playerId] = eligibility;
+      this.canDeclareAnkan[playerId] = eligibility.canAnkan; // 古いstateも更新
+      this.canDeclareKakan[playerId] = eligibility.canKakan; // 古いstateも更新
+
+      // AI対戦モードで、かつ現在のプレイヤーがAIの場合、自動で打牌処理を呼び出す
+      if (this.gameMode === 'vsCPU' && player.id !== 'player1') {
+          this.handleAiDiscard();
+      }
+    }
+    ,
+    // AIプレイヤーの打牌処理
+    handleAiDiscard() {
+      if (this.gameMode !== 'vsCPU' || this.gamePhase !== GAME_PHASES.AWAITING_DISCARD) {
+        return;
+      }
+
+      const aiPlayerId = this.currentTurnPlayerId;
+      const player = this.players.find(p => p.id === aiPlayerId);
+
+      // プレイヤーが 'player1' (人間) の場合は何もしない
+      if (!player || player.id === 'player1') {
+        return;
+      }
+
+      console.log(`AI turn for ${aiPlayerId}. Thinking...`);
+
+      // 0.5秒後に思考・実行
+      setTimeout(() => {
+        // ツモ和了可能かチェック
+        if (this.playerActionEligibility[aiPlayerId]?.canTsumoAgari) {
+          console.log(`AI ${aiPlayerId} declares Tsumo!`);
+          this.handleAgari(aiPlayerId, this.drawnTile, true);
+          return; // 和了したので打牌はしない
+        }
+
+        // ツモ牌がない場合は打牌できない（ありえないはずだが念のため）
+        if (!this.drawnTile) return;
+
+        // AIの手牌とツモ牌を結合
+        const fullHand = [...player.hand, this.drawnTile];
+
+        // ランダムに捨てる牌を選択
+        const tileToDiscard = fullHand[Math.floor(Math.random() * fullHand.length)];
+        const isFromDrawnTile = tileToDiscard.id === this.drawnTile.id;
+
+        console.log(`AI ${aiPlayerId} decided to discard ${tileToDiscard.id}`);
+        this.discardTile(aiPlayerId, tileToDiscard.id, isFromDrawnTile);
+      }, 500);
+    },
+    // AIプレイヤーの応答処理 (他家の打牌に対して)
+    handleAiResponse(aiPlayerId) {
+      console.log(`AI ${aiPlayerId} is responding...`);
+
+      // 0秒後に思考・実行
+      setTimeout(() => {
+        // タイムアウト後もまだこのAIの応答待ちか確認
+        if (this.activeActionPlayerId === aiPlayerId) {
+          // ロン可能かチェック
+          if (this.playerActionEligibility[aiPlayerId]?.canRon) {
+            console.log(`AI ${aiPlayerId} declares Ron!`);
+            // playerDeclaresCall は内部で応答待ちを進めるので、直接呼び出す
+            this.playerDeclaresCall(aiPlayerId, 'ron', null); // tileは内部で解決される
+          } else {
+            // ポン・カンはしない想定なので、それ以外はスキップ
+            console.log(`AI ${aiPlayerId} chooses to skip.`);
+            this.playerSkipsCall(aiPlayerId);
+          }
+        }
+      }, 0);
     }
   },
   getters: {

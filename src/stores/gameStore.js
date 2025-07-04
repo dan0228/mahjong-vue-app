@@ -522,11 +522,9 @@ export const useGameStore = defineStore('game', {
 
         notenPlayers.forEach(notenPlayer => {
           pointChanges[notenPlayer.id] -= paymentPerNoten;
-          this.players.find(p => p.id === notenPlayer.id).score -= paymentPerNoten;
         });
         tenpaiPlayers.forEach(tenpaiPlayer => {
           pointChanges[tenpaiPlayer.id] += incomePerTenpai;
-          this.players.find(p => p.id === tenpaiPlayer.id).score += incomePerTenpai;
         });
       }
       this.agariResultDetails.pointChanges = pointChanges; // 計算した点数変動をセット
@@ -601,6 +599,20 @@ export const useGameStore = defineStore('game', {
       this.showResultPopup = true; // リザルトポップアップを表示
     },
     prepareNextRound() {
+      // リザルトポップアップを閉じた後に、実際の点数移動を反映させる
+      if (this.agariResultDetails && this.agariResultDetails.pointChanges) {
+        for (const playerId in this.agariResultDetails.pointChanges) {
+          const player = this.players.find(p => p.id === playerId);
+          if (player) {
+            player.score += this.agariResultDetails.pointChanges[playerId];
+          }
+        }
+        // 供託リーチ棒をリセット
+        if (Object.values(this.agariResultDetails.pointChanges).some(v => v > 0)) {
+            this.riichiSticks = 0;
+        }
+      }
+
       // dealerIndex を nextDealerIndex で更新
       if (this.nextDealerIndex !== null) {
         this.dealerIndex = this.nextDealerIndex;
@@ -1170,7 +1182,7 @@ export const useGameStore = defineStore('game', {
         this.animationState = { type: isTsumo ? 'tsumo' : 'ron', playerId: agariPlayerId };
 
         console.log(`[handleAgari] ${player.name} が和了しました！`, winResult);
-        // 点数移動の計算 (仮のロジック)
+
         const pointChanges = {};
         this.players.forEach(p => pointChanges[p.id] = 0);
         if (isTsumo) {
@@ -1179,14 +1191,11 @@ export const useGameStore = defineStore('game', {
             this.players.forEach(p => {
               if (p.id !== agariPlayerId) {
                 pointChanges[p.id] = -scorePerKo;
-                p.score -= scorePerKo;
               }
             });
           } else { // 子のツモ和了
             let parentPayment = 0;
             let koPayment = 0;
-            // winResult.score は子の和了点合計 (例: 満貫なら8000, 跳満なら12000)
-            // 親の支払いはその半分、他の子の支払いはその1/4
             parentPayment = Math.ceil(winResult.score / 2); // 親の支払い (切り上げ)
             koPayment = Math.ceil(winResult.score / 4);     // 他の子の支払い (切り上げ)
 
@@ -1194,20 +1203,19 @@ export const useGameStore = defineStore('game', {
               if (p.id !== agariPlayerId) {
                 const payment = p.isDealer ? -parentPayment : -koPayment;
                 pointChanges[p.id] = payment;
-                p.score += payment;
               }
             });
           }
           pointChanges[agariPlayerId] = winResult.score;
-          player.score += winResult.score;
         } else if (ronTargetPlayerId) {
-          // ロン和了の場合、放銃者から点数を引く
+          // ロン和了の場合
           pointChanges[ronTargetPlayerId] = -winResult.score;
-          this.players.find(p => p.id === ronTargetPlayerId).score -= winResult.score;
           pointChanges[agariPlayerId] = winResult.score;
-          player.score += winResult.score;
         }
         
+        // 供託リーチ棒の処理
+        pointChanges[agariPlayerId] += this.riichiSticks * 1000;
+
         this.gamePhase = GAME_PHASES.ROUND_END;
         this.resultMessage = `${player.name} の和了！ ${winResult.yaku.map(y => y.name).join(' ')} ${winResult.isYakuman ? '' : (winResult.fans + '翻')} ${winResult.score}点`;
         this.agariResultDetails = {
@@ -1229,10 +1237,6 @@ export const useGameStore = defineStore('game', {
         setTimeout(() => {
           this.showResultPopup = true;
         }, 1000);
-        // TODO: 供託リーチ棒の処理 (和了者が取得)
-        player.score += this.riichiSticks * 1000;
-        pointChanges[agariPlayerId] += this.riichiSticks * 1000;
-        this.riichiSticks = 0;
         
         // 箱下チェック (誰かの点数が0未満になったらゲーム終了)
         const playerBelowZero = this.players.find(p => p.score < 0);

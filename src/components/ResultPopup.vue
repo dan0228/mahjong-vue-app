@@ -77,7 +77,7 @@
       <div class="result-section score-changes"> <!-- 点数変動は常に表示 -->
         <h3>点数変動</h3>
         <div v-for="player in gameStore.players" :key="player.id" class="player-score-change">
-          <span>{{ player.name }}: {{ gameStore.getPlayerById(player.id)?.score ?? player.score }}点 </span>
+          <span>{{ player.name }}: {{ (gameStore.getPlayerById(player.id)?.score ?? 0) + (resultDetails.pointChanges[player.id] ?? 0) }}点 </span>
           <span :class="getPointChangeClass(resultDetails.pointChanges[player.id])">
             ({{ formatPointChange(resultDetails.pointChanges[player.id]) }})
           </span>

@@ -529,13 +529,7 @@ export const useGameStore = defineStore('game', {
       }
       this.agariResultDetails.pointChanges = pointChanges; // 計算した点数変動をセット
 
-      // 箱下チェック (誰かの点数が0未満になったらゲーム終了)
-      const playerBelowZero = this.players.find(p => p.score < 0);
-      if (playerBelowZero && this.gamePhase !== GAME_PHASES.GAME_OVER) {
-        console.log(`Player ${playerBelowZero.name} has gone below 0 points (${playerBelowZero.score}) due to noten penalty. Game ends.`);
-        this.gamePhase = GAME_PHASES.GAME_OVER;
-        this.shouldEndGameAfterRound = true; // 次のラウンド準備時にゲーム終了をトリガー
-      }
+      // 箱下チェックは prepareNextRound に移動
 
       const gameCtxForTenpai = {
         playerWind: dealerPlayer.seatWind, // PLAYER_WINDS.EAST など、mahjongLogicからインポート
@@ -599,7 +593,7 @@ export const useGameStore = defineStore('game', {
       this.showResultPopup = true; // リザルトポップアップを表示
     },
     prepareNextRound() {
-      // リザルトポップアップを閉じた後に、実際の点数移動を反映させる
+      // 実際の点数移動を反映させる
       if (this.agariResultDetails && this.agariResultDetails.pointChanges) {
         for (const playerId in this.agariResultDetails.pointChanges) {
           const player = this.players.find(p => p.id === playerId);
@@ -611,6 +605,13 @@ export const useGameStore = defineStore('game', {
         if (Object.values(this.agariResultDetails.pointChanges).some(v => v > 0)) {
             this.riichiSticks = 0;
         }
+      }
+
+      // 点数反映後に箱下チェックを行う
+      const playerBelowZero = this.players.find(p => p.score < 0);
+      if (playerBelowZero) {
+        console.log(`Player ${playerBelowZero.name} has gone below 0 points (${playerBelowZero.score}). Game ends.`);
+        this.shouldEndGameAfterRound = true;
       }
 
       // dealerIndex を nextDealerIndex で更新
@@ -1238,13 +1239,7 @@ export const useGameStore = defineStore('game', {
           this.showResultPopup = true;
         }, 1000);
         
-        // 箱下チェック (誰かの点数が0未満になったらゲーム終了)
-        const playerBelowZero = this.players.find(p => p.score < 0);
-        if (playerBelowZero && this.gamePhase !== GAME_PHASES.GAME_OVER) {
-          console.log(`Player ${playerBelowZero.name} has gone below 0 points (${playerBelowZero.score}). Game ends.`);
-          // this.gamePhase = GAME_PHASES.GAME_OVER; // すぐには変更しない
-          this.shouldEndGameAfterRound = true; // 次のラウンド準備時にゲーム終了をトリガー
-        }
+        // 箱下チェックは prepareNextRound に移動
 
         // isDealerHola の設定など、局の継続/終了に関わるフラグもここで設定
         if (player.isDealer) {

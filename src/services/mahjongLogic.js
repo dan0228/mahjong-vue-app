@@ -210,6 +210,49 @@ export function checkCanRon(hand, discardedTile, gameContext) {
 }
 
 /**
+ * ツモ和了が可能か判定します。
+ * @param {Array<Object>} hand 手牌
+ * @param {Object} drawnTile ツモ牌
+ * @param {Object} gameContext ゲームコンテキスト (役判定用)
+ * @returns {{isWin: boolean, yaku: Array, score: number, fans: number, isYakuman: boolean, yakumanPower: number}}} 和了情報
+ */
+export function checkCanTsumo(hand, drawnTile, gameContext) {
+    if (!hand || !drawnTile) {
+        return { isWin: false, yaku: [], score: 0, fans: 0, isYakuman: false, yakumanPower: 0 };
+    }
+    const handForWin = [...hand, drawnTile];
+    return checkYonhaiWin(handForWin, drawnTile, true, gameContext);
+}
+
+/**
+ * 役判定を行わずに、和了の基本形（1面子1雀頭）が成立するかどうかだけを高速に判定します。
+ * @param {Array<Object>} hand 手牌
+ * @param {Object} targetTile 和了牌（ロンまたはツモ）
+ * @param {Array<Object>} melds 鳴き
+ * @returns {boolean} 和了形が成立すればtrue
+ */
+export function canWinBasicShape(hand, targetTile, melds = []) {
+    if (!hand || !targetTile) {
+        return false;
+    }
+    const handForCheck = [...hand, targetTile];
+
+    if (melds.length > 0) {
+        // 鳴きがある場合、残りの手牌が雀頭を形成するかどうか
+        if (handForCheck.length === 2 && getTileKey(handForCheck[0]) === getTileKey(handForCheck[1])) {
+            return true;
+        }
+    } else {
+        // 門前の場合、5枚の手牌で和了形を判定
+        if (handForCheck.length === 5) {
+            const basicWinInfo = checkBasicYonhaiWinCondition(sortHand(handForCheck));
+            return basicWinInfo.isWin;
+        }
+    }
+    return false;
+}
+
+/**
  * ポンが可能かチェックします。
  * @param {Array<Object>} hand 手牌
  * @param {Object} discardedTile 捨てられた牌

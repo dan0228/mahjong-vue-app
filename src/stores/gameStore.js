@@ -241,10 +241,10 @@ export const useGameStore = defineStore('game', {
         if (currentPlayer) {
           // 自分のツモ番が来たので、同巡内フリテンは解除
           this.isDoujunFuriTen[currentPlayer.id] = false;
-          // ツモ和了可能か
-          const gameContextForTsumo = this.createGameContextForPlayer(currentPlayer, true);
-          const tsumoWinResult = mahjongLogic.checkYonhaiWin([...currentPlayer.hand, this.drawnTile], this.drawnTile, true, gameContextForTsumo);
-          this.playerActionEligibility[currentPlayer.id] = { canTsumoAgari: tsumoWinResult.isWin };
+          // ツモ和了可能か（軽量チェック）
+          this.playerActionEligibility[currentPlayer.id] = { 
+            canTsumoAgari: mahjongLogic.canWinBasicShape(currentPlayer.hand, this.drawnTile, currentPlayer.melds)
+          };
 
           // リーチ後の処理
           if (currentPlayer.isRiichi || currentPlayer.isDoubleRiichi) {
@@ -412,12 +412,11 @@ export const useGameStore = defineStore('game', {
           // フリテンチェック
           const isPlayerInFuriTen = this.isFuriTen[p.id] || this.isDoujunFuriTen[p.id] || false;
 
-          // ロン判定のためのコンテキストを作成
-          const gameCtxForRon = this.createGameContextForPlayer(p, false, this.lastDiscardedTile);
+          // ロン可能か（軽量チェック）
           if (isPlayerInFuriTen) {
             eligibility.canRon = false;
           } else {
-            eligibility.canRon = mahjongLogic.checkCanRon(p.hand, this.lastDiscardedTile, gameCtxForRon).isWin;
+            eligibility.canRon = mahjongLogic.canWinBasicShape(p.hand, this.lastDiscardedTile, p.melds);
           }
           // 河底牌ではポン・明槓はできず、リーチ中のプレイヤーも同様にできない
           if (this.wall.length > 0 && !p.isRiichi && !p.isDoubleRiichi) {
@@ -1077,8 +1076,7 @@ export const useGameStore = defineStore('game', {
       this.playerResponses = {}; // 応答状態をリセット
       this.players.forEach(p => {
         if (p.id !== playerId) {
-          const gameCtxForChankanRon = this.createGameContextForPlayer(p, false, this.chankanTile);
-          const canChankanRon = mahjongLogic.checkCanRon(p.hand, this.chankanTile, gameCtxForChankanRon).isWin;
+          const canChankanRon = mahjongLogic.canWinBasicShape(p.hand, this.chankanTile, p.melds);
           // フリテンでない場合のみ槍槓可能
           if (canChankanRon && !this.isFuriTen[p.id] && !this.isDoujunFuriTen[p.id]) {
             this.playerActionEligibility[p.id] = { canRon: true };
@@ -1155,17 +1153,11 @@ export const useGameStore = defineStore('game', {
         this.uraDoraIndicators = []; // リーチ和了でなければ裏ドラはなし
       }
 
-      // 和了時の手牌を準備 (ツモならそのまま、ロンなら和了牌を加える)
-      // 注意: 四牌麻雀では和了時に5枚になる。ツモった牌は this.drawnTile にある想定。
-      // ロン牌は agariTile として渡される。
-      const handForWin = isTsumo ? [...player.hand, this.drawnTile] : [...player.hand, agariTile];
-      if (handForWin.some(tile => !tile)) { // handForWin に null/undefined が含まれていないかチェック
-          console.error('[handleAgari] Invalid tile in handForWin:', handForWin);
-          return;
-      }
-
+      // ここで初めて、完全な役判定と点数計算を行う
       const gameCtxForWin = this.createGameContextForPlayer(player, isTsumo, agariTile);
-      const winResult = mahjongLogic.checkYonhaiWin(handForWin, agariTile, isTsumo, gameCtxForWin);
+      const winResult = isTsumo 
+        ? mahjongLogic.checkCanTsumo(player.hand, this.drawnTile, gameCtxForWin)
+        : mahjongLogic.checkCanRon(player.hand, agariTile, gameCtxForWin);
 
       if (winResult.isWin) {
         // 和了アニメーションの状態を即座に設定

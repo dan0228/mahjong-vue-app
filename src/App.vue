@@ -12,7 +12,7 @@ import { preloadImages } from './utils/imageLoader';
 const isLoading = ref(true);
 
 onMounted(async () => {
-  const imageUrls = await import.meta.glob('/public/assets/images/**/*.png');
+  const imageUrls = await import.meta.glob('/assets/images/**/*.png');
   const paths = Object.keys(imageUrls);
   await preloadImages(paths);
   isLoading.value = false;

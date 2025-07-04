@@ -1,6 +1,7 @@
 <template>
-  <div v-if="show" class="popup-overlay">
-    <div class="popup-content">
+  <transition name="popup">
+    <div v-if="show" class="popup-overlay">
+      <div class="popup-content">
 
       <div class="result-section round-info" style="text-align: center; margin-bottom: 15px;">
         <p class="round-main-info">{{ roundWindDisplay }}{{ resultDetails.roundNumber }}局 {{ resultDetails.honba }}本場</p>
@@ -85,8 +86,9 @@
       </div>
 
       <button @click="proceedToNext">次へ</button>
+      </div>
     </div>
-  </div>
+  </transition>
 </template>
 
 <script setup>
@@ -236,6 +238,15 @@ function getPointChangeClass(change) {
   text-align: center;
   transform: scale(0.75); /* ポップアップ全体を縮小して画面に収める */
   box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+/* Transition styles */
+.popup-enter-active, .popup-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.popup-enter-from, .popup-leave-to {
+  opacity: 0;
+  transform: scale(0.7);
 }
 .winner-title-container {
   display: flex;

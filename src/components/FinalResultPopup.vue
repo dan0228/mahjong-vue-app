@@ -1,30 +1,32 @@
 <template>
-  <div v-if="show" class="popup-overlay">
-    <div class="popup-content">
-      <h2>最終結果</h2>
-      <div class="final-results-list">
-        <div v-for="player in finalResultDetails.rankedPlayers" :key="player.name" class="player-rank-item">
-          <span class="rank">{{ player.rank }}位</span>
-          <span class="player-name">{{ player.name }}</span>          
-          <img v-if="getPlayerIcon(player.id)" :src="getPlayerIcon(player.id)" alt="Player Icon" class="player-icon" />
-          <span class="score">{{ player.score }}点</span>
+  <transition name="popup">
+    <div v-if="show" class="popup-overlay">
+      <div class="popup-content">
+        <h2>最終結果</h2>
+        <div class="final-results-list">
+          <div v-for="player in finalResultDetails.rankedPlayers" :key="player.name" class="player-rank-item">
+            <span class="rank">{{ player.rank }}位</span>
+            <span class="player-name">{{ player.name }}</span>          
+            <img v-if="getPlayerIcon(player.id)" :src="getPlayerIcon(player.id)" alt="Player Icon" class="player-icon" />
+            <span class="score">{{ player.score }}点</span>
+          </div>
+        </div>
+        <p class="consecutive-wins">
+          {{ finalResultDetails.consecutiveWins }}連勝中！
+        </p>
+        <div class="actions">
+          <button @click="startNewGame" class="action-button">
+            <span>新しいゲームを開始</span>
+            <span>(連勝継続)</span>
+          </button>
+          <button @click="backToTitle" class="action-button">
+            <span>タイトルに戻る</span>
+            <span>(連勝リセット)</span>
+          </button>
         </div>
       </div>
-      <p class="consecutive-wins">
-        {{ finalResultDetails.consecutiveWins }}連勝中！
-      </p>
-      <div class="actions">
-        <button @click="startNewGame" class="action-button">
-          <span>新しいゲームを開始</span>
-          <span>(連勝継続)</span>
-        </button>
-        <button @click="backToTitle" class="action-button">
-          <span>タイトルに戻る</span>
-          <span>(連勝リセット)</span>
-        </button>
-      </div>
     </div>
-  </div>
+  </transition>
 </template>
 
 <script setup>
@@ -84,6 +86,15 @@ function getPlayerIcon(playerId) {
   text-align: center;
   transform: scale(0.85); /* ポップアップ全体を縮小して画面に収める */
   box-shadow: 0 5px 20px rgba(0,0,0,0.25);
+}
+
+/* Transition styles */
+.popup-enter-active, .popup-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.popup-enter-from, .popup-leave-to {
+  opacity: 0;
+  transform: scale(0.7);
 }
 .popup-content h2 {
   margin-top: 0;

@@ -1,53 +1,55 @@
 <template>
-  <div class="popup-overlay" @click.self="$emit('close')">
-    <div class="popup-content">
-      <h2>ルール</h2>
-      <p>手牌4枚+1枚の1面子1雀頭</p>
-      <table class="rules-table">
-        <tbody>
-          <tr>
-            <td class="rule-category">基本</td>
-            <td class="rule-description">東風戦、南入なし。</td>
-          </tr>
-          <tr>
-            <td class="rule-category">点数</td>
-            <td class="rule-description">本場による加点なし。切り上げ満貫とし、満貫未満は0点(和了自体は可能)。</td>
-          </tr>
-          <tr>
-            <td class="rule-category">ドラ</td>
-            <td class="rule-description">赤ドラなし。</td>
-          </tr>
-          <tr>
-            <td class="rule-category">鳴き</td>
-            <td class="rule-description">チーなし。喰い替えあり。後付けあり。喰いタンあり。</td>
-          </tr>
-          <tr>
-            <td class="rule-category">リーチ</td>
-            <td class="rule-description">リーチ後の暗カンはいかなる形でも可能。</td>
-          </tr>
-          <tr>
-            <td class="rule-category">流局</td>
-            <td class="rule-description">四風連打・四家リーチによる途中流局なし。</td>
-          </tr>
-          <tr>
-            <td class="rule-category">和了優先</td>
-            <td class="rule-description">ダブロン・トリロンは頭ハネ。</td>
-          </tr>
-          <tr>
-            <td class="rule-category">持ち点</td>
-            <td class="rule-description">箱下なし (0点未満になった時点で終局)。</td>
-          </tr>
-          <tr>
-            <td class="rule-category">終局条件</td>
-            <td class="rule-description">和了止めあり (東4局は親が和了またはテンパイしても終局)。</td>
-          </tr>
-        </tbody>
-      </table>
-      <div class="close-button-container">
-        <button @click="$emit('close')" class="close-button">閉じる</button>
+  <transition name="popup">
+    <div class="popup-overlay" @click.self="$emit('close')">
+      <div class="popup-content">
+        <h2>ルール</h2>
+        <p>手牌4枚+1枚の1面子1雀頭</p>
+        <table class="rules-table">
+          <tbody>
+            <tr>
+              <td class="rule-category">基本</td>
+              <td class="rule-description">東風戦、南入なし。</td>
+            </tr>
+            <tr>
+              <td class="rule-category">点数</td>
+              <td class="rule-description">本場による加点なし。切り上げ満貫とし、満貫未満は0点(和了自体は可能)。</td>
+            </tr>
+            <tr>
+              <td class="rule-category">ドラ</td>
+              <td class="rule-description">赤ドラなし。</td>
+            </tr>
+            <tr>
+              <td class="rule-category">鳴き</td>
+              <td class="rule-description">チーなし。喰い替えあり。後付けあり。喰いタンあり。</td>
+            </tr>
+            <tr>
+              <td class="rule-category">リーチ</td>
+              <td class="rule-description">リーチ後の暗カンはいかなる形でも可能。</td>
+            </tr>
+            <tr>
+              <td class="rule-category">流局</td>
+              <td class="rule-description">四風連打・四家リーチによる途中流局なし。</td>
+            </tr>
+            <tr>
+              <td class="rule-category">和了優先</td>
+              <td class="rule-description">ダブロン・トリロンは頭ハネ。</td>
+            </tr>
+            <tr>
+              <td class="rule-category">持ち点</td>
+              <td class="rule-description">箱下なし (0点未満になった時点で終局)。</td>
+            </tr>
+            <tr>
+              <td class="rule-category">終局条件</td>
+              <td class="rule-description">和了止めあり (東4局は親が和了またはテンパイしても終局)。</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="close-button-container">
+          <button @click="$emit('close')" class="close-button">閉じる</button>
+        </div>
       </div>
     </div>
-  </div>
+  </transition>
 </template>
 
 <script setup>
@@ -80,6 +82,15 @@ defineEmits(['close']);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+}
+
+/* Transition styles */
+.popup-enter-active, .popup-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.popup-enter-from, .popup-leave-to {
+  opacity: 0;
+  transform: scale(0.7);
 }
 .popup-content h2 {
   margin-top: 0;

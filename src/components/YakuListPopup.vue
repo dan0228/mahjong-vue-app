@@ -1,72 +1,74 @@
 <template>
-  <div class="popup-overlay" @click.self="$emit('close')">
-    <div class="popup-content">
-      <h2>役一覧</h2>
-      <div class="yaku-section">
-        <table class="yaku-table">
-          <thead>
-            <tr>
-              <th>役名</th>
-              <th>翻数</th>
-              <th>例</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="yaku in normalYakuList" :key="yaku.name">
-              <td>{{ yaku.name }}</td>
-              <td>
-                {{ yaku.fans }}翻
-                <span v-if="yaku.menzenOnly"> (門前のみ)</span>
-                <span v-if="yaku.kuisagari"> (喰{{ yaku.fans - yaku.kuisagari }}翻)</span>
-              </td>
-              <td class="yaku-example">
-                <span v-if="yaku.exampleTiles && yaku.exampleTiles.length > 0">
-                  <img
-                    v-for="(tile, index) in yaku.exampleTiles"
-                    :key="index"
-                    :src="determineTileImage(yaku, tile, index)"
-                    :alt="determineTileAlt(yaku, tile, index)"
-                    :class="['tile-image-small', getTileSpecificClass(yaku, index, yaku.exampleTiles.length)]"/>
-                </span>
-                <span v-else>-</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="yaku-section">
-        <table class="yaku-table">
-          <thead>
-            <tr>
-              <th>役満名</th>
-              <th>役満数</th>
-              <th>例</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="yakuman in yakumanList" :key="yakuman.name">
-              <td>{{ yakuman.name }}</td>
-              <td>{{ yakuman.power === 1 ? '役満' : `${yakuman.power}倍役満` }}</td>
-              <td class="yaku-example">
-                <span v-if="yakuman.exampleTiles && yakuman.exampleTiles.length > 0">
-                  <img
-                    v-for="(tile, index) in yakuman.exampleTiles"
-                    :key="index"
-                    :src="determineTileImage(yakuman, tile, index)"
-                    :alt="determineTileAlt(yakuman, tile, index)"
-                    :class="['tile-image-small', getTileSpecificClass(yakuman, index, yakuman.exampleTiles.length)]"/>
-                </span>
-                <span v-else>-</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="close-button-container">
-        <button @click="$emit('close')" class="close-button">閉じる</button>
+  <transition name="popup">
+    <div class="popup-overlay" @click.self="$emit('close')">
+      <div class="popup-content">
+        <h2>役一覧</h2>
+        <div class="yaku-section">
+          <table class="yaku-table">
+            <thead>
+              <tr>
+                <th>役名</th>
+                <th>翻数</th>
+                <th>例</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="yaku in normalYakuList" :key="yaku.name">
+                <td>{{ yaku.name }}</td>
+                <td>
+                  {{ yaku.fans }}翻
+                  <span v-if="yaku.menzenOnly"> (門前のみ)</span>
+                  <span v-if="yaku.kuisagari"> (喰{{ yaku.fans - yaku.kuisagari }}翻)</span>
+                </td>
+                <td class="yaku-example">
+                  <span v-if="yaku.exampleTiles && yaku.exampleTiles.length > 0">
+                    <img
+                      v-for="(tile, index) in yaku.exampleTiles"
+                      :key="index"
+                      :src="determineTileImage(yaku, tile, index)"
+                      :alt="determineTileAlt(yaku, tile, index)"
+                      :class="['tile-image-small', getTileSpecificClass(yaku, index, yaku.exampleTiles.length)]"/>
+                  </span>
+                  <span v-else>-</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="yaku-section">
+          <table class="yaku-table">
+            <thead>
+              <tr>
+                <th>役満名</th>
+                <th>役満数</th>
+                <th>例</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="yakuman in yakumanList" :key="yakuman.name">
+                <td>{{ yakuman.name }}</td>
+                <td>{{ yakuman.power === 1 ? '役満' : `${yakuman.power}倍役満` }}</td>
+                <td class="yaku-example">
+                  <span v-if="yakuman.exampleTiles && yakuman.exampleTiles.length > 0">
+                    <img
+                      v-for="(tile, index) in yakuman.exampleTiles"
+                      :key="index"
+                      :src="determineTileImage(yakuman, tile, index)"
+                      :alt="determineTileAlt(yakuman, tile, index)"
+                      :class="['tile-image-small', getTileSpecificClass(yakuman, index, yakuman.exampleTiles.length)]"/>
+                  </span>
+                  <span v-else>-</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="close-button-container">
+          <button @click="$emit('close')" class="close-button">閉じる</button>
+        </div>
       </div>
     </div>
-  </div>
+  </transition>
 </template>
 
 <script setup>
@@ -129,6 +131,15 @@
     transform: scale(0.85); /* ポップアップ全体を縮小して画面に収める */
     display: flex; flex-direction: column; justify-content: space-between;
   }
+
+  /* Transition styles */
+.popup-enter-active, .popup-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.popup-enter-from, .popup-leave-to {
+  opacity: 0;
+  transform: scale(0.7);
+}
   .yaku-section { margin-bottom: 15px; }
   .yaku-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
   .yaku-table th, .yaku-table td { border: 1px solid #ddd; padding: 6px; text-align: left; }

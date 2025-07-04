@@ -130,7 +130,7 @@ function getPlayerIcon(playerId) {
 .score { 
   font-weight: bold; 
   color: #007bff; 
-  width: 100px; 
+  width: 90px; 
   text-align: right;
   flex-shrink: 0;
 }

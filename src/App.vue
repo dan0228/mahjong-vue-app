@@ -1,10 +1,22 @@
 <template>
-  <router-view />
+  <div v-if="isLoading">
+    Now Loading...
+  </div>
+  <router-view v-else />
 </template>
 
 <script setup>
-// 今のところ、特別なスクリプトは不要です。
-// 将来的に、グローバルなイベントリスナーや初期化処理などを記述する可能性があります。
+import { ref, onMounted } from 'vue';
+import { preloadImages } from './utils/imageLoader';
+
+const isLoading = ref(true);
+
+onMounted(async () => {
+  const imageUrls = await import.meta.glob('/public/assets/images/**/*.png');
+  const paths = Object.keys(imageUrls);
+  await preloadImages(paths);
+  isLoading.value = false;
+});
 </script>
 
 <style scoped>

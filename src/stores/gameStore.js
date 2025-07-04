@@ -1153,6 +1153,12 @@ export const useGameStore = defineStore('game', {
         this.uraDoraIndicators = []; // リーチ和了でなければ裏ドラはなし
       }
 
+      const handForWin = isTsumo ? [...player.hand, this.drawnTile] : [...player.hand, agariTile];
+      if (handForWin.some(tile => !tile)) { // handForWin に null/undefined が含まれていないかチェック
+          console.error('[handleAgari] Invalid tile in handForWin:', handForWin);
+          return;
+      }
+
       // ここで初めて、完全な役判定と点数計算を行う
       const gameCtxForWin = this.createGameContextForPlayer(player, isTsumo, agariTile);
       const winResult = isTsumo 

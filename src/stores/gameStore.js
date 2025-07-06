@@ -119,6 +119,10 @@ export const useGameStore = defineStore('game', {
     },
     riichiDiscardedTileId: {}, // { [playerId: string]: string | null } リーチ宣言牌のIDを保持
     maxConsecutiveWins: parseInt(localStorage.getItem('mahjongMaxConsecutiveWins') || '0'), // ローカルストレージから最大連勝数を読み込み
+    showDealerDeterminationPopup: false, // 親決め結果ポップアップの表示フラグ
+    dealerDeterminationResult: { // 親決め結果の詳細情報
+      players: [], // { id, name, seatWind, isDealer } の配列
+    },
   }),
   actions: {
     initializeGame() {
@@ -211,9 +215,17 @@ export const useGameStore = defineStore('game', {
       console.log(`gameStore: initializeGame finished. Dealer: ${this.players[this.dealerIndex]?.name} (${this.players[this.dealerIndex]?.seatWind}). Player hands:`, this.players.map(p => ({ id: p.id, name: p.name, wind: p.seatWind, hand: p.hand.map(t => t?.id) })), 'Wall size:', this.wall.length, 'DeadWall size:', this.deadWall.length);
 
       // 新しい局の開始時、またはゲーム初回開始時に、最初のプレイヤー(親)がツモを行う
-      if (this.gamePhase === 'playerTurn' && this.currentTurnPlayerId) {
-        this.drawTile();
-      }
+      
+
+      // 親決め結果をセットし、ポップアップを表示
+      this.dealerDeterminationResult.players = this.players.map(p => ({
+        id: p.id,
+        name: p.name,
+        seatWind: p.seatWind,
+        isDealer: p.isDealer,
+        score: 25000, // 初期点数
+      }));
+      
     },
     drawTile() {
       // プレイヤーがツモるアクション
@@ -613,20 +625,6 @@ export const useGameStore = defineStore('game', {
       this.showResultPopup = true; // リザルトポップアップを表示
     },
     prepareNextRound() {
-      // 実際の点数移動を反映させる
-      if (this.agariResultDetails && this.agariResultDetails.pointChanges) {
-        for (const playerId in this.agariResultDetails.pointChanges) {
-          const player = this.players.find(p => p.id === playerId);
-          if (player) {
-            player.score += this.agariResultDetails.pointChanges[playerId];
-          }
-        }
-        // 供託リーチ棒をリセット
-        if (Object.values(this.agariResultDetails.pointChanges).some(v => v > 0)) {
-            this.riichiSticks = 0;
-        }
-      }
-
       // 点数反映後に箱下チェックを行う
       const playerBelowZero = this.players.find(p => p.score < 0);
       if (playerBelowZero) {
@@ -684,6 +682,7 @@ export const useGameStore = defineStore('game', {
       // dealerIndex が更新された状態で initializeGame を呼び出す
       // initializeGame 内で、現在の dealerIndex を元に親や風が設定される
       this.initializeGame();
+      this.startGameFlow(); // 新しい局の開始時に最初のツモを開始
     },
     setGameMode(mode) {
       this.gameMode = mode; // 'allManual', 'vsCPU', 'online'
@@ -1373,6 +1372,11 @@ export const useGameStore = defineStore('game', {
         } else {
           this.finalResultDetails.consecutiveWins = 0; // 1位でなければ連勝数をリセット
         }
+        // 最大連勝数を更新
+        if (this.finalResultDetails.consecutiveWins > this.maxConsecutiveWins) {
+          this.maxConsecutiveWins = this.finalResultDetails.consecutiveWins;
+          localStorage.setItem('mahjongMaxConsecutiveWins', this.maxConsecutiveWins.toString());
+        }
       }
 
       // 最終結果の詳細情報をセット
@@ -1391,8 +1395,10 @@ export const useGameStore = defineStore('game', {
       // ここでVue Routerなどを使ってタイトル画面へ遷移する処理を呼び出す (UI側で実装)
     },
     // 新しいゲームセッションのために状態をリセットするアクション
-    resetGameForNewSession() {
+    resetGameForNewSession(options = { keepStreak: false }) {
       console.log('gameStore: Resetting game state for new session.');
+      const wins = options.keepStreak ? this.finalResultDetails.consecutiveWins : 0;
+
       this.players.forEach(player => {
         player.hand = [];
         player.discards = [];
@@ -1419,7 +1425,7 @@ export const useGameStore = defineStore('game', {
       this.showFinalResultPopup = false; // 最終リザルトポップアップもリセット
       this.finalResultDetails = { // 最終リザルト詳細もリセット
         rankedPlayers: [],
-        consecutiveWins: 0,
+        consecutiveWins: wins,
       };
       this.currentRound = { wind: 'east', number: 1 };
       this.honba = 0;
@@ -1600,6 +1606,26 @@ export const useGameStore = defineStore('game', {
           }
         }
       }, 0);
+    },
+    startGameFlow() {
+      // ゲーム開始時の最初のツモ処理
+      if (this.currentTurnPlayerId && this.gamePhase === GAME_PHASES.PLAYER_TURN) {
+        this.drawTile();
+      }
+    },
+    applyPointChanges() {
+      if (this.agariResultDetails && this.agariResultDetails.pointChanges) {
+        for (const playerId in this.agariResultDetails.pointChanges) {
+          const player = this.players.find(p => p.id === playerId);
+          if (player) {
+            player.score += this.agariResultDetails.pointChanges[playerId];
+          }
+        }
+        // 供託リーチ棒をリセット
+        if (Object.values(this.agariResultDetails.pointChanges).some(v => v > 0)) {
+            this.riichiSticks = 0;
+        }
+      }
     }
   },
   getters: {

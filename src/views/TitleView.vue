@@ -22,7 +22,7 @@
         <span class="toggle-label">SE</span>
       </div>
       <div class="max-consecutive-wins">
-        最大連勝数: {{ gameStore.maxConsecutiveWins }}
+        🏆最大連勝数: <span class="max-wins-number">{{ gameStore.maxConsecutiveWins }}</span>
       </div>
       <nav class="menu">
         <ul>
@@ -35,6 +35,11 @@
 
       <RulePopup v-if="showRulesPopup" @close="showRulesPopup = false" />
       <YakuListPopup v-if="showYakuListPopup" @close="showYakuListPopup = false" />
+      <ParentDecisionPopup 
+        :show="showParentDecisionPopup"
+        :dealerDeterminationResults="dealerDeterminationResults"
+        @close="handleParentDecisionClose"
+      />
       <div class="credit">BGM by OtoLogic(CC BY 4.0)</div>
       <div class="x-account">
         <a href="https://x.com/yonjan_official" target="_blank" rel="noopener noreferrer">公式X: @yonjan_official</a>
@@ -50,6 +55,7 @@ import { useGameStore } from '@/stores/gameStore';
 import { useAudioStore } from '@/stores/audioStore';
 import RulePopup from '@/components/RulePopup.vue';
 import YakuListPopup from '@/components/YakuListPopup.vue';
+import ParentDecisionPopup from '@/components/ParentDecisionPopup.vue';
 
 const router = useRouter();
 const gameStore = useGameStore();
@@ -57,6 +63,8 @@ const audioStore = useAudioStore();
 
 const showRulesPopup = ref(false);
 const showYakuListPopup = ref(false);
+const showParentDecisionPopup = ref(false);
+const dealerDeterminationResults = ref([]);
 
 // --- Scaling Logic ---
 const DESIGN_WIDTH = 360;
@@ -86,6 +94,21 @@ onBeforeUnmount(() => {
 function startGame(mode) {
   gameStore.setGameMode(mode);
   gameStore.resetGameForNewSession();
+  gameStore.initializeGame(); // ゲームを初期化し、親や風を決定
+
+  // 親決め結果のデータをgameStoreから取得
+  dealerDeterminationResults.value = gameStore.players.map(p => ({
+    id: p.id,
+    name: p.name,
+    seatWind: p.seatWind,
+    score: p.score, // 点数情報を追加
+  }));
+  showParentDecisionPopup.value = true;
+}
+
+function handleParentDecisionClose() {
+  showParentDecisionPopup.value = false;
+  gameStore.startGameFlow(); // ポップアップが閉じた後にゲームフローを開始
   router.push('/game');
 }
 </script>
@@ -290,8 +313,8 @@ function startGame(mode) {
 
 .audio-toggles {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 25px;
+  right: 30px;
   display: flex;
   flex-direction: row; /* 横並びにする */
   gap: 15px; /* 要素間の間隔 */
@@ -302,11 +325,20 @@ function startGame(mode) {
 
 .max-consecutive-wins {
   position: absolute;
-  top: 10px;
-  left: 30px;
+  top: 20px;
+  left: 30px; /* 左端からの位置を調整 */
   font-size: 0.8em;
   color: #333;
   z-index: 10;
+  background-color: rgba(255, 255, 255, 0.6); /* 背景色 */
+  padding: 5px 8px; /* パディング */
+  border-radius: 8px; /* 角丸 */
+  white-space: nowrap; /* テキストが改行されないように */
+}
+
+.max-wins-number {
+  font-weight: bold;
+  color: #CC6633; /* #C63 */
 }
 
 .toggle-switch {

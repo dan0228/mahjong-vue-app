@@ -5,7 +5,7 @@
         <h2>最終結果</h2>
         <div class="final-results-list">
           <div v-for="player in finalResultDetails.rankedPlayers" :key="player.name" class="player-rank-item">
-            <span class="rank">{{ player.rank }}位</span>
+            <span class="rank">{{ `${player.rank}位` }}</span>
             <span class="player-name">{{ player.name }}</span>          
             <img v-if="getPlayerIcon(player.id)" :src="getPlayerIcon(player.id)" alt="Player Icon" class="player-icon" />
             <span class="score">{{ player.score }}点</span>
@@ -46,6 +46,7 @@ const props = defineProps({
     default: () => ({ rankedPlayers: [], consecutiveWins: 0 }),
   },
 });
+
 
 const emit = defineEmits(['start-new-game', 'back-to-title']);
 const gameStore = useGameStore();

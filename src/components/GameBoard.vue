@@ -79,6 +79,12 @@
         @start-new-game="handleStartNewGameFromFinalResult"
         @back-to-title="handleBackToTitleFromFinalResult"
       />
+      
+      <ParentDecisionPopup
+        :show="gameStore.showDealerDeterminationPopup"
+        :dealer-determination-results="gameStore.dealerDeterminationResult.players"
+        @close="handleCloseDealerDeterminationPopup"
+      />
       <img v-if="animationDisplay && animationDisplay.type === 'ron'" src="/assets/images/status/ron.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`]" alt="ロン" />
       <img v-if="riichiAnimationState" src="/assets/images/status/riichi.png" :class="['ron-indicator', `ron-indicator-${riichiAnimationState.position}`]" alt="リーチ" />
       <img v-if="animationDisplay && animationDisplay.type === 'tsumo'" src="/assets/images/status/tsumo.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`]" alt="ツモ" />
@@ -98,6 +104,7 @@
   import PlayerArea from './PlayerArea.vue';
   import ResultPopup from './ResultPopup.vue';
   import FinalResultPopup from './FinalResultPopup.vue';
+  import ParentDecisionPopup from './ParentDecisionPopup.vue';
   import RulePopup from './RulePopup.vue';
   import YakuListPopup from './YakuListPopup.vue';
   // import Wall from './Wall.vue'; // 将来的に使用
@@ -113,19 +120,15 @@
   const showRulesPopup = ref(false);
   const showYakuListPopup = ref(false);
   const riichiAnimationState = ref(null);
+  
 
 const playerIcon = (player) => {
   if (!player) return '';
-  switch (player.name.trim()) {
-    case 'くろ':
-      return '/assets/images/info/cat_icon_1.png';
-    case 'たま':
-      return '/assets/images/info/cat_icon_2.png';
-    case 'とら':
-      return '/assets/images/info/cat_icon_3.png';
-    default:
-      return '/assets/images/info/hito_icon_1.png';
-  }
+  if (player.id === 'player1') return '/assets/images/info/hito_icon_1.png'; // あなた
+  if (player.id === 'player2') return '/assets/images/info/cat_icon_3.png'; // くろ
+  if (player.id === 'player3') return '/assets/images/info/cat_icon_2.png'; // たま
+  if (player.id === 'player4') return '/assets/images/info/cat_icon_1.png'; // とら
+  return null;
 };
 
   // --- Scaling Logic ---
@@ -424,13 +427,29 @@ function onAnkanSelected(tile) { // モーダルからのイベント
 
   function handleProceedToNextRound() {
     riichiAnimationState.value = null;
-    gameStore.prepareNextRound();
+    gameStore.showResultPopup = false; // まずポップアップを閉じる
+    gameStore.applyPointChanges(); // 点数変動を適用
+    gameStore.prepareNextRound(); // 次の局の準備
   }
 
   function handleStartNewGameFromFinalResult() {
     riichiAnimationState.value = null;
-    gameStore.resetGameForNewSession(); // 状態を完全にリセット
+    gameStore.resetGameForNewSession({ keepStreak: true }); // 連勝数を維持
     gameStore.initializeGame(); // 新しいゲームを開始
+    // 親決め結果をセットし、ポップアップを表示
+    gameStore.dealerDeterminationResult.players = gameStore.players.map(p => ({
+      id: p.id,
+      name: p.name,
+      seatWind: p.seatWind,
+      isDealer: p.isDealer,
+      score: 25000, // 初期点数
+    }));
+    gameStore.showDealerDeterminationPopup = true;
+  }
+
+  function handleCloseDealerDeterminationPopup() {
+    gameStore.showDealerDeterminationPopup = false;
+    gameStore.startGameFlow(); // ポップアップが閉じた後にゲームフローを開始
   }
 
   function handleBackToTitleFromFinalResult() {

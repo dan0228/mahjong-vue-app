@@ -234,6 +234,7 @@ function getPointChangeClass(change) {
   background-color: white;
   padding: 25px;
   border-radius: 8px;
+  min-width: 300px; /* ポップアップの最小幅を広げる */
   max-width: 80%;
   text-align: center;
   transform: scale(0.75); /* ポップアップ全体を縮小して画面に収める */
@@ -285,7 +286,7 @@ function getPointChangeClass(change) {
   display: flex; /* Flexbox を使用して内部要素を配置 */
   justify-content: space-between; /* 名前と点数変動を両端に配置 */
   margin: 3px auto; /* 上下マージン3px、左右マージンautoでブロック自体を中央寄せ */
-  width: 200px; /* 固定幅を設定して中央揃えを安定させる (値は調整可能) */
+  width: 230px; /* 固定幅を設定して中央揃えを安定させる (値は調整可能) */
   /* width: fit-content; から変更 */
 }
 .point-increase { color: green; }

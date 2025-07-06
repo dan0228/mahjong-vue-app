@@ -24,13 +24,14 @@
             <span>(連勝リセット)</span>
           </button>
         </div>
+        <div class="timestamp">{{ formattedTimestamp }}</div>
       </div>
     </div>
   </transition>
 </template>
 
 <script setup>
-import { defineProps, defineEmits } from 'vue';
+import { defineProps, defineEmits, computed } from 'vue';
 import { useGameStore } from '@/stores/gameStore';
 
 const props = defineProps({
@@ -48,6 +49,17 @@ const props = defineProps({
 
 const emit = defineEmits(['start-new-game', 'back-to-title']);
 const gameStore = useGameStore();
+
+const formattedTimestamp = computed(() => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+});
 
 function startNewGame() {
   emit('start-new-game');
@@ -185,5 +197,11 @@ function getPlayerIcon(playerId) {
 }
 .action-button:last-child:hover {
   background-color: #da190b;
+}
+
+.timestamp {
+  margin-top: 2px;
+  font-size: 0.8em;
+  color: #666;
 }
 </style>

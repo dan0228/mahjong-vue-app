@@ -118,6 +118,7 @@ export const useGameStore = defineStore('game', {
       playerId: null,
     },
     riichiDiscardedTileId: {}, // { [playerId: string]: string | null } リーチ宣言牌のIDを保持
+    maxConsecutiveWins: parseInt(localStorage.getItem('mahjongMaxConsecutiveWins') || '0'), // ローカルストレージから最大連勝数を読み込み
   }),
   actions: {
     initializeGame() {

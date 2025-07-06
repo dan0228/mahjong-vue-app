@@ -21,6 +21,9 @@
         </label>
         <span class="toggle-label">SE</span>
       </div>
+      <div class="max-consecutive-wins">
+        最大連勝数: {{ gameStore.maxConsecutiveWins }}
+      </div>
       <nav class="menu">
         <ul>
           <li><button @click="startGame('vsCPU')">ねこAI対戦</button></li>
@@ -33,6 +36,9 @@
       <RulePopup v-if="showRulesPopup" @close="showRulesPopup = false" />
       <YakuListPopup v-if="showYakuListPopup" @close="showYakuListPopup = false" />
       <div class="credit">BGM by OtoLogic(CC BY 4.0)</div>
+      <div class="x-account">
+        <a href="https://x.com/yonjan_official" target="_blank" rel="noopener noreferrer">公式X: @yonjan_official</a>
+      </div>
     </div>
   </div>
 </template>
@@ -256,12 +262,30 @@ function startGame(mode) {
 
 .credit {
   position: absolute;
-  bottom: 10px;
+  bottom: 30px; /* Xアカウントのリンクの上に配置 */
   width: 100%;
   text-align: center;
   font-size: 0.7em;
   color: rgba(0, 0, 0, 0.4);
   z-index: 1;
+}
+
+.x-account {
+  position: absolute;
+  bottom: 10px;
+  width: 100%;
+  text-align: center;
+  font-size: 0.7em;
+  z-index: 1;
+}
+
+.x-account a {
+  color: #126fa8; /* Xのブランドカラー */
+  text-decoration: none;
+}
+
+.x-account a:hover {
+  text-decoration: underline;
 }
 
 .audio-toggles {
@@ -270,10 +294,19 @@ function startGame(mode) {
   right: 10px;
   display: flex;
   flex-direction: row; /* 横並びにする */
-  gap: 5px; /* 要素間の間隔 */
+  gap: 15px; /* 要素間の間隔 */
   z-index: 10;
   font-size: 0.8em;
   color: #333;
+}
+
+.max-consecutive-wins {
+  position: absolute;
+  top: 10px;
+  left: 30px;
+  font-size: 0.8em;
+  color: #333;
+  z-index: 10;
 }
 
 .toggle-switch {

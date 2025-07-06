@@ -9,10 +9,21 @@
         <span class="main-title">よんじゃん！</span>
         <span class="sub-title">~ 4牌で楽しむ本格麻雀 ~</span>
       </h1>
+      <div class="audio-toggles">
+        <label class="toggle-switch">
+          <input type="checkbox" :checked="audioStore.isBgmEnabled" @change="audioStore.toggleBgm()">
+          <span class="slider round"></span>
+        </label>
+        <span class="toggle-label">BGM</span>
+        <label class="toggle-switch">
+          <input type="checkbox" :checked="audioStore.isSeEnabled" @change="audioStore.toggleSe()">
+          <span class="slider round"></span>
+        </label>
+        <span class="toggle-label">SE</span>
+      </div>
       <nav class="menu">
         <ul>
           <li><button @click="startGame('vsCPU')">ねこAI対戦</button></li>
-          <li><button @click="startGame('online')" disabled>オンライン対戦 (準備中)</button></li>
           <li><button @click="startGame('allManual')">全操作モード</button></li>
           <li><button @click="showRulesPopup = true">ルール 📖</button></li>
           <li><button @click="showYakuListPopup = true">役一覧 🀄</button></li>
@@ -30,11 +41,13 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { useGameStore } from '@/stores/gameStore';
+import { useAudioStore } from '@/stores/audioStore';
 import RulePopup from '@/components/RulePopup.vue';
 import YakuListPopup from '@/components/YakuListPopup.vue';
 
 const router = useRouter();
 const gameStore = useGameStore();
+const audioStore = useAudioStore();
 
 const showRulesPopup = ref(false);
 const showYakuListPopup = ref(false);
@@ -249,6 +262,76 @@ function startGame(mode) {
   font-size: 0.7em;
   color: rgba(0, 0, 0, 0.4);
   z-index: 1;
+}
+
+.audio-toggles {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  flex-direction: row; /* 横並びにする */
+  gap: 5px; /* 要素間の間隔 */
+  z-index: 10;
+  font-size: 0.8em;
+  color: #333;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 24px;
+  height: 14px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+  border-radius: 14px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 10px;
+  width: 10px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(10px);
+  -ms-transform: translateX(10px);
+  transform: translateX(10px);
+}
+
+.toggle-label {
+  vertical-align: middle;
+  font-size: 0.9em; /* ラベルのフォントサイズも調整 */
 }
 
 </style>

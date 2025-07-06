@@ -11,7 +11,7 @@
             <span class="score">{{ player.score }}点</span>
           </div>
         </div>
-        <p class="consecutive-wins">
+        <p class="consecutive-wins" v-if="gameStore.gameMode !== 'allManual'">
           {{ finalResultDetails.consecutiveWins }}連勝中！
         </p>
         <div class="actions">
@@ -31,6 +31,7 @@
 
 <script setup>
 import { defineProps, defineEmits } from 'vue';
+import { useGameStore } from '@/stores/gameStore';
 
 const props = defineProps({
   show: {
@@ -46,6 +47,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['start-new-game', 'back-to-title']);
+const gameStore = useGameStore();
 
 function startNewGame() {
   emit('start-new-game');

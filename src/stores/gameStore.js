@@ -317,9 +317,11 @@ export const useGameStore = defineStore('game', {
     },
     discardTile(playerId, tileIdToDiscard, isFromDrawnTile) {
       const audioStore = useAudioStore();
-      const audio = new Audio('/assets/sounds/打牌.mp3');
-      audio.volume = audioStore.volume;
-      audio.play();
+      if (audioStore.isSeEnabled) {
+        const audio = new Audio('/assets/sounds/打牌.mp3');
+        audio.volume = audioStore.volume;
+        audio.play();
+      }
 
       setTimeout(() => {
         const player = this.players.find(p => p.id === playerId);
@@ -1360,12 +1362,16 @@ export const useGameStore = defineStore('game', {
       console.log('gameStore: Game has ended.');
       // プレイヤーをランク付け
       const rankedPlayers = getRankedPlayers(this.players);
-      // ユーザープレイヤー ('player1') が1位か判定し、連勝数を更新
-      const myPlayerRank = rankedPlayers.find(p => p.id === 'player1')?.rank;
-      if (myPlayerRank === 1) {
-        this.finalResultDetails.consecutiveWins++; // 1位なら連勝数をインクリメント
-      } else {
-        this.finalResultDetails.consecutiveWins = 0; // 1位でなければ連勝数をリセット
+
+      // 全操作モードでない場合のみ連勝数を更新
+      if (this.gameMode !== 'allManual') {
+        // ユーザープレイヤー ('player1') が1位か判定し、連勝数を更新
+        const myPlayerRank = rankedPlayers.find(p => p.id === 'player1')?.rank;
+        if (myPlayerRank === 1) {
+          this.finalResultDetails.consecutiveWins++; // 1位なら連勝数をインクリメント
+        } else {
+          this.finalResultDetails.consecutiveWins = 0; // 1位でなければ連勝数をリセット
+        }
       }
 
       // 最終結果の詳細情報をセット

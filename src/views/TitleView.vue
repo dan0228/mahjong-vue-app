@@ -21,6 +21,7 @@
 
       <RulePopup v-if="showRulesPopup" @close="showRulesPopup = false" />
       <YakuListPopup v-if="showYakuListPopup" @close="showYakuListPopup = false" />
+      <div class="credit">BGM by OtoLogic(CC BY 4.0)</div>
     </div>
   </div>
 </template>
@@ -72,6 +73,7 @@ function startGame(mode) {
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap');
+
 .title-view-container {
   position: relative;
   width: 100vw;
@@ -237,6 +239,16 @@ function startGame(mode) {
 @keyframes subtleFloat {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-5px); } /* わずかに上に移動 */
+}
+
+.credit {
+  position: absolute;
+  bottom: 10px;
+  width: 100%;
+  text-align: center;
+  font-size: 0.7em;
+  color: rgba(0, 0, 0, 0.4);
+  z-index: 1;
 }
 
 </style>

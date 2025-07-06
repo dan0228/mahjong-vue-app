@@ -126,7 +126,7 @@
     padding: 20px; border-radius: 8px;
     max-width: 90%; max-height: 85vh;
     overflow-y: auto; text-align: center;
-    font-family: 'Helvetica Neue', Arial, sans-serif; /* フォントを元に戻す */
+    font-family: 'M PLUS 1', sans-serif; /* フォントをM PLUS 1に統一 */
     font-size: small;
     transform: scale(0.85); /* ポップアップ全体を縮小して画面に収める */
     display: flex; flex-direction: column; justify-content: space-between;

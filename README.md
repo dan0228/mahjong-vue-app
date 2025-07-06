@@ -1,5 +1,75 @@
-# Vue 3 + Vite
+# 麻雀-Vue-App
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+これはVue.jsで作成された四人麻雀ゲームです。
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+## 概要
+
+このアプリケーションは、Vue.js、Pinia、Vue Routerを使用して構築されたクライアントサイドの麻雀ゲームです。プレイヤーは3人のCPU対戦相手と麻雀をプレイできます。
+
+## ゲームルール
+
+このゲームは、一般的な麻雀とは異なる以下の特殊ルールを採用しています。
+
+- **四牌麻雀:** 手牌が4枚でテンパイ、5枚で和了となる特殊な麻雀です。
+- **東場のみ:** ゲームは東場のみで、南場はありません。
+- **チーなし:** チーはできません。
+
+## 主な機能
+
+- **四人麻雀:** プレイヤー1人とCPU3人での対局
+- **Vue.js 3:** Composition API を活用したリアクティブなUI
+- **Pinia:** コンポーネント間で共有されるグローバルな状態管理
+- **Vue Router:** タイトル画面とゲーム画面間の画面遷移
+- **基本的な麻雀ロジック:**
+    - 配牌、ツモ、打牌
+    - ポン、カン（明槓、暗槓、加槓）
+    - リーチ
+    - 和了（ロン、ツモ）
+    - ドラ、裏ドラ
+    - 役判定（一部）
+    - 点数計算（一部）
+
+## プロジェクト構造
+
+```
+mahjong-vue-app/
+├── public/              # 画像や音声などの静的アセット
+├── src/
+│   ├── components/      # 再利用可能なVueコンポーネント
+│   ├── services/        # 麻雀のゲームロジック
+│   ├── stores/          # Piniaストア（状態管理）
+│   ├── views/           # 各画面のVueコンポーネント
+│   ├── router/          # Vue Routerの設定
+│   ├── styles/          # CSSスタイル
+│   ├── utils/           # ユーティリティ関数
+│   ├── App.vue          # ルートコンポーネント
+│   └── main.js          # アプリケーションのエントリーポイント
+├── package.json         # プロジェクトの依存関係とスクリプト
+└── vite.config.js       # Viteの設定ファイル
+```
+
+## セットアップと実行方法
+
+1.  **依存関係のインストール:**
+    ```bash
+    npm install
+    ```
+
+2.  **開発サーバーの起動:**
+    ```bash
+    npm run dev
+    ```
+    これにより、ホットリロード対応の開発サーバーが起動します。
+
+3.  **本番用のビルド:**
+    ```bash
+    npm run build
+    ```
+    `dist` ディレクトリに最適化された本番用ファイルが生成されます。
+
+## 使用技術
+
+-   **フレームワーク:** [Vue.js 3](https://v3.vuejs.org/)
+-   **状態管理:** [Pinia](https://pinia.vuejs.org/)
+-   **ルーティング:** [Vue Router](https://router.vuejs.org/)
+-   **ビルドツール:** [Vite](https://vitejs.dev/)

@@ -6,6 +6,18 @@
       <div class="game-board-top-left-buttons">
         <img src="/assets/images/button/rule_button.png" alt="ルール" @click="showRulesPopup = true" class="info-button-image" />
         <img src="/assets/images/button/yaku_button.png" alt="役一覧" @click="showYakuListPopup = true" class="info-button-image" />
+        <div class="audio-toggles">
+          <label class="toggle-switch">
+            <input type="checkbox" :checked="audioStore.isBgmEnabled" @change="audioStore.toggleBgm()">
+            <span class="slider round"></span>
+          </label>
+          <span class="toggle-label">BGM</span>
+          <label class="toggle-switch">
+            <input type="checkbox" :checked="audioStore.isSeEnabled" @change="audioStore.toggleSe()">
+            <span class="slider round"></span>
+          </label>
+          <span class="toggle-label">SE</span>
+        </div>
       </div>
       <!-- タイトルへ戻るボタン -->
       <div class="game-board-header" v-if="showReturnButton">
@@ -99,6 +111,7 @@
   import { useRouter } from 'vue-router';
   import PlayerHand from './PlayerHand.vue';
   import { useGameStore } from '@/stores/gameStore';
+  import { useAudioStore } from '@/stores/audioStore';
   import CenterTableInfo from './CenterTableInfo.vue';
   import DiscardPile from './DiscardPile.vue';
   import PlayerArea from './PlayerArea.vue';
@@ -112,6 +125,7 @@
   import { GAME_PHASES } from '@/stores/gameStore'; // gameStoreからフェーズ定数をインポート
 
   const gameStore = useGameStore(); // ストアのインスタンスを取得
+  const audioStore = useAudioStore();
   const router = useRouter(); // routerインスタンスを取得
   const showAnkanModal = ref(false);
   const ankanOptions = ref([]); // ストアから渡される暗槓可能な牌のリスト
@@ -559,7 +573,76 @@ function onAnkanSelected(tile) { // モーダルからのイベント
   left: 10px;
   z-index: 20;
   display: flex;
+  align-items: center; /* Align items vertically */
   gap: 8px;
+}
+
+.audio-toggles {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  background-color: rgba(0, 0, 0, 0.3);
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+
+.toggle-label {
+  color: white;
+  font-size: 0.64em; /* 0.8em * 0.8 */
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 19.2px; /* 24px * 0.8 */
+  height: 11.2px; /* 14px * 0.8 */
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+  border-radius: 14px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 8px; /* 10px * 0.8 */
+  width: 8px; /* 10px * 0.8 */
+  left: 1.6px; /* 2px * 0.8 */
+  bottom: 1.6px; /* 2px * 0.8 */
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(8px); /* 10px * 0.8 */
+  -ms-transform: translateX(8px);
+  transform: translateX(8px);
 }
 .info-button-image {
   width: 50px;

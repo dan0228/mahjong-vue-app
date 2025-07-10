@@ -2,7 +2,11 @@
   <div v-if="isLoading">
     Now Loading...
   </div>
-  <router-view v-else />
+  <router-view v-else v-slot="{ Component }">
+    <transition name="fade" mode="out-in">
+      <component :is="Component" />
+    </transition>
+  </router-view>
 </template>
 
 <script setup>
@@ -32,6 +36,14 @@ watch([() => audioStore.volume, () => audioStore.isBgmEnabled], ([newVolume, isB
 });
 </script>
 
-<style scoped>
-/* App.vueのスタイルは最小限に、各ビューやコンポーネントで管理するのが一般的 */
+<style>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 </style>

@@ -123,6 +123,8 @@ export const useGameStore = defineStore('game', {
     dealerDeterminationResult: { // 親決め結果の詳細情報
       players: [], // { id, name, seatWind, isDealer } の配列
     },
+    catCoins: 0, // 猫コインの合計
+    lastCoinGain: 0, // 直近で得た猫コイン
   }),
   actions: {
     initializeGame() {
@@ -474,7 +476,7 @@ export const useGameStore = defineStore('game', {
           this.setNextActiveResponder(); // 応答を待つ最初のプレイヤーを設定
           console.log(`gameStore: Player ${player.id} discarded ${tileIdToDiscard}. Waiting for: ${this.waitingForPlayerResponses.join(', ')}. Active: ${this.activeActionPlayerId}. Eligible:`, JSON.parse(JSON.stringify(this.playerActionEligibility)));
         }
-      }, 150);
+      }, 100);
     },
     moveToNextPlayer() {
       if (this.players.length === 0) return;
@@ -1386,6 +1388,7 @@ export const useGameStore = defineStore('game', {
         name: p.name,
         score: p.score,
       }));
+      this.updateCatCoins();
       this.showFinalResultPopup = true;
     },
     returnToTitle() {
@@ -1510,6 +1513,19 @@ export const useGameStore = defineStore('game', {
       };
     }
     ,
+    loadCatCoins() {
+      const coins = localStorage.getItem('mahjongCatCoins');
+      this.catCoins = coins ? parseInt(coins, 10) : 0;
+    },
+    updateCatCoins() {
+      const player1 = this.players.find(p => p.id === 'player1');
+      if (player1) {
+        const gain = Math.floor(player1.score / 500);
+        this.lastCoinGain = gain;
+        this.catCoins = Math.min(9999, this.catCoins + gain);
+        localStorage.setItem('mahjongCatCoins', this.catCoins.toString());
+      }
+    },
     _handlePostRinshanDraw(playerId) {
       const player = this.players.find(p => p.id === playerId);
       if (!player || !this.drawnTile) return;

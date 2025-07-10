@@ -14,6 +14,9 @@
         <p class="consecutive-wins" v-if="gameStore.gameMode !== 'allManual'">
           {{ finalResultDetails.consecutiveWins }}連勝中！
         </p>
+        <div class="coin-gain" v-if="gameStore.lastCoinGain > 0">
+          <img src="/assets/images/info/cat_coin.png" alt="Cat Coin" class="cat-coin-icon">+{{ gameStore.lastCoinGain }}
+        </div>
         <div class="actions">
           <button @click="startNewGame" class="action-button">
             <span>新しいゲームを開始</span>
@@ -161,11 +164,28 @@ function getPlayerIcon(playerId) {
   flex-shrink: 0;
 }
 .consecutive-wins {
-  font-size: 1.2em;
+  font-size: 2em;
   font-weight: bold;
   color: #ff9800; /* オレンジ色 */
   margin-top: 15px;
+  margin-bottom: 5px;
+  margin-left: 40px;
+}
+
+.coin-gain {
+  font-size: 2em;
+  font-weight: bold;
+  color: #f59e0b;
   margin-bottom: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cat-coin-icon {
+  width: 80px;
+  height: 80px;
+  margin-left: 0px;
 }
 .actions {
   display: flex;

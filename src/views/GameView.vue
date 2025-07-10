@@ -1,11 +1,39 @@
 <template>
   <div class="game-view-container">
     <GameBoard />
+    <ParentDecisionPopup 
+      :show="showParentDecisionPopup"
+      :dealerDeterminationResults="dealerDeterminationResults"
+      @close="handleParentDecisionClose"
+    />
   </div>
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue';
+import { useGameStore } from '@/stores/gameStore';
 import GameBoard from '@/components/GameBoard.vue';
+import ParentDecisionPopup from '@/components/ParentDecisionPopup.vue';
+
+const gameStore = useGameStore();
+const showParentDecisionPopup = ref(false);
+const dealerDeterminationResults = ref([]);
+
+onMounted(() => {
+  // 親決め結果のデータをgameStoreから取得
+  dealerDeterminationResults.value = gameStore.players.map(p => ({
+    id: p.id,
+    name: p.name,
+    seatWind: p.seatWind,
+    score: p.score,
+  }));
+  showParentDecisionPopup.value = true;
+});
+
+function handleParentDecisionClose() {
+  showParentDecisionPopup.value = false;
+  gameStore.startGameFlow(); // ポップアップが閉じた後にゲームフローを開始
+}
 </script>
 
 <style scoped>
@@ -16,5 +44,6 @@ import GameBoard from '@/components/GameBoard.vue';
   justify-content: center; /* ゲームボードを中央寄せにする */
   width: 100vw;
   height: 100vh;
+  position: relative; /* audio-toggles の配置基準 */
 }
 </style>

@@ -83,6 +83,20 @@ watch(() => audioStore.volume, (newVolume) => {
 </script>
 
 <style>
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Prevents scrolling at the root level */
+  height: 100%;
+  width: 100%;
+  position: fixed; /* Fixes the viewport to the window size */
+}
+
+#app {
+  height: 100%;
+  width: 100%;
+}
+
 /* グローバルなスタイルや、App.vue固有のスタイルをここに記述 */
 .fade-enter-active,
 .fade-leave-active {

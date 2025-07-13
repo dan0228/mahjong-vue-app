@@ -1,6 +1,10 @@
 <template>
-  <div v-if="isLoading">
-    Now Loading...
+  <div v-if="isLoading" class="loading-screen">
+    <img src="/assets/images/back/loading.png" alt="Loading..." class="loading-image" />
+    <div class="progress-bar-container">
+      <div class="progress-bar" :style="{ width: loadingProgress + '%' }"></div>
+    </div>
+    <p class="loading-text">Loading... {{ Math.floor(loadingProgress) }}%</p>
   </div>
   <router-view v-else v-slot="{ Component }">
     <transition name="fade" mode="out-in">
@@ -15,6 +19,7 @@ import { useAudioStore } from '@/stores/audioStore';
 import { preloadImages } from '@/utils/imageLoader';
 
 const isLoading = ref(true); // 初期値をtrueに設定
+const loadingProgress = ref(0); // ローディング進捗 (0-100)
 
 const audioStore = useAudioStore();
 const bgmPlayer = ref(null);
@@ -22,6 +27,7 @@ const bgmPlayer = ref(null);
 // --- Preload Logic ---
 onMounted(async () => {
   const imagePaths = [
+    '/assets/images/back/loading.png',
     '/assets/images/back/shrine.png',
     '/assets/images/back/back_out_shrine.png',
     '/assets/images/back/back_hai.png',
@@ -139,16 +145,27 @@ onMounted(async () => {
     '/assets/sounds/打牌.mp3',
   ];
 
+  const totalAssets = imagePaths.length + audioPaths.length;
+  let loadedAssets = 0;
+
+  const updateOverallProgress = () => {
+    loadedAssets++;
+    loadingProgress.value = (loadedAssets / totalAssets) * 100;
+  };
+
   try {
     await Promise.all([
-      preloadImages(imagePaths),
-      audioStore.preloadAudio(audioPaths)
+      preloadImages(imagePaths, updateOverallProgress),
+      audioStore.preloadAudio(audioPaths, updateOverallProgress)
     ]);
     console.log('All assets preloaded!');
   } catch (error) {
     console.error('Failed to preload assets:', error);
   } finally {
-    isLoading.value = false; // プリロード完了後にローディングを終了
+    // プリロード完了後、少し遅延させてからローディングを終了
+    setTimeout(() => {
+      isLoading.value = false;
+    }, 500); // 500msの遅延
   }
 });
 
@@ -238,6 +255,49 @@ html, body {
 #app {
   height: 100%;
   width: 100%;
+}
+
+.loading-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #222; /* Dark background for loading */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999; /* Ensure it's on top */
+  color: white;
+  font-family: 'M PLUS Rounded 1c', sans-serif;
+}
+
+.loading-image {
+  width: 80%; /* Adjust size as needed */
+  max-width: 300px;
+  margin-bottom: 20px;
+}
+
+.progress-bar-container {
+  width: 80%;
+  max-width: 400px;
+  height: 20px;
+  background-color: #555;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.progress-bar {
+  height: 100%;
+  background-color: #4CAF50; /* Green progress bar */
+  width: 0%; /* Initial width */
+  transition: width 0.1s linear; /* Smooth transition for progress */
+}
+
+.loading-text {
+  font-size: 1.2em;
 }
 
 /* グローバルなスタイルや、App.vue固有のスタイルをここに記述 */

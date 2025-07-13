@@ -10,17 +10,22 @@ export const useAudioStore = defineStore('audio', {
     audioPlayers: new Map(), // プリロードしたAudioオブジェクトを格納
   }),
   actions: {
-    async preloadAudio(urls) {
+    async preloadAudio(urls, onProgress = () => {}) {
+      let loadedCount = 0;
       const promises = urls.map(url => {
         return new Promise((resolve, reject) => {
           const audio = new Audio(url);
           audio.preload = 'auto';
           audio.oncanplaythrough = () => {
             this.audioPlayers.set(url, audio);
+            loadedCount++;
+            onProgress(loadedCount / urls.length);
             resolve();
           };
           audio.onerror = () => {
             console.error(`Failed to load audio: ${url}`);
+            loadedCount++; // エラーでも進捗を進める
+            onProgress(loadedCount / urls.length);
             reject();
           };
           audio.load(); // ロードを開始

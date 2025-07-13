@@ -30,9 +30,10 @@
       <nav class="menu">
         <ul>
           <li><button @click="startGame('vsCPU')">ねこAI対戦</button></li>
-          <li><button @click="startGame('allManual')">全操作モード</button></li>
+          <li><button @click="goToShrine">じゃん猫神社 参拝 ⛩️</button></li>
           <li><button @click="showRulesPopup = true">ルール 📖</button></li>
           <li><button @click="showYakuListPopup = true">役一覧 🀄</button></li>
+          <li><button @click="startGame('allManual')">全操作モード</button></li>
         </ul>
       </nav>
 
@@ -94,6 +95,10 @@ function startGame(mode) {
   gameStore.resetGameForNewSession();
   gameStore.initializeGame(); // ゲームを初期化し、親や風を決定
   router.push('/game');
+}
+
+function goToShrine() {
+  router.push('/shrine');
 }
 
 
@@ -210,12 +215,12 @@ function startGame(mode) {
   z-index: 1; /* グラデーションより手前に来るように */
 }
 .menu li {
-  margin-bottom: 15px;
+  margin-bottom: 8px;
 }
 
 .menu button {
   width: 280px; /* 固定幅に設定 */
-  padding: 10px 20px; /* パディング調整 */
+  padding: 6px 20px; /* パディング調整 */
   font-size: 1.2em;
   cursor: pointer;
   border: none; /* ボーダーを削除 */

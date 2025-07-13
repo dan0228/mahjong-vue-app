@@ -16,7 +16,7 @@
             <input type="checkbox" :checked="audioStore.isSeEnabled" @change="audioStore.toggleSe()">
             <span class="slider round"></span>
           </label>
-          <span class="toggle-label">SE</span>
+          <span class="toggle-label">効果音</span>
         </div>
       </div>
       <!-- タイトルへ戻るボタン -->

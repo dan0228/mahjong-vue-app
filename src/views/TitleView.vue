@@ -19,7 +19,7 @@
           <input type="checkbox" :checked="audioStore.isSeEnabled" @change="audioStore.toggleSe()">
           <span class="slider round"></span>
         </label>
-        <span class="toggle-label">SE</span>
+        <span class="toggle-label">効果音</span>
       </div>
       <div class="max-consecutive-wins">
         🏆最大連勝数: <span class="max-wins-number">{{ gameStore.maxConsecutiveWins }}</span>
@@ -29,7 +29,7 @@
       </div>
       <nav class="menu">
         <ul>
-          <li><button @click="startGame('vsCPU')">ねこAI対戦</button></li>
+          <li><button @click="startGame('vsCPU')">ねこAI対戦 🐈</button></li>
           <li><button @click="goToShrine">じゃん猫神社 参拝 ⛩️</button></li>
           <li><button @click="showRulesPopup = true">ルール 📖</button></li>
           <li><button @click="showYakuListPopup = true">役一覧 🀄</button></li>

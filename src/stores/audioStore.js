@@ -4,8 +4,9 @@ import { defineStore } from 'pinia';
 export const useAudioStore = defineStore('audio', {
   state: () => ({
     volume: 0.4,
-    isBgmEnabled: false, // デフォルトはオフ
-    isSeEnabled: false,  // デフォルトはオフ
+    isBgmEnabled: true, // デフォルトはオン
+    isSeEnabled: true,  // デフォルトはオン
+    currentBgm: null,
   }),
   actions: {
     setVolume(newVolume) {
@@ -16,6 +17,16 @@ export const useAudioStore = defineStore('audio', {
     },
     toggleSe() {
       this.isSeEnabled = !this.isSeEnabled;
+    },
+    setBgm(bgm) {
+      this.currentBgm = bgm;
+    },
+    playSound(sound) {
+      if (this.isSeEnabled) {
+        const audio = new Audio(`/assets/sounds/${sound}`);
+        audio.volume = this.volume;
+        audio.play().catch(e => console.error("効果音の再生に失敗しました:", e));
+      }
     },
   },
 });

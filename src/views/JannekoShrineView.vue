@@ -15,7 +15,7 @@
             <input type="checkbox" :checked="audioStore.isSeEnabled" @change="audioStore.toggleSe()">
             <span class="slider round"></span>
           </label>
-          <span class="toggle-label">SE</span>
+          <span class="toggle-label">効果音</span>
         </div>
         <button @click="goToTitle" class="back-button">
           <img src="/assets/images/button/buckToTitle.png" alt="トップに戻る">
@@ -33,7 +33,9 @@
           </tbody>
         </table>
       </div>
-      <SayingPopup v-if="showPopup" :fortune="randomFortune" :saying="randomSaying" :sayingId="randomSayingId" :isNew="isNewSaying" @close="showPopup = false" />
+      <transition name="fade">
+        <SayingPopup v-if="showPopup" :fortune="randomFortune" :saying="randomSaying" :sayingId="randomSayingId" :isNew="isNewSaying" @close="closePopup" />
+      </transition>
 
       <div :class="{'fade-overlay': true, 'is-fading': isFading}"></div>
     </div>
@@ -71,7 +73,13 @@ const saveRevealedSayings = () => {
   localStorage.setItem('mahjongRevealedSayings', JSON.stringify(revealedSayings.value));
 };
 
+const previousBgm = ref(null);
+
 const drawOmikuji = () => {
+  previousBgm.value = audioStore.currentBgm;
+  audioStore.setBgm(null); // BGMを停止
+  audioStore.playSound('Kagura_Suzu01-7.mp3'); // 神楽鈴の音を再生
+
   const cost = 100;
   if (gameStore.catCoins < cost) {
     randomFortune.value = ""; // 運勢は表示しない
@@ -81,6 +89,8 @@ const drawOmikuji = () => {
     showPopup.value = true;
     return;
   }
+
+
 
   if (gameStore.deductCatCoins(cost)) {
     isFading.value = true; // フェードアウト開始
@@ -108,6 +118,15 @@ const drawOmikuji = () => {
     randomSayingId.value = null; // コイン消費失敗時はIDをクリア
     isNewSaying.value = false; // リセット
     showPopup.value = true;
+  }
+};
+
+
+const closePopup = () => {
+  showPopup.value = false;
+  if (previousBgm.value) {
+    audioStore.setBgm(previousBgm.value);
+    previousBgm.value = null; // Reset for next time
   }
 };
 
@@ -358,6 +377,7 @@ const sayings = ref([
   padding: 5px 8px;
   border-radius: 8px;
   white-space: nowrap;
+  scale: 0.9; /* サイズを小さく */
 }
 
 .cat-coins-number {
@@ -373,6 +393,7 @@ const sayings = ref([
   justify-content: flex-end; /* 右寄せに変更 */
   align-items: center;
   z-index: 10;
+  scale: 0.9; /* サイズを小さく */
 }
 
 .audio-toggles {

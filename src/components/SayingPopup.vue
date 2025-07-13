@@ -61,7 +61,7 @@ const sayingNumber = computed(() => {
 
 .fortune-text {
   font-family: 'Yuji Syuku', serif;
-  font-size: 1.4rem;
+  font-size: 1.25rem;
   color: #333;
   margin-bottom: 15px;
   text-align: left;
@@ -69,7 +69,7 @@ const sayingNumber = computed(() => {
 
 .saying-text-with-prefix {
   font-family: 'Yuji Syuku', serif;
-  font-size: 1.4rem;
+  font-size: 1.25rem;
   color: #333;
   margin: 0;
   white-space: pre-wrap;
@@ -94,5 +94,15 @@ const sayingNumber = computed(() => {
   font-size: 2.5rem;
   cursor: pointer;
   color: #5a4a42;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

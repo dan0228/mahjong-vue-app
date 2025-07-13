@@ -18,7 +18,7 @@ export function getAllTiles() {
  [SUITS.MANZU, SUITS.PINZU, SUITS.SOZU].forEach(suit => { // 検証用にコメントアウト
   // [SUITS.MANZU].forEach(suit => {
     for (let rank = 1; rank <= 9; rank++) { // 検証用。本来は9
-      for (let i = 0; i < 15; i++) { //検証用。本来は4
+      for (let i = 0; i < 4; i++) { //検証用。本来は4
         tiles.push({
           suit,
           rank,

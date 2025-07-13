@@ -10,36 +10,83 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
-import { useAudioStore } from './stores/audioStore';
-import { preloadImages } from './utils/imageLoader';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
+import { useAudioStore } from '@/stores/audioStore';
 
-const isLoading = ref(true);
+const isLoading = ref(false); 
+
 const audioStore = useAudioStore();
-const bgm = new Audio('/assets/sounds/BGM.mp3');
-bgm.loop = true;
+const bgmPlayer = ref(null);
 
-onMounted(async () => {
-  const imageUrls = await import.meta.glob('/assets/images/**/*.png');
-  const paths = Object.keys(imageUrls);
-  await preloadImages(paths);
-  isLoading.value = false;
+// --- Autoplay Workaround ---
+const startAudioContext = () => {
+  if (audioStore.isBgmEnabled && bgmPlayer.value && bgmPlayer.value.paused) {
+    bgmPlayer.value.play().catch(e => {
+      // Autoplay might still be blocked, but we attempt it on first user interaction.
+      console.warn("BGM autoplay failed on interaction, might require another user gesture:", e);
+    });
+  }
+  // Remove the event listeners after the first interaction
+  window.removeEventListener('click', startAudioContext);
+  window.removeEventListener('keydown', startAudioContext);
+  window.removeEventListener('touchstart', startAudioContext);
+};
+
+onMounted(() => {
+  // Add listeners for the first user interaction to start audio
+  window.addEventListener('click', startAudioContext);
+  window.addEventListener('keydown', startAudioContext);
+  window.addEventListener('touchstart', startAudioContext);
 });
 
-watch([() => audioStore.volume, () => audioStore.isBgmEnabled], ([newVolume, isBgmEnabled]) => {
-  bgm.volume = newVolume;
-  if (isBgmEnabled) {
-    bgm.play().catch(e => console.error("BGMの再生に失敗しました。", e));
+onUnmounted(() => {
+  // Clean up listeners when the component is destroyed
+  window.removeEventListener('click', startAudioContext);
+  window.removeEventListener('keydown', startAudioContext);
+  window.removeEventListener('touchstart', startAudioContext);
+});
+// --- End Autoplay Workaround ---
+
+watch(() => audioStore.isBgmEnabled, (newVal) => {
+  if (newVal) {
+    if (bgmPlayer.value && bgmPlayer.value.paused) {
+      bgmPlayer.value.play().catch(e => console.error("BGMの再生に失敗しました:", e));
+    }
   } else {
-    bgm.pause();
+    if (bgmPlayer.value && !bgmPlayer.value.paused) {
+      bgmPlayer.value.pause();
+    }
+  }
+});
+
+watch(() => audioStore.currentBgm, (newBgm) => {
+  if (bgmPlayer.value) {
+    bgmPlayer.value.pause();
+  }
+  if (newBgm) {
+    bgmPlayer.value = new Audio(`/assets/sounds/${newBgm}`);
+    bgmPlayer.value.loop = true;
+    bgmPlayer.value.volume = audioStore.volume;
+    if (audioStore.isBgmEnabled) {
+      bgmPlayer.value.play().catch(e => console.error("BGMの再生に失敗しました:", e));
+    }
+  } else {
+    bgmPlayer.value = null;
+  }
+});
+
+watch(() => audioStore.volume, (newVolume) => {
+  if (bgmPlayer.value) {
+    bgmPlayer.value.volume = newVolume;
   }
 });
 </script>
 
 <style>
+/* グローバルなスタイルや、App.vue固有のスタイルをここに記述 */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.5s ease;
+  transition: opacity 0.2s ease;
 }
 
 .fade-enter-from,

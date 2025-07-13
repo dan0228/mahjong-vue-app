@@ -74,7 +74,7 @@ defineEmits(['close']);
   padding: 20px;
   border-radius: 8px;
   max-width: 80%;
-  max-height: 85vh; /* ポップアップの最大高さを画面の85%に制限 */
+  max-height: 70vh; /* ポップアップの最大高さを画面の85%に制限 */
   font-family: 'M PLUS 1', sans-serif; /* フォントをM PLUS 1に統一 */
   font-size: small; /* フォントサイズを小さくして全体を縮小 */
   overflow-y: auto; /* 内容が多い場合にスクロール可能にする */

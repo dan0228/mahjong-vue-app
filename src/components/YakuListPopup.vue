@@ -124,7 +124,7 @@
   .popup-content {
     background-color: white;
     padding: 20px; border-radius: 8px;
-    max-width: 90%; max-height: 85vh;
+    max-width: 90%; max-height: 70vh;
     overflow-y: auto; text-align: center;
     font-family: 'M PLUS 1', sans-serif; /* フォントをM PLUS 1に統一 */
     font-size: small;

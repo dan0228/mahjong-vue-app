@@ -1,5 +1,5 @@
 <template>
-  <div class="game-view-container">
+  <div class="game-view-container" :style="{ height: viewportHeight }">
     <GameBoard />
     <ParentDecisionPopup 
       :show="showParentDecisionPopup"
@@ -14,6 +14,9 @@ import { ref, onMounted } from 'vue';
 import { useGameStore } from '@/stores/gameStore';
 import GameBoard from '@/components/GameBoard.vue';
 import ParentDecisionPopup from '@/components/ParentDecisionPopup.vue';
+import { useViewportHeight } from '@/composables/useViewportHeight';
+
+const { viewportHeight } = useViewportHeight();
 
 const gameStore = useGameStore();
 const showParentDecisionPopup = ref(false);
@@ -43,7 +46,7 @@ function handleParentDecisionClose() {
   align-items: flex-end; /* ゲームボードを下寄せにする */
   justify-content: center; /* ゲームボードを中央寄せにする */
   width: 100vw;
-  height: 100vh;
+  /* height: 100vh; */ /* Replaced by dynamic height */
   position: relative; /* audio-toggles の配置基準 */
 }
 </style>

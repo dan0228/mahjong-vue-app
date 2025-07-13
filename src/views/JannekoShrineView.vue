@@ -1,5 +1,5 @@
 <template>
-  <div class="shrine-view-container">
+  <div class="shrine-view-container" :style="{ height: viewportHeight }">
     <div class="shrine-screen" :style="scalerStyle">
       <div class="cat-coins">
         🪙猫コイン: <span class="cat-coins-number">{{ gameStore.catCoins }}</span>
@@ -48,6 +48,9 @@ import { useRouter } from 'vue-router';
 import { useAudioStore } from '../stores/audioStore';
 import { useGameStore } from '@/stores/gameStore';
 import SayingPopup from '@/components/SayingPopup.vue';
+import { useViewportHeight } from '@/composables/useViewportHeight';
+
+const { viewportHeight } = useViewportHeight();
 
 const router = useRouter();
 const audioStore = useAudioStore();
@@ -273,7 +276,7 @@ const sayings = ref([
 .shrine-view-container {
   position: relative;
   width: 100vw;
-  height: 100vh;
+  /* height: 100vh; */ /* Replaced by dynamic height */
   overflow: hidden;
   background-image: url('/assets/images/back/back_out_shrine.png');
   background-repeat: repeat;

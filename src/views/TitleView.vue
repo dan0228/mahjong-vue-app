@@ -1,5 +1,5 @@
 <template>
-  <div class="title-view-container">
+  <div class="title-view-container" :style="{ height: viewportHeight }">
     <div class="title-screen" :style="scalerStyle">
       <div class="title-background-container">
         <div class="title-background-image base-image"></div>
@@ -56,6 +56,9 @@ import { useGameStore } from '@/stores/gameStore';
 import { useAudioStore } from '@/stores/audioStore';
 import RulePopup from '@/components/RulePopup.vue';
 import YakuListPopup from '@/components/YakuListPopup.vue';
+import { useViewportHeight } from '@/composables/useViewportHeight';
+
+const { viewportHeight } = useViewportHeight();
 
 const router = useRouter();
 const gameStore = useGameStore();
@@ -110,7 +113,7 @@ function goToShrine() {
 .title-view-container {
   position: relative;
   width: 100vw;
-  height: 100vh;
+  /* height: 100vh; */ /* Replaced by dynamic height */
   overflow: hidden;
   background-image: url('/assets/images/back/back_out.png');
   background-repeat: repeat;

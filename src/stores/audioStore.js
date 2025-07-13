@@ -7,10 +7,26 @@ export const useAudioStore = defineStore('audio', {
     isBgmEnabled: true, // デフォルトはオン
     isSeEnabled: true,  // デフォルトはオン
     currentBgm: null,
+    audioPlayers: new Map(), // プリロードしたAudioオブジェクトを格納
   }),
   actions: {
-    setVolume(newVolume) {
-      this.volume = Math.max(0, Math.min(1, newVolume)); // Clamp between 0 and 1
+    async preloadAudio(urls) {
+      const promises = urls.map(url => {
+        return new Promise((resolve, reject) => {
+          const audio = new Audio(url);
+          audio.preload = 'auto';
+          audio.oncanplaythrough = () => {
+            this.audioPlayers.set(url, audio);
+            resolve();
+          };
+          audio.onerror = () => {
+            console.error(`Failed to load audio: ${url}`);
+            reject();
+          };
+          audio.load(); // ロードを開始
+        });
+      });
+      await Promise.all(promises);
     },
     toggleBgm() {
       this.isBgmEnabled = !this.isBgmEnabled;
@@ -23,9 +39,18 @@ export const useAudioStore = defineStore('audio', {
     },
     playSound(sound) {
       if (this.isSeEnabled) {
-        const audio = new Audio(`/assets/sounds/${sound}`);
-        audio.volume = this.volume;
-        audio.play().catch(e => console.error("効果音の再生に失敗しました:", e));
+        const audio = this.audioPlayers.get(`/assets/sounds/${sound}`);
+        if (audio) {
+          audio.currentTime = 0; // 再生位置を先頭に戻す
+          audio.volume = this.volume;
+          audio.play().catch(e => console.error("効果音の再生に失敗しました:", e));
+        } else {
+          console.warn(`Audio not preloaded: /assets/sounds/${sound}`);
+          // Fallback: if not preloaded, create new Audio object
+          const newAudio = new Audio(`/assets/sounds/${sound}`);
+          newAudio.volume = this.volume;
+          newAudio.play().catch(e => console.error("効果音の再生に失敗しました:", e));
+        }
       }
     },
   },

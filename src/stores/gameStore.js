@@ -125,8 +125,28 @@ export const useGameStore = defineStore('game', {
     },
     catCoins: 9999, // 猫コインの合計 (デバッグ用)
     lastCoinGain: 0, // 直近で得た猫コイン
+    isRiichiBgmActive: false, // リーチBGMがアクティブかどうか
+    previousBgm: null, // リーチ前のBGMを保持
   }),
   actions: {
+    startRiichiBgm() {
+      const audioStore = useAudioStore();
+      console.log('[gameStore] startRiichiBgm: Current BGM before change:', audioStore.currentBgm);
+      this.previousBgm = audioStore.currentBgm; // 現在のBGMを保存
+      audioStore.setBgm('NES-JP-A04-2(Stage3-Loop125).mp3'); // リーチBGMに切り替え
+      this.isRiichiBgmActive = true;
+      console.log('[gameStore] startRiichiBgm: Previous BGM saved:', this.previousBgm, 'New BGM set:', audioStore.currentBgm);
+    },
+    stopRiichiBgm() {
+      const audioStore = useAudioStore();
+      console.log('[gameStore] stopRiichiBgm: Previous BGM to restore:', this.previousBgm, 'Current BGM:', audioStore.currentBgm);
+      if (this.isRiichiBgmActive) {
+        audioStore.setBgm(this.previousBgm); // 元のBGMに戻す
+        this.isRiichiBgmActive = false;
+        this.previousBgm = null; // リセット
+        console.log('[gameStore] stopRiichiBgm: BGM restored to:', audioStore.currentBgm);
+      }
+    },
     initializeGame() {
       // TODO: ここでmahjongLogicを呼び出し、山牌生成、配牌などを行う
       console.log('gameStore: initializeGame action started');
@@ -374,6 +394,8 @@ export const useGameStore = defineStore('game', {
           discardedTileActual = tempDiscardedTile;
           player.hand = mahjongLogic.sortHand(handAfterDiscard);
           this.drawnTile = null;
+          // リーチBGMを再生
+          this.startRiichiBgm();
         } else { // --- 通常の打牌処理 ---
           // リーチ中で、かつまだリーチ宣言牌が横向きになっていない場合
           if ((player.isRiichi || player.isDoubleRiichi) && !this.riichiDiscardedTileId[playerId]) {
@@ -1218,6 +1240,78 @@ export const useGameStore = defineStore('game', {
         : mahjongLogic.checkCanRon(player.hand, agariTile, gameCtxForWin);
 
       if (winResult.isWin) {
+        // チョンボの場合の点数計算
+        if (winResult.isChombo) {
+          console.log(`[handleAgari] ${player.name} が役なしチョンボ！`);
+          const chomboScore = winResult.score; // mahjongLogicから返されるチョンボの点数
+          const pointChanges = {};
+          this.players.forEach(p => pointChanges[p.id] = 0);
+
+          const chomboPlayer = this.players.find(p => p.id === agariPlayerId);
+          const isChomboParent = chomboPlayer.isDealer;
+
+          if (isChomboParent) {
+            // 親がチョンボ
+            pointChanges[agariPlayerId] = -12000;
+            this.players.forEach(p => {
+              if (p.id !== agariPlayerId) {
+                pointChanges[p.id] = 4000; // 他の子は4000点
+              }
+            });
+          } else {
+            // 子がチョンボ
+            pointChanges[agariPlayerId] = -8000;
+            this.players.forEach(p => {
+              if (p.id !== agariPlayerId) {
+                if (p.isDealer) {
+                  pointChanges[p.id] = 4000; // 親は4000点
+                } else {
+                  pointChanges[p.id] = 2000; // 他の子は2000点
+                }
+              }
+            });
+          }
+
+          this.gamePhase = GAME_PHASES.ROUND_END;
+          this.resultMessage = `${player.name} が役なしチョンボ！`;
+          this.agariResultDetails = {
+            roundWind: this.currentRound.wind,
+            roundNumber: this.currentRound.number,
+            honba: this.honba,
+            doraIndicators: [...this.doraIndicators],
+            uraDoraIndicators: [],
+            winningHand: [],
+            agariTile: null,
+            yakuList: [{ name: "役なしチョンボ", fans: 0 }], // チョンボの役として表示
+            totalFans: 0,
+            fu: 0,
+            score: chomboScore,
+            scoreName: "役なしチョンボ",
+            pointChanges: pointChanges,
+            isChombo: true, // チョンボであることを示すフラグ
+            chomboPlayerId: agariPlayerId, // チョンボしたプレイヤーのID
+          };
+
+          // チョンボの場合も局は進む
+          if (player.isDealer) {
+            this.resultMessage += `\n親（${player.name}）のチョンボのため連荘します。`;
+            this.honba++;
+            this.nextDealerIndex = this.dealerIndex;
+            this.shouldAdvanceRound = false;
+          } else {
+            this.resultMessage += `\n子（${player.name}）のチョンボのため親流れです。`;
+            this.honba = 0;
+            this.nextDealerIndex = (this.dealerIndex + 1) % this.players.length;
+            this.shouldAdvanceRound = true;
+          }
+          setTimeout(() => {
+            this.showResultPopup = true;
+            this.stopRiichiBgm();
+          }, 1000);
+          return; // チョンボ処理が完了したのでここで終了
+        }
+
+        // 通常の和了処理
         // 和了アニメーションの状態を即座に設定
         this.animationState = { type: isTsumo ? 'tsumo' : 'ron', playerId: agariPlayerId };
 
@@ -1233,7 +1327,7 @@ export const useGameStore = defineStore('game', {
                 pointChanges[p.id] = -scorePerKo;
               }
             });
-          } else { // 子のツモ和了
+          } else {
             let parentPayment = 0;
             let koPayment = 0;
             parentPayment = Math.ceil(winResult.score / 2); // 親の支払い (切り上げ)
@@ -1276,6 +1370,7 @@ export const useGameStore = defineStore('game', {
         // アニメーション表示から1秒後にリザルトポップアップを表示
         setTimeout(() => {
           this.showResultPopup = true;
+          this.stopRiichiBgm(); // リザルトポップアップ表示時にBGMを元に戻す
         }, 1000);
         
         // 箱下チェックは prepareNextRound に移動

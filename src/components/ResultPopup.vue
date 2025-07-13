@@ -92,7 +92,7 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits } from 'vue';
+import { defineProps, defineEmits, onMounted, onBeforeUnmount } from 'vue';
 import { useGameStore } from '@/stores/gameStore';
 import { getTileImageUrl, tileToString } from '@/utils/tileUtils';
 import { computed } from 'vue';
@@ -115,6 +115,8 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'proceed']);
 
+const gameStore = useGameStore();
+
 function closePopup() {
   emit('close');
 }
@@ -122,7 +124,7 @@ function closePopup() {
 function proceedToNext() {
   emit('proceed');
 }
-const gameStore = useGameStore();
+
 const isDrawResult = computed(() => {
   // resultDetails.yakuList が存在し、かつ空配列の場合は明確に流局と判断
   // message に "流局" が含まれる場合も流局とみなす (フォールバック)
@@ -133,8 +135,14 @@ const resultTitle = computed(() => {
   // 1. 流局の場合
   if (isDrawResult.value) return '流局';
 
-  // 2. 和了の場合
-  // 2a. 点数移動から和了者を特定する (満貫以上)
+  // 2. チョンボの場合
+  if (props.resultDetails.isChombo && props.resultDetails.chomboPlayerId) {
+    const chomboPlayer = gameStore.getPlayerById(props.resultDetails.chomboPlayerId);
+    if (chomboPlayer) return `${chomboPlayer.name} のチョンボ`;
+  }
+
+  // 3. 和了の場合
+  // 3a. 点数移動から和了者を特定する (満貫以上)
   if (props.resultDetails && props.resultDetails.pointChanges) {
     const winnerId = Object.keys(props.resultDetails.pointChanges).find(
       playerId => props.resultDetails.pointChanges[playerId] > 0
@@ -144,11 +152,11 @@ const resultTitle = computed(() => {
       if (winner) return `${winner.name} の和了`;
     }
   }
-  // 2b. 点数移動がない場合 (0点和了)、メッセージから名前を抽出
+  // 3b. 点数移動がない場合 (0点和了)、メッセージから名前を抽出
   const match = props.message.match(/(.+?) の和了/);
   if (match && match[1]) return `${match[1]} の和了`;
 
-  // 3. 上記で見つからない場合のフォールバック
+  // 4. 上記で見つからない場合のフォールバック
   return '和了結果';
 });
 
@@ -162,14 +170,20 @@ const isRiichiAgari = computed(() => {
 const winnerIconSrc = computed(() => {
   if (isDrawResult.value) return null;
 
-  const winnerId = Object.keys(props.resultDetails.pointChanges || {}).find(playerId => props.resultDetails.pointChanges[playerId] > 0);
-  if (!winnerId) return null;
+  let targetPlayerId = null;
+  if (props.resultDetails.isChombo && props.resultDetails.chomboPlayerId) {
+    targetPlayerId = props.resultDetails.chomboPlayerId;
+  } else {
+    targetPlayerId = Object.keys(props.resultDetails.pointChanges || {}).find(playerId => props.resultDetails.pointChanges[playerId] > 0);
+  }
+
+  if (!targetPlayerId) return null;
 
   // player1 (あなた) の場合は hito_icon_1.png を表示
-  if (winnerId === 'player1') return '/assets/images/info/hito_icon_1.png'; // あなた
-  if (winnerId === 'player2') return '/assets/images/info/cat_icon_3.png'; // くろ
-  if (winnerId === 'player3') return '/assets/images/info/cat_icon_2.png'; // たま
-  if (winnerId === 'player4') return '/assets/images/info/cat_icon_1.png'; // とら
+  if (targetPlayerId === 'player1') return '/assets/images/info/hito_icon_1.png'; // あなた
+  if (targetPlayerId === 'player2') return '/assets/images/info/cat_icon_3.png'; // くろ
+  if (targetPlayerId === 'player3') return '/assets/images/info/cat_icon_2.png'; // たま
+  if (targetPlayerId === 'player4') return '/assets/images/info/cat_icon_1.png'; // とら
 
   return null;
 });

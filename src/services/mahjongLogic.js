@@ -1327,6 +1327,7 @@ function isYonhaiSanshokuDoukou(handData, basicWinInfo) {
  */
 export function checkYonhaiWin(currentHandWithWinTile, winTile, isTsumo, gameContext = {}) {
   const melds = gameContext.melds || [];
+  const isParent = gameContext.isParent || false; // ここで isParent を定義
   let basicWinInfo = { isWin: false, mentsuType: null, jantou: null, mentsu: null };
 
   if (melds.length > 0) {
@@ -1378,15 +1379,25 @@ export function checkYonhaiWin(currentHandWithWinTile, winTile, isTsumo, gameCon
       playerCount: gameContext.playerCount, // プレイヤー数を渡す
       gameContext: gameContext // 人和判定のために gameContext 自体も渡す
     };
+    const isParent = gameContext.isParent || false;
     const yakuResult = calculateYonhaiYaku(handDataForYaku);
 
     // 役なし和了は認めないため、役がない場合は isWin = false
     if (yakuResult.fans === 0 && yakuResult.yakumanPower === 0) {
-        return { isWin: false, yaku: [], score: 0, fans: 0, isYakuman: false, yakumanPower: 0 };
+        // 役なしチョンボとして扱う
+        return {
+            isWin: true, // 和了形は成立しているのでtrue
+            yaku: [{ name: "役なしチョンボ", fans: 0, isChombo: true }], // チョンボであることを示すフラグ
+            score: isParent ? -12000 : -8000, // 親は12000点、子は8000点 (満貫払い)
+            fans: 0,
+            isYakuman: false,
+            yakumanPower: 0,
+            scoreName: "役なしチョンボ",
+            isChombo: true, // チョンボであることを示すフラグ
+        };
     }
 
     let score = 0;
-    const isParent = gameContext.isParent || false;
     let calculatedFans = yakuResult.fans;
     let calculatedYakumanPower = yakuResult.yakumanPower;
     let isWinResult = false; 

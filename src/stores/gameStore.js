@@ -933,7 +933,20 @@ export const useGameStore = defineStore('game', {
         }
         return true;
       });
-      player.melds.push({ type: 'pon', tiles: [tileToPon, tileToPon, tileToPon], from: targetPlayerId }); // 鳴いた牌も含む
+
+      // どの位置の牌が鳴かれたか (横向きになる牌) を計算
+      const currentPlayerIndex = this.players.findIndex(p => p.id === playerId);
+      const targetPlayerIndex = this.players.findIndex(p => p.id === targetPlayerId);
+      let takenTileRelativePosition = null;
+      if ((currentPlayerIndex + 1) % this.players.length === targetPlayerIndex) { // 下家
+        takenTileRelativePosition = 'right';
+      } else if ((currentPlayerIndex + 2) % this.players.length === targetPlayerIndex) { // 対面
+        takenTileRelativePosition = 'middle';
+      } else if ((currentPlayerIndex + 3) % this.players.length === targetPlayerIndex) { // 上家
+        takenTileRelativePosition = 'left';
+      }
+
+      player.melds.push({ type: 'pon', tiles: [tileToPon, tileToPon, tileToPon], from: targetPlayerId, takenTileRelativePosition: takenTileRelativePosition }); // 鳴いた牌も含む
       // 手牌が変わったのでフリテン状態を更新
       this.updateFuriTenState(playerId);
       
@@ -988,7 +1001,20 @@ export const useGameStore = defineStore('game', {
         }
         return true;
       });
-      player.melds.push({ type: 'minkan', tiles: [tileToKan, tileToKan, tileToKan, tileToKan], from: targetPlayerId });
+
+      // どの位置の牌が鳴かれたか (横向きになる牌) を計算
+      const currentPlayerIndex = this.players.findIndex(p => p.id === playerId);
+      const targetPlayerIndex = this.players.findIndex(p => p.id === targetPlayerId);
+      let takenTileRelativePosition = null;
+      if ((currentPlayerIndex + 1) % this.players.length === targetPlayerIndex) { // 下家
+        takenTileRelativePosition = 'right';
+      } else if ((currentPlayerIndex + 2) % this.players.length === targetPlayerIndex) { // 対面
+        takenTileRelativePosition = 'middle';
+      } else if ((currentPlayerIndex + 3) % this.players.length === targetPlayerIndex) { // 上家
+        takenTileRelativePosition = 'left';
+      }
+
+      player.melds.push({ type: 'minkan', tiles: [tileToKan, tileToKan, tileToKan, tileToKan], from: targetPlayerId, takenTileRelativePosition: takenTileRelativePosition });
       
       this.currentTurnPlayerId = playerId;
       this.lastDiscardedTile = null;
@@ -1041,7 +1067,8 @@ export const useGameStore = defineStore('game', {
         }
         return true;
       });
-      player.melds.push({ type: 'ankan', tiles: [tileToAnkan, tileToAnkan, tileToAnkan, tileToAnkan], from: playerId });
+      player.hand = mahjongLogic.sortHand(player.hand); // 暗槓後に手牌をソート
+      player.melds.push({ type: 'ankan', tiles: [tileToAnkan, tileToAnkan, tileToAnkan, tileToAnkan], from: playerId, takenTileRelativePosition: null });
       // ツモ牌でカンした場合は、ツモ牌を消費する
       if (isFromDrawn) {
           this.drawnTile = null;
@@ -1099,6 +1126,8 @@ export const useGameStore = defineStore('game', {
       }
       player.melds[ponMeldIndex].type = 'kakan'; // または 'chakan'
       player.melds[ponMeldIndex].tiles.push(tileToKakan); // 4枚目の牌を追加
+      // 加槓の場合、元のポン牌の takenTileRelativePosition を維持
+      // player.melds[ponMeldIndex].takenTileRelativePosition は変更しない
       // ツモ牌で加カンした場合はツモ牌を消費、そうでなければ手牌から削除
       const kakanKey = mahjongLogic.getTileKey(tileToKakan);
       if (this.drawnTile && mahjongLogic.getTileKey(this.drawnTile) === kakanKey) {
@@ -1326,6 +1355,7 @@ export const useGameStore = defineStore('game', {
           score: winResult.score,
           scoreName: winResult.scoreName, // 役満名や満貫などの名称
           pointChanges: pointChanges,
+          melds: player.melds, // 鳴き牌情報を追加
           isDraw: false,
         };
         // アニメーション表示から1秒後にリザルトポップアップを表示
@@ -1597,12 +1627,11 @@ export const useGameStore = defineStore('game', {
       // 鳴きが入ったので、全プレイヤーの一発は消える
       this.players.forEach(p => this.isIppatsuChance[p.id] = false);
 
+      const eligibility = {}; // ここでeligibilityを定義
+
       // ツモ和了可能かチェック (嶺上開花)
       const gameContextForTsumo = this.createGameContextForPlayer(player, true);
       const tsumoWinResult = mahjongLogic.checkYonhaiWin([...player.hand, this.drawnTile], this.drawnTile, true, gameContextForTsumo);
-      
-      // アクションの選択肢を初期化
-      const eligibility = {};
       eligibility.canTsumoAgari = tsumoWinResult.isWin;
 
       // リーチ中でなければ、さらにカンができるかチェック
@@ -1623,7 +1652,14 @@ export const useGameStore = defineStore('game', {
 
       // AI対戦モードで、かつ現在のプレイヤーがAIの場合、自動で打牌処理を呼び出す
       if (this.gameMode === 'vsCPU' && player.id !== 'player1') {
-          this.handleAiDiscard();
+          // ツモ和了もできず、カンもできない場合、自動で打牌
+          if (!eligibility.canTsumoAgari && !eligibility.canAnkan && !eligibility.canKakan) {
+            const fullHand = [...player.hand, this.drawnTile];
+            const tileToDiscard = fullHand[Math.floor(Math.random() * fullHand.length)];
+            const isFromDrawnTile = tileToDiscard.id === this.drawnTile.id;
+            console.log(`AI ${player.id} auto-discarding after Rinshan draw: ${tileToDiscard.id}`);
+            this.discardTile(player.id, tileToDiscard.id, isFromDrawnTile);
+          }
       }
     }
     ,

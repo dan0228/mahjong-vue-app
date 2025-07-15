@@ -47,6 +47,14 @@
           <span v-if="resultDetails.agariTile" class="tile-image-medium agari-tile-display">
             <img :src="getTileImageUrl(resultDetails.agariTile)" :alt="tileToString(resultDetails.agariTile)" />
           </span>
+          <!-- 鳴いた牌 -->
+          <template v-if="resultDetails.melds && resultDetails.melds.length > 0">
+            <div v-for="(meld, meldIndex) in resultDetails.melds" :key="'meld-' + meldIndex" class="meld-display">
+              <span v-for="(tile, tileIndex) in meld.tiles" :key="'meld-' + meldIndex + '-tile-' + tileIndex" class="tile-image-medium" :class="getMeldTileClass(meld, tileIndex)">
+                <img :src="meld.type === 'ankan' && (tileIndex === 1 || tileIndex === 2) ? '/assets/images/tiles/ura.png' : getTileImageUrl(tile)" :alt="tileToString(tile)" />
+              </span>
+            </div>
+          </template>
         </div>
       </div>
 
@@ -223,6 +231,35 @@ function getPointChangeClass(change) {
   if (change == null) return '';
   return change > 0 ? 'point-increase' : (change < 0 ? 'point-decrease' : '');
 }
+
+function getMeldTileClass(meld, tileIndex) {
+  if (!meld.takenTileRelativePosition) return '';
+  
+  // ポンの場合
+  if (meld.type === 'pon') {
+    if (meld.takenTileRelativePosition === 'left' && tileIndex === 0) return 'sideways';
+    if (meld.takenTileRelativePosition === 'middle' && tileIndex === 1) return 'sideways';
+    if (meld.takenTileRelativePosition === 'right' && tileIndex === 2) return 'sideways';
+  }
+  // 明槓の場合
+  else if (meld.type === 'minkan') {
+    if (meld.takenTileRelativePosition === 'left' && tileIndex === 0) return 'sideways';
+    if (meld.takenTileRelativePosition === 'middle' && tileIndex === 1) return 'sideways';
+    if (meld.takenTileRelativePosition === 'right' && tileIndex === 2) return 'sideways';
+  }
+  // 加槓の場合
+  else if (meld.type === 'kakan') {
+    // 加槓は元のポン牌の向きを維持するので、ポンと同じロジック
+    if (meld.takenTileRelativePosition === 'left' && tileIndex === 0) return 'sideways';
+    if (meld.takenTileRelativePosition === 'middle' && tileIndex === 1) return 'sideways';
+    if (meld.takenTileRelativePosition === 'right' && tileIndex === 2) return 'sideways';
+  }
+  // 暗槓は常に縦向きなので、ここでは何も返さない
+  else if (meld.type === 'ankan') {
+    if (tileIndex === 1 || tileIndex === 2) return 'hidden-tile'; // 真ん中の2枚を裏向きに
+  }
+  return '';
+}
 </script>
 
 <style scoped>
@@ -285,9 +322,23 @@ function getPointChangeClass(change) {
 }
 .dora-display img.tile-image-small { width: 24px; height: auto; vertical-align: middle; margin-left: 0; margin-right: 0; /* 牌同士の間隔をなくす */ }
 .hand-display { display: flex; justify-content: center; gap: 0px; margin-bottom: 10px; }
-.hand-display { display: flex; justify-content: center; gap: 0px; margin-bottom: 10px; }
 .hand-display .tile-image-medium img { width: 35px; height: auto; border-radius: 3px; }
 .agari-tile-display { margin-left: 10px; /* 和了牌の左に間隔を空ける */}
+.meld-display {
+  display: flex;
+  margin-left: 10px; /* 鳴き牌の塊の左に間隔を空ける */
+}
+
+.sideways {
+  transform: rotate(90deg);
+  transform-origin: left center; /* 回転の中心を牌の左端中央に設定 */
+  margin: 0 -10px 0 0; /* 左寄せになるようにマージンを調整 */
+}
+
+.hidden-tile img {
+  content: url('/public/assets/images/tiles/ura.png'); /* 裏向きの牌の画像 */
+}
+
 .yaku-info ul { list-style: none; padding: 0; margin: 0 0 10px 0; }
 .yaku-info li { margin-bottom: 3px; }
 .total-score { font-weight: bold; font-size: 1.5em;  color: red;}

@@ -15,10 +15,10 @@ export function getAllTiles() {
   let idCounter = 0;
 
 // 萬子、筒子、索子 (1-9) - 各4枚
- [SUITS.MANZU, SUITS.PINZU, SUITS.SOZU].forEach(suit => { // 検証用にコメントアウト
-  // [SUITS.MANZU].forEach(suit => {
-    for (let rank = 2; rank <= 6; rank++) { // 検証用。本来は9
-      for (let i = 0; i < 6; i++) { //検証用。本来は4
+//  [SUITS.MANZU, SUITS.PINZU, SUITS.SOZU].forEach(suit => { // 検証用にコメントアウト
+  [SUITS.MANZU].forEach(suit => {
+    for (let rank = 1; rank <= 9; rank++) { // 検証用。本来は9
+      for (let i = 0; i < 4; i++) { //検証用。本来は4
         tiles.push({
           suit,
           rank,
@@ -625,11 +625,6 @@ function calculateYonhaiYaku(handData) {
     yakumanList.push(YONHAI_YAKUMAN.CHINROUTOU);
     totalYakumanPower += YONHAI_YAKUMAN.CHINROUTOU.power;
   }
-  // 一槓子 (Iikantsu) - 四槓子の代用
-  if (isYonhaiIikantsu(handData, basicWinInfo)) {
-    yakumanList.push(YONHAI_YAKUMAN.SUUKANTSU_DAIYO);
-    totalYakumanPower += YONHAI_YAKUMAN.SUUKANTSU_DAIYO.power;
-  }
   // 小四喜 (Shousuushi)
   if (isYonhaiShousuushi(handData, basicWinInfo)) {
     yakumanList.push(YONHAI_YAKUMAN.SHOUSUUSHI);
@@ -644,6 +639,11 @@ function calculateYonhaiYaku(handData) {
   if (isYonhaiIiankantanki(handData, basicWinInfo)) {
     yakumanList.push(YONHAI_YAKUMAN.SUUANKOU_TANKI_DAIYO);
     totalYakumanPower += YONHAI_YAKUMAN.SUUANKOU_TANKI_DAIYO.power;
+  }
+  // 一槓子 (Iikantsu) - 四槓子の代用
+  if (isYonhaiIikantsu(handData, basicWinInfo)) {
+    yakumanList.push(YONHAI_YAKUMAN.SUUKANTSU_DAIYO);
+    totalYakumanPower += YONHAI_YAKUMAN.SUUKANTSU_DAIYO.power;
   }
 
   // 通常役判定
@@ -1072,7 +1072,9 @@ function isYonhaiIiankantanki(handData) { // 四暗刻単騎の代用 (一暗槓
   if (!basicWinInfo.isWin) return false;
   const ankanCount = melds.filter(m => m.type === 'ankan').length;
   if (ankanCount !== 1) return false;
-  return hand.length === 1 && getTileKey(hand[0]) === getTileKey(winTile);
+
+  // 手牌が2枚で雀頭を形成し、かつその雀頭が和了牌である（単騎待ち）
+  return hand.length === 2 && getTileKey(hand[0]) === getTileKey(hand[1]) && getTileKey(hand[0]) === getTileKey(winTile);
 }
 
 // 四牌麻雀：タンヤオ

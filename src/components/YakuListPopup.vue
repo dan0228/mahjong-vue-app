@@ -124,7 +124,7 @@
   .popup-content {
     background-color: white;
     padding: 20px; border-radius: 8px;
-    max-width: 90%; max-height: 85vh;
+    max-width: 90%; max-height: 70vh;
     overflow-y: auto; text-align: center;
     font-family: 'M PLUS 1', sans-serif; /* フォントをM PLUS 1に統一 */
     font-size: small;
@@ -141,7 +141,7 @@
   transform: scale(0.7);
 }
   .yaku-section { margin-bottom: 15px; }
-  .yaku-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  .yaku-table { width: 105%; border-collapse: collapse; margin-top: 10px; }
   .yaku-table th, .yaku-table td { border: 1px solid #ddd; padding: 6px; text-align: left; }
   .yaku-table th { background-color: #f2f2f2; }
   .yaku-example {

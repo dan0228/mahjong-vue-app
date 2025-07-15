@@ -17,8 +17,8 @@ export function getAllTiles() {
 // 萬子、筒子、索子 (1-9) - 各4枚
  [SUITS.MANZU, SUITS.PINZU, SUITS.SOZU].forEach(suit => { // 検証用にコメントアウト
   // [SUITS.MANZU].forEach(suit => {
-    for (let rank = 1; rank <= 3; rank++) { // 検証用。本来は9
-      for (let i = 0; i < 4; i++) { //検証用。本来は4
+    for (let rank = 2; rank <= 6; rank++) { // 検証用。本来は9
+      for (let i = 0; i < 6; i++) { //検証用。本来は4
         tiles.push({
           suit,
           rank,
@@ -29,17 +29,17 @@ export function getAllTiles() {
     }
   });
 
-  // 字牌 (東南西北白發中) - 各4枚
-  Object.values(JIHAI_TYPES).forEach(rank => {
-    for (let i = 0; i < 4; i++) {
-      tiles.push({
-        suit: SUITS.JIHAI,
-        rank,
-        id: `${SUITS.JIHAI}${rank}_${i}` // 例: z1_0 (東), z5_0 (白)
-      });
-      idCounter++;
-    }
-  });
+  // // 字牌 (東南西北白發中) - 各4枚
+  // Object.values(JIHAI_TYPES).forEach(rank => {
+  //   for (let i = 0; i < 4; i++) {
+  //     tiles.push({
+  //       suit: SUITS.JIHAI,
+  //       rank,
+  //       id: `${SUITS.JIHAI}${rank}_${i}` // 例: z1_0 (東), z5_0 (白)
+  //     });
+  //     idCounter++;
+  //   }
+  // });
 
   return tiles;
 }
@@ -1088,69 +1088,42 @@ function isYonhaiTanyao(handData) {
 // 四牌麻雀: 平和
 function isYonhaiPinfu(handData, basicWinInfo) {
   const { hand, winTile, melds, playerWind, roundWind } = handData;
+
   // 1. 門前限定
   if (melds && melds.length > 0) return false;
 
-  // 2. 手牌の全ての組み合わせを試す (1雀頭 + 1順子)
-  const uniqueTileKeys = [...new Set(hand.map(getTileKey))];
+  // 2. 面子が順子であること
+  if (basicWinInfo.mentsuType !== 'shuntsu') return false;
 
-  for (const jantouCandidateKey of uniqueTileKeys) {
-    // 雀頭候補が2枚以上あるか
-    if (hand.filter(t => getTileKey(t) === jantouCandidateKey).length < 2) {
-      continue;
-    }
+  const jantou = basicWinInfo.jantou;
+  const mentsu = basicWinInfo.mentsu;
 
-    const jantouTile = hand.find(t => getTileKey(t) === jantouCandidateKey);
-
-    // 3. 雀頭が役牌でないこと
-    const yakuhaiInfo = isYakuhai(jantouTile, playerWind, roundWind);
-    if (yakuhaiInfo.isPlayerWind || yakuhaiInfo.isRoundWind || yakuhaiInfo.isSangenpai) {
-      continue;
-    }
-
-    // 雀頭候補を除いた残りの3牌を取得
-    const remainingTiles = [];
-    let removedCount = 0;
-    for (const tile of hand) {
-      if (getTileKey(tile) === jantouCandidateKey && removedCount < 2) {
-        removedCount++;
-      } else {
-        remainingTiles.push(tile);
-      }
-    }
-
-    if (remainingTiles.length !== 3) continue;
-
-    // 4. 残りが順子であること
-    const sortedMentsu = sortHand(remainingTiles);
-    const isShuntsu = sortedMentsu[0].suit !== SUITS.JIHAI &&
-                      sortedMentsu[0].suit === sortedMentsu[1].suit &&
-                      sortedMentsu[1].suit === sortedMentsu[2].suit &&
-                      sortedMentsu[1].rank === sortedMentsu[0].rank + 1 &&
-                      sortedMentsu[2].rank === sortedMentsu[1].rank + 1;
-
-    if (!isShuntsu) continue;
-
-    // 5. 待ちが両面待ちであること (待ちが2つ以上あるかで判定)
-    // 和了前のテンパイ形を復元
-    const tenpaiHand = [];
-    let winTileRemoved = false;
-    for (const tile of hand) {
-      if (getTileKey(tile) === getTileKey(winTile) && !winTileRemoved) {
-        winTileRemoved = true;
-      } else {
-        tenpaiHand.push(tile);
-      }
-    }
-
-    // テンパイ形の待ちをチェック
-    const tenpaiResult = checkYonhaiTenpai(tenpaiHand);
-    if (tenpaiResult.isTenpai && tenpaiResult.waits.length >= 2) {
-      // 平和の条件をすべて満たす組み合わせが見つかった
-      return true;
-    }  
+  // 3. 雀頭が役牌でないこと
+  const yakuhaiInfo = isYakuhai(jantou[0], playerWind, roundWind);
+  if (yakuhaiInfo.isPlayerWind || yakuhaiInfo.isRoundWind || yakuhaiInfo.isSangenpai) {
+    return false;
   }
-  return false; // どの組み合わせも平和の条件を満たさなかった
+
+  // 4. 待ちが両面待ちであること
+  const winTileKey = getTileKey(winTile);
+  const mentsuTileKeys = mentsu.map(getTileKey);
+
+  // 和了牌が順子の一部でなければならない (ノベタン待ちなどを除外)
+  if (!mentsuTileKeys.includes(winTileKey)) {
+    return false;
+  }
+
+  // 両面待ちの判定：順子の最初か最後の牌で待っている必要がある
+  const isRyanmenWait = winTileKey === mentsuTileKeys[0] || winTileKey === mentsuTileKeys[2];
+
+  // 辺張待ち(123の3、789の7)を除外
+  const isPenchanWait = (mentsu[0].rank === 1 && winTile.rank === 3) || (mentsu[0].rank === 7 && winTile.rank === 7);
+
+  if (isRyanmenWait && !isPenchanWait) {
+    return true; // 全ての平和の条件を満たす
+  }
+
+  return false;
 }
 
 // 四牌麻雀: 対々和

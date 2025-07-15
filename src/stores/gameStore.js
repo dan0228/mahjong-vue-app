@@ -622,19 +622,19 @@ export const useGameStore = defineStore('game', {
             this.shouldEndGameAfterRound = true; // ゲーム終了をトリガー
          } else {
             // 東4局だが親がテンパイだがトップではない場合 -> 連荘
-            this.resultMessage = `親（${dealerPlayer.name}）がテンパイでトップでないため連荘します。`;
+            this.resultMessage = `親（${dealerPlayer.name}）がテンパイでトップでないため連荘`;
             this.honba++; // 連荘なので本場プラス
             this.nextDealerIndex = this.dealerIndex; // 親は継続
             this.shouldAdvanceRound = false;
             this.shouldEndGameAfterRound = false; // ゲーム終了しない
          }
       } else if (isDealerTenpai) { // 東4局以外で親がテンパイ
-        this.resultMessage = `親（${dealerPlayer.name}）がテンパイのため連荘します。`;
+        this.resultMessage = `親（${dealerPlayer.name}）がテンパイなので連荘`;
         this.honba++; // 本場を増やす
         this.nextDealerIndex = this.dealerIndex; // 親は継続
         this.shouldAdvanceRound = false;
       } else { // 親がノーテン
-        this.resultMessage = `親（${this.players[this.dealerIndex].name}）がノーテンのため親流れです。`;
+        this.resultMessage = `親（${this.players[this.dealerIndex].name}）がノーテンなので流れ`;
         this.honba = 0; // 本場をリセット
         this.nextDealerIndex = (this.dealerIndex + 1) % this.players.length; // 親流れ
         this.shouldAdvanceRound = true;
@@ -1243,19 +1243,17 @@ export const useGameStore = defineStore('game', {
         // チョンボの場合の点数計算
         if (winResult.isChombo) {
           console.log(`[handleAgari] ${player.name} が役なしチョンボ！`);
-          const chomboScore = winResult.score; // mahjongLogicから返されるチョンボの点数
           const pointChanges = {};
           this.players.forEach(p => pointChanges[p.id] = 0);
 
-          const chomboPlayer = this.players.find(p => p.id === agariPlayerId);
-          const isChomboParent = chomboPlayer.isDealer;
+          const isChomboParent = winResult.chomboPlayerIsParent;
 
           if (isChomboParent) {
             // 親がチョンボ
             pointChanges[agariPlayerId] = -12000;
             this.players.forEach(p => {
               if (p.id !== agariPlayerId) {
-                pointChanges[p.id] = 4000; // 他の子は4000点
+                pointChanges[p.id] = 4000;
               }
             });
           } else {
@@ -1264,9 +1262,9 @@ export const useGameStore = defineStore('game', {
             this.players.forEach(p => {
               if (p.id !== agariPlayerId) {
                 if (p.isDealer) {
-                  pointChanges[p.id] = 4000; // 親は4000点
+                  pointChanges[p.id] = 4000;
                 } else {
-                  pointChanges[p.id] = 2000; // 他の子は2000点
+                  pointChanges[p.id] = 2000;
                 }
               }
             });
@@ -1282,33 +1280,28 @@ export const useGameStore = defineStore('game', {
             uraDoraIndicators: [],
             winningHand: [],
             agariTile: null,
-            yakuList: [{ name: "役なしチョンボ", fans: 0 }], // チョンボの役として表示
+            yakuList: [{ name: "役なしチョンボ", fans: 0 }],
             totalFans: 0,
             fu: 0,
-            score: chomboScore,
+            score: winResult.score,
             scoreName: "役なしチョンボ",
             pointChanges: pointChanges,
-            isChombo: true, // チョンボであることを示すフラグ
-            chomboPlayerId: agariPlayerId, // チョンボしたプレイヤーのID
+            isChombo: true,
+            chomboPlayerId: agariPlayerId,
           };
 
-          // チョンボの場合も局は進む
-          if (player.isDealer) {
-            this.resultMessage += `\n親（${player.name}）のチョンボのため連荘します。`;
-            this.honba++;
-            this.nextDealerIndex = this.dealerIndex;
-            this.shouldAdvanceRound = false;
-          } else {
-            this.resultMessage += `\n子（${player.name}）のチョンボのため親流れです。`;
-            this.honba = 0;
-            this.nextDealerIndex = (this.dealerIndex + 1) % this.players.length;
-            this.shouldAdvanceRound = true;
-          }
+          // チョンボの場合、親は流れず、本場を1つ増やす
+          this.resultMessage += `
+チョンボのため、親は流れず、1本場となります.`;
+          this.honba++;
+          this.nextDealerIndex = this.dealerIndex; // 親は継続
+          this.shouldAdvanceRound = false; // 局は進めない
+
           setTimeout(() => {
             this.showResultPopup = true;
             this.stopRiichiBgm();
           }, 1000);
-          return; // チョンボ処理が完了したのでここで終了
+          return;
         }
 
         // 通常の和了処理

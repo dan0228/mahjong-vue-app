@@ -1377,15 +1377,17 @@ export function checkYonhaiWin(currentHandWithWinTile, winTile, isTsumo, gameCon
     // 役なし和了は認めないため、役がない場合は isWin = false
     if (yakuResult.fans === 0 && yakuResult.yakumanPower === 0) {
         // 役なしチョンボとして扱う
+        const chomboScore = isParent ? -12000 : -8000;
         return {
-            isWin: true, // 和了形は成立しているのでtrue
-            yaku: [{ name: "役なしチョンボ", fans: 0, isChombo: true }], // チョンボであることを示すフラグ
-            score: isParent ? -12000 : -8000, // 親は12000点、子は8000点 (満貫払い)
+            isWin: true, // 和了形は成立しているが、役がない状態
+            yaku: [{ name: "役なしチョンボ", fans: 0, isChombo: true }],
+            score: chomboScore, // チョンボしたプレイヤーが失う点数
             fans: 0,
             isYakuman: false,
             yakumanPower: 0,
             scoreName: "役なしチョンボ",
             isChombo: true, // チョンボであることを示すフラグ
+            chomboPlayerIsParent: isParent // チョンボしたのが親かどうかのフラグ
         };
     }
 

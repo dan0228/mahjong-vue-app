@@ -132,31 +132,29 @@ const isDrawResult = computed(() => {
          (props.message && props.message.includes('流局')); // messageによる判定も残す
 });
 const resultTitle = computed(() => {
-  // 1. 流局の場合
-  if (isDrawResult.value) return '流局';
-
-  // 2. チョンボの場合
+  // 1. チョンボの場合
   if (props.resultDetails.isChombo && props.resultDetails.chomboPlayerId) {
     const chomboPlayer = gameStore.getPlayerById(props.resultDetails.chomboPlayerId);
     if (chomboPlayer) return `${chomboPlayer.name} のチョンボ`;
   }
 
+  // 2. 流局の場合
+  if (isDrawResult.value) return '流局';
+
   // 3. 和了の場合
-  // 3a. 点数移動から和了者を特定する (満貫以上)
-  if (props.resultDetails && props.resultDetails.pointChanges) {
-    const winnerId = Object.keys(props.resultDetails.pointChanges).find(
-      playerId => props.resultDetails.pointChanges[playerId] > 0
-    );
-    if (winnerId) {
-      const winner = gameStore.getPlayerById(winnerId);
-      if (winner) return `${winner.name} の和了`;
-    }
+  const winnerId = Object.keys(props.resultDetails.pointChanges || {}).find(
+    playerId => (props.resultDetails.pointChanges[playerId] || 0) > 0
+  );
+  if (winnerId) {
+    const winner = gameStore.getPlayerById(winnerId);
+    if (winner) return `${winner.name} の和了`;
   }
-  // 3b. 点数移動がない場合 (0点和了)、メッセージから名前を抽出
+
+  // 4. 点数移動がない和了の場合 (0点和了など)
   const match = props.message.match(/(.+?) の和了/);
   if (match && match[1]) return `${match[1]} の和了`;
 
-  // 4. 上記で見つからない場合のフォールバック
+  // 5. 上記で見つからない場合のフォールバック
   return '和了結果';
 });
 

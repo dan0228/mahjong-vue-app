@@ -646,6 +646,7 @@ export const useGameStore = defineStore('game', {
                this.resultMessage += `\n${playerBelowZero.name} の持ち点が0点未満になったため終局します。`;
            }
       }
+      this.stopRiichiBgm(); // 流局時にBGMを停止
       this.showResultPopup = true; // リザルトポップアップを表示
     },
     prepareNextRound() {

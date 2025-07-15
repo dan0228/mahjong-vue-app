@@ -730,15 +730,15 @@ function calculateYonhaiYaku(handData) {
     yakuList.push(YONHAI_YAKU.SANGEN_DOUKOU);
     totalFans += YONHAI_YAKU.SANGEN_DOUKOU.fans;
   }
-  // 混全帯么九 (Chanta)
-  if (isYonhaiChanta(handData, basicWinInfo)) {
-    const yaku = YONHAI_YAKU.CHANTA;
-    yakuList.push(yaku);
-    totalFans += isMenzen ? yaku.fans : (yaku.fans - (yaku.kuisagari || 0));
-  }
   // 純全帯么九 (Junchan)
   if (isYonhaiJunchan(handData, basicWinInfo)) {
     const yaku = YONHAI_YAKU.JUNCHAN;
+    yakuList.push(yaku);
+    totalFans += isMenzen ? yaku.fans : (yaku.fans - (yaku.kuisagari || 0));
+  }
+  // 混全帯么九 (Chanta)
+  else if (isYonhaiChanta(handData, basicWinInfo)) {
+    const yaku = YONHAI_YAKU.CHANTA;
     yakuList.push(yaku);
     totalFans += isMenzen ? yaku.fans : (yaku.fans - (yaku.kuisagari || 0));
   }
@@ -1212,18 +1212,14 @@ function isYonhaiChanta(handData, basicWinInfo) {
   const { hand, melds } = handData;
   if (!basicWinInfo.isWin) return false;
 
-  const allGroups = []; // [ [雀頭], [面子] ] または [ [雀頭], [鳴いた面子] ]
-  if (melds.length > 0) {
-    if (melds.length === 1 && hand.length === 2 && getTileKey(hand[0]) === getTileKey(hand[1])) { // 1鳴き1雀頭
-      allGroups.push(hand); // 雀頭
-      allGroups.push(melds[0].tiles); // 鳴いた面子
-    } else {
-      return false; // 四牌麻雀の1面子1雀頭ではありえない形
-    }
-  } else { // 門前
-    if (basicWinInfo.jantou) allGroups.push(basicWinInfo.jantou);
-    if (basicWinInfo.mentsu) allGroups.push(basicWinInfo.mentsu);
+  // 順子が含まれている必要がある。四麻の鳴きは刻子のみなので、門前限定。
+  if (melds.length > 0 || basicWinInfo.mentsuType !== 'shuntsu') {
+    return false;
   }
+
+  const allGroups = []; // [ [雀頭], [面子] ]
+  if (basicWinInfo.jantou) allGroups.push(basicWinInfo.jantou);
+  if (basicWinInfo.mentsu) allGroups.push(basicWinInfo.mentsu);
 
   const isYaochuhai = (tile) => (tile.suit === SUITS.JIHAI || tile.rank === 1 || tile.rank === 9);
   if (!allGroups.every(group => Array.isArray(group) && group.some(isYaochuhai))) return false;
@@ -1235,18 +1231,14 @@ function isYonhaiJunchan(handData, basicWinInfo) {
   const { hand, melds } = handData;
   if (!basicWinInfo.isWin) return false;
 
-  const allGroups = [];
-  if (melds.length > 0) {
-    if (melds.length === 1 && hand.length === 2 && getTileKey(hand[0]) === getTileKey(hand[1])) {
-      allGroups.push(hand);
-      if (melds[0].tiles) allGroups.push(melds[0].tiles);
-    } else {
-      return false;
-    }
-  } else {
-    if (basicWinInfo.jantou) allGroups.push(basicWinInfo.jantou);
-    if (basicWinInfo.mentsu) allGroups.push(basicWinInfo.mentsu);
+  // 順子が含まれている必要がある。四麻の鳴きは刻子のみなので、門前限定。
+  if (melds.length > 0 || basicWinInfo.mentsuType !== 'shuntsu') {
+    return false;
   }
+
+  const allGroups = [];
+  if (basicWinInfo.jantou) allGroups.push(basicWinInfo.jantou);
+  if (basicWinInfo.mentsu) allGroups.push(basicWinInfo.mentsu);
 
   const isTerminal = (tile) => (tile.suit !== SUITS.JIHAI && (tile.rank === 1 || tile.rank === 9));
   if (!allGroups.every(group => Array.isArray(group) && group.some(isTerminal))) return false;

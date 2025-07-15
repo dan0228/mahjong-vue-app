@@ -332,12 +332,12 @@ export const useGameStore = defineStore('game', {
               this.canDeclareAnkan[currentPlayer.id] = ankanOptions.length > 0 ? ankanOptions : null;
               const kakanOptions = mahjongLogic.checkCanKakan(currentPlayer.hand, currentPlayer.melds, this.drawnTile);
               this.canDeclareKakan[currentPlayer.id] = kakanOptions.length > 0 ? kakanOptions : null;
-              // AI対戦モードで、かつ現在のプレイヤーがAIの場合、自動で打牌処理を呼び出す
-              if (this.gameMode === 'vsCPU' && currentPlayer.id !== 'player1') {
-                this.handleAiDiscard();
-              }
             }
             this.updateFuriTenState(currentPlayer.id);
+            // AI対戦モードで、かつ現在のプレイヤーがAIの場合、自動で打牌処理を呼び出す
+            if (this.gameMode === 'vsCPU' && currentPlayer.id !== 'player1') {
+              this.handleAiDiscard();
+            }
           }
         }
       } else {
@@ -524,130 +524,95 @@ export const useGameStore = defineStore('game', {
       this.activeActionPlayerId = null; // アクティブな応答者もクリア
     },
     handleRyuukyoku() {
-      this.gamePhase = GAME_PHASES.ROUND_END; // ゲームフェーズをラウンド終了に
-      // TODO: 実際の親のテンパイ判定ロジックをここに組み込む
-      // isDealerTenpai = mahjongLogic.checkYonhaiTenpai(dealerPlayer.hand).isTenpai;
-      const dealerPlayer = this.players[this.dealerIndex];
-      // agariResultDetails をリセットまたは流局用に設定
-      // これにより、ResultPopup が前回の和了情報を表示するのを防ぐ
-      this.agariResultDetails = {
-        roundWind: this.currentRound.wind,
-        roundNumber: this.currentRound.number,
-        honba: this.honba,
-        doraIndicators: [...this.doraIndicators],
-        uraDoraIndicators: [], // 流局時は裏ドラなし
-        winningHand: [],
-        agariTile: null,
-        yakuList: [], // 流局なので役リストは空
-        totalFans: 0,
-        fu: 0,
-        score: 0,
-        scoreName: null,
-        pointChanges: {}, // 点数変動もリセット (ノーテン罰符は別途計算・設定)
-      };
+      try {
+        this.gamePhase = GAME_PHASES.ROUND_END;
+        const dealerPlayer = this.players[this.dealerIndex];
 
-      // 各プレイヤーのテンパイ状態を判定
-      const tenpaiStates = this.players.map(player => {
-        const context = this.createGameContextForPlayer(player, false); // ツモ和了ではないので isTsumo は false
-        return {
-          id: player.id,
-          isTenpai: mahjongLogic.checkYonhaiTenpai(player.hand, context).isTenpai,
+        this.agariResultDetails = {
+          roundWind: this.currentRound.wind,
+          roundNumber: this.currentRound.number,
+          honba: this.honba,
+          doraIndicators: [...this.doraIndicators],
+          uraDoraIndicators: [],
+          winningHand: [],
+          agariTile: null,
+          yakuList: [],
+          totalFans: 0,
+          fu: 0,
+          score: 0,
+          scoreName: null,
+          pointChanges: {},
+          isDraw: true,
         };
-      });
 
-      const tenpaiPlayers = tenpaiStates.filter(p => p.isTenpai);
-      const notenPlayers = tenpaiStates.filter(p => !p.isTenpai);
-      const pointChanges = {};
-      this.players.forEach(p => pointChanges[p.id] = 0);
+        const tenpaiStates = this.players.map(player => {
+          const context = this.createGameContextForPlayer(player, false);
+          return {
+            id: player.id,
+            isTenpai: mahjongLogic.checkYonhaiTenpai(player.hand, context).isTenpai,
+          };
+        });
 
-      if (tenpaiPlayers.length > 0 && tenpaiPlayers.length < 4) { // 全員テンパイ・全員ノーテン以外
-        const totalPayment = 3000; // ノーテン罰符の総額
-        let paymentPerNoten = 0;
-        let incomePerTenpai = 0;
+        const tenpaiPlayers = tenpaiStates.filter(p => p.isTenpai);
+        const notenPlayers = tenpaiStates.filter(p => !p.isTenpai);
+        const pointChanges = {};
+        this.players.forEach(p => pointChanges[p.id] = 0);
 
-        if (tenpaiPlayers.length === 1) { // 1人テンパイ
-          paymentPerNoten = 1000;
-          incomePerTenpai = 3000;
-        } else if (tenpaiPlayers.length === 2) { // 2人テンパイ
-          paymentPerNoten = 1500;
-          incomePerTenpai = 1500;
-        } else if (tenpaiPlayers.length === 3) { // 3人テンパイ
-          paymentPerNoten = 3000; // ノーテンの1人が3000点支払う
-          incomePerTenpai = 1000;
+        if (tenpaiPlayers.length > 0 && tenpaiPlayers.length < 4) {
+          const totalPayment = 3000;
+          let paymentPerNoten = 0;
+          let incomePerTenpai = 0;
+
+          if (tenpaiPlayers.length === 1) { paymentPerNoten = 1000; incomePerTenpai = 3000; }
+          else if (tenpaiPlayers.length === 2) { paymentPerNoten = 1500; incomePerTenpai = 1500; }
+          else if (tenpaiPlayers.length === 3) { paymentPerNoten = 3000; incomePerTenpai = 1000; }
+
+          notenPlayers.forEach(notenPlayer => { pointChanges[notenPlayer.id] -= paymentPerNoten; });
+          tenpaiPlayers.forEach(tenpaiPlayer => { pointChanges[tenpaiPlayer.id] += incomePerTenpai; });
+        }
+        this.agariResultDetails.pointChanges = pointChanges;
+
+        const isDealerTenpai = tenpaiPlayers.some(p => p.id === dealerPlayer.id);
+        const rankedPlayers = getRankedPlayers(this.players);
+        const dealerRank = rankedPlayers.find(p => p.id === dealerPlayer.id)?.rank;
+
+        const isEast4 = this.currentRound.wind === 'east' && this.currentRound.number === 4;
+        const isDealerTop = dealerRank === 1;
+
+        if (isEast4 && isDealerTenpai && isDealerTop) {
+          this.resultMessage = `親（${dealerPlayer.name}）がテンパイでトップのため終局`;
+          this.honba = 0;
+          this.nextDealerIndex = (this.dealerIndex + 1) % this.players.length;
+          this.shouldAdvanceRound = true;
+          this.shouldEndGameAfterRound = true;
+        } else if (isDealerTenpai) {
+          this.resultMessage = `親（${dealerPlayer.name}）がテンパイのため連荘`;
+          this.honba++;
+          this.nextDealerIndex = this.dealerIndex;
+          this.shouldAdvanceRound = false;
+        } else {
+          this.resultMessage = `親（${this.players[this.dealerIndex].name}）がノーテンのため親流れ`;
+          this.honba = 0;
+          this.nextDealerIndex = (this.dealerIndex + 1) % this.players.length;
+          this.shouldAdvanceRound = true;
         }
 
-        notenPlayers.forEach(notenPlayer => {
-          pointChanges[notenPlayer.id] -= paymentPerNoten;
-        });
-        tenpaiPlayers.forEach(tenpaiPlayer => {
-          pointChanges[tenpaiPlayer.id] += incomePerTenpai;
-        });
-      }
-      this.agariResultDetails.pointChanges = pointChanges; // 計算した点数変動をセット
-
-      // 箱下チェックは prepareNextRound に移動
-
-      const gameCtxForTenpai = {
-        playerWind: dealerPlayer.seatWind, // PLAYER_WINDS.EAST など、mahjongLogicからインポート
-        roundWind: this.currentRound.wind === 'east' ? mahjongLogic.PLAYER_WINDS.EAST : mahjongLogic.PLAYER_WINDS.SOUTH, // 東場のみ
-        doraIndicators: this.doraIndicators,
-        // isRiichi: dealerPlayer.isRiichi, // リーチ状態も渡す場合
-        // melds: dealerPlayer.melds, // 鳴きも考慮する場合
-        // 四牌麻雀のテンパイ判定に必要なその他の情報
-        isParent: true, // 親のテンパイ判定なので
-      };
-      const isDealerTenpai = tenpaiPlayers.some(p => p.id === dealerPlayer.id && p.isTenpai); // dealerPlayerがテンパイリストに含まれるか
-      console.log('[handleRyuukyoku] isDealerTenpai value:', isDealerTenpai); // デバッグ用ログ追加
-
-      // 東4局かつ親がテンパイの場合の終局条件を判定
-      let shouldEndGameDueToEast4DealerTenpai = false;
-      if (this.currentRound.wind === 'east' && this.currentRound.number === 4 && isDealerTenpai) {
-          // 東4局で親がテンパイ かつ 親がトップであるかチェック
-          const rankedPlayers = getRankedPlayers(this.players); // 点数変動後の順位を取得
-          const dealerRank = rankedPlayers.find(p => p.id === dealerPlayer.id)?.rank;
-          if (dealerRank === 1) {
-              shouldEndGameDueToEast4DealerTenpai = true; // 親がトップなら終局
+        if (this.shouldEndGameAfterRound && !(isEast4 && isDealerTenpai && isDealerTop)) {
+          const playerBelowZero = this.players.find(p => (p.score + (pointChanges[p.id] || 0)) < 0);
+          if (playerBelowZero) {
+            this.resultMessage += `\n${playerBelowZero.name} の持ち点が0点未満になったため終局します。`;
           }
-      }
-
-      if (shouldEndGameDueToEast4DealerTenpai || (isDealerTenpai && this.currentRound.wind === 'east' && this.currentRound.number === 4)) {
-         // 東4局で親がテンパイかつトップの場合、または箱下で既に終局フラグが立っている場合
-         // shouldEndGameDueToEast4DealerTenpai の条件に箱下チェックも含めるか、shouldEndGameAfterRound を優先するか検討
-         // ここでは shouldEndGameDueToEast4DealerTenpai が true の場合のみ終局条件として扱う
-         if (shouldEndGameDueToEast4DealerTenpai) {
-            this.resultMessage = `親（${dealerPlayer.name}）がテンパイでトップのため終局します。`;
-            this.honba = 0; // 終局なので本場はリセット
-            this.nextDealerIndex = (this.dealerIndex + 1) % this.players.length; // 形式的に親流れ
-            this.shouldAdvanceRound = true; // 局を進めてゲーム終了へ
-            this.shouldEndGameAfterRound = true; // ゲーム終了をトリガー
-         } else {
-            // 東4局だが親がテンパイだがトップではない場合 -> 連荘
-            this.resultMessage = `親（${dealerPlayer.name}）がテンパイでトップでないため連荘`;
-            this.honba++; // 連荘なので本場プラス
-            this.nextDealerIndex = this.dealerIndex; // 親は継続
-            this.shouldAdvanceRound = false;
-            this.shouldEndGameAfterRound = false; // ゲーム終了しない
-         }
-      } else if (isDealerTenpai) { // 東4局以外で親がテンパイ
-        this.resultMessage = `親（${dealerPlayer.name}）がテンパイなので連荘`;
-        this.honba++; // 本場を増やす
-        this.nextDealerIndex = this.dealerIndex; // 親は継続
-        this.shouldAdvanceRound = false;
-      } else { // 親がノーテン
-        this.resultMessage = `親（${this.players[this.dealerIndex].name}）がノーテンなので流れ`;
-        this.honba = 0; // 本場をリセット
-        this.nextDealerIndex = (this.dealerIndex + 1) % this.players.length; // 親流れ
+        }
+      } catch (error) {
+        console.error("Error during handleRyuukyoku:", error);
+        this.resultMessage = "流局処理中にエラーが発生しました。";
         this.shouldAdvanceRound = true;
+        this.nextDealerIndex = (this.dealerIndex + 1) % this.players.length;
+      } finally {
+        this.stopRiichiBgm();
+        this.showResultPopup = true;
+        console.log("handleRyuukyoku finished, showResultPopup set to true.");
       }
-      // 箱下による終局フラグが既に立っている場合は、メッセージに追記
-      if (this.shouldEndGameAfterRound && !shouldEndGameDueToEast4DealerTenpai) { // 東4局親トップ以外での箱下終局
-           const playerBelowZero = this.players.find(p => p.score < 0);
-           if (playerBelowZero) {
-               this.resultMessage += `\n${playerBelowZero.name} の持ち点が0点未満になったため終局します。`;
-           }
-      }
-      this.stopRiichiBgm(); // 流局時にBGMを停止
-      this.showResultPopup = true; // リザルトポップアップを表示
     },
     prepareNextRound() {
       // 点数反映後に箱下チェックを行う
@@ -1289,6 +1254,7 @@ export const useGameStore = defineStore('game', {
             pointChanges: pointChanges,
             isChombo: true,
             chomboPlayerId: agariPlayerId,
+            isDraw: false,
           };
 
           // チョンボの場合、親は流れず、本場を1つ増やす
@@ -1360,6 +1326,7 @@ export const useGameStore = defineStore('game', {
           score: winResult.score,
           scoreName: winResult.scoreName, // 役満名や満貫などの名称
           pointChanges: pointChanges,
+          isDraw: false,
         };
         // アニメーション表示から1秒後にリザルトポップアップを表示
         setTimeout(() => {

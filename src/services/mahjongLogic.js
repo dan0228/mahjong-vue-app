@@ -17,7 +17,7 @@ export function getAllTiles() {
 // 萬子、筒子、索子 (1-9) - 各4枚
  [SUITS.MANZU, SUITS.PINZU, SUITS.SOZU].forEach(suit => { // 検証用にコメントアウト
   // [SUITS.MANZU].forEach(suit => {
-    for (let rank = 1; rank <= 9; rank++) { // 検証用。本来は9
+    for (let rank = 1; rank <= 3; rank++) { // 検証用。本来は9
       for (let i = 0; i < 4; i++) { //検証用。本来は4
         tiles.push({
           suit,
@@ -732,27 +732,31 @@ function calculateYonhaiYaku(handData) {
   }
   // 純全帯么九 (Junchan)
   if (isYonhaiJunchan(handData, basicWinInfo)) {
-    const yaku = YONHAI_YAKU.JUNCHAN;
-    yakuList.push(yaku);
-    totalFans += isMenzen ? yaku.fans : (yaku.fans - (yaku.kuisagari || 0));
+    const yakuInfo = YONHAI_YAKU.JUNCHAN;
+    const actualFans = isMenzen ? yakuInfo.fans : (yakuInfo.fans - (yakuInfo.kuisagari || 0));
+    yakuList.push({ ...yakuInfo, fans: actualFans });
+    totalFans += actualFans;
   }
   // 混全帯么九 (Chanta)
   else if (isYonhaiChanta(handData, basicWinInfo)) {
-    const yaku = YONHAI_YAKU.CHANTA;
-    yakuList.push(yaku);
-    totalFans += isMenzen ? yaku.fans : (yaku.fans - (yaku.kuisagari || 0));
+    const yakuInfo = YONHAI_YAKU.CHANTA;
+    const actualFans = isMenzen ? yakuInfo.fans : (yakuInfo.fans - (yakuInfo.kuisagari || 0));
+    yakuList.push({ ...yakuInfo, fans: actualFans });
+    totalFans += actualFans;
   }
   // 混一色 (Honitsu)
   if (isYonhaiHonitsu(handData, basicWinInfo)) {
-    const yaku = YONHAI_YAKU.HONITSU;
-    yakuList.push(yaku);
-    totalFans += isMenzen ? yaku.fans : (yaku.fans - (yaku.kuisagari || 0));
+    const yakuInfo = YONHAI_YAKU.HONITSU;
+    const actualFans = isMenzen ? yakuInfo.fans : (yakuInfo.fans - (yakuInfo.kuisagari || 0));
+    yakuList.push({ ...yakuInfo, fans: actualFans });
+    totalFans += actualFans;
   }
   // 清一色 (Chinitsu)
   if (isYonhaiChinitsu(handData, basicWinInfo)) {
-    const yaku = YONHAI_YAKU.CHINITSU;
-    yakuList.push(yaku);
-    totalFans += isMenzen ? yaku.fans : (yaku.fans - (yaku.kuisagari || 0));
+    const yakuInfo = YONHAI_YAKU.CHINITSU;
+    const actualFans = isMenzen ? yakuInfo.fans : (yakuInfo.fans - (yakuInfo.kuisagari || 0));
+    yakuList.push({ ...yakuInfo, fans: actualFans });
+    totalFans += actualFans;
   }
   // 槍槓 (Chankan)
   if (isChankan) {

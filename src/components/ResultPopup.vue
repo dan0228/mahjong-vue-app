@@ -126,10 +126,7 @@ function proceedToNext() {
 }
 
 const isDrawResult = computed(() => {
-  // resultDetails.yakuList が存在し、かつ空配列の場合は明確に流局と判断
-  // message に "流局" が含まれる場合も流局とみなす (フォールバック)
-  return (props.resultDetails && Array.isArray(props.resultDetails.yakuList) && props.resultDetails.yakuList.length === 0) ||
-         (props.message && props.message.includes('流局')); // messageによる判定も残す
+  return props.resultDetails?.isDraw;
 });
 const resultTitle = computed(() => {
   // 1. チョンボの場合

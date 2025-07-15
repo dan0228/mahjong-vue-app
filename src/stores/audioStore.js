@@ -8,6 +8,7 @@ export const useAudioStore = defineStore('audio', {
     isSeEnabled: true,  // デフォルトはオン
     currentBgm: null,
     audioPlayers: new Map(), // プリロードしたAudioオブジェクトを格納
+    isSwitchingBgm: false, // BGM切り替え中フラグ
   }),
   actions: {
     async preloadAudio(urls, onProgress = () => {}) {
@@ -35,12 +36,73 @@ export const useAudioStore = defineStore('audio', {
     },
     toggleBgm() {
       this.isBgmEnabled = !this.isBgmEnabled;
+      const audio = this.currentBgm ? this.audioPlayers.get(`/assets/sounds/${this.currentBgm}`) : null;
+      if (audio) {
+        if (this.isBgmEnabled) {
+          audio.play();
+        } else {
+          audio.pause();
+        }
+      }
     },
     toggleSe() {
       this.isSeEnabled = !this.isSeEnabled;
     },
-    setBgm(bgm) {
-      this.currentBgm = bgm;
+    async setBgm(newBgmName, fadeDuration = 100) {
+      if (this.isSwitchingBgm || this.currentBgm === newBgmName) {
+        return;
+      }
+      this.isSwitchingBgm = true;
+
+      const oldBgmName = this.currentBgm;
+      const oldAudio = oldBgmName ? this.audioPlayers.get(`/assets/sounds/${oldBgmName}`) : null;
+
+      // Fade out
+      if (oldAudio && !oldAudio.paused) {
+        let currentVolume = oldAudio.volume;
+        const fadeStep = currentVolume / (fadeDuration / 50);
+        const fadeOutInterval = setInterval(() => {
+          currentVolume -= fadeStep;
+          if (currentVolume <= 0) {
+            clearInterval(fadeOutInterval);
+            oldAudio.pause();
+            oldAudio.currentTime = 0;
+            oldAudio.volume = this.volume; // Reset volume for next time
+          } else {
+            oldAudio.volume = currentVolume;
+          }
+        }, 50);
+        await new Promise(resolve => setTimeout(resolve, fadeDuration));
+      }
+
+      this.currentBgm = newBgmName;
+      const newAudio = newBgmName ? this.audioPlayers.get(`/assets/sounds/${newBgmName}`) : null;
+
+      // Fade in
+      if (newAudio && this.isBgmEnabled) {
+        newAudio.currentTime = 0;
+        newAudio.volume = 0;
+        newAudio.loop = true;
+        newAudio.play().catch(e => console.error("BGMの再生に失敗しました:", e));
+        
+        let targetVolume = this.volume;
+        let currentVolume = 0;
+        const fadeStep = targetVolume / (fadeDuration / 50);
+        const fadeInInterval = setInterval(() => {
+          currentVolume += fadeStep;
+          if (currentVolume >= targetVolume) {
+            clearInterval(fadeInInterval);
+            newAudio.volume = targetVolume;
+          } else {
+            newAudio.volume = currentVolume;
+          }
+        }, 50);
+      }
+      
+      // Allow new BGM changes after the transition is complete
+      setTimeout(() => {
+        this.isSwitchingBgm = false;
+      }, fadeDuration);
     },
     playSound(sound) {
       if (this.isSeEnabled) {

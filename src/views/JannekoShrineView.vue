@@ -489,4 +489,8 @@ input:checked + .slider {
   opacity: 1;
   visibility: visible;
 }
+
+.fade-leave-active {
+  transition-duration: 0.2s;
+}
 </style>

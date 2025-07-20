@@ -15,8 +15,8 @@ export function getAllTiles() {
   let idCounter = 0;
 
 // 萬子、筒子、索子 (1-9) - 各4枚
-//  [SUITS.MANZU, SUITS.PINZU, SUITS.SOZU].forEach(suit => { // 検証用にコメントアウト
-  [SUITS.MANZU].forEach(suit => {
+ [SUITS.MANZU, SUITS.PINZU, SUITS.SOZU].forEach(suit => { // 検証用にコメントアウト
+  // [SUITS.MANZU].forEach(suit => {
     for (let rank = 1; rank <= 9; rank++) { // 検証用。本来は9
       for (let i = 0; i < 4; i++) { //検証用。本来は4
         tiles.push({
@@ -547,6 +547,36 @@ export function checkBasicYonhaiWinCondition(hand5tiles) {
   }
   // 大四喜の判定は、通常の1面子1雀頭のパターンでカバーされることが多い (例: 東東東 南南)
   // もし特殊な5枚構成の大四喜がある場合はここに追加
+
+  // 5. 特殊な役の形を判定 (三色同刻)
+  const sanshokuCounts = { ...counts }; // 最初に計算したcountsをコピー
+  for (let rank = 1; rank <= 9; rank++) {
+    const manKey = `m${rank}`;
+    const pinKey = `p${rank}`;
+    const souKey = `s${rank}`;
+
+    if (sanshokuCounts[manKey] >= 1 && sanshokuCounts[pinKey] >= 1 && sanshokuCounts[souKey] >= 1) {
+      const tempCounts = { ...sanshokuCounts };
+      tempCounts[manKey]--;
+      tempCounts[pinKey]--;
+      tempCounts[souKey]--;
+
+      const remainingKeys = Object.keys(tempCounts).filter(key => tempCounts[key] > 0);
+      if (remainingKeys.length === 1 && tempCounts[remainingKeys[0]] === 2) {
+        const jantouTileKey = remainingKeys[0];
+        const jantou = hand5tiles.filter(t => getTileKey(t) === jantouTileKey);
+        
+        // 三色同刻の構成牌を重複なく抽出
+        const sanshokuTiles = [
+            hand5tiles.find(t => getTileKey(t) === manKey),
+            hand5tiles.find(t => getTileKey(t) === pinKey),
+            hand5tiles.find(t => getTileKey(t) === souKey),
+        ];
+
+        return { isWin: true, mentsuType: 'sanshoku_special', jantou: jantou, mentsu: sanshokuTiles };
+      }
+    }
+  }
 
   return { isWin: false, mentsuType: null, jantou: null, mentsu: null };
 }
@@ -1134,6 +1164,12 @@ function isYonhaiToitoi(handData, basicWinInfo) {
   if (isYonhaiPinfu(handData, basicWinInfo)) {
     return false;
   }
+
+  // 三色同刻の特殊形の場合、無条件で対々和とする
+  if (basicWinInfo.mentsuType === 'sanshoku_special') {
+    return true;
+  }
+
   // 基本的な和了形で、面子が刻子(koutsu)であれば対々和
   if (!basicWinInfo.isWin || basicWinInfo.mentsuType !== 'koutsu') {
     return false;
@@ -1253,38 +1289,48 @@ function isYonhaiChinitsu(handData, basicWinInfo) {
 // 四牌麻雀: 三色同刻 (サンショクドウコウ)
 function isYonhaiSanshokuDoukou(handData, basicWinInfo) {
   const { hand, melds } = handData;
-  if (!basicWinInfo.isWin) return false;
-  if (melds.length > 0) return false; // 門前限定
+  if (!basicWinInfo || !basicWinInfo.isWin) return false;
 
-  const countsBySuitAndRank = {}; // { 'm1': 1, 'p1': 1, 's1': 1, 'z1': 2 }
-
-  hand.forEach(tile => {
-    const key = getTileKey(tile);
-    countsBySuitAndRank[key] = (countsBySuitAndRank[key] || 0) + 1;
-  });
-
-  for (let rank = 1; rank <= 9; rank++) {
-    const manKey = `${SUITS.MANZU}${rank}`;
-    const pinKey = `${SUITS.PINZU}${rank}`;
-    const souKey = `${SUITS.SOZU}${rank}`;
-
-    if (countsBySuitAndRank[manKey] >= 1 &&
-        countsBySuitAndRank[pinKey] >= 1 &&
-        countsBySuitAndRank[souKey] >= 1) {
-      // 萬筒索の同じ数字が1枚ずつある
-      // 残りの2枚が雀頭になっている必要がある
-      let jantouFound = false;
-      const tempHand = [...hand];
-      // 三色の牌を1枚ずつ取り除く
-      [manKey, pinKey, souKey].forEach(sKey => {
-        const idx = tempHand.findIndex(t => getTileKey(t) === sKey);
-        if (idx > -1) tempHand.splice(idx, 1);
-      });
-      if (tempHand.length === 2 && getTileKey(tempHand[0]) === getTileKey(tempHand[1])) {
-        return true;
-      }
-    }
+  // 鳴いている場合は対象外 (このゲームのルール)
+  if (melds && melds.length > 0) {
+    return false;
   }
+
+  // checkBasicYonhaiWinCondition で sanshoku_special と判定された場合
+  if (basicWinInfo.mentsuType === 'sanshoku_special') {
+    return true;
+  }
+
+  // 通常の三色同刻（3つの刻子）の判定も残す場合
+  if (basicWinInfo.mentsuType === 'koutsu') {
+      const koutsu = basicWinInfo.mentsu;
+      const jantou = basicWinInfo.jantou;
+
+      // 刻子と雀頭が同じ数字・スーツであってはならない
+      if (getTileKey(koutsu[0]) === getTileKey(jantou[0])) {
+          return false;
+      }
+
+      // 3つの異なるスーツの同じランクの刻子を探す
+      const koutsuCounts = {};
+      const allKoutsuTiles = [...melds.filter(m => m.type.includes('kan') || m.type === 'pon').flatMap(m => m.tiles), ...koutsu];
+      
+      allKoutsuTiles.forEach(tile => {
+          const key = getTileKey(tile);
+          koutsuCounts[key] = (koutsuCounts[key] || 0) + 1;
+      });
+
+      for (let rank = 1; rank <= 9; rank++) {
+          const manKey = `m${rank}`;
+          const pinKey = `p${rank}`;
+          const souKey = `s${rank}`;
+
+          if (koutsuCounts[manKey] >= 3 && koutsuCounts[pinKey] >= 3 && koutsuCounts[souKey] >= 3) {
+              return true;
+          }
+      }
+  }
+
   return false;
 }
 

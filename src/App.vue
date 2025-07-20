@@ -172,18 +172,6 @@ onMounted(async () => {
 
 onMounted(() => {
   document.addEventListener('visibilitychange', audioStore.handleVisibilityChange);
-
-  const playBgm = () => {
-    if (!hasInteracted) {
-      hasInteracted = true;
-      audioStore.playBgmOnInteraction();
-    }
-    window.removeEventListener('click', playBgm);
-    window.removeEventListener('keydown', playBgm);
-  };
-
-  window.addEventListener('click', playBgm);
-  window.addEventListener('keydown', playBgm);
 });
 
 onUnmounted(() => {

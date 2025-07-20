@@ -135,11 +135,6 @@ export const useAudioStore = defineStore('audio', {
         }
       }
     },
-    playBgmOnInteraction() {
-      const audio = this.currentBgm ? this.audioPlayers.get(`/assets/sounds/${this.currentBgm}`) : null;
-      if (audio && audio.paused && this.isBgmEnabled) {
-        audio.play().catch(e => console.error("BGMの再生に失敗しました:", e));
-      }
-    },
+    
   },
 });

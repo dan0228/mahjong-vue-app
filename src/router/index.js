@@ -30,10 +30,27 @@ const router = createRouter({
   routes,
 });
 
+let hasInteracted = false;
+
+const playBgmOnFirstInteraction = (bgm) => {
+  if (!hasInteracted) {
+    hasInteracted = true;
+    const audioStore = useAudioStore();
+    audioStore.setBgm(bgm);
+  }
+  window.removeEventListener('click', playBgmOnFirstInteraction);
+  window.removeEventListener('keydown', playBgmOnFirstInteraction);
+};
+
 router.beforeEach((to, from, next) => {
   const audioStore = useAudioStore();
   if (to.meta.bgm !== from.meta.bgm) {
-    audioStore.setBgm(to.meta.bgm);
+    if (!hasInteracted) {
+      window.addEventListener('click', () => playBgmOnFirstInteraction(to.meta.bgm));
+      window.addEventListener('keydown', () => playBgmOnFirstInteraction(to.meta.bgm));
+    } else {
+      audioStore.setBgm(to.meta.bgm);
+    }
   }
 
   if (from.name === undefined && to.name !== 'Title') {

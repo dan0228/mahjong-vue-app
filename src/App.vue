@@ -22,7 +22,7 @@ const isLoading = ref(true); // 初期値をtrueに設定
 const loadingProgress = ref(0); // ローディング進捗 (0-100)
 
 const audioStore = useAudioStore();
-const bgmPlayer = ref(null);
+let hasInteracted = false;
 
 // --- Preload Logic ---
 onMounted(async () => {
@@ -170,76 +170,24 @@ onMounted(async () => {
   }
 });
 
-// --- Autoplay Workaround ---
-const startAudioContext = () => {
-  if (audioStore.isBgmEnabled && bgmPlayer.value && bgmPlayer.value.paused) {
-    bgmPlayer.value.play().catch(e => {
-      // Autoplay might still be blocked, but we attempt it on first user interaction.
-      console.warn("BGM autoplay failed on interaction, might require another user gesture:", e);
-    });
-  }
-  // Remove the event listeners after the first interaction
-  window.removeEventListener('click', startAudioContext);
-  window.removeEventListener('keydown', startAudioContext);
-  window.removeEventListener('touchstart', startAudioContext);
-};
-
 onMounted(() => {
-  // Add listeners for the first user interaction to start audio
-  window.addEventListener('click', startAudioContext);
-  window.addEventListener('keydown', startAudioContext);
-  window.addEventListener('touchstart', startAudioContext);
+  document.addEventListener('visibilitychange', audioStore.handleVisibilityChange);
+
+  const playBgm = () => {
+    if (!hasInteracted) {
+      hasInteracted = true;
+      audioStore.playBgmOnInteraction();
+    }
+    window.removeEventListener('click', playBgm);
+    window.removeEventListener('keydown', playBgm);
+  };
+
+  window.addEventListener('click', playBgm);
+  window.addEventListener('keydown', playBgm);
 });
 
 onUnmounted(() => {
-  // Clean up listeners when the component is destroyed
-  window.removeEventListener('click', startAudioContext);
-  window.removeEventListener('keydown', startAudioContext);
-  window.removeEventListener('touchstart', startAudioContext);
-});
-// --- End Autoplay Workaround ---
-
-watch(() => audioStore.isBgmEnabled, (newVal) => {
-  if (newVal) {
-    if (bgmPlayer.value && bgmPlayer.value.paused) {
-      bgmPlayer.value.play().catch(e => console.error("BGMの再生に失敗しました:", e));
-    }
-  } else {
-    if (bgmPlayer.value && !bgmPlayer.value.paused) {
-      bgmPlayer.value.pause();
-    }
-  }
-});
-
-watch(() => audioStore.currentBgm, (newBgm) => {
-  if (bgmPlayer.value) {
-    bgmPlayer.value.pause();
-  }
-  if (newBgm) {
-    // プリロードされたAudioオブジェクトを使用
-    const preloadedAudio = audioStore.audioPlayers.get(`/assets/sounds/${newBgm}`);
-    if (preloadedAudio) {
-      bgmPlayer.value = preloadedAudio;
-      bgmPlayer.value.currentTime = 0; // 再生位置を先頭に
-    } else {
-      // プリロードされていない場合は新規作成 (フォールバック)
-      console.warn(`BGM not preloaded: /assets/sounds/${newBgm}. Creating new Audio object.`);
-      bgmPlayer.value = new Audio(`/assets/sounds/${newBgm}`);
-    }
-    bgmPlayer.value.loop = true;
-    bgmPlayer.value.volume = audioStore.volume;
-    if (audioStore.isBgmEnabled) {
-      bgmPlayer.value.play().catch(e => console.error("BGMの再生に失敗しました:", e));
-    }
-  } else {
-    bgmPlayer.value = null;
-  }
-});
-
-watch(() => audioStore.volume, (newVolume) => {
-  if (bgmPlayer.value) {
-    bgmPlayer.value.volume = newVolume;
-  }
+  document.removeEventListener('visibilitychange', audioStore.handleVisibilityChange);
 });
 </script>
 

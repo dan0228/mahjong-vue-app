@@ -1369,19 +1369,19 @@ export const useGameStore = defineStore('game', {
         // isDealerHola の設定など、局の継続/終了に関わるフラグもここで設定
         if (player.isDealer) {
           if (this.currentRound.wind === 'east' && this.currentRound.number === 4) {
-            this.resultMessage += `\n親が和了しましたが、東4局のため終局します。`;
+            this.resultMessage += `\n親が和了、東4局のため終局`;
             this.honba = 0; // 終局なので本場はリセット
             this.nextDealerIndex = (this.dealerIndex + 1) % this.players.length; // 形式的に親流れ
             this.shouldAdvanceRound = true; // 局を進めてゲーム終了へ
             this.shouldEndGameAfterRound = true; // 東4局親和了でもゲーム終了
           } else {
-            this.resultMessage += `\n親が和了したため連荘します。`;
+            this.resultMessage += `\n親が和了し、連荘`;
             this.honba++; // 親和了で本場プラス (連荘)
             this.nextDealerIndex = this.dealerIndex; // 親は継続
             this.shouldAdvanceRound = false;
           }
         } else {
-            this.resultMessage += `\n子が和了したため親流れです。`;
+            this.resultMessage += `\n子が和了、親流れ`;
             this.honba = 0; // 子和了で本場リセット
             this.nextDealerIndex = (this.dealerIndex + 1) % this.players.length; // 親流れ
             this.shouldAdvanceRound = true;
@@ -1408,26 +1408,26 @@ export const useGameStore = defineStore('game', {
            // shouldEndGameDueToEast4DealerWin の条件に箱下チェックも含めるか、shouldEndGameAfterRound を優先するか検討
            // ここでは shouldEndGameDueToEast4DealerWin が true の場合のみ終局条件として扱う
            if (shouldEndGameDueToEast4DealerWin) {
-              this.resultMessage += `\n親が和了しました。東4局終了、親がトップのため終局します。`;
+              this.resultMessage += `\n親が和了、東4局終了、親がトップのため終局`;
               this.honba = 0; // 終局なので本場はリセット
               this.nextDealerIndex = (this.dealerIndex + 1) % this.players.length; // 形式的に親流れ
               this.shouldAdvanceRound = true; // 局を進めてゲーム終了へ
               this.shouldEndGameAfterRound = true; // ゲーム終了をトリガー
            } else {
               // 東4局で親が和了だがトップではない場合 -> 連荘
-              this.resultMessage += `\n親が和了しました。東4局ですが、親がトップでないため連荘します。`;
+              this.resultMessage += `\n親が和了、東4局終了、親がトップでないため連荘`;
               this.honba++; // 連荘なので本場プラス
               this.nextDealerIndex = this.dealerIndex; // 親は継続
               this.shouldAdvanceRound = false;
               this.shouldEndGameAfterRound = false; // ゲーム終了しない
            }
         } else if (player.isDealer) { // 東4局以外で親が和了
-            this.resultMessage += `\n親が和了したため連荘します。`;
+            this.resultMessage += `\n親が和了、連荘`;
             this.honba++; // 親和了で本場プラス (連荘)
             this.nextDealerIndex = this.dealerIndex; // 親は継続
             this.shouldAdvanceRound = false;
         } else { // 子が和了
-            this.resultMessage += `\n子が和了したため親流れです。`;
+            this.resultMessage += `\n子が和了、親流れ`;
             this.honba = 0; // 子和了で本場リセット
             this.nextDealerIndex = (this.dealerIndex + 1) % this.players.length; // 親流れ
             this.shouldAdvanceRound = true;
@@ -1437,7 +1437,7 @@ export const useGameStore = defineStore('game', {
         if (this.shouldEndGameAfterRound && !shouldEndGameDueToEast4DealerWin) { // 東4局親トップ以外での箱下終局
              const playerBelowZero = this.players.find(p => p.score < 0);
              if (playerBelowZero) {
-                 this.resultMessage += `\n${playerBelowZero.name} の持ち点が0点未満になったため終局します。`;
+                 this.resultMessage += `\n${playerBelowZero.name} の持ち点が0点未満になったため終局`;
              }
             }
       } else {

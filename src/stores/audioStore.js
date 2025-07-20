@@ -59,20 +59,22 @@ export const useAudioStore = defineStore('audio', {
 
       // Fade out
       if (oldAudio && !oldAudio.paused) {
-        let currentVolume = oldAudio.volume;
-        const fadeStep = currentVolume / (fadeDuration / 50);
-        const fadeOutInterval = setInterval(() => {
-          currentVolume -= fadeStep;
-          if (currentVolume <= 0) {
-            clearInterval(fadeOutInterval);
-            oldAudio.pause();
-            oldAudio.currentTime = 0;
-            oldAudio.volume = this.volume; // Reset volume for next time
-          } else {
-            oldAudio.volume = currentVolume;
-          }
-        }, 50);
-        await new Promise(resolve => setTimeout(resolve, fadeDuration));
+        await new Promise(resolve => {
+          let currentVolume = oldAudio.volume;
+          const fadeStep = currentVolume / (fadeDuration / 50);
+          const fadeOutInterval = setInterval(() => {
+            currentVolume -= fadeStep;
+            if (currentVolume <= 0) {
+              clearInterval(fadeOutInterval);
+              oldAudio.pause();
+              oldAudio.currentTime = 0;
+              oldAudio.volume = this.volume; // Reset volume for next time
+              resolve();
+            } else {
+              oldAudio.volume = currentVolume;
+            }
+          }, 50);
+        });
       }
 
       this.currentBgm = newBgmName;
@@ -81,7 +83,7 @@ export const useAudioStore = defineStore('audio', {
       // Fade in
       if (newAudio && this.isBgmEnabled) {
         newAudio.currentTime = 0;
-        newAudio.volume = 0;
+        newAudio.volume = 0; // Set volume to 0 before playing
         newAudio.loop = true;
         newAudio.play().catch(e => console.error("BGMの再生に失敗しました:", e));
         
@@ -89,6 +91,7 @@ export const useAudioStore = defineStore('audio', {
         let currentVolume = 0;
         const fadeStep = targetVolume / (fadeDuration / 50);
         const fadeInInterval = setInterval(() => {
+          if (document.hidden) return; // タブが非表示の場合はフェードインを一時停止
           currentVolume += fadeStep;
           if (currentVolume >= targetVolume) {
             clearInterval(fadeInInterval);
@@ -118,6 +121,24 @@ export const useAudioStore = defineStore('audio', {
           newAudio.volume = this.volume;
           newAudio.play().catch(e => console.error("効果音の再生に失敗しました:", e));
         }
+      }
+    },
+    handleVisibilityChange() {
+      const audio = this.currentBgm ? this.audioPlayers.get(`/assets/sounds/${this.currentBgm}`) : null;
+      if (audio) {
+        if (document.hidden) {
+          audio.pause();
+        } else {
+          if (this.isBgmEnabled) {
+            audio.play().catch(e => console.error("BGMの再生に失敗しました:", e));
+          }
+        }
+      }
+    },
+    playBgmOnInteraction() {
+      const audio = this.currentBgm ? this.audioPlayers.get(`/assets/sounds/${this.currentBgm}`) : null;
+      if (audio && audio.paused && this.isBgmEnabled) {
+        audio.play().catch(e => console.error("BGMの再生に失敗しました:", e));
       }
     },
   },

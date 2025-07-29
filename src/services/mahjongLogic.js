@@ -29,17 +29,17 @@ export function getAllTiles() {
     }
   });
 
-  // // 字牌 (東南西北白發中) - 各4枚
-  // Object.values(JIHAI_TYPES).forEach(rank => {
-  //   for (let i = 0; i < 4; i++) {
-  //     tiles.push({
-  //       suit: SUITS.JIHAI,
-  //       rank,
-  //       id: `${SUITS.JIHAI}${rank}_${i}` // 例: z1_0 (東), z5_0 (白)
-  //     });
-  //     idCounter++;
-  //   }
-  // });
+  // 字牌 (東南西北白發中) - 各4枚
+  Object.values(JIHAI_TYPES).forEach(rank => {
+    for (let i = 0; i < 4; i++) {
+      tiles.push({
+        suit: SUITS.JIHAI,
+        rank,
+        id: `${SUITS.JIHAI}${rank}_${i}` // 例: z1_0 (東), z5_0 (白)
+      });
+      idCounter++;
+    }
+  });
 
   return tiles;
 }
@@ -1179,8 +1179,13 @@ function isYonhaiToitoi(handData, basicWinInfo) {
 }
 
 // 四牌麻雀: 一暗刻 (三暗刻の代用で一暗刻)
-function isYonhaiIianko(handData) {
+function isYonhaiIianko(handData, basicWinInfo) {
   const { hand, melds, winTile, isTsumo } = handData;
+
+  // そもそも和了していなければ役はつかない
+  if (!basicWinInfo.isWin) {
+    return false;
+  }
 
   let ankouCount = 0;
 
@@ -1189,24 +1194,20 @@ function isYonhaiIianko(handData) {
     ankouCount += melds.filter(m => m.type === 'ankan').length;
   }
 
-  // 2. 手牌の中の刻子をチェック
-  const handCounts = {};
-  hand.forEach(tile => {
-    const key = getTileKey(tile);
-    handCounts[key] = (handCounts[key] || 0) + 1;
-  });
+  // 2. 手牌の中の暗刻をチェック
+  // 和了形が刻子を含んでいるか
+  if (basicWinInfo.mentsuType === 'koutsu') {
+    const koutsu = basicWinInfo.mentsu;
+    const koutsuKey = getTileKey(koutsu[0]);
+    const winTileKey = getTileKey(winTile);
 
-  const winTileKey = getTileKey(winTile);
-
-  for (const key in handCounts) {
-    if (handCounts[key] >= 3) {
-      // ツモ和了の場合は、手牌の刻子は常に暗刻扱い
-      // ロン和了の場合は、和了牌で完成した刻子は明刻扱い
-      if (isTsumo || key !== winTileKey) {
-        ankouCount++;
-      }
+    // ツモ和了の場合は、その刻子は常に暗刻
+    // ロン和了の場合は、和了牌で完成した刻子は明刻扱いになるため、暗刻ではない
+    if (isTsumo || koutsuKey !== winTileKey) {
+      ankouCount++;
     }
   }
+
   return ankouCount >= 1;
 }
 

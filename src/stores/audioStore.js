@@ -96,16 +96,14 @@ export const useAudioStore = defineStore('audio', {
           if (currentVolume >= targetVolume) {
             clearInterval(fadeInInterval);
             newAudio.volume = targetVolume;
+            this.isSwitchingBgm = false;
           } else {
             newAudio.volume = currentVolume;
           }
         }, 50);
-      }
-      
-      // Allow new BGM changes after the transition is complete
-      setTimeout(() => {
+      } else {
         this.isSwitchingBgm = false;
-      }, fadeDuration);
+      }
     },
     playSound(sound) {
       if (this.isSeEnabled) {

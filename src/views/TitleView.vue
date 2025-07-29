@@ -319,13 +319,13 @@ function goToShrine() {
 
 .max-consecutive-wins {
   position: absolute;
-  top: 20px;
+  top: 19px;
   left: 30px; /* 左端からの位置を調整 */
   font-size: 0.8em;
   color: #333;
   z-index: 10;
   background-color: rgba(255, 255, 255, 0.6); /* 背景色 */
-  padding: 5px 8px; /* パディング */
+  padding: 3px 14px; /* パディング */
   border-radius: 8px; /* 角丸 */
   white-space: nowrap; /* テキストが改行されないように */
 }
@@ -338,7 +338,7 @@ function goToShrine() {
   color: #333;
   z-index: 10;
   background-color: rgba(255, 255, 255, 0.6);
-  padding: 5px 8px;
+  padding: 3px 8px;
   border-radius: 8px;
   white-space: nowrap;
 }

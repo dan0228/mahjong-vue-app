@@ -765,7 +765,7 @@ export const useGameStore = defineStore('game', {
 
       let priority = 0;
       if (actionType === 'ron') priority = 3;
-      else if (actionType === 'minkan') priority = 2;
+      else if (actionType === 'minkan') priority = 1;
       else if (actionType === 'pon') priority = 1;
 
       this.actionResponseQueue.push({ playerId, actionType, tile: tileForAction, priority });

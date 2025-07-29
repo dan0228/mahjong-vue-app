@@ -15,8 +15,8 @@ export function getAllTiles() {
   let idCounter = 0;
 
 // 萬子、筒子、索子 (1-9) - 各4枚
-//  [SUITS.MANZU, SUITS.PINZU, SUITS.SOZU].forEach(suit => { // 検証用にコメントアウト
-  [SUITS.MANZU].forEach(suit => {
+ [SUITS.MANZU, SUITS.PINZU, SUITS.SOZU].forEach(suit => { // 検証用にコメントアウト
+  // [SUITS.MANZU].forEach(suit => {
     for (let rank = 1; rank <= 2; rank++) { // 検証用。本来は9
       for (let i = 0; i < 19; i++) { //検証用。本来は4
         tiles.push({
@@ -29,17 +29,17 @@ export function getAllTiles() {
     }
   });
 
-  // // 字牌 (東南西北白發中) - 各4枚
-  // Object.values(JIHAI_TYPES).forEach(rank => {
-  //   for (let i = 0; i < 4; i++) {
-  //     tiles.push({
-  //       suit: SUITS.JIHAI,
-  //       rank,
-  //       id: `${SUITS.JIHAI}${rank}_${i}` // 例: z1_0 (東), z5_0 (白)
-  //     });
-  //     idCounter++;
-  //   }
-  // });
+  // 字牌 (東南西北白發中) - 各4枚
+  Object.values(JIHAI_TYPES).forEach(rank => {
+    for (let i = 0; i < 4; i++) {
+      tiles.push({
+        suit: SUITS.JIHAI,
+        rank,
+        id: `${SUITS.JIHAI}${rank}_${i}` // 例: z1_0 (東), z5_0 (白)
+      });
+      idCounter++;
+    }
+  });
 
   return tiles;
 }

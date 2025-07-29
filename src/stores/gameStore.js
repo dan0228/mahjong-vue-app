@@ -1072,6 +1072,10 @@ export const useGameStore = defineStore('game', {
       // ツモ牌でカンした場合は、ツモ牌を消費する
       if (isFromDrawn) {
           this.drawnTile = null;
+      } else if (this.drawnTile) {
+          // 手牌の4枚でカンした場合、元々ツモっていた牌は手牌に加える
+          player.hand.push(this.drawnTile);
+          this.drawnTile = null;
       }
 
       // 手牌が変わったのでフリテン状態を更新

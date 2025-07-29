@@ -332,7 +332,9 @@ function getMeldTileClass(meld, tileIndex) {
 .sideways {
   transform: rotate(90deg);
   transform-origin: left center; /* 回転の中心を牌の左端中央に設定 */
-  margin: 0 -10px 0 0; /* 左寄せになるようにマージンを調整 */
+  margin: 0 6px 0 0; /* 左寄せになるようにマージンを調整 */
+  margin-left: 4px;
+  margin-top: -32px;
 }
 
 .hidden-tile img {

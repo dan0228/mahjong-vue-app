@@ -22,6 +22,8 @@ const gameStore = useGameStore();
 const showParentDecisionPopup = ref(false);
 const dealerDeterminationResults = ref([]);
 
+import { useAudioStore } from '@/stores/audioStore';
+
 onMounted(() => {
   // 親決め結果のデータをgameStoreから取得
   dealerDeterminationResults.value = gameStore.players.map(p => ({
@@ -31,6 +33,10 @@ onMounted(() => {
     score: p.score,
   }));
   showParentDecisionPopup.value = true;
+  // BGMの再生を少し遅らせて、前の画面のBGM停止処理との競合を避ける
+  setTimeout(() => {
+    audioStore.setBgm('NES-JP-A02-2(Stage1-Loop110).mp3');
+  }, 150); // 150msの遅延
 });
 
 function handleParentDecisionClose() {

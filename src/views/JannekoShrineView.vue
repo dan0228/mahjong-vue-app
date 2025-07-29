@@ -159,10 +159,14 @@ onMounted(() => {
   window.addEventListener('resize', updateScaleFactor);
   gameStore.loadCatCoins();
   loadRevealedSayings(); // 追加
+  setTimeout(() => {
+    audioStore.setBgm('GB-JP-A02-2(Menu-Loop105).mp3');
+  }, 150);
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', updateScaleFactor);
+  audioStore.setBgm(null); // 画面離脱時にBGMを停止
 });
 
 const sayings = ref([

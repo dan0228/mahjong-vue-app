@@ -15,10 +15,10 @@ export function getAllTiles() {
   let idCounter = 0;
 
 // 萬子、筒子、索子 (1-9) - 各4枚
- [SUITS.MANZU, SUITS.PINZU, SUITS.SOZU].forEach(suit => { // 検証用にコメントアウト
-  // [SUITS.MANZU].forEach(suit => {
-    for (let rank = 1; rank <= 9; rank++) { // 検証用。本来は9
-      for (let i = 0; i < 4; i++) { //検証用。本来は4
+//  [SUITS.MANZU, SUITS.PINZU, SUITS.SOZU].forEach(suit => { // 検証用にコメントアウト
+  [SUITS.MANZU].forEach(suit => {
+    for (let rank = 3; rank <= 6; rank++) { // 検証用。本来は9
+      for (let i = 0; i < 10; i++) { //検証用。本来は4
         tiles.push({
           suit,
           rank,
@@ -29,17 +29,17 @@ export function getAllTiles() {
     }
   });
 
-  // 字牌 (東南西北白發中) - 各4枚
-  Object.values(JIHAI_TYPES).forEach(rank => {
-    for (let i = 0; i < 4; i++) {
-      tiles.push({
-        suit: SUITS.JIHAI,
-        rank,
-        id: `${SUITS.JIHAI}${rank}_${i}` // 例: z1_0 (東), z5_0 (白)
-      });
-      idCounter++;
-    }
-  });
+  // // 字牌 (東南西北白發中) - 各4枚
+  // Object.values(JIHAI_TYPES).forEach(rank => {
+  //   for (let i = 0; i < 4; i++) {
+  //     tiles.push({
+  //       suit: SUITS.JIHAI,
+  //       rank,
+  //       id: `${SUITS.JIHAI}${rank}_${i}` // 例: z1_0 (東), z5_0 (白)
+  //     });
+  //     idCounter++;
+  //   }
+  // });
 
   return tiles;
 }
@@ -440,15 +440,7 @@ export function checkBasicYonhaiWinCondition(hand5tiles) {
 
       if (remainingForMentsuCandidate.length === 3) {
         const sortedMentsuCandidate = sortHand(remainingForMentsuCandidate);
-        // 刻子判定
-        if (
-          getTileKey(sortedMentsuCandidate[0]) === getTileKey(sortedMentsuCandidate[1]) &&
-          getTileKey(sortedMentsuCandidate[1]) === getTileKey(sortedMentsuCandidate[2])
-        ) {
-          return { isWin: true, mentsuType: 'koutsu', jantou: jantou, mentsu: sortedMentsuCandidate };
-        }
-
-        // 順子判定
+        // 順子判定 (刻子より優先)
         if (
           sortedMentsuCandidate[0].suit !== SUITS.JIHAI && // 字牌は順子にならない
           sortedMentsuCandidate[0].suit === sortedMentsuCandidate[1].suit && // 牌のスーツが同じであること
@@ -457,6 +449,14 @@ export function checkBasicYonhaiWinCondition(hand5tiles) {
           sortedMentsuCandidate[2].rank === sortedMentsuCandidate[1].rank + 1
         ) {
           return { isWin: true, mentsuType: 'shuntsu', jantou: jantou, mentsu: sortedMentsuCandidate };
+        }
+
+        // 刻子判定
+        if (
+          getTileKey(sortedMentsuCandidate[0]) === getTileKey(sortedMentsuCandidate[1]) &&
+          getTileKey(sortedMentsuCandidate[1]) === getTileKey(sortedMentsuCandidate[2])
+        ) {
+          return { isWin: true, mentsuType: 'koutsu', jantou: jantou, mentsu: sortedMentsuCandidate };
         }
       }
     }

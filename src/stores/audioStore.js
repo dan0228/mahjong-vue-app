@@ -66,10 +66,17 @@ export const useAudioStore = defineStore('audio', {
       const newAudio = newBgmName ? this.audioPlayers.get(`/assets/sounds/${newBgmName}`) : null;
 
       if (newAudio && this.isBgmEnabled) {
-        newAudio.currentTime = 0;
+        if (!newAudio.paused) {
+          newAudio.pause();
+          newAudio.currentTime = 0;
+        }
         newAudio.volume = this.volume;
         newAudio.loop = true;
-        newAudio.play().catch(e => console.error("BGMの再生に失敗しました:", e));
+        try {
+          await newAudio.play();
+        } catch (e) {
+          console.error("BGMの再生に失敗しました:", e);
+        }
       }
       
       this.isSwitchingBgm = false;

@@ -159,9 +159,7 @@ onMounted(() => {
   window.addEventListener('resize', updateScaleFactor);
   gameStore.loadCatCoins();
   loadRevealedSayings(); // 追加
-  setTimeout(() => {
-    audioStore.setBgm('GB-JP-A02-2(Menu-Loop105).mp3');
-  }, 150);
+  audioStore.setBgm('GB-JP-A02-2(Menu-Loop105).mp3');
 });
 
 onBeforeUnmount(() => {

@@ -48,7 +48,7 @@ export const useAudioStore = defineStore('audio', {
     toggleSe() {
       this.isSeEnabled = !this.isSeEnabled;
     },
-    async setBgm(newBgmName, fadeDuration = 100) {
+    async setBgm(newBgmName) {
       if (this.isSwitchingBgm || this.currentBgm === newBgmName) {
         return;
       }
@@ -57,53 +57,22 @@ export const useAudioStore = defineStore('audio', {
       const oldBgmName = this.currentBgm;
       const oldAudio = oldBgmName ? this.audioPlayers.get(`/assets/sounds/${oldBgmName}`) : null;
 
-      // Fade out
       if (oldAudio && !oldAudio.paused) {
-        await new Promise(resolve => {
-          let currentVolume = oldAudio.volume;
-          const fadeStep = currentVolume / (fadeDuration / 50);
-          const fadeOutInterval = setInterval(() => {
-            currentVolume -= fadeStep;
-            if (currentVolume <= 0) {
-              clearInterval(fadeOutInterval);
-              oldAudio.pause();
-              oldAudio.currentTime = 0;
-              oldAudio.volume = this.volume; // Reset volume for next time
-              resolve();
-            } else {
-              oldAudio.volume = currentVolume;
-            }
-          }, 50);
-        });
+        oldAudio.pause();
+        oldAudio.currentTime = 0;
       }
 
       this.currentBgm = newBgmName;
       const newAudio = newBgmName ? this.audioPlayers.get(`/assets/sounds/${newBgmName}`) : null;
 
-      // Fade in
       if (newAudio && this.isBgmEnabled) {
         newAudio.currentTime = 0;
-        newAudio.volume = 0; // Set volume to 0 before playing
+        newAudio.volume = this.volume;
         newAudio.loop = true;
         newAudio.play().catch(e => console.error("BGMの再生に失敗しました:", e));
-        
-        let targetVolume = this.volume;
-        let currentVolume = 0;
-        const fadeStep = targetVolume / (fadeDuration / 50);
-        const fadeInInterval = setInterval(() => {
-          if (document.hidden) return; // タブが非表示の場合はフェードインを一時停止
-          currentVolume += fadeStep;
-          if (currentVolume >= targetVolume) {
-            clearInterval(fadeInInterval);
-            newAudio.volume = targetVolume;
-            this.isSwitchingBgm = false;
-          } else {
-            newAudio.volume = currentVolume;
-          }
-        }, 50);
-      } else {
-        this.isSwitchingBgm = false;
       }
+      
+      this.isSwitchingBgm = false;
     },
     playSound(sound) {
       if (this.isSeEnabled) {

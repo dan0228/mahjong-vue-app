@@ -17,8 +17,8 @@ export function getAllTiles() {
 // 萬子、筒子、索子 (1-9) - 各4枚
 //  [SUITS.MANZU, SUITS.PINZU, SUITS.SOZU].forEach(suit => { // 検証用にコメントアウト
   [SUITS.MANZU].forEach(suit => {
-    for (let rank = 1; rank <= 3; rank++) { // 検証用。本来は9
-      for (let i = 0; i < 15; i++) { //検証用。本来は4
+    for (let rank = 1; rank <= 2; rank++) { // 検証用。本来は9
+      for (let i = 0; i < 19; i++) { //検証用。本来は4
         tiles.push({
           suit,
           rank,
@@ -108,7 +108,6 @@ export function dealInitialHands(playerCount, wall, handSize) {
   return { hands, wall };
 }
 
-// TODO: ドラ表示牌をめくるロジック、王牌を生成するロジックなどを追加
 export function revealDora(deadWall) {
     // カンがあった場合、新しいドラ表示牌をめくる。
     // 通常、既存のドラ表示牌の隣(嶺上牌側)の牌をめくる。
@@ -163,30 +162,14 @@ export function assignPlayerWinds(players, dealerIndex, playerCount = 4) {
 
 /**
  * 嶺上牌を取得します。
- * @param {Array<Object>} deadWall 王牌の配列
+ * @param {Array<Object>} wall 山牌の配列
  * @returns {Object|null} 嶺上牌、または取得できない場合はnull
- * @modifies deadWall - 取得した嶺上牌をdeadWallから取り除く
  */
-export function drawRinshanTile(deadWall) {
-    // 通常、嶺上牌は王牌の特定の位置から取ります。
-    // 王牌14枚: [嶺1,嶺2,表1,裏1, 表2,裏2, 表3,裏3, 表4,裏4, 予備,予備,予備,予備]
-    // 嶺上牌は通常、山の端から取ります。ここでは deadWall の先頭2枚を嶺上牌と仮定。
-    if (deadWall && deadWall.length > 0) {
-        // 嶺上牌がまだ残っているか確認 (例: 先頭から2枚までが嶺上牌)
-        // 実際に何枚嶺上牌を使ったかを管理する必要がある。
-        // ここでは単純に deadWall から pop するが、これは山の最後から取るので不適切。
-        // 正しくは、王牌の構造を定義し、そこから取得する。
-        // 仮に、王牌の先頭から順番に嶺上牌として使用するとする。
-        // (より正確には、王牌の端からドラ表示牌をめくり、その隣から嶺上牌を取る)
-        // deadWall の先頭が嶺上牌と仮定 (最大4回まで)
-        const rinshanTilesArea = deadWall.slice(0, 4); // 先頭4牌が嶺上牌エリアと仮定
-        const drawnRinshanTilesCount = rinshanTilesArea.filter(t => t.isRinshanDrawn).length;
-        if (drawnRinshanTilesCount < 4 && rinshanTilesArea.length > drawnRinshanTilesCount) {
-            const rinshanTile = rinshanTilesArea[drawnRinshanTilesCount];
-            rinshanTile.isRinshanDrawn = true; // 使用済みマーク
-            // deadWall から物理的に取り除く必要はないが、取得したことを示す。
-            // 王牌の枚数は変わらない。
-            return rinshanTile;
+export function drawRinshanTile(wall) {
+    // 通常、嶺上牌は王牌の特定の位置から取るが、簡易的な実装にするため山牌から取得する。
+    if (wall && wall.length > 0) {
+        if (wall.length >= 1) { // 最低1枚あればツモれる
+            return wall.pop(); // wallから牌を取り除く
         }
     }
     console.warn("嶺上牌を取得できません。");

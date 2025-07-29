@@ -1033,7 +1033,7 @@ export const useGameStore = defineStore('game', {
       }
       // 嶺上牌をツモる
       if (this.deadWall.length > 0) {
-        this.drawnTile = mahjongLogic.drawRinshanTile(this.deadWall); // 修正: mahjongLogicから呼び出し
+        this.drawnTile = mahjongLogic.drawRinshanTile(this.wall); // 修正: mahjongLogicから呼び出し
         this.rinshanKaihouChance = true;
         this.pendingKanDoraReveal = true; // 打牌後にドラをめくるフラグを立てる
         this._handlePostRinshanDraw(playerId);
@@ -1091,7 +1091,7 @@ export const useGameStore = defineStore('game', {
       }
       // 嶺上牌をツモる
       if (this.deadWall.length > 0) {
-        this.drawnTile = mahjongLogic.drawRinshanTile(this.deadWall); // 修正: mahjongLogicから呼び出し
+        this.drawnTile = mahjongLogic.drawRinshanTile(this.wall); // 修正: mahjongLogicから呼び出し
         this.rinshanKaihouChance = true;
         console.log(`gameStore: Player ${playerId} drew Rinshan tile: ${this.drawnTile?.id}`);
         if (this.deadWall.length > 0) {
@@ -1195,7 +1195,7 @@ export const useGameStore = defineStore('game', {
         }
       });
       if (this.deadWall.length > 0) {
-        this.drawnTile = mahjongLogic.drawRinshanTile(this.deadWall); // 修正: mahjongLogicから呼び出し
+        this.drawnTile = mahjongLogic.drawRinshanTile(this.wall); // 修正: mahjongLogicから呼び出し
         this.rinshanKaihouChance = true;
         this.pendingKanDoraReveal = true; // 打牌後にドラをめくるフラグを立てる
         this._handlePostRinshanDraw(playerId);

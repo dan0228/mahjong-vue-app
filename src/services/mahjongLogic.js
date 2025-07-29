@@ -671,7 +671,8 @@ function calculateYonhaiYaku(handData) {
     totalYakumanPower += YONHAI_YAKUMAN.SUUANKOU_TANKI_DAIYO.power;
   }
   // 一槓子 (Iikantsu) - 四槓子の代用
-  if (isYonhaiIikantsu(handData, basicWinInfo)) {
+  // 一暗槓単騎が成立している場合は複合しない
+  if (!yakumanList.some(y => y.name === YONHAI_YAKUMAN.SUUANKOU_TANKI_DAIYO.name) && isYonhaiIikantsu(handData, basicWinInfo)) {
     yakumanList.push(YONHAI_YAKUMAN.SUUKANTSU_DAIYO);
     totalYakumanPower += YONHAI_YAKUMAN.SUUKANTSU_DAIYO.power;
   }
@@ -1187,6 +1188,11 @@ function isYonhaiIianko(handData, basicWinInfo) {
     return false;
   }
 
+  // 鳴き（ポン、明槓、加槓）がある場合は一暗刻は成立しない
+  if (melds.some(m => m.type === 'pon' || m.type === 'minkan' || m.type === 'kakan')) {
+    return false;
+  }
+
   let ankouCount = 0;
 
   // 1. 暗槓(ankan)をチェック
@@ -1349,23 +1355,40 @@ export function checkYonhaiWin(currentHandWithWinTile, winTile, isTsumo, gameCon
   let basicWinInfo = { isWin: false, mentsuType: null, jantou: null, mentsu: null };
 
   if (melds.length > 0) {
-    // 鳴きがある場合: 残りの手牌が雀頭を形成するかチェック
-    // 四牌麻雀で1回鳴くと、手牌は和了牌を含めて2枚になる
-    if (currentHandWithWinTile.length === 2 && getTileKey(currentHandWithWinTile[0]) === getTileKey(currentHandWithWinTile[1])) {
-      const meld = melds[0];
-      // ポンやカンは刻子として扱う
-      const mentsuType = (meld.type === 'pon' || meld.type.includes('kan')) ? 'koutsu' : 'shuntsu';
+    // If there's any meld (pon, minkan, kakan, ankan)
+    // The hand should be decomposable into the meld and a pair.
+    // currentHandWithWinTile contains the player's hand (including ankan tiles) + winning tile.
+    // We need to effectively "remove" the melded tiles from currentHandWithWinTile to get the remaining tiles for the pair check.
 
+    let tempHandForPairCheck = [...currentHandWithWinTile];
+    const meldToExclude = melds[0]; // Assuming only one meld for 4-tile mahjong
+
+    // Remove the tiles of the meld from tempHandForPairCheck
+    // This handles both open melds (where tiles are already "out") and ankan (where tiles are still "in hand")
+    // We need to be careful to remove only the exact tiles that form the meld.
+    const meldTileKeys = meldToExclude.tiles.map(getTileKey);
+    const removedCount = {};
+
+    for (let i = tempHandForPairCheck.length - 1; i >= 0; i--) {
+      const tile = tempHandForPairCheck[i];
+      const tileKey = getTileKey(tile);
+      if (meldTileKeys.includes(tileKey) && (removedCount[tileKey] || 0) < meldTileKeys.filter(k => k === tileKey).length) {
+        tempHandForPairCheck.splice(i, 1);
+        removedCount[tileKey] = (removedCount[tileKey] || 0) + 1;
+      }
+    }
+
+    // After removing the meld, the remaining tiles should be 2 and form a pair
+    if (tempHandForPairCheck.length === 2 && getTileKey(tempHandForPairCheck[0]) === getTileKey(tempHandForPairCheck[1])) {
       basicWinInfo = {
         isWin: true,
-        // 鳴いた面子を mentsu として、手牌を jantou として設定
-        mentsuType: mentsuType,
-        jantou: currentHandWithWinTile,
-        mentsu: melds[0].tiles
+        mentsuType: 'koutsu', // All melds (pon, kan) are koutsu
+        jantou: tempHandForPairCheck,
+        mentsu: meldToExclude.tiles
       };
     }
   } else {
-    // 鳴きがない場合 (門前): 5枚の手牌全体で和了形を判定
+    // No melds (menzen), check the full 5-tile hand
     const sortedHand = sortHand([...currentHandWithWinTile]);
     basicWinInfo = checkBasicYonhaiWinCondition(sortedHand);
   }

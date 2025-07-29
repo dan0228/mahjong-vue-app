@@ -303,7 +303,8 @@ export const useGameStore = defineStore('game', {
           } else {
             // 通常のツモ処理
             let canRiichi = false;
-            if (currentPlayer.melds.length === 0 && currentPlayer.score >= 1000) {
+            // リーチは、残り山牌が4枚以上あり、持ち点が1000点以上の場合のみ可能
+            if (this.wall.length > 3 && currentPlayer.melds.length === 0 && currentPlayer.score >= 1000) {
               const potentialHandAfterDraw = [...currentPlayer.hand, this.drawnTile];
               for (const tileToDiscard of potentialHandAfterDraw) {
                 const tempHand = [];
@@ -681,8 +682,8 @@ export const useGameStore = defineStore('game', {
     declareRiichi(playerId) {
       const player = this.players.find(p => p.id === playerId);
       // ダブルリーチ: 自分の最初の捨て牌までで、かつ他家が誰も鳴いていない(turnCountがプレイヤー数未満)
-      // リーチ宣言時はツモ牌を持っている状態
-      if (!player || player.isRiichi || player.isDoubleRiichi || !this.drawnTile || player.melds.length > 0) {
+      // リーチは、残り山牌が4枚以上あり、持ち点が1000点以上の場合のみ可能
+      if (!player || player.isRiichi || player.isDoubleRiichi || !this.drawnTile || player.melds.length > 0 || this.wall.length <= 3 || player.score < 1000) {
         console.warn("Cannot declare Riichi now.");
         return;
       }

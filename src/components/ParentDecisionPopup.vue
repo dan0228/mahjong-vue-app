@@ -113,7 +113,7 @@ function getPlayerIcon(playerId) {
   align-items: center;
   justify-content: center;
   z-index: 1050;
-  touch-action: none;
+  touch-action: none !important;
 }
 .popup-content {
   background-color: white;

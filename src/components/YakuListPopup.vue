@@ -130,7 +130,7 @@
     font-size: small;
     transform: scale(0.85); /* ポップアップ全体を縮小して画面に収める */
     display: flex; flex-direction: column; justify-content: space-between;
-    touch-action: auto;
+    touch-action: pan-y;
   }
 
   /* Transition styles */

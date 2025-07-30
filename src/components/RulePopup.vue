@@ -82,7 +82,7 @@ defineEmits(['close']);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  touch-action: auto;
+  touch-action: pan-y;
 }
 
 /* Transition styles */

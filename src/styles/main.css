@@ -10,6 +10,10 @@ body, html, #app {
   touch-action: none;
 }
 
+* {
+  touch-action: none;
+}
+
 body {
   font-family: 'M PLUS 1', sans-serif;
   min-height: 100vh; /* bodyも最小の高さをビューポートに合わせる */

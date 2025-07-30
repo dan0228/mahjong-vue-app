@@ -119,7 +119,6 @@ function goToShrine() {
   overflow: hidden;
   background-image: url('/assets/images/back/back_out.png');
   background-repeat: repeat;
-  touch-action: none; /* Add this line to disable pinch zoom */
 }
 
 .title-screen {

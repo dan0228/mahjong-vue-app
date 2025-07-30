@@ -148,7 +148,6 @@ export const useGameStore = defineStore('game', {
       }
     },
     initializeGame() {
-      // TODO: ここでmahjongLogicを呼び出し、山牌生成、配牌などを行う
       console.log('gameStore: initializeGame action started');
       this.turnCount = 0; // 局開始時に総ターン数をリセット
       this.players.forEach(player => {
@@ -1293,7 +1292,7 @@ export const useGameStore = defineStore('game', {
 
           // チョンボの場合、親は流れず、本場を1つ増やす
           this.resultMessage += `
-チョンボのため、親は流れず、1本場となります.`;
+チョンボのため、親は流れず次の本場になります.`;
           this.honba++;
           this.nextDealerIndex = this.dealerIndex; // 親は継続
           this.shouldAdvanceRound = false; // 局は進めない

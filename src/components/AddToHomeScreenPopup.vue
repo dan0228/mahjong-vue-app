@@ -2,7 +2,7 @@
   <div v-if="show" class="add-to-home-screen-popup-overlay">
     <div class="add-to-home-screen-popup-content">
       <h2>📱ホーム画面に追加しませんか？</h2>
-      <p>アプリのようにワンタップで開けて便利です</p>
+      <p>アプリのようにワンタップでゲーム開始</p>
       <p class="note">※データはすべてブラウザに保存されます</p>
       <div class="buttons">
         <button @click="closePopup">閉じる</button>

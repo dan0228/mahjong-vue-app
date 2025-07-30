@@ -60,7 +60,6 @@ export function getDoraIndicators(deadWall) {
   const initialDoraIndicatorIndex = 4; // 仮: 0-indexed で5番目の牌
   if (deadWall.length > initialDoraIndicatorIndex) {
     // deadWall[initialDoraIndicatorIndex].isDoraIndicator = true; // 必要であればマーク
-    // console.log("Dora Indicator revealed:", deadWall[initialDoraIndicatorIndex]);
     return [deadWall[initialDoraIndicatorIndex]];
   }
   // 王牌が足りない場合は、取得できる範囲で返すか、空を返す
@@ -1333,10 +1332,6 @@ function isYonhaiSanshokuDoukou(handData, basicWinInfo) {
  * @returns {{isWin: boolean, yaku: Array, score: number}}
  */
 export function checkYonhaiWin(currentHandWithWinTile, winTile, isTsumo, gameContext = {}) {
-  console.log(`mahjongLogic: [checkYonhaiWin] currentHandWithWinTile:`, currentHandWithWinTile.map(t => t.id));
-  console.log(`mahjongLogic: [checkYonhaiWin] winTile:`, winTile?.id);
-  console.log(`mahjongLogic: [checkYonhaiWin] isTsumo:`, isTsumo);
-  console.log(`mahjongLogic: [checkYonhaiWin] gameContext.melds:`, gameContext.melds.map(m => m.tiles.map(t => t.id)));
   const melds = gameContext.melds || [];
   const isParent = gameContext.isParent || false;
   let basicWinInfo = { isWin: false, mentsuType: null, jantou: null, mentsu: null };

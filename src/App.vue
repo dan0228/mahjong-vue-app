@@ -159,7 +159,6 @@ onMounted(async () => {
       preloadImages(imagePaths, updateOverallProgress),
       audioStore.preloadAudio(audioPaths, updateOverallProgress)
     ]);
-    console.log('All assets preloaded!');
   } catch (error) {
     console.error('Failed to preload assets:', error);
   } finally {

@@ -76,7 +76,6 @@ const playerEligibility = computed(() => gameStore.playerActionEligibility[props
 // プレイヤーのアクション資格が変更されたときに actionInProgress をリセット
 watch(playerEligibility, () => {
   actionInProgress.value = false;
-  console.log(`PlayerArea: actionInProgress reset for ${props.player.id} due to playerEligibility change.`);
 });
 
 // 自分のターンで、かつ打牌前のアクション（ツモ和了、リーチ、カン）が可能なフェーズか
@@ -88,7 +87,6 @@ const isMyTurnAndCanActBeforeDiscard = computed(() => {
 // 自分のターンのアクション
 const canDeclareTsumoAgari = computed(() => {
   const result = !actionInProgress.value && isMyTurnAndCanActBeforeDiscard.value && playerEligibility.value.canTsumoAgari;
-  console.log(`PlayerArea: canDeclareTsumoAgari for ${props.player.id}: ${result} (actionInProgress: ${actionInProgress.value}, isMyTurnAndCanActBeforeDiscard: ${isMyTurnAndCanActBeforeDiscard.value}, canTsumoAgari: ${playerEligibility.value.canTsumoAgari})`);
   return result;
 });
 const canDeclareRiichi = computed(() => !actionInProgress.value && isMyTurnAndCanActBeforeDiscard.value && playerEligibility.value.canRiichi);
@@ -129,7 +127,6 @@ function emitAction(actionType) {
         } else {
             // 選択肢が複数ある、またはUIでの選択が必要な場合
             // GameBoardに選択を促すイベントを投げる (tileDataはnullのまま)
-            console.log("Multiple ankan options, UI selection needed.");
         }
     } else if (actionType === 'kakan') {
         const kakanOptions = gameStore.canDeclareKakan[props.player.id];
@@ -138,7 +135,6 @@ function emitAction(actionType) {
             tileData = kakanOptions[0];
         } else {
             // 選択肢が複数ある場合はUIでの選択が必要
-            console.log("Multiple kakan options, UI selection needed.");
         }
     }
     emit('action-declared', { playerId: props.player.id, actionType, tile: tileData });

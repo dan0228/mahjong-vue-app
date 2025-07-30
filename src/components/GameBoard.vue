@@ -296,13 +296,12 @@ const playerIcon = (player) => {
     if (riichiAnimationState.value) {
       riichiAnimationState.value = null;
     }
-    console.log('Selected tile for discard:', payload.tile, 'Is from drawn:', payload.isFromDrawnTile);
     // どのプレイヤーの操作かに関わらず、現在のターンプレイヤーが打牌可能な状態であれば実行
     // PlayerHand が can-discard プロパティ経由で適切なプレイヤーのターンであること保証すると想定
     if (gameStore.currentTurnPlayerId && (gameStore.gamePhase === 'awaitingDiscard' || gameStore.gamePhase === 'awaitingRiichiDiscard')) {
       gameStore.discardTile(gameStore.currentTurnPlayerId, payload.tile.id, payload.isFromDrawnTile); // 誰が打牌したか渡す
     } else {
-      console.log("It's not your turn or you cannot discard now.");
+      console.warn("現在のゲームフェーズでは牌を選択できません。ターンプレイヤーが打牌可能な状態であることを確認してください。");
     }
   }
 
@@ -380,7 +379,6 @@ function onAnkanSelected(tile) { // モーダルからのイベント
   }
 
   function handlePlayerAction(payload) { // { playerId, actionType, tile }
-    console.log('Player action received in GameBoard:', payload);
     const { playerId, actionType, tile } = payload;
     if (actionType === 'skip') {
       gameStore.playerSkipsCall(playerId);

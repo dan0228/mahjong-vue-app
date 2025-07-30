@@ -21,7 +21,6 @@ router.isReady().then(() => {
     // 強制的にタイトルに戻し、ゲーム状態をリセット
     gameStore.resetGameForNewSession(); // ゲーム状態を完全にリセット (連勝数もリセットされる)
     router.replace('/'); // replace を使うとブラウザの履歴に残らない
-    console.log('Browser reloaded during game, redirecting to title and resetting game.');
   }
 });
 

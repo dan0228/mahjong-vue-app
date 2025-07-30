@@ -18,13 +18,13 @@ import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { useAudioStore } from '@/stores/audioStore';
 import { preloadImages } from '@/utils/imageLoader';
 
-const isLoading = ref(true); // 初期値をtrueに設定
-const loadingProgress = ref(0); // ローディング進捗 (0-100)
+const isLoading = ref(true);
+const loadingProgress = ref(0);
 
 const audioStore = useAudioStore();
 let hasInteracted = false;
 
-// --- Preload Logic ---
+// アセットのプリロード処理
 onMounted(async () => {
   const imagePaths = [
     '/assets/images/back/loading.png',
@@ -162,7 +162,7 @@ onMounted(async () => {
   } catch (error) {
     console.error('Failed to preload assets:', error);
   } finally {
-    // プリロード完了後、少し遅延させてからローディングを終了
+    // プリロード完了後、指定時間遅延させてローディング画面を非表示にする
     setTimeout(() => {
       isLoading.value = false;
     }, 500); // 500msの遅延
@@ -182,10 +182,10 @@ onUnmounted(() => {
 html, body {
   margin: 0;
   padding: 0;
-  overflow: hidden; /* Prevents scrolling at the root level */
+  overflow: hidden; /* ルート要素でのスクロールを防止 */
   height: 100%;
   width: 100%;
-  position: fixed; /* Fixes the viewport to the window size */
+  position: fixed; /* ビューポートをウィンドウサイズに固定 */
 }
 
 #app {
@@ -199,18 +199,18 @@ html, body {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: #222; /* Dark background for loading */
+  background-color: #222; /* ローディング画面の背景色（暗め） */
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  z-index: 9999; /* Ensure it's on top */
+  z-index: 9999; /* 最前面に表示 */
   color: white;
   font-family: 'M PLUS Rounded 1c', sans-serif;
 }
 
 .loading-image {
-  width: 80%; /* Adjust size as needed */
+  width: 80%; /* 必要に応じてサイズ調整 */
   max-width: 300px;
   margin-bottom: 20px;
 }
@@ -227,16 +227,15 @@ html, body {
 
 .progress-bar {
   height: 100%;
-  background-color: #4CAF50; /* Green progress bar */
-  width: 0%; /* Initial width */
-  transition: width 0.1s linear; /* Smooth transition for progress */
+  background-color: #4CAF50; /* プログレスバーの色（緑） */
+  width: 0%; /* 初期幅 */
+  transition: width 0.1s linear; /* プログレスバーの滑らかなアニメーション */
 }
 
 .loading-text {
   font-size: 1.2em;
 }
 
-/* グローバルなスタイルや、App.vue固有のスタイルをここに記述 */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s ease;

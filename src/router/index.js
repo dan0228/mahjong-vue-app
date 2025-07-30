@@ -32,27 +32,34 @@ const router = createRouter({
 
 let hasInteracted = false;
 
+// ユーザーの初回操作時にBGMを再生する関数
 const playBgmOnFirstInteraction = (bgm) => {
   if (!hasInteracted) {
     hasInteracted = true;
     const audioStore = useAudioStore();
     audioStore.setBgm(bgm);
   }
+  // イベントリスナーを削除し、二重にBGMが設定されないようにする
   window.removeEventListener('click', playBgmOnFirstInteraction);
   window.removeEventListener('keydown', playBgmOnFirstInteraction);
 };
 
 router.beforeEach((to, from, next) => {
   const audioStore = useAudioStore();
+
+  // BGMが変更される場合
   if (to.meta.bgm !== from.meta.bgm) {
+    // 初回操作がまだの場合、操作をトリガーとしてBGMを再生
     if (!hasInteracted) {
       window.addEventListener('click', () => playBgmOnFirstInteraction(to.meta.bgm));
       window.addEventListener('keydown', () => playBgmOnFirstInteraction(to.meta.bgm));
     } else {
+      // 初回操作済みの場合は直接BGMを設定
       audioStore.setBgm(to.meta.bgm);
     }
   }
 
+  // アプリケーションの初回ロード時、または直接URLアクセス時にタイトル画面へリダイレクト
   if (from.name === undefined && to.name !== 'Title') {
     next({ name: 'Title' });
   } else {

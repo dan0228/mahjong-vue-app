@@ -1051,7 +1051,7 @@ export const useGameStore = defineStore('game', {
         console.error("Ankan declaration invalid. Player or tile not found.");
         return;
       }
-      console.log(`gameStore: Player ${playerId} declares Ankan with ${tileToAnkan.id}`);
+      console.log(`gameStore: Player ${playerId} declares Ankan with ${tileToAnkan.id}. Hand before:`, player.hand.map(t => t.id));
       const ankanKey = mahjongLogic.getTileKey(tileToAnkan);
       const drawnTileKey = this.drawnTile ? mahjongLogic.getTileKey(this.drawnTile) : null;
       const isFromDrawn = ankanKey === drawnTileKey;
@@ -1077,6 +1077,7 @@ export const useGameStore = defineStore('game', {
           player.hand.push(this.drawnTile);
           this.drawnTile = null;
       }
+      console.log(`gameStore: Player ${playerId} declares Ankan. Hand after:`, player.hand.map(t => t.id), `Melds after:`, player.melds.map(m => m.tiles.map(t => t.id)));
 
       // 手牌が変わったのでフリテン状態を更新
       this.updateFuriTenState(playerId);
@@ -1635,8 +1636,12 @@ export const useGameStore = defineStore('game', {
 
       // ツモ和了可能かチェック (嶺上開花)
       const gameContextForTsumo = this.createGameContextForPlayer(player, true);
+      console.log(`gameStore: [_handlePostRinshanDraw] Player ${playerId} hand before checkYonhaiWin:`, player.hand.map(t => t.id));
+      console.log(`gameStore: [_handlePostRinshanDraw] Drawn tile:`, this.drawnTile?.id);
+      console.log(`gameStore: [_handlePostRinshanDraw] Melds in gameContextForTsumo:`, gameContextForTsumo.melds.map(m => m.tiles.map(t => t.id)));
       const tsumoWinResult = mahjongLogic.checkYonhaiWin([...player.hand, this.drawnTile], this.drawnTile, true, gameContextForTsumo);
       eligibility.canTsumoAgari = tsumoWinResult.isWin;
+      console.log(`gameStore: [_handlePostRinshanDraw] eligibility.canTsumoAgari:`, eligibility.canTsumoAgari);
 
       // リーチ中でなければ、さらにカンができるかチェック
       if (!player.isRiichi && !player.isDoubleRiichi) {
@@ -1651,6 +1656,7 @@ export const useGameStore = defineStore('game', {
       }
       
       this.playerActionEligibility[playerId] = eligibility;
+      console.log(`gameStore: [_handlePostRinshanDraw] playerActionEligibility[${playerId}] updated:`, JSON.parse(JSON.stringify(this.playerActionEligibility[playerId])));
       this.canDeclareAnkan[playerId] = eligibility.canAnkan; // 古いstateも更新
       this.canDeclareKakan[playerId] = eligibility.canKakan; // 古いstateも更新
 

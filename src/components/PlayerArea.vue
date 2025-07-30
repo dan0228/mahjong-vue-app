@@ -64,11 +64,6 @@ const gameStore = useGameStore();
 
 const actionInProgress = ref(false);
 
-// ゲームの状態が変化したら、アクションボタンを再表示できるようにする
-watch(() => [gameStore.gamePhase, gameStore.activeActionPlayerId, gameStore.currentTurnPlayerId], () => {
-  actionInProgress.value = false;
-}, { deep: true });
-
 const positionClass = computed(() => `player-area-${props.position}`);
 const isCurrentTurn = computed(() => gameStore.currentTurnPlayerId === props.player.id);
 
@@ -78,6 +73,12 @@ function onTileSelected(payload) {
 
 const playerEligibility = computed(() => gameStore.playerActionEligibility[props.player.id] || {});
 
+// プレイヤーのアクション資格が変更されたときに actionInProgress をリセット
+watch(playerEligibility, () => {
+  actionInProgress.value = false;
+  console.log(`PlayerArea: actionInProgress reset for ${props.player.id} due to playerEligibility change.`);
+});
+
 // 自分のターンで、かつ打牌前のアクション（ツモ和了、リーチ、カン）が可能なフェーズか
 const isMyTurnAndCanActBeforeDiscard = computed(() => {
   return gameStore.currentTurnPlayerId === props.player.id &&
@@ -85,7 +86,11 @@ const isMyTurnAndCanActBeforeDiscard = computed(() => {
 });
 
 // 自分のターンのアクション
-const canDeclareTsumoAgari = computed(() => !actionInProgress.value && isMyTurnAndCanActBeforeDiscard.value && playerEligibility.value.canTsumoAgari);
+const canDeclareTsumoAgari = computed(() => {
+  const result = !actionInProgress.value && isMyTurnAndCanActBeforeDiscard.value && playerEligibility.value.canTsumoAgari;
+  console.log(`PlayerArea: canDeclareTsumoAgari for ${props.player.id}: ${result} (actionInProgress: ${actionInProgress.value}, isMyTurnAndCanActBeforeDiscard: ${isMyTurnAndCanActBeforeDiscard.value}, canTsumoAgari: ${playerEligibility.value.canTsumoAgari})`);
+  return result;
+});
 const canDeclareRiichi = computed(() => !actionInProgress.value && isMyTurnAndCanActBeforeDiscard.value && playerEligibility.value.canRiichi);
 const canDeclareAnkan = computed(() => {
   if (actionInProgress.value || !isMyTurnAndCanActBeforeDiscard.value) return false;

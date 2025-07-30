@@ -24,6 +24,8 @@ const dealerDeterminationResults = ref([]);
 
 import { useAudioStore } from '@/stores/audioStore';
 
+const audioStore = useAudioStore();
+
 onMounted(() => {
   // 親決め結果のデータをgameStoreから取得
   dealerDeterminationResults.value = gameStore.players.map(p => ({

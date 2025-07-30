@@ -1326,56 +1326,66 @@ function isYonhaiSanshokuDoukou(handData, basicWinInfo) {
 
 /**
  * 四牌麻雀の5枚手牌における和了判定 (役と点数計算は含まない基本的な形のみ)
- * @param {Array<Object>} hand5tiles - 手牌5枚 (牌オブジェクトの配列)
- * @param {Object} winTile - 和了牌 (今回は未使用だが、将来の役判定で利用)
- * @param {boolean} isTsumo - ツモ和了か (今回は未使用だが、将来の役判定で利用)
- * @param {Object} gameContext - 役判定に必要なゲームのコンテキスト情報 (自風、場風、ドラなど)
+ * @param {Array<Object>} currentHandWithWinTile - 和了牌を含んだ手牌 (5枚)
+ * @param {Object} winTile - 和了牌 (ロン牌またはツモ牌)
+ * @param {boolean} isTsumo - ツモ和了か
+ * @param {Object} gameContext - 役判定に必要なゲームのコンテキスト情報 (自風、場風、ドラ、鳴きなど)
  * @returns {{isWin: boolean, yaku: Array, score: number}}
  */
 export function checkYonhaiWin(currentHandWithWinTile, winTile, isTsumo, gameContext = {}) {
+  console.log(`mahjongLogic: [checkYonhaiWin] currentHandWithWinTile:`, currentHandWithWinTile.map(t => t.id));
+  console.log(`mahjongLogic: [checkYonhaiWin] winTile:`, winTile?.id);
+  console.log(`mahjongLogic: [checkYonhaiWin] isTsumo:`, isTsumo);
+  console.log(`mahjongLogic: [checkYonhaiWin] gameContext.melds:`, gameContext.melds.map(m => m.tiles.map(t => t.id)));
   const melds = gameContext.melds || [];
-  const isParent = gameContext.isParent || false; // ここで isParent を定義
+  const isParent = gameContext.isParent || false;
   let basicWinInfo = { isWin: false, mentsuType: null, jantou: null, mentsu: null };
 
   if (melds.length > 0) {
-    // If there's any meld (pon, minkan, kakan, ankan)
-    // The hand should be decomposable into the meld and a pair.
-    // currentHandWithWinTile contains the player's hand (including ankan tiles) + winning tile.
-    // We need to effectively "remove" the melded tiles from currentHandWithWinTile to get the remaining tiles for the pair check.
+    // 鳴き（ポン、カン）がある場合
+    // 手牌から鳴き牌を除外し、残りの2枚が雀頭を形成するかどうかを判定します。
+    // 暗槓も他の鳴きと同様に、手牌から除外して雀頭判定を行います。
 
-    let tempHandForPairCheck = [...currentHandWithWinTile];
-    const meldToExclude = melds[0]; // Assuming only one meld for 4-tile mahjong
+    // currentHandWithWinTile の牌の出現回数をカウント
+    const handCounts = {};
+    currentHandWithWinTile.forEach(tile => {
+      const key = getTileKey(tile);
+      handCounts[key] = (handCounts[key] || 0) + 1;
+    });
 
-    // Remove the tiles of the meld from tempHandForPairCheck
-    // This handles both open melds (where tiles are already "out") and ankan (where tiles are still "in hand")
-    // We need to be careful to remove only the exact tiles that form the meld.
-    const meldTileKeys = meldToExclude.tiles.map(getTileKey);
-    const removedCount = {};
+    const meldToExclude = melds[0]; // 四牌麻雀では鳴きは一つのみと仮定
 
-    for (let i = tempHandForPairCheck.length - 1; i >= 0; i--) {
-      const tile = tempHandForPairCheck[i];
-      const tileKey = getTileKey(tile);
-      if (meldTileKeys.includes(tileKey) && (removedCount[tileKey] || 0) < meldTileKeys.filter(k => k === tileKey).length) {
-        tempHandForPairCheck.splice(i, 1);
-        removedCount[tileKey] = (removedCount[tileKey] || 0) + 1;
+    // 鳴き牌の出現回数を手牌のカウントから減算
+    meldToExclude.tiles.forEach(meldTile => {
+      const key = getTileKey(meldTile);
+      if (handCounts[key] && handCounts[key] > 0) {
+        handCounts[key]--;
+      }
+    });
+
+    // 残りの牌を再構築
+    const remainingTiles = [];
+    for (const key in handCounts) {
+      for (let i = 0; i < handCounts[key]; i++) {
+        // 新しい牌オブジェクトを作成して追加 (IDは不要なため、suitとrankのみで構成)
+        remainingTiles.push({ suit: key.charAt(0), rank: parseInt(key.substring(1)) });
       }
     }
 
-    // After removing the meld, the remaining tiles should be 2 and form a pair
-    if (tempHandForPairCheck.length === 2 && getTileKey(tempHandForPairCheck[0]) === getTileKey(tempHandForPairCheck[1])) {
+    // 残りの牌が2枚で雀頭を形成しているかチェック
+    if (remainingTiles.length === 2 && getTileKey(remainingTiles[0]) === getTileKey(remainingTiles[1])) {
       basicWinInfo = {
         isWin: true,
-        mentsuType: 'koutsu', // All melds (pon, kan) are koutsu
-        jantou: tempHandForPairCheck,
-        mentsu: meldToExclude.tiles
+        mentsuType: 'koutsu', // 鳴き（ポン、カン）は全て刻子とみなす
+        jantou: remainingTiles, // 雀頭
+        mentsu: meldToExclude.tiles // 鳴き牌を面子として記録
       };
     }
   } else {
-    // No melds (menzen), check the full 5-tile hand
+    // 鳴きがない場合（門前）、5枚の手牌全体で和了形を判定します。
     const sortedHand = sortHand([...currentHandWithWinTile]);
     basicWinInfo = checkBasicYonhaiWinCondition(sortedHand);
   }
-
 
   if (basicWinInfo.isWin) {
     const handDataForYaku = {

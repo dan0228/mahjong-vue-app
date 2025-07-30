@@ -123,7 +123,7 @@ export const useGameStore = defineStore('game', {
     dealerDeterminationResult: { // 親決め結果の詳細情報
       players: [], // { id, name, seatWind, isDealer } の配列
     },
-    catCoins: 9999, // 猫コインの合計 (デバッグ用)
+    catCoins: 0, // 猫コインの合計
     lastCoinGain: 0, // 直近で得た猫コイン
     isRiichiBgmActive: false, // リーチBGMがアクティブかどうか
     previousBgm: null, // リーチ前のBGMを保持

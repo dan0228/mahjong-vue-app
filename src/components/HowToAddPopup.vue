@@ -1,7 +1,7 @@
 <template>
   <div v-if="show" class="how-to-add-popup-overlay">
     <div class="how-to-add-popup-content">
-      <h2>📲ホーム画面に追加する方法📲</h2>
+      <h2>📲ホーム画面への追加方法📲</h2>
 
       <h3>【iPhone（Safariの場合）】</h3>
       <ol>

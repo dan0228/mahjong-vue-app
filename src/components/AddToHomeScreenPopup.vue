@@ -2,7 +2,7 @@
   <div v-if="show" class="add-to-home-screen-popup-overlay">
     <div class="add-to-home-screen-popup-content">
       <h2>📱ホーム画面に追加しませんか？</h2>
-      <p>ホーム画面に追加するとワンタップで開けて便利です</p>
+      <p>アプリのようにワンタップで開けて便利です</p>
       <p class="note">※データはすべてブラウザに保存されます</p>
       <div class="buttons">
         <button @click="closePopup">閉じる</button>
@@ -57,6 +57,7 @@ const showInstructions = () => {
 h2 {
   margin-top: 0;
   color: #333;
+  font-size: 1.2em; /* 文字サイズを小さく調整 */
 }
 
 p {
@@ -95,3 +96,4 @@ button:last-child:hover {
   background-color: #0056b3; /* ホバー時の色 */
 }
 </style>
+

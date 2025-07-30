@@ -27,6 +27,11 @@
             <span>(連勝リセット)</span>
           </button>
         </div>
+        <button @click="postToX" class="x-post-button">
+          <img src="/assets/images/info/logo-black.png" alt="X logo" class="x-logo-icon">
+          <span>でシェア！</span>
+          <span>(スクショも一緒に投稿するにゃ📸)</span>
+        </button>
         <div class="timestamp">{{ formattedTimestamp }}</div>
       </div>
     </div>
@@ -83,6 +88,15 @@ function getPlayerIcon(playerId) {
   if (playerId === 'player3') return '/assets/images/info/cat_icon_2.png'; // たま
   if (playerId === 'player4') return '/assets/images/info/cat_icon_1.png'; // とら
   return null;
+}
+
+function postToX() {
+  const consecutiveWins = props.finalResultDetails.consecutiveWins;
+  let tweetText = `よんじゃん！で${consecutiveWins}連勝達成！\n\n`;
+  tweetText += `#よんじゃん #よんじゃん連勝数`;
+
+  const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
+  window.open(twitterUrl, '_blank');
 }
 </script>
 
@@ -222,6 +236,34 @@ function getPlayerIcon(playerId) {
 }
 .action-button:last-child:hover {
   background-color: #da190b;
+}
+
+.x-post-button {
+  background-color: transparent; /* 背景を透明に */
+  color: #1DA1F2; /* Xのブランドカラーに */
+  padding: 10px 20px;
+  border: 1px solid #1DA1F2; /* Xのブランドカラーのボーダー */
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.8em;
+  margin: 15px auto 0 auto;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.x-post-button .x-logo-icon {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+}
+
+.x-post-button:hover {
+  background-color: #1DA1F2; /* ホバー時に背景色をXのブランドカラーに */
+  color: white; /* ホバー時に文字色を白に */
 }
 
 .timestamp {

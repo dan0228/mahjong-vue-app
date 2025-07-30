@@ -1555,14 +1555,32 @@ export const useGameStore = defineStore('game', {
     ,
     loadCatCoins() {
       const coins = localStorage.getItem('mahjongCatCoins');
-      this.catCoins = coins ? parseInt(coins, 10) : 9999; // デバッグ用: ローカルストレージにない場合は9999
+      this.catCoins = coins ? parseInt(coins, 10) : 0;
     },
     updateCatCoins() {
       const player1 = this.players.find(p => p.id === 'player1');
       if (player1) {
-        const gain = Math.floor(player1.score / 500);
+        const rankedPlayers = getRankedPlayers(this.players);
+        const myRank = rankedPlayers.find(p => p.id === 'player1')?.rank;
+        let gain = 0;
+
+        if (myRank === 1) {
+          gain = Math.floor(player1.score / 500) + 200; // 1位は200コインボーナス
+        } else if (myRank === 2) {
+          gain = Math.floor(player1.score / 500);
+        } else if (myRank === 3) {
+          gain = -Math.floor(player1.score / 400);
+        } else if (myRank === 4) {
+          } else if (myRank === 4) {
+          if (player1.score < 0) {
+            gain = -300;
+          } else {
+            gain = -Math.floor(player1.score / 300) - 100; // 4位はマイナスボーナス
+          }
+        }
+
         this.lastCoinGain = gain;
-        this.catCoins = Math.min(9999, this.catCoins + gain);
+        this.catCoins = Math.min(9999, Math.max(0, this.catCoins + gain)); // 0を下回らないように修正
         localStorage.setItem('mahjongCatCoins', this.catCoins.toString());
       }
     },

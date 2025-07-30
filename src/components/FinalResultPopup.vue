@@ -94,6 +94,7 @@ function getPlayerIcon(playerId) {
   align-items: center;
   justify-content: center;
   z-index: 1050; /* ResultPopupより手前に表示する場合 */
+  touch-action: none !important;
 }
 .popup-content {
   background-color: white;

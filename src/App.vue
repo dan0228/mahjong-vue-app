@@ -11,18 +11,39 @@
       <component :is="Component" />
     </transition>
   </router-view>
+  <AddToHomeScreenPopup
+    :show="showAddToHomeScreenPopup"
+    @close="handleCloseAddToHomeScreenPopup"
+    @showInstructions="handleShowInstructions"
+  />
+  <HowToAddPopup
+    :show="showHowToAddPopup"
+    @close="handleCloseHowToAddPopup"
+  />
 </template>
 
 <script setup>
 import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { useAudioStore } from '@/stores/audioStore';
 import { preloadImages } from '@/utils/imageLoader';
+import AddToHomeScreenPopup from '@/components/AddToHomeScreenPopup.vue';
+import HowToAddPopup from '@/components/HowToAddPopup.vue';
 
 const isLoading = ref(true);
 const loadingProgress = ref(0);
 
 const audioStore = useAudioStore();
 let hasInteracted = false;
+
+const showAddToHomeScreenPopup = ref(false);
+const showHowToAddPopup = ref(false);
+
+// モバイルデバイスかどうかを判定する関数
+const isMobileDevice = () => {
+  const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+  // Android, iOS, Windows Phoneのユーザーエージェントをチェック
+  return /android|ipad|iphone|ipod|windows phone/i.test(userAgent);
+};
 
 // アセットのプリロード処理
 onMounted(async () => {
@@ -165,9 +186,27 @@ onMounted(async () => {
     // プリロード完了後、指定時間遅延させてローディング画面を非表示にする
     setTimeout(() => {
       isLoading.value = false;
+      // ローディング完了後にポップアップ表示
+      if (isMobileDevice()) {
+        showAddToHomeScreenPopup.value = true;
+      }
     }, 500); // 500msの遅延
   }
 });
+
+const handleCloseAddToHomeScreenPopup = () => {
+  showAddToHomeScreenPopup.value = false;
+};
+
+const handleShowInstructions = () => {
+  console.log("追加方法を見るボタンが押されました");
+  showAddToHomeScreenPopup.value = false; // ポップアップを閉じる
+  showHowToAddPopup.value = true; // 追加方法モーダルを表示
+};
+
+const handleCloseHowToAddPopup = () => {
+  showHowToAddPopup.value = false;
+};
 
 onMounted(() => {
   document.addEventListener('visibilitychange', audioStore.handleVisibilityChange);

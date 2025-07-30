@@ -1,14 +1,15 @@
 // src/stores/audioStore.js
+// オーディオ再生に関する状態とロジックを管理するPiniaストア
 import { defineStore } from 'pinia';
 
 export const useAudioStore = defineStore('audio', {
   state: () => ({
     volume: 0.4,
-    isBgmEnabled: true, // デフォルトはオン
-    isSeEnabled: true,  // デフォルトはオン
+    isBgmEnabled: true,
+    isSeEnabled: true,
     currentBgm: null,
-    audioPlayers: new Map(), // プリロードしたAudioオブジェクトを格納
-    isSwitchingBgm: false, // BGM切り替え中フラグ
+    audioPlayers: new Map(),
+    isSwitchingBgm: false,
   }),
   actions: {
     async preloadAudio(urls, onProgress = () => {}) {
@@ -25,11 +26,11 @@ export const useAudioStore = defineStore('audio', {
           };
           audio.onerror = () => {
             console.error(`Failed to load audio: ${url}`);
-            loadedCount++; // エラーでも進捗を進める
+            loadedCount++;
             onProgress(loadedCount / urls.length);
             reject();
           };
-          audio.load(); // ロードを開始
+          audio.load();
         });
       });
       await Promise.all(promises);
@@ -85,12 +86,12 @@ export const useAudioStore = defineStore('audio', {
       if (this.isSeEnabled) {
         const audio = this.audioPlayers.get(`/assets/sounds/${sound}`);
         if (audio) {
-          audio.currentTime = 0; // 再生位置を先頭に戻す
+          audio.currentTime = 0;
           audio.volume = this.volume;
           audio.play().catch(e => console.error("効果音の再生に失敗しました:", e));
         } else {
           console.warn(`Audio not preloaded: /assets/sounds/${sound}`);
-          // Fallback: if not preloaded, create new Audio object
+          // プリロードされていない場合、新しいAudioオブジェクトを作成して再生
           const newAudio = new Audio(`/assets/sounds/${sound}`);
           newAudio.volume = this.volume;
           newAudio.play().catch(e => console.error("効果音の再生に失敗しました:", e));

@@ -119,6 +119,7 @@ function goToShrine() {
   overflow: hidden;
   background-image: url('/assets/images/back/back_out.png');
   background-repeat: repeat;
+  touch-action: none;
 }
 
 .title-screen {

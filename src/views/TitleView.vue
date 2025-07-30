@@ -119,7 +119,6 @@ function goToShrine() {
   overflow: hidden;
   background-image: url('/assets/images/back/back_out.png');
   background-repeat: repeat;
-  touch-action: none !important;
 }
 
 .title-screen {
@@ -136,6 +135,7 @@ function goToShrine() {
   font-family: 'M PLUS Rounded 1c', 'Helvetica Neue', Arial, sans-serif;
   overflow-x: hidden; /* 横方向のスクロールを禁止して、はみ出しを隠す */
   box-sizing: border-box; /* padding や border を width/height に含める */
+  touch-action: none !important;
 }
 
 .title-screen::before { /* 最背面の画像用疑似要素 */

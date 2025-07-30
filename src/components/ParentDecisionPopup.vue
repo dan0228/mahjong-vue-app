@@ -113,7 +113,6 @@ function getPlayerIcon(playerId) {
   align-items: center;
   justify-content: center;
   z-index: 1050;
-  touch-action: none !important;
 }
 .popup-content {
   background-color: white;
@@ -124,6 +123,7 @@ function getPlayerIcon(playerId) {
   text-align: center;
   transform: scale(0.85);
   box-shadow: 0 5px 20px rgba(0,0,0,0.25);
+  touch-action: none !important;
 }
 
 /* Transition styles */

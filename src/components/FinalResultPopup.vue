@@ -104,6 +104,7 @@ function getPlayerIcon(playerId) {
   text-align: center;
   transform: scale(0.85); /* ポップアップ全体を縮小して画面に収める */
   box-shadow: 0 5px 20px rgba(0,0,0,0.25);
+  touch-action: none !important;
 }
 
 /* Transition styles */

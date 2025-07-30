@@ -36,6 +36,10 @@
 <script setup>
 import { defineProps, defineEmits, computed } from 'vue';
 import { useGameStore } from '@/stores/gameStore';
+import { useZoomLock } from '@/composables/useZoomLock';
+
+// ズーム防止機能を有効化
+useZoomLock();
 
 const props = defineProps({
   show: {
@@ -94,7 +98,6 @@ function getPlayerIcon(playerId) {
   align-items: center;
   justify-content: center;
   z-index: 1050; /* ResultPopupより手前に表示する場合 */
-  touch-action: none !important;
 }
 .popup-content {
   background-color: white;
@@ -105,7 +108,6 @@ function getPlayerIcon(playerId) {
   text-align: center;
   transform: scale(0.85); /* ポップアップ全体を縮小して画面に収める */
   box-shadow: 0 5px 20px rgba(0,0,0,0.25);
-  touch-action: none !important;
 }
 
 /* Transition styles */

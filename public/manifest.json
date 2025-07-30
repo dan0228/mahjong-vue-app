@@ -1,6 +1,6 @@
 {
   "name": "Mahjong Vue App",
-  "short_name": "Mahjong",
+  "short_name": "よんじゃん！",
   "description": "A simple Mahjong game built with Vue.js",
   "start_url": "/",
   "display": "standalone",

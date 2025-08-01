@@ -96,7 +96,6 @@
         :final-result-details="gameStore.finalResultDetails"
         @start-new-game="handleStartNewGameFromFinalResult"
         @back-to-title="handleBackToTitleFromFinalResult"
-        @copy-screenshot="handleCopyScreenshot"
       />
       <img v-if="animationDisplay && animationDisplay.type === 'ron'" src="/assets/images/status/ron.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`]" alt="ロン" />
       <img v-if="riichiAnimationState" src="/assets/images/status/riichi.png" :class="['ron-indicator', `ron-indicator-${riichiAnimationState.position}`]" alt="リーチ" />
@@ -111,7 +110,6 @@
   import { computed, onMounted, ref, onBeforeUnmount, watch } from 'vue';
   import { useRouter } from 'vue-router';
   import PlayerHand from './PlayerHand.vue';
-  import html2canvas from 'html2canvas';
   import { useGameStore } from '@/stores/gameStore';
   import { useAudioStore } from '@/stores/audioStore';
   import CenterTableInfo from './CenterTableInfo.vue';
@@ -477,35 +475,6 @@ function onAnkanSelected(tile) { // モーダルからのイベント
     riichiAnimationState.value = null;
     gameStore.resetGameForNewSession();
     router.push('/');
-  }
-
-  async function handleCopyScreenshot() {
-    const element = gameBoardScalerRef.value;
-    if (!element) return;
-
-    try {
-      const canvas = await html2canvas(element, {
-        scale: window.devicePixelRatio,
-        useCORS: true,
-        backgroundColor: null,
-      });
-      canvas.toBlob(async (blob) => {
-        if (!blob) {
-          alert('スクリーンショットのデータ生成に失敗しました。');
-          return;
-        }
-        try {
-          await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-          alert('スクリーンショットをクリップボードにコピーしました！');
-        } catch (err) {
-          console.error('クリップボードへの画像のコピーに失敗しました: ', err);
-          alert('スクリーンショットのコピーに失敗しました。');
-        }
-      }, 'image/png');
-    } catch (error) {
-      console.error('スクリーンショットの生成に失敗しました: ', error);
-      alert('スクリーンショットの生成に失敗しました。');
-    }
   }
 
   // --- Scaling Logic ---

@@ -39,11 +39,8 @@
             <img src="/assets/images/info/Instagram_logo.png" alt="Instagram logo" class="social-logo-icon">
             <span>でシェア！</span>
           </button>
-          <button @click="copyScreenshot" class="social-button screenshot-button">
-            <span class="screenshot-icon">📸</span>
-          </button>
         </div>
-        <div class="share-caption">スクショも一緒に投稿するにゃ📸</div>
+        <div class="share-caption">スクショも一緒に投稿してにゃ📸</div>
         <div class="timestamp">{{ formattedTimestamp }}</div>
       </div>
     </div>
@@ -75,7 +72,7 @@ const props = defineProps({
 });
 
 
-const emit = defineEmits(['start-new-game', 'back-to-title', 'copy-screenshot']);
+const emit = defineEmits(['start-new-game', 'back-to-title']);
 const gameStore = useGameStore();
 
 const formattedTimestamp = computed(() => {
@@ -128,10 +125,6 @@ function postToInstagram() {
     console.error('クリップボードへのコピーに失敗しました: ', err);
     alert("キャプションのコピーに失敗しました。");
   });
-}
-
-function copyScreenshot() {
-  emit('copy-screenshot');
 }
 </script>
 

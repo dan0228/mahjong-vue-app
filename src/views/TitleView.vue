@@ -45,6 +45,7 @@
       <div class="x-account">
         <a href="https://x.com/yonjan_official" target="_blank" rel="noopener noreferrer">公式X: @yonjan_official</a>
       </div>
+      <div class="version-info">v1.0.0 | 2025.08.01</div>
     </div>
   </div>
 </template>
@@ -282,7 +283,7 @@ function goToShrine() {
 
 .credit {
   position: absolute;
-  bottom: 30px; /* Xアカウントのリンクの上に配置 */
+  bottom: 50px; /* さらに上に配置 */
   width: 100%;
   text-align: center;
   font-size: 0.7em;
@@ -292,7 +293,7 @@ function goToShrine() {
 
 .x-account {
   position: absolute;
-  bottom: 10px;
+  bottom: 30px; /* バージョン情報の上に配置 */
   width: 100%;
   text-align: center;
   font-size: 0.7em;
@@ -306,6 +307,16 @@ function goToShrine() {
 
 .x-account a:hover {
   text-decoration: underline;
+}
+
+.version-info {
+  position: absolute;
+  bottom: 10px;
+  width: 100%;
+  text-align: center;
+  font-size: 0.7em;
+  color: rgba(0, 0, 0, 0.4);
+  z-index: 1;
 }
 
 .audio-toggles {

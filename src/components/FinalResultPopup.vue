@@ -1,7 +1,7 @@
 <template>
   <transition name="popup">
     <div v-if="show" class="popup-overlay">
-      <div class="popup-content">
+      <div class="popup-content" ref="popupContentRef">
         <h2>最終結果</h2>
         <div class="final-results-list">
           <div v-for="player in finalResultDetails.rankedPlayers" :key="player.name" class="player-rank-item">
@@ -14,8 +14,11 @@
         <p class="consecutive-wins" v-if="gameStore.gameMode !== 'allManual'">
           {{ finalResultDetails.consecutiveWins }}連勝中！
         </p>
-        <div class="coin-gain" v-if="gameStore.lastCoinGain > 0">
-          <img src="/assets/images/info/cat_coin.png" alt="Cat Coin" class="cat-coin-icon">+{{ gameStore.lastCoinGain }}
+        <div class="coin-gain" v-if="gameStore.lastCoinGain !== 0">
+          <img src="/assets/images/info/cat_coin.png" alt="Cat Coin" class="cat-coin-icon">
+          <span :class="{ 'positive-gain': gameStore.lastCoinGain > 0, 'negative-gain': gameStore.lastCoinGain < 0 }">
+            {{ gameStore.lastCoinGain > 0 ? '+' : '' }}{{ gameStore.lastCoinGain }}
+          </span>
         </div>
         <div class="actions">
           <button @click="startNewGame" class="action-button">
@@ -27,11 +30,20 @@
             <span>(連勝リセット)</span>
           </button>
         </div>
-        <button @click="postToX" class="x-post-button">
-          <img src="/assets/images/info/logo-black.png" alt="X logo" class="x-logo-icon">
-          <span>でシェア！</span>
-          <span>(スクショも一緒に投稿するにゃ📸)</span>
-        </button>
+        <div class="social-share-buttons">
+          <button @click="postToX" class="social-button x-post-button">
+            <img src="/assets/images/info/logo-black.png" alt="X logo" class="social-logo-icon">
+            <span>でシェア！</span>
+          </button>
+          <button @click="postToInstagram" class="social-button instagram-post-button">
+            <img src="/assets/images/info/Instagram_logo.png" alt="Instagram logo" class="social-logo-icon">
+            <span>でシェア！</span>
+          </button>
+          <button @click="copyScreenshot" class="social-button screenshot-button">
+            <span class="screenshot-icon">📸</span>
+          </button>
+        </div>
+        <div class="share-caption">スクショも一緒に投稿するにゃ📸</div>
         <div class="timestamp">{{ formattedTimestamp }}</div>
       </div>
     </div>
@@ -39,12 +51,15 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits, computed } from 'vue';
+import { defineProps, defineEmits, computed, ref } from 'vue';
 import { useGameStore } from '@/stores/gameStore';
 import { useZoomLock } from '@/composables/useZoomLock';
+import html2canvas from 'html2canvas';
 
 // ズーム防止機能を有効化
 useZoomLock();
+
+const popupContentRef = ref(null);
 
 const props = defineProps({
   show: {
@@ -60,7 +75,7 @@ const props = defineProps({
 });
 
 
-const emit = defineEmits(['start-new-game', 'back-to-title']);
+const emit = defineEmits(['start-new-game', 'back-to-title', 'copy-screenshot']);
 const gameStore = useGameStore();
 
 const formattedTimestamp = computed(() => {
@@ -92,17 +107,37 @@ function getPlayerIcon(playerId) {
 
 function postToX() {
   const consecutiveWins = props.finalResultDetails.consecutiveWins;
-  let tweetText = `よんじゃん！で${consecutiveWins}連勝達成！\n\n`;
+  let tweetText = `よんじゃん！で${consecutiveWins}連勝達成！
+
+`;
   tweetText += `#よんじゃん #よんじゃん連勝数`;
 
   const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
   window.open(twitterUrl, '_blank');
 }
+
+function postToInstagram() {
+  const consecutiveWins = props.finalResultDetails.consecutiveWins;
+  const caption = `よんじゃん！で${consecutiveWins}連勝達成！
+
+#よんじゃん #よんじゃん連勝数`;
+  navigator.clipboard.writeText(caption).then(() => {
+    alert("ポスト用メッセージをクリップボードにコピー。投稿に貼り付けられます。");
+    window.open('https://www.instagram.com', '_blank');
+  }).catch(err => {
+    console.error('クリップボードへのコピーに失敗しました: ', err);
+    alert("キャプションのコピーに失敗しました。");
+  });
+}
+
+function copyScreenshot() {
+  emit('copy-screenshot');
+}
 </script>
 
 <style scoped>
 .popup-overlay {
-  position: fixed;
+  position: absolute; /* fixedからabsoluteに変更 */
   top: 0;
   left: 0;
   width: 100%;
@@ -111,16 +146,16 @@ function postToX() {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1050; /* ResultPopupより手前に表示する場合 */
+  z-index: 1050; /* 他の要素より手前に表示 */
 }
 .popup-content {
   background-color: white;
-  padding: 30px;
+  padding: 2px;
   border-radius: 10px;
-  min-width: 350px;
-  max-width: 90%;
+  min-width: 320px;
+  max-width: 95%;
   text-align: center;
-  transform: scale(0.85); /* ポップアップ全体を縮小して画面に収める */
+  transform: scale(1); 
   box-shadow: 0 5px 20px rgba(0,0,0,0.25);
 }
 
@@ -134,14 +169,13 @@ function postToX() {
 }
 .popup-content h2 {
   margin-top: 0;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   color: #333;
-  font-size: 1.8em;
+  font-size: 1.7em;
 }
 .final-results-list {
-  margin-bottom: 25px;
   color: #444;
-  font-size: 1.1em;
+  font-size: 1.0em;
   background-color: #f9f9f9;
   padding: 15px;
   border-radius: 5px;
@@ -151,7 +185,7 @@ function postToX() {
 .player-rank-item {
   display: flex;
   align-items: center;
-  padding: 5px 0;
+  padding: 2px 0;
   border-bottom: 1px dashed #eee;
 }
 .player-rank-item:last-child {
@@ -185,19 +219,26 @@ function postToX() {
   font-size: 2em;
   font-weight: bold;
   color: #ff9800; /* オレンジ色 */
-  margin-top: 15px;
-  margin-bottom: 5px;
+  margin-top: 0px;
+  margin-bottom: 0px;
   margin-left: 40px;
 }
 
 .coin-gain {
   font-size: 2em;
   font-weight: bold;
-  color: #f59e0b;
-  margin-bottom: 25px;
+  margin-bottom: 0px;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.positive-gain {
+  color: #f59e0b;
+}
+
+.negative-gain {
+  color: #f44336; /* 赤色 */
 }
 
 .cat-coin-icon {
@@ -215,7 +256,7 @@ function postToX() {
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  font-size: 0.9em;
+  font-size: 0.8em;
   transition: background-color 0.2s ease;
   display: flex; /* テキストを縦に並べるため */
   flex-direction: column; /* テキストを縦に並べるため */
@@ -238,36 +279,72 @@ function postToX() {
   background-color: #da190b;
 }
 
-.x-post-button {
-  background-color: transparent; /* 背景を透明に */
-  color: #1DA1F2; /* Xのブランドカラーに */
-  padding: 10px 20px;
-  border: 1px solid #1DA1F2; /* Xのブランドカラーのボーダー */
+.social-share-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.social-button {
+  background-color: transparent;
+  padding: 10px 15px;
   border-radius: 5px;
   cursor: pointer;
   font-size: 0.8em;
-  margin: 15px auto 0 auto;
   transition: background-color 0.2s ease, color 0.2s ease;
   display: flex;
-  flex-direction: row;
   justify-content: center;
   align-items: center;
   gap: 8px;
 }
 
-.x-post-button .x-logo-icon {
+.social-logo-icon {
   width: 20px;
   height: 20px;
-  vertical-align: middle;
+}
+
+.x-post-button {
+  color: #1DA1F2;
+  border: 1px solid #1DA1F2;
 }
 
 .x-post-button:hover {
-  background-color: #1DA1F2; /* ホバー時に背景色をXのブランドカラーに */
-  color: white; /* ホバー時に文字色を白に */
+  background-color: #1DA1F2;
+  color: white;
+}
+
+.instagram-post-button {
+  color: #E1306C;
+  border: 1px solid #E1306C;
+}
+
+.instagram-post-button:hover {
+  background-color: #E1306C;
+  color: white;
+}
+
+.screenshot-button {
+  color: #555;
+  border: 1px solid #ccc;
+}
+
+.screenshot-button:hover {
+  background-color: #f0f0f0;
+}
+
+.screenshot-icon {
+  font-size: 1.2em;
+}
+
+.share-caption {
+  font-size: 0.8em;
+  color: #666;
+  margin-top: 8px;
 }
 
 .timestamp {
-  margin-top: 2px;
+  margin-top: 15px; /* 調整 */
   font-size: 0.8em;
   color: #666;
 }

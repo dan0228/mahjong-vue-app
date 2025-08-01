@@ -80,6 +80,7 @@ onMounted(async () => {
     '/assets/images/info/ton4.png',
     '/assets/images/info/zan_1000.png',
     '/assets/images/info/logo-black.png',
+    '/assets/images/info/Instagram_logo.png',
     '/assets/images/number/-.png',
     '/assets/images/number/0.png',
     '/assets/images/number/00.png',

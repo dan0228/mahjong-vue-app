@@ -1,7 +1,7 @@
 <template>
     <div class="game-board">
       <!-- :styleで動的にtransformを適用 -->
-      <div class="game-board-scaler" :style="scalerStyle">
+      <div class="game-board-scaler" :style="scalerStyle" ref="gameBoardScalerRef">
       <!-- ルール・役一覧ボタン -->
       <div class="game-board-top-left-buttons">
         <img src="/assets/images/button/rule_button.png" alt="ルール" @click="showRulesPopup = true" class="info-button-image" />
@@ -85,17 +85,18 @@
         @close="handleCloseResultPopup"
         @proceed="handleProceedToNextRound"
       />
-      <FinalResultPopup
-        :show="gameStore.showFinalResultPopup"
-        :final-result-details="gameStore.finalResultDetails"
-        @start-new-game="handleStartNewGameFromFinalResult"
-        @back-to-title="handleBackToTitleFromFinalResult"
-      />
       
       <ParentDecisionPopup
         :show="gameStore.showDealerDeterminationPopup"
         :dealer-determination-results="gameStore.dealerDeterminationResult.players"
         @close="handleCloseDealerDeterminationPopup"
+      />
+      <FinalResultPopup
+        :show="gameStore.showFinalResultPopup"
+        :final-result-details="gameStore.finalResultDetails"
+        @start-new-game="handleStartNewGameFromFinalResult"
+        @back-to-title="handleBackToTitleFromFinalResult"
+        @copy-screenshot="handleCopyScreenshot"
       />
       <img v-if="animationDisplay && animationDisplay.type === 'ron'" src="/assets/images/status/ron.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`]" alt="ロン" />
       <img v-if="riichiAnimationState" src="/assets/images/status/riichi.png" :class="['ron-indicator', `ron-indicator-${riichiAnimationState.position}`]" alt="リーチ" />
@@ -110,6 +111,7 @@
   import { computed, onMounted, ref, onBeforeUnmount, watch } from 'vue';
   import { useRouter } from 'vue-router';
   import PlayerHand from './PlayerHand.vue';
+  import html2canvas from 'html2canvas';
   import { useGameStore } from '@/stores/gameStore';
   import { useAudioStore } from '@/stores/audioStore';
   import CenterTableInfo from './CenterTableInfo.vue';
@@ -134,6 +136,7 @@
   const showRulesPopup = ref(false);
   const showYakuListPopup = ref(false);
   const riichiAnimationState = ref(null);
+  const gameBoardScalerRef = ref(null);
   
 
 const playerIcon = (player) => {
@@ -444,6 +447,11 @@ function onAnkanSelected(tile) { // モーダルからのイベント
     gameStore.prepareNextRound(); // 次の局の準備
   }
 
+  function handleCloseDealerDeterminationPopup() {
+    gameStore.showDealerDeterminationPopup = false;
+    gameStore.startGameFlow(); // ポップアップが閉じた後にゲームフローを開始
+  }
+
   function handleStartNewGameFromFinalResult() {
     riichiAnimationState.value = null;
     gameStore.resetGameForNewSession({ keepStreak: true }); // 連勝数を維持
@@ -459,11 +467,6 @@ function onAnkanSelected(tile) { // モーダルからのイベント
     gameStore.showDealerDeterminationPopup = true;
   }
 
-  function handleCloseDealerDeterminationPopup() {
-    gameStore.showDealerDeterminationPopup = false;
-    gameStore.startGameFlow(); // ポップアップが閉じた後にゲームフローを開始
-  }
-
   function handleBackToTitleFromFinalResult() {
     riichiAnimationState.value = null;
     gameStore.returnToTitle();
@@ -474,6 +477,35 @@ function onAnkanSelected(tile) { // モーダルからのイベント
     riichiAnimationState.value = null;
     gameStore.resetGameForNewSession();
     router.push('/');
+  }
+
+  async function handleCopyScreenshot() {
+    const element = gameBoardScalerRef.value;
+    if (!element) return;
+
+    try {
+      const canvas = await html2canvas(element, {
+        scale: window.devicePixelRatio,
+        useCORS: true,
+        backgroundColor: null,
+      });
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          alert('スクリーンショットのデータ生成に失敗しました。');
+          return;
+        }
+        try {
+          await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+          alert('スクリーンショットをクリップボードにコピーしました！');
+        } catch (err) {
+          console.error('クリップボードへの画像のコピーに失敗しました: ', err);
+          alert('スクリーンショットのコピーに失敗しました。');
+        }
+      }, 'image/png');
+    } catch (error) {
+      console.error('スクリーンショットの生成に失敗しました: ', error);
+      alert('スクリーンショットの生成に失敗しました。');
+    }
   }
 
   // --- Scaling Logic ---

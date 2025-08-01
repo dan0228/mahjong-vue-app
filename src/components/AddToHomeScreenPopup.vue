@@ -1,19 +1,22 @@
 <template>
   <div v-if="show" class="add-to-home-screen-popup-overlay">
     <div class="add-to-home-screen-popup-content">
-      <h2>📱ホーム画面に追加しませんか？</h2>
-      <p>アプリのようにワンタップでゲーム開始</p>
+      <h2 v-if="isMobile">📱ホーム画面に追加しませんか？</h2>
+      <h2 v-else>⭐ブックマークに登録しませんか？</h2>
+      <p v-if="isMobile">アプリのようにワンタップでゲーム開始</p>
+      <p v-else>すぐにアクセスできるようブックマークに登録しましょう</p>
       <p class="note">※データはすべてブラウザに保存されます</p>
       <div class="buttons">
         <button @click="closePopup">閉じる</button>
-        <button @click="showInstructions">追加方法を見る</button>
+        <button v-if="isMobile" @click="showInstructions">追加方法を見る</button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { defineProps, defineEmits } from 'vue';
+import { defineProps, defineEmits, ref, onMounted } from 'vue';
+import { useAudioStore } from '@/stores/audioStore';
 
 const props = defineProps({
   show: Boolean,
@@ -21,11 +24,21 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'showInstructions']);
 
+const audioStore = useAudioStore();
+
+const isMobile = ref(false);
+
+onMounted(() => {
+  isMobile.value = /Mobi|Android/i.test(navigator.userAgent);
+});
+
 const closePopup = () => {
+  audioStore.setBgm('NES-JP-A01-2(Title-Loop115).mp3'); // 音楽再生
   emit('close');
 };
 
 const showInstructions = () => {
+  audioStore.setBgm('NES-JP-A01-2(Title-Loop115).mp3'); // 音楽再生
   emit('showInstructions');
 };
 </script>

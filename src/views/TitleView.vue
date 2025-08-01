@@ -88,7 +88,6 @@ onMounted(() => {
   updateScaleFactor();
   window.addEventListener('resize', updateScaleFactor);
   gameStore.loadCatCoins();
-  audioStore.setBgm('NES-JP-A01-2(Title-Loop115).mp3');
 });
 
 onBeforeUnmount(() => {

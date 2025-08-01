@@ -38,12 +38,7 @@ let hasInteracted = false;
 const showAddToHomeScreenPopup = ref(false);
 const showHowToAddPopup = ref(false);
 
-// モバイルデバイスかどうかを判定する関数
-const isMobileDevice = () => {
-  const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-  // Android, iOS, Windows Phoneのユーザーエージェントをチェック
-  return /android|ipad|iphone|ipod|windows phone/i.test(userAgent);
-};
+
 
 // アセットのプリロード処理
 onMounted(async () => {
@@ -188,10 +183,7 @@ onMounted(async () => {
     // プリロード完了後、指定時間遅延させてローディング画面を非表示にする
     setTimeout(() => {
       isLoading.value = false;
-      // ローディング完了後にポップアップ表示
-      if (isMobileDevice()) {
-        showAddToHomeScreenPopup.value = true;
-      }
+      showAddToHomeScreenPopup.value = true;
     }, 500); // 500msの遅延
   }
 });
@@ -201,7 +193,6 @@ const handleCloseAddToHomeScreenPopup = () => {
 };
 
 const handleShowInstructions = () => {
-  console.log("追加方法を見るボタンが押されました");
   showAddToHomeScreenPopup.value = false; // ポップアップを閉じる
   showHowToAddPopup.value = true; // 追加方法モーダルを表示
 };

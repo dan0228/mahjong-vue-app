@@ -240,6 +240,10 @@ export const useGameStore = defineStore('game', {
         isDealer: p.isDealer,
         score: 25000, // 初期点数
       }));
+
+      // ゲームBGMを開始
+      const audioStore = useAudioStore();
+      audioStore.setBgm('NES-JP-A02-2(Stage1-Loop110).mp3');
       
     },
     drawTile() {
@@ -1501,6 +1505,8 @@ export const useGameStore = defineStore('game', {
       this.animationState = { type: null, playerId: null }; // アニメーション状態をリセット
       this.pendingKanDoraReveal = false; // フラグをリセット
       // isInitialized フラグなどがあればそれもリセット
+      this.stopRiichiBgm(); // リーチBGMが再生中の場合、停止して通常BGMに戻す
+      this.previousBgm = null; // 保存していたBGMをクリア
     },
     // フリテン状態を更新するヘルパーアクション
     updateFuriTenState(playerId) {

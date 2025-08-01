@@ -107,7 +107,7 @@ function getPlayerIcon(playerId) {
 
 <style scoped>
 .popup-overlay {
-  position: fixed;
+  position: absolute; /* fixedからabsoluteに変更 */
   top: 0;
   left: 0;
   width: 100%;

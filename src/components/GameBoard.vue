@@ -102,6 +102,11 @@
       <img v-if="animationDisplay && animationDisplay.type === 'tsumo'" src="/assets/images/status/tsumo.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`]" alt="ツモ" />
       <RulePopup v-if="showRulesPopup" @close="showRulesPopup = false" />
       <YakuListPopup v-if="showYakuListPopup" @close="showYakuListPopup = false" />
+      <ParentDecisionPopup
+        :show="gameStore.showDealerDeterminationPopup"
+        :dealer-determination-results="gameStore.dealerDeterminationResult.players"
+        @close="handleCloseDealerDeterminationPopup"
+      />
       </div> <!-- End of game-board-scaler -->
     </div>
 </template>
@@ -454,15 +459,7 @@ function onAnkanSelected(tile) { // モーダルからのイベント
     riichiAnimationState.value = null;
     gameStore.resetGameForNewSession({ keepStreak: true }); // 連勝数を維持
     gameStore.initializeGame(); // 新しいゲームを開始
-    // 親決め結果をセットし、ポップアップを表示
-    gameStore.dealerDeterminationResult.players = gameStore.players.map(p => ({
-      id: p.id,
-      name: p.name,
-      seatWind: p.seatWind,
-      isDealer: p.isDealer,
-      score: 25000, // 初期点数
-    }));
-    gameStore.showDealerDeterminationPopup = true;
+    gameStore.showDealerDeterminationPopup = true; // 親決めポップアップを表示
   }
 
   function handleBackToTitleFromFinalResult() {

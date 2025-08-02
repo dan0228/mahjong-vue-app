@@ -1,10 +1,10 @@
 <template>
   <div v-if="show" class="add-to-home-screen-popup-overlay">
     <div class="add-to-home-screen-popup-content">
-      <h2 v-if="isMobile">📱ホーム画面に追加しませんか？</h2>
-      <h2 v-else>⭐ブックマークに登録しませんか？</h2>
-      <p v-if="isMobile">アプリのようにワンタップでゲーム開始</p>
-      <p v-else>すぐにアクセスできるようブックマークに登録しましょう</p>
+      <h2 v-if="isMobile">お知らせ😸</h2>
+      <h2 v-else>お知らせ😸</h2>
+      <p v-if="isMobile">📱ホーム画面に追加したら<br>アプリのようにワンタップでゲーム開始</p>
+      <p v-else>⭐ブックマークに登録したら<br>すぐにアクセスしてゲーム開始</p>
       <p class="note">※データはすべてブラウザに保存されます</p>
       <div class="buttons">
         <button @click="closePopup">閉じる</button>

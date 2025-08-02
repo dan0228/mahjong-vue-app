@@ -119,7 +119,7 @@ function postToInstagram() {
 
 #よんじゃん #よんじゃん連勝数`;
   navigator.clipboard.writeText(caption).then(() => {
-    alert("ポスト用メッセージをクリップボードにコピー。投稿に貼り付けられます。");
+    alert("投稿用メッセージをクリップボードにコピー！貼り付けして簡単投稿！");
     window.open('https://www.instagram.com', '_blank');
   }).catch(err => {
     console.error('クリップボードへのコピーに失敗しました: ', err);

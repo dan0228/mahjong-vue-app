@@ -1903,6 +1903,9 @@ export const useGameStore = defineStore('game', {
         let bestTileToDiscard = null;
         let maxScore = -Infinity;
 
+        // 鳴いた牌の情報を取得
+        const lastMeld = player.melds.length > 0 ? player.melds[player.melds.length - 1] : null;
+
         for (const tile of fullHand) {
           let score = 0;
           const tileKey = mahjongLogic.getTileKey(tile);
@@ -1915,6 +1918,34 @@ export const useGameStore = defineStore('game', {
           if (tileCountInHand >= 3) {
             score -= 150;
           }
+
+          // --- 鳴いた後の打牌選択ロジック ---
+          if (lastMeld && lastMeld.tiles.length > 0) {
+            const calledTile = lastMeld.tiles[0];
+            
+            if (calledTile.suit === 'z') {
+              // 鳴いた牌が字牌の場合、他の字牌を残す
+              if (tile.suit === 'z') {
+                score -= 200; // 捨てにくくする
+              }
+            } else {
+              // 鳴いた牌が数牌の場合
+              const isCalledTileTerminal = (calledTile.rank === 1 || calledTile.rank === 9);
+
+              if (isCalledTileTerminal) {
+                // 鳴いた牌が1,9牌の場合、他の1,9牌を残す
+                if (tile.suit !== 'z' && (tile.rank === 1 || tile.rank === 9)) {
+                  score -= 200; // 捨てにくくする
+                }
+              } else {
+                // 鳴いた牌が中張牌の場合、同じ色の牌を残す
+                if (tile.suit === calledTile.suit) {
+                  score -= 200; // 捨てにくくする
+                }
+              }
+            }
+          }
+          // --- ここまで ---
 
           if (tile.suit === mahjongLogic.SUITS.JIHAI) {
             const isWindTile = tile.rank >= mahjongLogic.JIHAI_TYPES.TON && tile.rank <= mahjongLogic.JIHAI_TYPES.PEI;

@@ -12,7 +12,7 @@
           </div>
         </div>
         <p class="consecutive-wins" v-if="gameStore.gameMode !== 'allManual'">
-          {{ finalResultDetails.consecutiveWins }}連勝中！
+          {{ finalResultDetails.consecutiveWins }} 連勝中！
         </p>
         <div class="coin-gain" v-if="gameStore.lastCoinGain !== 0">
           <img src="/assets/images/info/cat_coin.png" alt="Cat Coin" class="cat-coin-icon">
@@ -38,7 +38,7 @@
             <img src="/assets/images/info/Instagram_logo.png" alt="Instagram logo" class="social-logo-icon">
           </button>
         </div>
-        <div class="share-caption">スクショも一緒に投稿してにゃ📸</div>
+        <div class="share-caption">スクショも一緒に投稿してランキングに参加📸</div>
         <div class="timestamp">{{ formattedTimestamp }}</div>
       </div>
     </div>
@@ -102,7 +102,7 @@ function getPlayerIcon(playerId) {
 
 function postToX() {
   const consecutiveWins = props.finalResultDetails.consecutiveWins;
-  let tweetText = `よんじゃん！で${consecutiveWins}連勝達成！
+  let tweetText = `よんじゃんで${consecutiveWins}連勝達成！
 
 `;
   tweetText += `#よんじゃん #よんじゃん連勝数`;
@@ -113,7 +113,7 @@ function postToX() {
 
 function postToInstagram() {
   const consecutiveWins = props.finalResultDetails.consecutiveWins;
-  const caption = `よんじゃん！で${consecutiveWins}連勝達成！
+  const caption = `よんじゃんで${consecutiveWins}連勝達成！
 
 #よんじゃん #よんじゃん連勝数`;
   navigator.clipboard.writeText(caption).then(() => {
@@ -243,8 +243,9 @@ function postToInstagram() {
   gap: 15px;
 }
 .action-button { /* actions button から action-button にクラス名を変更 */
-  padding: 12px 25px;
+  padding: 10px 20px;
   border: none;
+  width: 155px;
   border-radius: 5px;
   cursor: pointer;
   font-size: 0.8em;
@@ -331,7 +332,6 @@ function postToInstagram() {
 .share-caption {
   font-size: 0.8em;
   color: #666;
-  margin-top: 8px;
 }
 
 .timestamp {

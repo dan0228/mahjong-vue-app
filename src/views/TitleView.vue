@@ -45,7 +45,7 @@
       <div class="x-account">
         <a href="https://x.com/yonjan_official" target="_blank" rel="noopener noreferrer">公式X: @yonjan_official</a>
       </div>
-      <div class="version-info">v1.0.0 | 2025.08.01</div>
+      <div class="version-info">v1.0.0 | 2025.08.02</div>
     </div>
   </div>
 </template>

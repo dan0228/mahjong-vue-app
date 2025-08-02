@@ -50,7 +50,6 @@ export const useAudioStore = defineStore('audio', {
       this.isSeEnabled = !this.isSeEnabled;
     },
     async setBgm(newBgmName) {
-      console.log(`setBgm called: ${newBgmName}, currentBgm: ${this.currentBgm}, isSwitchingBgm: ${this.isSwitchingBgm}`);
       if (this.isSwitchingBgm || this.currentBgm === newBgmName) {
         return;
       }
@@ -76,7 +75,6 @@ export const useAudioStore = defineStore('audio', {
         newAudio.loop = true;
         try {
           await newAudio.play();
-          console.log(`Successfully played BGM: ${newBgmName}`);
         } catch (e) {
           console.error("BGMの再生に失敗しました:", e);
         }

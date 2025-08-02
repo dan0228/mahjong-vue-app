@@ -141,7 +141,6 @@ export const useGameStore = defineStore('game', {
     },
     stopRiichiBgm() {
       const audioStore = useAudioStore();
-      console.log('stopRiichiBgm called. isRiichiBgmActive:', this.isRiichiBgmActive, 'Previous BGM:', this.previousBgm);
       if (this.isRiichiBgmActive) {
         audioStore.setBgm(this.previousBgm); // 元のBGMに戻す
         this.isRiichiBgmActive = false;

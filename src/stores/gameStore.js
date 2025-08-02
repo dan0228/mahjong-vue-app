@@ -425,13 +425,21 @@ export const useGameStore = defineStore('game', {
                       }
 
                       let connections = 0;
-                      for (let i = -2; i <= 2; i++) {
-                        if (i === 0) continue;
-                        if (suitTiles.some(t => t.rank === rank + i)) {
-                          connections++;
-                        }
-                      }
-                      score -= (connections * 10);
+          // 1つ離れた牌のつながりを強く評価
+          if (suitTiles.some(t => t.rank === rank + 1)) {
+            connections += 2; // 1つ離れた牌は2点
+          }
+          if (suitTiles.some(t => t.rank === rank - 1)) {
+            connections += 2; // 1つ離れた牌は2点
+          }
+          // 2つ離れた牌のつながりを評価
+          if (suitTiles.some(t => t.rank === rank + 2)) {
+            connections += 1; // 2つ離れた牌は1点
+          }
+          if (suitTiles.some(t => t.rank === rank - 2)) {
+            connections += 1; // 2つ離れた牌は1点
+          }
+          score -= (connections * 10); // connectionsの合計点に応じてスコアを減算
 
                       if (rank === 1 && !suitTiles.some(t => t.rank === 2 || t.rank === 3)) {
                         score += 25;
@@ -1846,7 +1854,7 @@ export const useGameStore = defineStore('game', {
     // 最適な捨て牌を選択するヘルパー関数
     _getBestTileToDiscard(player, currentFullHand) {
       let bestTileToDiscard = null;
-      let minScore = Infinity; // スコアが低いほど良い牌
+      let maxScore = -Infinity; // スコアが高いほど捨てたい牌
 
       // 鳴いた牌の情報を取得 (handleAiDiscardから移動)
       const lastMeld = player.melds.length > 0 ? player.melds[player.melds.length - 1] : null;
@@ -1913,7 +1921,7 @@ export const useGameStore = defineStore('game', {
           } else {
             score += 100;
           }
-        } else { // 数牌
+        } else {
           const suitTiles = currentFullHand.filter(t => t.suit === tile.suit);
           const rank = tile.rank;
 
@@ -1943,8 +1951,8 @@ export const useGameStore = defineStore('game', {
           }
         }
 
-        if (score < minScore) {
-          minScore = score;
+        if (score > maxScore) {
+          maxScore = score;
           bestTileToDiscard = tile;
         }
       }

@@ -291,7 +291,21 @@ export const useGameStore = defineStore('game', {
             this.playerActionEligibility[currentPlayer.id].canMinkan = null; // リーチ中は明槓不可
             this.playerActionEligibility[currentPlayer.id].canKakan = null; // リーチ中は加槓不可
 
-            // AIプレイヤーの行動決定
+            // ツモ和了可能かチェック
+            const gameContextForTsumo = this.createGameContextForPlayer(currentPlayer, true);
+            const tsumoWinResult = mahjongLogic.checkYonhaiWin([...currentPlayer.hand, this.drawnTile], this.drawnTile, true, gameContextForTsumo);
+            this.playerActionEligibility[currentPlayer.id].canTsumoAgari = tsumoWinResult.isWin;
+
+            // ツモ和了できない場合、自動でツモ切り
+            if (!this.playerActionEligibility[currentPlayer.id].canTsumoAgari) {
+                setTimeout(() => {
+                    // タイムアウト後もまだ自分のターンで、ツモ牌が残っているか確認
+                    if (this.currentTurnPlayerId === currentPlayer.id && this.drawnTile) {
+                        this.discardTile(currentPlayer.id, this.drawnTile.id, true);
+                    }
+                }, 500); // 0.5秒後に自動打牌
+            }
+            // AIプレイヤーの行動決定 (既存のAIロジックはそのまま残す)
             if (this.gameMode === 'vsCPU' && currentPlayer.id !== 'player1') {
               // 1. ツモ和了可能なら、100%和了する
               if (this.playerActionEligibility[currentPlayer.id].canTsumoAgari) {
@@ -354,7 +368,7 @@ export const useGameStore = defineStore('game', {
               let actionTaken = false;
 
               // 1. リーチ可能なら70%の確率でリーチを試みる
-              if (this.playerActionEligibility[currentPlayer.id].canRiichi && Math.random() < 0) { //検証用
+              if (this.playerActionEligibility[currentPlayer.id].canRiichi && Math.random() < 1) { //検証用
                 // リーチ宣言を試みる (riichiDiscardOptionsが設定される)
                 // declareRiichiはgamePhaseをAWAITING_RIICHI_DISCARDに設定するので、
                 // その後すぐにdiscardTileを呼ぶ必要がある
@@ -810,6 +824,14 @@ export const useGameStore = defineStore('game', {
     setGameMode(mode) {
       this.gameMode = mode; // 'allManual', 'vsCPU', 'online'
     },
+    // リーチアニメーションの状態を設定するアクション
+    setRiichiAnimationState(playerId) {
+      this.animationState = { type: 'riichi', playerId: playerId };
+      // 1秒後にアニメーションをリセット
+      setTimeout(() => {
+        this.animationState = { type: null, playerId: null };
+      }, 1000);
+    },
     declareRiichi(playerId) {
       const player = this.players.find(p => p.id === playerId);
       // ダブルリーチ: 自分の最初の捨て牌までで、かつ他家が誰も鳴いていない(turnCountがプレイヤー数未満)
@@ -847,6 +869,9 @@ export const useGameStore = defineStore('game', {
         }
         return mahjongLogic.checkYonhaiTenpai(tempHand, this.createGameContextForPlayer(player, false)).isTenpai;
       }).map(tile => tile.id); // IDのリストとして保持
+
+      // リーチアニメーションの状態を設定
+      this.setRiichiAnimationState(playerId);
     },
 
     // プレイヤーが鳴きやロンを見送るアクション
@@ -1815,12 +1840,122 @@ export const useGameStore = defineStore('game', {
           } else {
             // ツモ和了もカンもできない場合は打牌
             setTimeout(() => {
-              this.handleAiDiscard();
+              const fullHand = [...player.hand, this.drawnTile];
+              const tileToDiscard = this._getBestTileToDiscard(player, fullHand);
+              const isFromDrawnTile = tileToDiscard.id === this.drawnTile.id;
+              this.discardTile(playerId, tileToDiscard.id, isFromDrawnTile);
             }, 100); // 100msの遅延
           }
       }
     }
     ,
+    // 最適な捨て牌を選択するヘルパー関数
+    _getBestTileToDiscard(player, currentFullHand) {
+      let bestTileToDiscard = null;
+      let minScore = Infinity; // スコアが低いほど良い牌
+
+      // 鳴いた牌の情報を取得 (handleAiDiscardから移動)
+      const lastMeld = player.melds.length > 0 ? player.melds[player.melds.length - 1] : null;
+
+      for (const tile of currentFullHand) {
+        let score = 0;
+        const tileKey = mahjongLogic.getTileKey(tile);
+        const tileCountInHand = currentFullHand.filter(t => mahjongLogic.getTileKey(t) === tileKey).length;
+
+        // 対子や刻子は残す優先度が高い
+        if (tileCountInHand >= 2) {
+          score -= 100;
+        }
+        if (tileCountInHand >= 3) {
+          score -= 150;
+        }
+
+        // --- 鳴いた後の打牌選択ロジック ---
+        if (lastMeld && lastMeld.tiles.length > 0) {
+          const calledTile = lastMeld.tiles[0];
+          
+          if (calledTile.suit === 'z') {
+            // 鳴いた牌が字牌の場合、他の字牌を残す
+            if (tile.suit === 'z') {
+              score -= 200; // 捨てにくくする
+            }
+          } else {
+            // 鳴いた牌が数牌の場合
+            const isCalledTileTerminal = (calledTile.rank === 1 || calledTile.rank === 9);
+
+            if (isCalledTileTerminal) {
+              // 鳴いた牌が1,9牌の場合、他の1,9牌を残す
+              if (tile.suit !== 'z' && (tile.rank === 1 || tile.rank === 9)) {
+                score -= 200; // 捨てにくくする
+              }
+            } else {
+              // 鳴いた牌が中張牌の場合、同じ色の牌を残す
+              if (tile.suit === calledTile.suit) {
+                score -= 200; // 捨てにくくする
+              }
+            }
+          }
+        }
+        // --- ここまで ---
+
+        if (tile.suit === mahjongLogic.SUITS.JIHAI) {
+          const isWindTile = tile.rank >= mahjongLogic.JIHAI_TYPES.TON && tile.rank <= mahjongLogic.JIHAI_TYPES.PEI;
+          const isSangenTile = tile.rank >= mahjongLogic.JIHAI_TYPES.HAKU && tile.rank <= mahjongLogic.JIHAI_TYPES.CHUN;
+
+          if (isWindTile) {
+            const otherWindTiles = currentFullHand.filter(t => t.suit === mahjongLogic.SUITS.JIHAI && t.rank >= mahjongLogic.JIHAI_TYPES.TON && t.rank <= mahjongLogic.JIHAI_TYPES.PEI && mahjongLogic.getTileKey(t) !== tileKey);
+            if (otherWindTiles.length === 0) {
+              score += 80;
+            } else {
+              score -= 20;
+            }
+          } else if (isSangenTile) {
+            const otherSangenTiles = currentFullHand.filter(t => t.suit === mahjongLogic.SUITS.JIHAI && t.rank >= mahjongLogic.JIHAI_TYPES.HAKU && t.rank <= mahjongLogic.JIHAI_TYPES.CHUN && mahjongLogic.getTileKey(t) !== tileKey);
+            if (otherSangenTiles.length === 0) {
+              score += 80;
+            } else {
+              score -= 20;
+            }
+          } else {
+            score += 100;
+          }
+        } else { // 数牌
+          const suitTiles = currentFullHand.filter(t => t.suit === tile.suit);
+          const rank = tile.rank;
+
+          if (suitTiles.length <= 2) {
+            score += 80;
+          } else if (suitTiles.length <= 4) {
+            score += 40;
+          }
+
+          let connections = 0;
+          for (let i = -2; i <= 2; i++) {
+            if (i === 0) continue;
+            if (suitTiles.some(t => t.rank === rank + i)) {
+              connections++;
+            }
+          }
+          score -= (connections * 10);
+
+          if (rank === 1 && !suitTiles.some(t => t.rank === 2 || t.rank === 3)) {
+            score += 25;
+          }
+          if (rank === 9 && !suitTiles.some(t => t.rank === 7 || t.rank === 8)) {
+            score += 25;
+          }
+          if (rank > 1 && rank < 9 && connections === 0) {
+              score += 30;
+          }
+        }
+
+        if (score < minScore) {
+          minScore = score;
+          bestTileToDiscard = tile;
+        }
+      }
+      return bestTileToDiscard || currentFullHand[Math.floor(Math.random() * currentFullHand.length)];
+    },
     // AIプレイヤーの打牌処理
     handleAiDiscard() {
       if (this.gameMode !== 'vsCPU' || this.gamePhase !== GAME_PHASES.AWAITING_DISCARD) {
@@ -1850,111 +1985,7 @@ export const useGameStore = defineStore('game', {
           return;
         }
 
-        let bestTileToDiscard = null;
-        let maxScore = -Infinity;
-
-        // 鳴いた牌の情報を取得
-        const lastMeld = player.melds.length > 0 ? player.melds[player.melds.length - 1] : null;
-
-        for (const tile of fullHand) {
-          let score = 0;
-          const tileKey = mahjongLogic.getTileKey(tile);
-          const tileCountInHand = fullHand.filter(t => mahjongLogic.getTileKey(t) === tileKey).length;
-
-          // 対子や刻子は残す優先度が高い
-          if (tileCountInHand >= 2) {
-            score -= 100;
-          }
-          if (tileCountInHand >= 3) {
-            score -= 150;
-          }
-
-          // --- 鳴いた後の打牌選択ロジック ---
-          if (lastMeld && lastMeld.tiles.length > 0) {
-            const calledTile = lastMeld.tiles[0];
-            
-            if (calledTile.suit === 'z') {
-              // 鳴いた牌が字牌の場合、他の字牌を残す
-              if (tile.suit === 'z') {
-                score -= 200; // 捨てにくくする
-              }
-            } else {
-              // 鳴いた牌が数牌の場合
-              const isCalledTileTerminal = (calledTile.rank === 1 || calledTile.rank === 9);
-
-              if (isCalledTileTerminal) {
-                // 鳴いた牌が1,9牌の場合、他の1,9牌を残す
-                if (tile.suit !== 'z' && (tile.rank === 1 || tile.rank === 9)) {
-                  score -= 200; // 捨てにくくする
-                }
-              } else {
-                // 鳴いた牌が中張牌の場合、同じ色の牌を残す
-                if (tile.suit === calledTile.suit) {
-                  score -= 200; // 捨てにくくする
-                }
-              }
-            }
-          }
-          // --- ここまで ---
-
-          if (tile.suit === mahjongLogic.SUITS.JIHAI) {
-            const isWindTile = tile.rank >= mahjongLogic.JIHAI_TYPES.TON && tile.rank <= mahjongLogic.JIHAI_TYPES.PEI;
-            const isSangenTile = tile.rank >= mahjongLogic.JIHAI_TYPES.HAKU && tile.rank <= mahjongLogic.JIHAI_TYPES.CHUN;
-
-            if (isWindTile) {
-              const otherWindTiles = fullHand.filter(t => t.suit === mahjongLogic.SUITS.JIHAI && t.rank >= mahjongLogic.JIHAI_TYPES.TON && t.rank <= mahjongLogic.JIHAI_TYPES.PEI && mahjongLogic.getTileKey(t) !== tileKey);
-              if (otherWindTiles.length === 0) {
-                score += 80;
-              } else {
-                score -= 20;
-              }
-            } else if (isSangenTile) {
-              const otherSangenTiles = fullHand.filter(t => t.suit === mahjongLogic.SUITS.JIHAI && t.rank >= mahjongLogic.JIHAI_TYPES.HAKU && t.rank <= mahjongLogic.JIHAI_TYPES.CHUN && mahjongLogic.getTileKey(t) !== tileKey);
-              if (otherSangenTiles.length === 0) {
-                score += 80;
-              } else {
-                score -= 20;
-              }
-            } else {
-              score += 100;
-            }
-          } else { // 数牌
-            const suitTiles = fullHand.filter(t => t.suit === tile.suit);
-            const rank = tile.rank;
-
-            if (suitTiles.length <= 2) {
-              score += 80;
-            } else if (suitTiles.length <= 4) {
-              score += 40;
-            }
-
-            let connections = 0;
-            for (let i = -2; i <= 2; i++) {
-              if (i === 0) continue;
-              if (suitTiles.some(t => t.rank === rank + i)) {
-                connections++;
-              }
-            }
-            score -= (connections * 10);
-
-            if (rank === 1 && !suitTiles.some(t => t.rank === 2 || t.rank === 3)) {
-              score += 25;
-            }
-            if (rank === 9 && !suitTiles.some(t => t.rank === 7 || t.rank === 8)) {
-              score += 25;
-            }
-            if (rank > 1 && rank < 9 && connections === 0) {
-                score += 30;
-            }
-          }
-
-          if (score > maxScore) {
-            maxScore = score;
-            bestTileToDiscard = tile;
-          }
-        }
-
-        const tileToDiscard = bestTileToDiscard || fullHand[Math.floor(Math.random() * fullHand.length)];
+        const tileToDiscard = this._getBestTileToDiscard(player, fullHand);
         const isFromDrawnTile = this.drawnTile ? tileToDiscard.id === this.drawnTile.id : false;
 
         this.discardTile(aiPlayerId, tileToDiscard.id, isFromDrawnTile);
@@ -1982,7 +2013,7 @@ export const useGameStore = defineStore('game', {
           }
 
           // 3. ポン可能かチェック (50%の確率で実施)
-          if (eligibility?.canPon && Math.random() < 1) { //検証用
+          if (eligibility?.canPon && Math.random() < 0) { //検証用
             this.playerDeclaresCall(aiPlayerId, 'pon', eligibility.canPon);
             return;
           }

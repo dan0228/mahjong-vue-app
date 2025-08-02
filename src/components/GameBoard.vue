@@ -98,7 +98,7 @@
         @back-to-title="handleBackToTitleFromFinalResult"
       />
       <img v-if="animationDisplay && animationDisplay.type === 'ron'" src="/assets/images/status/ron.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`]" alt="ロン" />
-      <img v-if="riichiAnimationState" src="/assets/images/status/riichi.png" :class="['ron-indicator', `ron-indicator-${riichiAnimationState.position}`]" alt="リーチ" />
+      <img v-if="animationDisplay && animationDisplay.type === 'riichi'" src="/assets/images/status/riichi.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`]" alt="リーチ" />
       <img v-if="animationDisplay && animationDisplay.type === 'tsumo'" src="/assets/images/status/tsumo.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`]" alt="ツモ" />
       <!-- ポンとカンの表示を追加 -->
       <img v-if="animationDisplay && animationDisplay.type === 'pon'" src="/assets/images/status/pon.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`]" alt="ポン" />
@@ -302,8 +302,9 @@ const playerIcon = (player) => {
 
   function handleTileSelection(payload) { // payload は { tile: Object, isFromDrawnTile: Boolean }
     // リーチアニメーションが表示されている場合、牌を選択した時点で非表示にする
-    if (riichiAnimationState.value) {
-      riichiAnimationState.value = null;
+    // リーチアニメーションが表示されている場合、牌を選択した時点で非表示にする
+    if (gameStore.animationState && gameStore.animationState.type === 'riichi') {
+      gameStore.animationState = { type: null, playerId: null };
     }
     // どのプレイヤーの操作かに関わらず、現在のターンプレイヤーが打牌可能な状態であれば実行
     // PlayerHand が can-discard プロパティ経由で適切なプレイヤーのターンであること保証すると想定
@@ -394,24 +395,8 @@ function onAnkanSelected(tile) { // モーダルからのイベント
     } else if (actionType === 'tsumoAgari') {
       gameStore.handleAgari(playerId, gameStore.drawnTile, true);
     } else if (actionType === 'riichi') {
-      const playerIndex = orderedPlayersForDisplay.value.findIndex(p => p.id === playerId);
-      let positionClass = '';
-      if (playerIndex === 0) positionClass = 'bottom';
-      else if (playerIndex === 1) positionClass = 'right';
-      else if (playerIndex === 2) positionClass = 'top';
-      else if (playerIndex === 3) positionClass = 'left';
-
-      if (positionClass) {
-        riichiAnimationState.value = { position: positionClass };
-        // 手前のプレイヤー以外は1秒で表示を消す
-        if (positionClass !== 'bottom') {
-          setTimeout(() => {
-            riichiAnimationState.value = null;
-          }, 1000);
-        }
-      }
-      gameStore.declareRiichi(playerId);
-    } else if (actionType === 'ankan') {
+              gameStore.declareRiichi(playerId); }
+    else if (actionType === 'ankan') {
       // PlayerAreaから渡されるtileは、暗槓の場合は選択された牌そのものであるべき
       // ストアの canDeclareAnkan[playerId] が候補リストを返す場合、
       // PlayerArea側で選択UIを出すか、GameBoardが仲介してモーダルを出す

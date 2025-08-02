@@ -431,8 +431,10 @@ export const useGameStore = defineStore('game', {
 
                   // 最適な捨て牌が見つかったらそれを捨てる
                   if (bestRiichiDiscardTile) {
+                    setTimeout(() => {
                     this.discardTile(currentPlayer.id, bestRiichiDiscardTile.id, bestRiichiDiscardTile.id === this.drawnTile.id);
-                    actionTaken = true;
+                  }, 500); // 0.5秒のディレイ
+                  actionTaken = true;
                   } else {
                     // ここに来ることは稀だが、念のためリーチをキャンセルして通常打牌
                     this.isDeclaringRiichi[currentPlayer.id] = false; // リーチ宣言状態をクリア
@@ -1989,7 +1991,7 @@ export const useGameStore = defineStore('game', {
           }
 
           // 3. ポン可能かチェック (50%の確率で実施)
-          if (eligibility?.canPon && Math.random() < 0.5) {
+          if (eligibility?.canPon && Math.random() < 1) {
             this.playerDeclaresCall(aiPlayerId, 'pon', eligibility.canPon);
             return;
           }

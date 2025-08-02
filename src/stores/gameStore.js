@@ -131,12 +131,14 @@ export const useGameStore = defineStore('game', {
   actions: {
     startRiichiBgm() {
       const audioStore = useAudioStore();
+      console.log('startRiichiBgm called. Current BGM:', audioStore.currentBgm);
       this.previousBgm = audioStore.currentBgm; // 現在のBGMを保存
       audioStore.setBgm('NES-JP-A04-2(Stage3-Loop125).mp3'); // リーチBGMに切り替え
       this.isRiichiBgmActive = true;
     },
     stopRiichiBgm() {
       const audioStore = useAudioStore();
+      console.log('stopRiichiBgm called. isRiichiBgmActive:', this.isRiichiBgmActive, 'Previous BGM:', this.previousBgm);
       if (this.isRiichiBgmActive) {
         audioStore.setBgm(this.previousBgm); // 元のBGMに戻す
         this.isRiichiBgmActive = false;
@@ -241,9 +243,7 @@ export const useGameStore = defineStore('game', {
         score: 25000, // 初期点数
       }));
 
-      // ゲームBGMを開始
-      const audioStore = useAudioStore();
-      audioStore.setBgm('NES-JP-A02-2(Stage1-Loop110).mp3');
+      
       
     },
     drawTile() {

@@ -30,13 +30,13 @@
     <div v-if="isMyHand || gameStore.gameMode === 'allManual'" :class="['player-actions', `player-actions-${position}`]">
         <!-- ツモ番のアクション -->
         <img v-if="canDeclareTsumoAgari" src="/assets/images/button/tsumo_button.png" alt="ツモ" class="action-image-button" @click="emitAction('tsumoAgari')" />
-        <img v-if="canDeclareRiichi" src="/assets/images/button/riichi_button.png" alt="リーチ" class="action-image-button" @click="emitAction('riichi')" />
+        <img v-if="canDeclareRiichi && !player.isRiichi && !player.isDoubleRiichi" src="/assets/images/button/riichi_button.png" alt="リーチ" class="action-image-button" @click="emitAction('riichi')" />
         <img v-if="canDeclareAnkan" src="/assets/images/button/kan_button.png" alt="暗槓" class="action-image-button" @click="emitAction('ankan')" />
-        <img v-if="canDeclareKakan" src="/assets/images/button/kan_button.png" alt="加槓" class="action-image-button" @click="emitAction('kakan')" />
+        <img v-if="canDeclareKakan && !player.isRiichi && !player.isDoubleRiichi" src="/assets/images/button/kan_button.png" alt="加槓" class="action-image-button" @click="emitAction('kakan')" />
         <!-- 他家の打牌/加槓に対するアクション -->
         <img v-if="canDeclareRon" src="/assets/images/button/ron_button.png" alt="ロン" class="action-image-button" @click="emitAction('ron')" />
-        <img v-if="canDeclarePon" src="/assets/images/button/pon_button.png" alt="ポン" class="action-image-button" @click="emitAction('pon')" />
-        <img v-if="canDeclareMinkan" src="/assets/images/button/kan_button.png" alt="カン" class="action-image-button" @click="emitAction('minkan')" />
+        <img v-if="canDeclarePon && !player.isRiichi && !player.isDoubleRiichi" src="/assets/images/button/pon_button.png" alt="ポン" class="action-image-button" @click="emitAction('pon')" />
+        <img v-if="canDeclareMinkan && !player.isRiichi && !player.isDoubleRiichi" src="/assets/images/button/kan_button.png" alt="カン" class="action-image-button" @click="emitAction('minkan')" />
         <!-- スキップボタン -->
         <img v-if="showSkipButton" src="/assets/images/button/skip_button.png" alt="スキップ" class="action-image-button" @click="emitAction('skip')" />
     </div>

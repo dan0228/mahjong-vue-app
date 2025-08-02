@@ -131,7 +131,6 @@ export const useGameStore = defineStore('game', {
   actions: {
     startRiichiBgm() {
       const audioStore = useAudioStore();
-      console.log('startRiichiBgm called. Current BGM:', audioStore.currentBgm);
       // リーチBGMがまだアクティブでない場合のみ、現在のBGMを保存
       if (!this.isRiichiBgmActive) {
         this.previousBgm = audioStore.currentBgm;
@@ -284,11 +283,16 @@ export const useGameStore = defineStore('game', {
 
           // リーチ後の処理
           if (currentPlayer.isRiichi || currentPlayer.isDoubleRiichi) {
-            // リーチ後の暗槓は、待ちが変わらない場合のみ可能（というルールが一般的だが、このゲームでは「いかなる形でも可能」）
-            const ankanable = this.playerActionEligibility[currentPlayer.id].canAnkan;
+            // リーチ中はツモ和了と暗槓のみ可能
+            const ankanOptions = mahjongLogic.checkCanAnkan(currentPlayer.hand, this.drawnTile);
+            this.playerActionEligibility[currentPlayer.id].canAnkan = ankanOptions.length > 0 ? ankanOptions : null;
+            this.playerActionEligibility[currentPlayer.id].canRiichi = false; // リーチ中は再リーチ不可
+            this.playerActionEligibility[currentPlayer.id].canPon = null; // リーチ中はポン不可
+            this.playerActionEligibility[currentPlayer.id].canMinkan = null; // リーチ中は明槓不可
+            this.playerActionEligibility[currentPlayer.id].canKakan = null; // リーチ中は加槓不可
 
             // ツモ和了も暗槓もできなければ、自動でツモ切り
-            if (!this.playerActionEligibility[currentPlayer.id].canTsumoAgari && !ankanable) {
+            if (!this.playerActionEligibility[currentPlayer.id].canTsumoAgari && !this.playerActionEligibility[currentPlayer.id].canAnkan) {
               setTimeout(() => {
                 // タイムアウト後もまだ自分のターンで、ツモ牌が残っているか確認
                 if (this.currentTurnPlayerId === currentPlayer.id && this.drawnTile) {
@@ -799,7 +803,8 @@ export const useGameStore = defineStore('game', {
         console.warn("Cannot declare Riichi now.");
         return;
       }
-
+      // リーチを宣言したことを一時的に記録する
+      this.isDeclaringRiichi[playerId] = true;
       // リーチ宣言後、次の自分のツモまでは一発のチャンス
       this.isIppatsuChance[playerId] = true;
       this.playerActionEligibility[playerId] = {}; // リーチしたので他のアクションはリセット

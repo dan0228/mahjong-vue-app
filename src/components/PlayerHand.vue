@@ -73,6 +73,11 @@
       return isFromDrawnTile;
     }
 
+    // リーチ中のプレイヤーは、ツモ牌以外は選択できない
+    if ((props.player.isRiichi || props.player.isDoubleRiichi) && !isFromDrawnTile) {
+      return false;
+    }
+
     // 通常の打牌時は常に選択可能
     return true;
   }

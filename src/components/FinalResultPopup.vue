@@ -33,11 +33,9 @@
         <div class="social-share-buttons">
           <button @click="postToX" class="social-button x-post-button">
             <img src="/assets/images/info/logo-black.png" alt="X logo" class="social-logo-icon">
-            <span>でシェア！</span>
           </button>
           <button @click="postToInstagram" class="social-button instagram-post-button">
             <img src="/assets/images/info/Instagram_logo.png" alt="Instagram logo" class="social-logo-icon">
-            <span>でシェア！</span>
           </button>
         </div>
         <div class="share-caption">スクショも一緒に投稿してにゃ📸</div>

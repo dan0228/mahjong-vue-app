@@ -132,7 +132,10 @@ export const useGameStore = defineStore('game', {
     startRiichiBgm() {
       const audioStore = useAudioStore();
       console.log('startRiichiBgm called. Current BGM:', audioStore.currentBgm);
-      this.previousBgm = audioStore.currentBgm; // 現在のBGMを保存
+      // リーチBGMがまだアクティブでない場合のみ、現在のBGMを保存
+      if (!this.isRiichiBgmActive) {
+        this.previousBgm = audioStore.currentBgm;
+      }
       audioStore.setBgm('NES-JP-A04-2(Stage3-Loop125).mp3'); // リーチBGMに切り替え
       this.isRiichiBgmActive = true;
     },

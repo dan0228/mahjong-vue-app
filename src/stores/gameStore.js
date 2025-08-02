@@ -1885,16 +1885,23 @@ export const useGameStore = defineStore('game', {
 
         for (const tile of fullHand) {
           let score = 0;
+          const tileKey = mahjongLogic.getTileKey(tile);
+          const tileCountInHand = fullHand.filter(t => mahjongLogic.getTileKey(t) === tileKey).length;
+
+          // 対子や刻子は残す優先度が高い
+          if (tileCountInHand >= 2) {
+            score -= 100; // 対子を強く残す
+          }
+          if (tileCountInHand >= 3) {
+            score -= 150; // 刻子をさらに強く残す
+          }
 
           // 1. 字牌の評価 (種類優先、集めるようにする)
           if (tile.suit === mahjongLogic.SUITS.JIHAI) {
-            const tileKey = mahjongLogic.getTileKey(tile);
-            const count = fullHand.filter(t => mahjongLogic.getTileKey(t) === tileKey).length;
-
-            // 対子や刻子になっている字牌は残す優先度が高い
-            if (count >= 2) {
-              score -= 50; // 対子や刻子は残す
-            }
+            // 以前の対子/刻子判定は汎用ロジックに統合されたため削除
+            // const tileKey = mahjongLogic.getTileKey(tile); // 既に上で定義済み
+            // const count = fullHand.filter(t => mahjongLogic.getTileKey(t) === tileKey).length; // 既に上で定義済み
+            // if (count >= 2) { score -= 50; } // 削除
 
             // 風牌か三元牌かを判定
             const isWindTile = tile.rank >= mahjongLogic.JIHAI_TYPES.TON && tile.rank <= mahjongLogic.JIHAI_TYPES.PEI;

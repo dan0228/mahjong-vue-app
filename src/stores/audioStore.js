@@ -84,30 +84,39 @@ export const useAudioStore = defineStore('audio', {
     },
     playSound(sound) {
       if (this.isSeEnabled) {
-        const audio = this.audioPlayers.get(`/assets/sounds/${sound}`);
-        if (audio) {
-          audio.currentTime = 0;
-          audio.volume = this.volume;
-          audio.play().catch(e => console.error("効果音の再生に失敗しました:", e));
-        } else {
-          console.warn(`Audio not preloaded: /assets/sounds/${sound}`);
-          // プリロードされていない場合、新しいAudioオブジェクトを作成して再生
-          const newAudio = new Audio(`/assets/sounds/${sound}`);
-          newAudio.volume = this.volume;
-          newAudio.play().catch(e => console.error("効果音の再生に失敗しました:", e));
+        let audio = this.audioPlayers.get(`/assets/sounds/${sound}`);
+        if (!audio) {
+          // プリロードされていない場合、新しいAudioオブジェクトを作成して保存
+          audio = new Audio(`/assets/sounds/${sound}`);
+          this.audioPlayers.set(`/assets/sounds/${sound}`, audio);
         }
+        audio.currentTime = 0;
+        audio.volume = this.volume;
+        audio.play().catch(e => console.error("効果音の再生に失敗しました:", e));
       }
     },
     handleVisibilityChange() {
-      const audio = this.currentBgm ? this.audioPlayers.get(`/assets/sounds/${this.currentBgm}`) : null;
-      if (audio) {
-        if (document.hidden) {
-          audio.pause();
-        } else {
-          if (this.isBgmEnabled) {
+      if (document.hidden) {
+        // ページが非表示になったらすべてのオーディオを一時停止
+        this.audioPlayers.forEach(audio => {
+          if (!audio.paused) {
+            audio.pause();
+          }
+        });
+      } else {
+        // ページが再び表示されたら、有効なオーディオを再生再開
+        this.audioPlayers.forEach((audio, url) => {
+          // BGMの場合
+          if (url.includes(this.currentBgm) && this.isBgmEnabled) {
             audio.play().catch(e => console.error("BGMの再生に失敗しました:", e));
           }
-        }
+          // SEの場合 (BGMと異なるURLで、かつSEが有効な場合)
+          else if (!url.includes(this.currentBgm) && this.isSeEnabled) {
+            // 効果音は通常ループしないため、再生中のものだけを再開
+            // ここでは、効果音は短いため、再開の必要はないと判断し、BGMのみを対象とする
+            // もし効果音も長時間再生されるものがある場合は、別途状態管理が必要
+          }
+        });
       }
     },
     

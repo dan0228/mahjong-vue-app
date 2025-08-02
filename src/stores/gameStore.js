@@ -1085,6 +1085,13 @@ export const useGameStore = defineStore('game', {
       if (this.gameMode === 'vsCPU' && playerId !== 'player1') {
         this.handleAiDiscard();
       }
+
+      // ポンアニメーションの状態を設定
+      this.animationState = { type: 'pon', playerId: playerId };
+      // 1秒後にアニメーションをリセット
+      setTimeout(() => {
+        this.animationState = { type: null, playerId: null };
+      }, 1000);
     },
     // 明カン宣言
     declareMinkan(playerId, targetPlayerId, tileToKan) {
@@ -1157,6 +1164,13 @@ export const useGameStore = defineStore('game', {
         console.warn("Cannot draw Rinshan tile, dead wall is empty.");
         this.gamePhase = GAME_PHASES.AWAITING_DISCARD; // 打牌は必要
       }
+
+      // カンアニメーションの状態を設定
+      this.animationState = { type: 'kan', playerId: playerId }; // 'kan' は新しいタイプ
+      // 1秒後にアニメーションをリセット
+      setTimeout(() => {
+        this.animationState = { type: null, playerId: null };
+      }, 1000);
     },
     // 暗カン宣言
     declareAnkan(playerId, tileToAnkan) {
@@ -1220,6 +1234,13 @@ export const useGameStore = defineStore('game', {
         console.warn("Cannot draw Rinshan tile, dead wall is empty.");
         this.gamePhase = GAME_PHASES.AWAITING_DISCARD;
       }
+
+      // カンアニメーションの状態を設定
+      this.animationState = { type: 'kan', playerId: playerId }; // 'kan' は新しいタイプ
+      // 1秒後にアニメーションをリセット
+      setTimeout(() => {
+        this.animationState = { type: null, playerId: null };
+      }, 1000);
     },
     // 加カン宣言
     declareKakan(playerId, tileToKakan) {
@@ -1286,6 +1307,13 @@ export const useGameStore = defineStore('game', {
       // そこで嶺上牌がツモられる
       this.gamePhase = GAME_PHASES.AWAITING_KAKAN_RESPONSE;
       this.setNextActiveResponder();
+
+      // カンアニメーションの状態を設定
+      this.animationState = { type: 'kan', playerId: playerId }; // 'kan' は新しいタイプ
+      // 1秒後にアニメーションをリセット
+      setTimeout(() => {
+        this.animationState = { type: null, playerId: null };
+      }, 1000);
     },
     
     // 加カン後、槍槓されなかった場合に嶺上牌をツモるアクション

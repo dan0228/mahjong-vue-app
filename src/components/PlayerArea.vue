@@ -141,6 +141,7 @@ function emitAction(actionType) {
 }
 
 function getMeldTileRotationClass(meld, tileIndex) {
+  
   // ポンと明槓以外は対象外
   if (meld.type !== 'pon' && meld.type !== 'minkan' && meld.type !== 'kakan') return '';
 
@@ -210,15 +211,20 @@ function getMeldTileRotationClass(meld, tileIndex) {
   }
 
   // tileIndexが回転対象のインデックスと一致すればクラスを返す
-  return tileIndex === rotatedTileIndex ? 'rotated-meld-tile' : '';
+  const resultClass = tileIndex === rotatedTileIndex ? 'rotated-meld-tile' : '';
+  
+  return resultClass;
 }
 
 function getMeldTileImage(meld, tile, tileIndex) {
+  
   // 暗槓の場合、真ん中の2枚を裏向きにする
   if (meld.type === 'ankan' && (tileIndex === 1 || tileIndex === 2)) {
     return getTileImageUrl(null); // tileUtilsのgetTileImageUrlはnullで裏向き画像を返す
   }
-  return getTileImageUrl(tile);
+  const imageUrl = getTileImageUrl(tile);
+  
+  return imageUrl;
 }
 
 function getMeldTileAlt(meld, tile, tileIndex) {

@@ -163,6 +163,7 @@ export const useGameStore = defineStore('game', {
         this.actionResponseQueue = [];
         this.isDoujunFuriTen[player.id] = false;
         this.isFuriTen[player.id] = false;
+        this.isTenpaiDisplay[player.id] = false;
         this.isDeclaringRiichi[player.id] = false; // リーチ宣言状態もリセット
         this.activeActionPlayerId = null;
         this.anyPlayerMeldInFirstRound = false; // 局開始時にリセット
@@ -708,9 +709,13 @@ export const useGameStore = defineStore('game', {
 
         const tenpaiStates = this.players.map(player => {
           const context = this.createGameContextForPlayer(player, false);
+          const tenpaiResult = mahjongLogic.checkYonhaiTenpai(player.hand, context);
+          // テンパイ状態をストアに保存
+          this.isTenpaiDisplay[player.id] = tenpaiResult.isTenpai;
+          console.log(`Player ${player.id} tenpai status: ${tenpaiResult.isTenpai}`); // 追加
           return {
             id: player.id,
-            isTenpai: mahjongLogic.checkYonhaiTenpai(player.hand, context).isTenpai,
+            isTenpai: tenpaiResult.isTenpai,
           };
         });
 
@@ -770,8 +775,11 @@ export const useGameStore = defineStore('game', {
         this.shouldAdvanceRound = true;
         this.nextDealerIndex = (this.dealerIndex + 1) % this.players.length;
       } finally {
-        this.stopRiichiBgm();
-        this.showResultPopup = true;
+        // 2秒後にリザルトポップアップを表示
+        setTimeout(() => {
+          this.stopRiichiBgm();
+          this.showResultPopup = true;
+        }, 2000); // 2秒の遅延
       }
     },
     prepareNextRound() {
@@ -1710,6 +1718,7 @@ export const useGameStore = defineStore('game', {
         this.actionResponseQueue = [];
         this.isDoujunFuriTen = {};
         this.isFuriTen = {};
+        this.isTenpaiDisplay = {};
         this.isDeclaringRiichi[p.id] = false;
         this.activeActionPlayerId = null;
       });

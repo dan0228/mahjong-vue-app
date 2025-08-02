@@ -33,6 +33,7 @@
       <div class="player-area-container bottom-player-container" v-if="playerAtBottom">
         <!-- フリテン表示 -->
         <img v-if="isMyPlayerInFuriTen" src="/assets/images/status/furiten.png" alt="フリテン" class="furiten-indicator bottom-furiten" />
+        <img v-if="gameStore.isTenpaiDisplay[playerAtBottom.id]" src="/assets/images/status/tenpai.png" alt="テンパイ" class="tenpai-indicator bottom-tenpai" />
         <PlayerArea :player="playerAtBottom" position="bottom" :is-my-hand="determineIsMyHand(playerAtBottom.id)" :drawn-tile-display="drawnTileForPlayer(playerAtBottom.id)" :can-discard="canPlayerDiscard(playerAtBottom.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
       </div>
 
@@ -41,6 +42,7 @@
         <div class="player-area-container left-player-container" v-if="playerAtLeft">
           <img :src="playerIcon(playerAtLeft)" alt="Left Player Icon" class="cat-icon cat-icon-left" />
           <img v-if="isLeftPlayerInFuriTen" src="/assets/images/status/furiten.png" alt="フリテン" class="furiten-indicator left-furiten" />
+          <img v-if="gameStore.isTenpaiDisplay[playerAtLeft.id]" src="/assets/images/status/tenpai.png" alt="テンパイ" class="tenpai-indicator left-tenpai" />
           <PlayerArea :player="playerAtLeft" position="left" :is-my-hand="determineIsMyHand(playerAtLeft.id)" :drawn-tile-display="drawnTileForPlayer(playerAtLeft.id)" :can-discard="canPlayerDiscard(playerAtLeft.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
         </div>
         <div class="center-table">
@@ -53,6 +55,7 @@
         <div class="player-area-container right-player-container" v-if="playerAtRight">
          <img :src="playerIcon(playerAtRight)" alt="Right Player Icon" class="cat-icon cat-icon-right" />
          <img v-if="isRightPlayerInFuriTen" src="/assets/images/status/furiten.png" alt="フリテン" class="furiten-indicator right-furiten" />
+         <img v-if="gameStore.isTenpaiDisplay[playerAtRight.id]" src="/assets/images/status/tenpai.png" alt="テンパイ" class="tenpai-indicator right-tenpai" />
          <PlayerArea :player="playerAtRight" position="right" :is-my-hand="determineIsMyHand(playerAtRight.id)" :drawn-tile-display="drawnTileForPlayer(playerAtRight.id)" :can-discard="canPlayerDiscard(playerAtRight.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
         </div>
       </div>
@@ -62,6 +65,7 @@
          <img :src="playerIcon(playerAtTop)" alt="Top Player Icon" class="cat-icon cat-icon-top" />
          <PlayerArea :player="playerAtTop" position="top" :is-my-hand="determineIsMyHand(playerAtTop.id)" :drawn-tile-display="drawnTileForPlayer(playerAtTop.id)" :can-discard="canPlayerDiscard(playerAtTop.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
          <img v-if="isTopPlayerInFuriTen" src="/assets/images/status/furiten.png" alt="フリテン" class="furiten-indicator top-furiten" />
+         <img v-if="gameStore.isTenpaiDisplay[playerAtTop.id]" src="/assets/images/status/tenpai.png" alt="テンパイ" class="tenpai-indicator top-tenpai" />
          <!-- 対面の捨て牌エリア (対面手牌のすぐ下) -->
          <div class="top-discard-container">
            <DiscardPile v-if="playerAtTop" :tiles="playerAtTop.discards" position="top" :riichi-discarded-tile-id="gameStore.riichiDiscardedTileId[playerAtTop.id]" class="discard-pile-top-player" />
@@ -255,12 +259,12 @@ const playerIcon = (player) => {
     if (gameMode.value === 'allManual') {
       return true; // 全操作モードでは全ての牌を表向きに
     }
+    // 流局フェーズで、かつテンパイ表示が有効なプレイヤーの手牌を表向きにする
+    if (gameStore.gamePhase === GAME_PHASES.ROUND_END && gameStore.isTenpaiDisplay[playerId]) {
+      return true;
+    }
     // CPU対戦モードやオンライン対戦モードの場合
     // 自分のプレイヤーIDと一致する場合のみ手牌を表示
-    // 注意: 自分の手牌は常に表示されるべきなので、この関数は「裏向きにするか」の判定に使う方が適切かもしれません。
-    // 例: 自分のプレイヤーIDと一致する場合のみtrue
-    // return gameStore.myActualPlayerId === playerId;
-    // この関数は、渡された playerId が myPlayerId と一致するかどうかを返す
     return myPlayerId.value === playerId;
   }
 
@@ -672,6 +676,14 @@ input:checked + .slider:before {
   pointer-events: none; /* 画像がクリックを妨げないように */
 }
 
+.tenpai-indicator {
+  position: absolute;
+  width: 100px; /* 画像サイズに合わせて調整 */
+  height: auto;
+  z-index: 40; /* 手牌や他のUIより手前に */
+  pointer-events: none; /* 画像がクリックを妨げないように */
+}
+
 .bottom-furiten {
   /* 手牌の前に表示されるように調整 */
   bottom: 120px; /* 手牌の高さや位置に応じて調整 */
@@ -679,11 +691,21 @@ input:checked + .slider:before {
   transform: translateX(-50%);
 }
 
+.bottom-tenpai {
+  bottom: 90px;
+  left: 58%;
+  transform: translateX(-50%);
+}
+
 .top-furiten {
   /* 対面プレイヤーの手牌の上あたり */
   top: 90px; /* 手牌の上からの距離 */
-  left: 50%;
-  transform: translateX(-50%) rotate(180deg); /* 180度回転 */
+  left: 25%;
+}
+
+.top-tenpai {
+  top: 90px;
+  left: 25%;
 }
 
 .left-furiten {
@@ -693,10 +715,22 @@ input:checked + .slider:before {
   transform: translateY(-50%) rotate(90deg); /* 90度回転 */
 }
 
+.left-tenpai {
+  top: 50%;
+  left: 10px;
+  transform: translateY(-50%) rotate(90deg); /* 90度回転 */
+}
+
 .right-furiten {
   /* 右プレイヤーの手牌の右あたり */
   top: 50%;
   right: 10px; /* 手牌の右からの距離 */
+  transform: translateY(-50%) rotate(-90deg); /* -90度回転 */
+}
+
+.right-tenpai {
+  top: 50%;
+  right: 10px;
   transform: translateY(-50%) rotate(-90deg); /* -90度回転 */
 }
 
@@ -762,7 +796,7 @@ input:checked + .slider:before {
 .bottom-player-container {
   /* 自分プレイヤーのエリア */
   flex-grow: 1;
-  max-height: 0px;
+  max-height: 0px; 
   justify-content: center; /* PlayerAreaを水平中央に配置 */
   align-items: flex-end; /* PlayerAreaをコンテナの下端に配置 */
   max-width: 400px; /* 自家エリアの最大幅 */

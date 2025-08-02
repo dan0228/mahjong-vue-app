@@ -1949,8 +1949,8 @@ export const useGameStore = defineStore('game', {
           }
 
           // 現在の最小スコアよりも小さい場合、その牌を最良の捨て牌とする
-          if (score < minScore) {
-            minScore = score;
+          if (score > maxScore) {
+            maxScore = score;
             bestTileToDiscard = tile;
           }
         }

@@ -372,8 +372,8 @@ export const useGameStore = defineStore('game', {
             if (this.gameMode === 'vsCPU' && currentPlayer.id !== 'player1') {
               let actionTaken = false;
 
-              // 1. リーチ可能なら70%の確率でリーチを試みる
-              if (this.playerActionEligibility[currentPlayer.id].canRiichi && Math.random() < 1) { //検証用
+              // 1. リーチ可能なら50%の確率でリーチを試みる
+              if (this.playerActionEligibility[currentPlayer.id].canRiichi && Math.random() < 0.5) {
                 // リーチ宣言を試みる (riichiDiscardOptionsが設定される)
                 // declareRiichiはgamePhaseをAWAITING_RIICHI_DISCARDに設定するので、
                 // その後すぐにdiscardTileを呼ぶ必要がある
@@ -2022,7 +2022,7 @@ export const useGameStore = defineStore('game', {
           const eligibility = this.playerActionEligibility[aiPlayerId];
 
           // 1. ロン可能かチェック (最優先)
-          if (eligibility?.canRon && Math.random() < 0) { //検証用
+          if (eligibility?.canRon && Math.random() < 1) {
             this.playerDeclaresCall(aiPlayerId, 'ron', null);
             return;
           }
@@ -2034,7 +2034,7 @@ export const useGameStore = defineStore('game', {
           }
 
           // 3. ポン可能かチェック (50%の確率で実施)
-          if (eligibility?.canPon && Math.random() < 0) { //検証用
+          if (eligibility?.canPon && Math.random() < 5.0) {
             this.playerDeclaresCall(aiPlayerId, 'pon', eligibility.canPon);
             return;
           }

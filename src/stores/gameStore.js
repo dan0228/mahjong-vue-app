@@ -291,14 +291,27 @@ export const useGameStore = defineStore('game', {
             this.playerActionEligibility[currentPlayer.id].canMinkan = null; // リーチ中は明槓不可
             this.playerActionEligibility[currentPlayer.id].canKakan = null; // リーチ中は加槓不可
 
-            // ツモ和了も暗槓もできなければ、自動でツモ切り
-            if (!this.playerActionEligibility[currentPlayer.id].canTsumoAgari && !this.playerActionEligibility[currentPlayer.id].canAnkan) {
-              setTimeout(() => {
-                // タイムアウト後もまだ自分のターンで、ツモ牌が残っているか確認
-                if (this.currentTurnPlayerId === currentPlayer.id && this.drawnTile) {
-                  this.discardTile(currentPlayer.id, this.drawnTile.id, true);
-                }
-              }, 500); // 0.5秒後に自動打牌
+            // AIプレイヤーの行動決定
+            if (this.gameMode === 'vsCPU' && currentPlayer.id !== 'player1') {
+              // 1. ツモ和了可能なら、100%和了する
+              if (this.playerActionEligibility[currentPlayer.id].canTsumoAgari) {
+                setTimeout(() => {
+                  // タイムアウト後もまだ自分のターンで、和了可能か再確認
+                  if (this.currentTurnPlayerId === currentPlayer.id && this.playerActionEligibility[currentPlayer.id].canTsumoAgari) {
+                    this.handleAgari(currentPlayer.id, this.drawnTile, true);
+                  }
+                }, 500); // 0.5秒後に和了
+              }
+              // 2. TODO: リーチ後の暗槓ロジック (今回は見送り)
+              // 3. 和了できない場合は、自動でツモ切り
+              else {
+                setTimeout(() => {
+                  // タイムアウト後もまだ自分のターンで、ツモ牌が残っているか確認
+                  if (this.currentTurnPlayerId === currentPlayer.id && this.drawnTile) {
+                    this.discardTile(currentPlayer.id, this.drawnTile.id, true);
+                  }
+                }, 500); // 0.5秒後に自動打牌
+              }
             }
           } else { // リーチ中でない場合
             // 通常のツモ処理
@@ -1867,26 +1880,25 @@ export const useGameStore = defineStore('game', {
       const aiPlayerId = this.currentTurnPlayerId;
       const player = this.players.find(p => p.id === aiPlayerId);
 
-      // プレイヤーが 'player1' (人間) の場合は何もしない
       if (!player || player.id === 'player1') {
         return;
       }
 
-
       // 0.5秒後に思考・実行
       setTimeout(() => {
-        // ツモ和了可能かチェック
-        if (this.playerActionEligibility[aiPlayerId]?.canTsumoAgari) {
+        // ツモ和了可能かチェック (ツモ牌がある場合のみ)
+        if (this.drawnTile && this.playerActionEligibility[aiPlayerId]?.canTsumoAgari) {
           this.handleAgari(aiPlayerId, this.drawnTile, true);
           return; // 和了したので打牌はしない
         }
 
-        // ツモ牌がない場合は打牌できない（ありえないはずだが念のため）
-        if (!this.drawnTile) return;
-
-        // AIの手牌とツモ牌を結合
-        // 鳴き後の打牌の場合、this.drawnTile は null の可能性がある
+        // AIの手牌とツモ牌を結合 (鳴いた直後でdrawnTileがnullの場合も考慮)
         const fullHand = this.drawnTile ? [...player.hand, this.drawnTile] : [...player.hand];
+
+        if (fullHand.length === 0) {
+          console.error(`AI ${aiPlayerId} has no tiles to discard.`);
+          return;
+        }
 
         let bestTileToDiscard = null;
         let maxScore = -Infinity;
@@ -1898,88 +1910,71 @@ export const useGameStore = defineStore('game', {
 
           // 対子や刻子は残す優先度が高い
           if (tileCountInHand >= 2) {
-            score -= 100; // 対子を強く残す
+            score -= 100;
           }
           if (tileCountInHand >= 3) {
-            score -= 150; // 刻子をさらに強く残す
+            score -= 150;
           }
 
-          // 1. 字牌の評価 (種類優先、集めるようにする)
           if (tile.suit === mahjongLogic.SUITS.JIHAI) {
-            // 以前の対子/刻子判定は汎用ロジックに統合されたため削除
-            // const tileKey = mahjongLogic.getTileKey(tile); // 既に上で定義済み
-            // const count = fullHand.filter(t => mahjongLogic.getTileKey(t) === tileKey).length; // 既に上で定義済み
-            // if (count >= 2) { score -= 50; } // 削除
-
-            // 風牌か三元牌かを判定
             const isWindTile = tile.rank >= mahjongLogic.JIHAI_TYPES.TON && tile.rank <= mahjongLogic.JIHAI_TYPES.PEI;
             const isSangenTile = tile.rank >= mahjongLogic.JIHAI_TYPES.HAKU && tile.rank <= mahjongLogic.JIHAI_TYPES.CHUN;
 
             if (isWindTile) {
-              // 手牌内の他の風牌の数をカウント
               const otherWindTiles = fullHand.filter(t => t.suit === mahjongLogic.SUITS.JIHAI && t.rank >= mahjongLogic.JIHAI_TYPES.TON && t.rank <= mahjongLogic.JIHAI_TYPES.PEI && mahjongLogic.getTileKey(t) !== tileKey);
               if (otherWindTiles.length === 0) {
-                score += 80; // 他の風牌が全くない孤立した風牌は捨てる優先度が高い
-              } else { // 他の風牌が1枚以上ある場合
-                score -= 20; // 残す優先度を上げる
+                score += 80;
+              } else {
+                score -= 20;
               }
             } else if (isSangenTile) {
-              // 手牌内の他の三元牌の数をカウント
               const otherSangenTiles = fullHand.filter(t => t.suit === mahjongLogic.SUITS.JIHAI && t.rank >= mahjongLogic.JIHAI_TYPES.HAKU && t.rank <= mahjongLogic.JIHAI_TYPES.CHUN && mahjongLogic.getTileKey(t) !== tileKey);
               if (otherSangenTiles.length === 0) {
-                score += 80; // 他の三元牌が全くない孤立した三元牌は捨てる優先度が高い
-              } else { // 他の三元牌が1枚以上ある場合
-                score -= 20; // 残す優先度を上げる
+                score += 80;
+              } else {
+                score -= 20;
               }
             } else {
-              // その他の字牌（ありえないはずだが念のため）
               score += 100;
             }
-
-          } else { // 数牌の場合
+          } else { // 数牌
             const suitTiles = fullHand.filter(t => t.suit === tile.suit);
             const rank = tile.rank;
 
-            // 2. 同じ種類の牌の枚数を評価 (種類優先) - 変更なし
             if (suitTiles.length <= 2) {
               score += 80;
             } else if (suitTiles.length <= 4) {
               score += 40;
             }
 
-            // 3. 数字の近さを評価 (プラスマイナス2以内)
             let connections = 0;
             for (let i = -2; i <= 2; i++) {
-              if (i === 0) continue; // 自分自身はカウントしない
+              if (i === 0) continue;
               if (suitTiles.some(t => t.rank === rank + i)) {
                 connections++;
               }
             }
-            score -= (connections * 10); // 繋がりが多いほどスコアを減らす（残す優先度を上げる）
+            score -= (connections * 10);
 
-            // 特に孤立している端牌の評価を上げる
             if (rank === 1 && !suitTiles.some(t => t.rank === 2 || t.rank === 3)) {
               score += 25;
             }
             if (rank === 9 && !suitTiles.some(t => t.rank === 7 || t.rank === 8)) {
               score += 25;
             }
-            // 孤立した中張牌 (例: 4, 6) - 周囲2枚以内に繋がりがない場合
             if (rank > 1 && rank < 9 && connections === 0) {
                 score += 30;
             }
           }
 
-          // 現在の最小スコアよりも小さい場合、その牌を最良の捨て牌とする
           if (score > maxScore) {
             maxScore = score;
             bestTileToDiscard = tile;
           }
         }
 
-        // 最良の捨て牌が見つからなかった場合（ありえないはずだが念のため）、ランダムに選択
         const tileToDiscard = bestTileToDiscard || fullHand[Math.floor(Math.random() * fullHand.length)];
-        const isFromDrawnTile = tileToDiscard.id === this.drawnTile.id;
+        const isFromDrawnTile = this.drawnTile ? tileToDiscard.id === this.drawnTile.id : false;
 
         this.discardTile(aiPlayerId, tileToDiscard.id, isFromDrawnTile);
       }, 500);

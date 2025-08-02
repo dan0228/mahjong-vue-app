@@ -1761,7 +1761,7 @@ export const useGameStore = defineStore('game', {
           if (!eligibility.canTsumoAgari && !eligibility.canAnkan && !eligibility.canKakan) {
             // handleAiDiscard と同じロジックで最適な牌を選択
             let bestTileToDiscard = null;
-            let minScore = Infinity;
+            let maxScore = -Infinity;
             const currentFullHand = [...player.hand, this.drawnTile];
 
             for (const tile of currentFullHand) {
@@ -1874,7 +1874,7 @@ export const useGameStore = defineStore('game', {
         const fullHand = this.drawnTile ? [...player.hand, this.drawnTile] : [...player.hand];
 
         let bestTileToDiscard = null;
-        let minScore = Infinity;
+        let maxScore = -Infinity;
 
         for (const tile of fullHand) {
           let score = 0;

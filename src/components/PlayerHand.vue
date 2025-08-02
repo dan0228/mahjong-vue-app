@@ -10,7 +10,7 @@
           :class="getTileClasses(tile, false)"
           @click="selectTile(tile, false)"
         >
-          <img :src="getTileImageUrl(isMyHand ? tile : null)" :alt="isMyHand ? tileToString(tile) : '裏向きの牌'" />
+          <img :src="getTileImageUrl(isMyHand || (gameStore.gameMode === 'vsCPU' && props.player.id !== 'player1') ? tile : null)" :alt="(isMyHand || (gameStore.gameMode === 'vsCPU' && props.player.id !== 'player1')) ? tileToString(tile) : '裏向きの牌'" />
         </div>
       </div>
       <div v-if="drawnTileDisplay" class="drawn-tile-area player-hand">
@@ -18,7 +18,7 @@
           :class="getTileClasses(drawnTileDisplay, true)"
           @click="selectTile(drawnTileDisplay, true)"
         >
-          <img :src="getTileImageUrl(isMyHand ? drawnTileDisplay : null)" :alt="isMyHand ? tileToString(drawnTileDisplay) : '裏向きの牌'" />
+          <img :src="getTileImageUrl(isMyHand || (gameStore.gameMode === 'vsCPU' && props.player.id !== 'player1') ? drawnTileDisplay : null)" :alt="(isMyHand || (gameStore.gameMode === 'vsCPU' && props.player.id !== 'player1')) ? tileToString(drawnTileDisplay) : '裏向きの牌'" />
         </div>
       </div>
     </div>

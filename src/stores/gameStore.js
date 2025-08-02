@@ -296,8 +296,12 @@ export const useGameStore = defineStore('game', {
             const tsumoWinResult = mahjongLogic.checkYonhaiWin([...currentPlayer.hand, this.drawnTile], this.drawnTile, true, gameContextForTsumo);
             this.playerActionEligibility[currentPlayer.id].canTsumoAgari = tsumoWinResult.isWin;
 
-            // ツモ和了できない場合、自動でツモ切り
-            if (!this.playerActionEligibility[currentPlayer.id].canTsumoAgari) {
+            // ツモ和了可能な場合
+            if (this.playerActionEligibility[currentPlayer.id].canTsumoAgari) {
+                // ツモ和了処理を直接呼び出す
+                this.handleAgari(currentPlayer.id, this.drawnTile, true);
+            } else {
+                // ツモ和了できない場合、自動でツモ切り
                 setTimeout(() => {
                     // タイムアウト後もまだ自分のターンで、ツモ牌が残っているか確認
                     if (this.currentTurnPlayerId === currentPlayer.id && this.drawnTile) {
@@ -307,24 +311,14 @@ export const useGameStore = defineStore('game', {
             }
             // AIプレイヤーの行動決定 (既存のAIロジックはそのまま残す)
             if (this.gameMode === 'vsCPU' && currentPlayer.id !== 'player1') {
-              // 1. ツモ和了可能なら、100%和了する
+              // 1. ツモ和了可能なら、100%和了する (このブロックは上記の if/else でカバーされるため、実質不要になるが、念のため残す)
               if (this.playerActionEligibility[currentPlayer.id].canTsumoAgari) {
-                setTimeout(() => {
-                  // タイムアウト後もまだ自分のターンで、和了可能か再確認
-                  if (this.currentTurnPlayerId === currentPlayer.id && this.playerActionEligibility[currentPlayer.id].canTsumoAgari) {
-                    this.handleAgari(currentPlayer.id, this.drawnTile, true);
-                  }
-                }, 500); // 0.5秒後に和了
+                // handleAgari は既に呼び出されているので、ここでは何もしない
               }
               // 2. TODO: リーチ後の暗槓ロジック (今回は見送り)
-              // 3. 和了できない場合は、自動でツモ切り
+              // 3. 和了できない場合は、自動でツモ切り (これも上記の if/else でカバーされる)
               else {
-                setTimeout(() => {
-                  // タイムアウト後もまだ自分のターンで、ツモ牌が残っているか確認
-                  if (this.currentTurnPlayerId === currentPlayer.id && this.drawnTile) {
-                    this.discardTile(currentPlayer.id, this.drawnTile.id, true);
-                  }
-                }, 500); // 0.5秒後に自動打牌
+                // discardTile は既に呼び出されているので、ここでは何もしない
               }
             }
           } else { // リーチ中でない場合

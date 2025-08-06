@@ -1424,7 +1424,8 @@ export function checkYonhaiWin(currentHandWithWinTile, winTile, isTsumo, gameCon
             yakumanPower: 0,
             scoreName: "役なしチョンボ",
             isChombo: true, // チョンボであることを示すフラグ
-            chomboPlayerIsParent: isParent // チョンボしたのが親かどうかのフラグ
+            chomboPlayerIsParent: isParent, // チョンボしたのが親かどうかのフラグ
+            chomboHand: currentHandWithWinTile
         };
     }
 

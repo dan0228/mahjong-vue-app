@@ -10,7 +10,7 @@
         <img v-if="winnerIconSrc" :src="winnerIconSrc" alt="Winner Icon" class="winner-icon" />
         <h2>{{ resultTitle }}</h2>
       </div>
-      <div v-if="!isDrawResult" class="result-section round-info-details"> <!-- 和了時のみ表示 -->
+      <div v-if="!isDrawResult && !isChomboResult" class="result-section round-info-details"> <!-- 和了時のみ表示 -->
         <div class="dora-display">
           <span class="dora-label">ドラ</span>
           <div class="dora-tiles">
@@ -36,7 +36,7 @@
         </div>
       </div>
 
-      <div v-if="!isDrawResult" class="result-section winning-hand-info"> <!-- 和了時のみ表示 -->
+      <div v-if="!isDrawResult && !isChomboResult" class="result-section winning-hand-info"> <!-- 和了時のみ表示 -->
         <h3>和了手牌</h3>
         <div class="hand-display">
           <!-- 元々持っていた4牌 -->
@@ -58,7 +58,16 @@
         </div>
       </div>
 
-      <div v-if="!isDrawResult" class="result-section yaku-info"> <!-- 和了時のみ表示 -->
+      <div v-if="isChomboResult" class="result-section winning-hand-info"> <!-- チョンボ時のみ表示 -->
+        <h3>対象者の手牌</h3>
+        <div class="hand-display">
+          <span v-for="(tile, index) in resultDetails.winningHand" :key="'chombo-hand-' + tile.id + '-' + index" class="tile-image-medium">
+            <img :src="getTileImageUrl(tile)" :alt="tileToString(tile)" />
+          </span>
+        </div>
+      </div>
+
+      <div v-if="!isDrawResult && !isChomboResult" class="result-section yaku-info"> <!-- 和了時のみ表示 -->
         <h3>成立役</h3>
         <ul>
           <li v-for="(yaku, index) in resultDetails.yakuList" :key="index">
@@ -136,9 +145,13 @@ function proceedToNext() {
 const isDrawResult = computed(() => {
   return props.resultDetails?.isDraw;
 });
+
+const isChomboResult = computed(() => {
+  return props.resultDetails?.isChombo;
+});
 const resultTitle = computed(() => {
   // 1. チョンボの場合
-  if (props.resultDetails.isChombo && props.resultDetails.chomboPlayerId) {
+  if (isChomboResult.value && props.resultDetails.chomboPlayerId) {
     const chomboPlayer = gameStore.getPlayerById(props.resultDetails.chomboPlayerId);
     if (chomboPlayer) return `${chomboPlayer.name} のチョンボ`;
   }

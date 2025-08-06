@@ -1457,7 +1457,7 @@ export const useGameStore = defineStore('game', {
             honba: this.honba,
             doraIndicators: [...this.doraIndicators],
             uraDoraIndicators: [],
-            winningHand: [],
+            winningHand: winResult.chomboHand || [],
             agariTile: null,
             yakuList: [{ name: "役なしチョンボ", fans: 0 }],
             totalFans: 0,

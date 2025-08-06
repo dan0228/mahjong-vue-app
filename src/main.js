@@ -4,6 +4,9 @@ import App from './App.vue'
 import router from './router'
 import { useGameStore, GAME_PHASES } from './stores/gameStore';
 import './styles/main.css'
+import { inject } from '@vercel/analytics';
+
+inject();
 
 const app = createApp(App)
 const pinia = createPinia();

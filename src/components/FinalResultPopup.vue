@@ -11,8 +11,8 @@
             <span class="score">{{ player.score }}点</span>
           </div>
         </div>
-        <p class="consecutive-wins" v-if="gameStore.gameMode !== 'allManual'">
-          {{ finalResultDetails.consecutiveWins }} 連勝中！
+        <p class="consecutive-wins" v-if="gameStore.gameMode !== 'allManual' && winsToDisplay > 0">
+          {{ winsMessage }}
         </p>
         <div class="coin-gain" v-if="gameStore.lastCoinGain !== 0">
           <img src="/assets/images/info/cat_coin.png" alt="Cat Coin" class="cat-coin-icon">
@@ -73,6 +73,27 @@ const props = defineProps({
 const emit = defineEmits(['start-new-game', 'back-to-title']);
 const gameStore = useGameStore();
 
+// 連勝数表示用の算出プロパティ
+const winsToDisplay = computed(() => {
+  // 現在の連勝数が0で、直前の連勝数が1以上の場合、直前の連勝数を表示
+  if (props.finalResultDetails.consecutiveWins === 0 && gameStore.previousConsecutiveWins > 0) {
+    return gameStore.previousConsecutiveWins;
+  }
+  // それ以外の場合は現在の連勝数を表示
+  return props.finalResultDetails.consecutiveWins;
+});
+
+// 連勝メッセージ用の算出プロパティ
+const winsMessage = computed(() => {
+  const wins = winsToDisplay.value;
+  // 現在の連勝数が0で、直前の連勝数が1以上の場合、「連勝！」
+  if (props.finalResultDetails.consecutiveWins === 0 && gameStore.previousConsecutiveWins > 0) {
+    return `${wins}連勝！`;
+  }
+  // それ以外（連勝中）の場合、「連勝中！」
+  return `${wins}連勝中！`;
+});
+
 const formattedTimestamp = computed(() => {
   const now = new Date();
   const year = now.getFullYear();
@@ -101,8 +122,8 @@ function getPlayerIcon(playerId) {
 }
 
 function postToX() {
-  const consecutiveWins = props.finalResultDetails.consecutiveWins;
-  let tweetText = `よんじゃんで${consecutiveWins}連勝達成！
+  const wins = winsToDisplay.value;
+  let tweetText = `よんじゃんで${wins}連勝達成！
 
 `;
   tweetText += `#よんじゃん #よんじゃん連勝数`;
@@ -112,8 +133,8 @@ function postToX() {
 }
 
 function postToInstagram() {
-  const consecutiveWins = props.finalResultDetails.consecutiveWins;
-  const caption = `よんじゃんで${consecutiveWins}連勝達成！
+  const wins = winsToDisplay.value;
+  const caption = `よんじゃんで${wins}連勝達成！
 
 #よんじゃん #よんじゃん連勝数`;
   navigator.clipboard.writeText(caption).then(() => {

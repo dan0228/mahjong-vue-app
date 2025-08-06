@@ -119,6 +119,7 @@ export const useGameStore = defineStore('game', {
     },
     riichiDiscardedTileId: {}, // { [playerId: string]: string | null } リーチ宣言牌のIDを保持
     maxConsecutiveWins: parseInt(localStorage.getItem('mahjongMaxConsecutiveWins') || '0'), // ローカルストレージから最大連勝数を読み込み
+    previousConsecutiveWins: 0, // 連勝が途切れる直前の連勝数
     showDealerDeterminationPopup: false, // 親決め結果ポップアップの表示フラグ
     dealerDeterminationResult: { // 親決め結果の詳細情報
       players: [], // { id, name, seatWind, isDealer } の配列
@@ -1636,9 +1637,18 @@ export const useGameStore = defineStore('game', {
       if (this.gameMode !== 'allManual') {
         // ユーザープレイヤー ('player1') が1位か判定し、連勝数を更新
         const myPlayerRank = rankedPlayers.find(p => p.id === 'player1')?.rank;
+        const currentWins = this.finalResultDetails.consecutiveWins;
+
         if (myPlayerRank === 1) {
           this.finalResultDetails.consecutiveWins++; // 1位なら連勝数をインクリメント
+          this.previousConsecutiveWins = 0; // 連勝が継続しているのでリセット
         } else {
+          // 1位でなく、かつ現在の連勝数が1以上の場合、その数を記録
+          if (currentWins > 0) {
+            this.previousConsecutiveWins = currentWins;
+          } else {
+            this.previousConsecutiveWins = 0;
+          }
           this.finalResultDetails.consecutiveWins = 0; // 1位でなければ連勝数をリセット
         }
         // 最大連勝数を更新
@@ -1695,6 +1705,7 @@ export const useGameStore = defineStore('game', {
         rankedPlayers: [],
         consecutiveWins: wins,
       };
+      this.previousConsecutiveWins = 0; // 新しいセッションではリセット
       this.currentRound = { wind: 'east', number: 1 };
       this.honba = 0;
       this.riichiSticks = 0;
@@ -1798,7 +1809,6 @@ export const useGameStore = defineStore('game', {
         } else if (myRank === 3) {
           gain = -Math.floor(player1.score / 400);
         } else if (myRank === 4) {
-          } else if (myRank === 4) {
           if (player1.score < 0) {
             gain = -300;
           } else {

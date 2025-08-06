@@ -9,19 +9,31 @@ const routes = [
     path: '/',
     name: 'Title',
     component: TitleView,
-    meta: { bgm: 'NES-JP-A01-2(Title-Loop115).mp3' },
+    meta: {
+      title: 'よんじゃん！ - 猫と一緒に楽しむ麻雀ゲーム',
+      description: 'かわいい猫たちとオンラインで楽しめる麻雀ゲーム。初心者から上級者まで、いつでもどこでも手軽にプレイ！',
+      bgm: 'NES-JP-A01-2(Title-Loop115).mp3'
+    },
   },
   {
     path: '/game',
     name: 'Game',
     component: GameView,
-    meta: { bgm: 'NES-JP-A03-2(Stage2-Loop140).mp3' },
+    meta: {
+      title: '対局画面 | よんじゃん！',
+      description: '猫たちとの麻雀対局が楽しめるプレイ画面です。',
+      bgm: 'NES-JP-A03-2(Stage2-Loop140).mp3'
+    },
   },
   {
     path: '/shrine',
     name: 'JannekoShrine',
     component: JannekoShrineView,
-    meta: { bgm: 'GB-JP-A02-2(Menu-Loop105).mp3' },
+    meta: {
+      title: 'じゃんねこ神社 | よんじゃん！',
+      description: 'ゲームで集めた「にゃんこコイン」を使って、たくさんのお告げを集めよう！',
+      bgm: 'GB-JP-A02-2(Menu-Loop105).mp3'
+    },
   },
 ];
 
@@ -29,6 +41,21 @@ const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),
   routes,
 });
+
+// SEO: メタタグを更新するためのデフォルト値
+const DEFAULT_TITLE = 'よんじゃん！';
+
+router.afterEach((to) => {
+  // タイトルを更新
+  document.title = to.meta.title || DEFAULT_TITLE;
+
+  // descriptionを更新
+  const description = document.querySelector('meta[name="description"]');
+  if (description) {
+    description.setAttribute('content', to.meta.description || '');
+  }
+});
+
 
 let hasInteracted = false;
 

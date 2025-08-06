@@ -1,7 +1,7 @@
 # よんじゃん！ - 猫と一緒に楽しむ新感覚麻雀ゲーム
 
 <p align="center">
-  <img src="https://mahjong-vue-app.vercel.app/assets/info/cat_icon_2.png" alt="よんじゃん！ゲーム画面のスクリーンショット" width="600">
+  <img src="https://mahjong-vue-app.vercel.app/assets/images/info/cat_icon_2.png" alt="よんじゃん！ゲーム画面のスクリーンショット" width="600">
 </p>
 
 <p align="center">

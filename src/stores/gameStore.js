@@ -148,6 +148,15 @@ export const useGameStore = defineStore('game', {
       }
     },
     initializeGame() {
+      // ゲーム初回開始時にプレイヤーの順番をランダム化
+      if (this.dealerIndex === null) {
+        // Fisher-Yates shuffle
+        for (let i = this.players.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [this.players[i], this.players[j]] = [this.players[j], this.players[i]];
+        }
+      }
+
       this.turnCount = 0; // 局開始時に総ターン数をリセット
       this.players.forEach(player => {
         this.playerTurnCount[player.id] = 0; // 各プレイヤーのターン数もリセット

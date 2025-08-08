@@ -40,7 +40,7 @@
       <!-- 中央エリア (左右プレイヤーと中央テーブル) -->
       <div class="middle-row">
         <div class="player-area-container left-player-container" v-if="playerAtLeft">
-          <img :src="playerIcon(playerAtLeft)" alt="Left Player Icon" class="cat-icon cat-icon-left" />
+          <img :src="playerIcon(playerAtLeft)" alt="Left Player Icon" :class="{'cat-icon-left-flipped': isKuroAtLeft}" class="cat-icon cat-icon-left" />
           <img v-if="isLeftPlayerInFuriTen" src="/assets/images/status/furiten.png" alt="フリテン" class="furiten-indicator left-furiten" />
           <img v-if="gameStore.isTenpaiDisplay[playerAtLeft.id]" src="/assets/images/status/tenpai.png" alt="テンパイ" class="tenpai-indicator left-tenpai" />
           <PlayerArea :player="playerAtLeft" position="left" :is-my-hand="determineIsMyHand(playerAtLeft.id)" :drawn-tile-display="drawnTileForPlayer(playerAtLeft.id)" :can-discard="canPlayerDiscard(playerAtLeft.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
@@ -53,7 +53,7 @@
           </div>
         </div>
         <div class="player-area-container right-player-container" v-if="playerAtRight">
-         <img :src="playerIcon(playerAtRight)" alt="Right Player Icon" class="cat-icon cat-icon-right" />
+         <img :src="playerIcon(playerAtRight)" alt="Right Player Icon" :class="{'cat-icon-right-flipped': isToraAtRight}" class="cat-icon cat-icon-right" />
          <img v-if="isRightPlayerInFuriTen" src="/assets/images/status/furiten.png" alt="フリテン" class="furiten-indicator right-furiten" />
          <img v-if="gameStore.isTenpaiDisplay[playerAtRight.id]" src="/assets/images/status/tenpai.png" alt="テンパイ" class="tenpai-indicator right-tenpai" />
          <PlayerArea :player="playerAtRight" position="right" :is-my-hand="determineIsMyHand(playerAtRight.id)" :drawn-tile-display="drawnTileForPlayer(playerAtRight.id)" :can-discard="canPlayerDiscard(playerAtRight.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
@@ -220,6 +220,14 @@ const playerIcon = (player) => {
   const playerAtRight = computed(() => orderedPlayersForDisplay.value[1]);
   const playerAtTop = computed(() => orderedPlayersForDisplay.value[2]);
   const playerAtLeft = computed(() => orderedPlayersForDisplay.value[3]);
+
+  const isKuroAtLeft = computed(() => {
+    return playerAtLeft.value && playerAtLeft.value.id === 'player2';
+  });
+
+  const isToraAtRight = computed(() => {
+    return playerAtRight.value && playerAtRight.value.id === 'player4';
+  });
   const dealerInfo = computed(() => {
     if (gameStore.dealerIndex !== null && gameStore.players[gameStore.dealerIndex]) {
       const dealer = gameStore.players[gameStore.dealerIndex];
@@ -740,6 +748,10 @@ input:checked + .slider:before {
   transform: translate(-50%, -50%);
 }
 
+.cat-icon-left-flipped {
+  transform: translate(-50%, -50%) scaleX(-1);
+}
+
 .cat-icon-top {
   top: -35px;
   left: 50%;
@@ -750,6 +762,10 @@ input:checked + .slider:before {
   top: -70px;
   right: -40px;
   transform: translate(-50%, -50%);
+}
+
+.cat-icon-right-flipped {
+  transform: translate(-50%, -50%) scaleX(-1);
 }
 
 .player-area-container {

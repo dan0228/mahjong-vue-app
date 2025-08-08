@@ -195,11 +195,15 @@ const winnerIconSrc = computed(() => {
 
   if (!targetPlayerId) return null;
 
+  const player = gameStore.players.find(p => p.id === targetPlayerId);
+  if (!player) return null;
+
   // player1 (あなた) の場合は hito_icon_1.png を表示
-  if (targetPlayerId === 'player1') return '/assets/images/info/hito_icon_1.png'; // あなた
-  if (targetPlayerId === 'player2') return '/assets/images/info/cat_icon_3.png'; // くろ
-  if (targetPlayerId === 'player3') return '/assets/images/info/cat_icon_2.png'; // たま
-  if (targetPlayerId === 'player4') return '/assets/images/info/cat_icon_1.png'; // とら
+  if (player.id === 'player1') return '/assets/images/info/hito_icon_1.png'; // あなた
+  if (player.originalId === 'kuro') return '/assets/images/info/cat_icon_3.png'; // くろ
+  if (player.originalId === 'tama') return '/assets/images/info/cat_icon_2.png'; // たま
+  if (player.originalId === 'tora') return '/assets/images/info/cat_icon_1.png'; // とら
+  if (player.originalId === 'janneko') return '/assets/images/info/cat_icon_4.png'; // 雀猫様
 
   return null;
 });

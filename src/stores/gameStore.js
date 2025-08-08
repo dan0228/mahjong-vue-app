@@ -4,6 +4,14 @@ import { useAudioStore } from './audioStore';
 import { defineStore } from 'pinia';
 import * as mahjongLogic from '@/services/mahjongLogic';
 
+// AIプレイヤーの候補リスト
+const allAiPlayers = [
+  { name: 'くろ　', originalId: 'kuro' },
+  { name: 'たま　', originalId: 'tama' },
+  { name: 'とら　', originalId: 'tora' },
+  { name: '雀猫様', originalId: 'janneko' }
+];
+
 export const GAME_PHASES = {
   WAITING_TO_START: 'waitingToStart',
   PLAYER_TURN: 'playerTurn', // ツモ待ち
@@ -39,9 +47,6 @@ export const useGameStore = defineStore('game', {
   state: () => ({
     players: [
       { id: 'player1', name: 'あなた', hand: [], discards: [], melds: [], isDealer: false, score: 25000, seatWind: null },
-      { id: 'player2', name: 'くろ　', hand: [], discards: [], melds: [], isDealer: false, score: 25000, seatWind: null },
-      { id: 'player3', name: 'たま　', hand: [], discards: [], melds: [], isDealer: false, score: 25000, seatWind: null },
-      { id: 'player4', name: 'とら　', hand: [], discards: [], melds: [], isDealer: false, score: 25000, seatWind: null }
     ],
     wall: [], // 山牌
     deadWall: [], // 王牌 (嶺上牌、ドラ表示牌など)
@@ -150,6 +155,26 @@ export const useGameStore = defineStore('game', {
     initializeGame() {
       // ゲーム初回開始時にプレイヤーの順番をランダム化
       if (this.dealerIndex === null) {
+        // AIプレイヤーをランダムに3人選ぶ
+        const shuffledAis = [...allAiPlayers].sort(() => 0.5 - Math.random());
+        const selectedAis = shuffledAis.slice(0, 3).map((ai, index) => ({
+          id: `player${index + 2}`, // player2, player3, player4
+          name: ai.name,
+          originalId: ai.originalId, // アイコン判別用に元のIDを保持
+          hand: [],
+          discards: [],
+          melds: [],
+          isDealer: false,
+          score: 25000,
+          seatWind: null
+        }));
+
+        // 人間プレイヤーと選択されたAIプレイヤーを結合
+        this.players = [
+          this.players[0], // 既存の人間プレイヤー
+          ...selectedAis
+        ];
+
         // Fisher-Yates shuffle
         for (let i = this.players.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
@@ -253,6 +278,7 @@ export const useGameStore = defineStore('game', {
         seatWind: p.seatWind,
         isDealer: p.isDealer,
         score: 25000, // 初期点数
+        originalId: p.originalId, // アイコン表示用に元のIDを渡す
       }));
 
       
@@ -1685,6 +1711,9 @@ export const useGameStore = defineStore('game', {
     // 新しいゲームセッションのために状態をリセットするアクション
     resetGameForNewSession(options = { keepStreak: false }) {
       const wins = options.keepStreak ? this.finalResultDetails.consecutiveWins : 0;
+
+      // 人間プレイヤーのみ残し、AIプレイヤーを削除
+      this.players = [this.players.find(p => p.id === 'player1')];
 
       this.players.forEach(player => {
         player.hand = [];

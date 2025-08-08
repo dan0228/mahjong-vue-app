@@ -7,7 +7,7 @@
           <div v-for="player in dealerDeterminationResults" :key="player.id" class="player-item">
             <span class="seat-wind">{{ player.seatWind }}</span>
             <span class="player-name">{{ player.name }}</span>
-            <img v-if="getPlayerIcon(player.id)" :src="getPlayerIcon(player.id)" alt="Player Icon" class="player-icon" />
+            <img v-if="getPlayerIcon(player)" :src="getPlayerIcon(player)" alt="Player Icon" class="player-icon" />
             <span class="score">{{ player.score }}点</span>
           </div>
         </div>
@@ -96,11 +96,13 @@ const formattedTimestamp = computed(() => {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 });
 
-function getPlayerIcon(playerId) {
-  if (playerId === 'player1') return '/assets/images/info/hito_icon_1.png'; // あなた
-  if (playerId === 'player2') return '/assets/images/info/cat_icon_3.png'; // くろ
-  if (playerId === 'player3') return '/assets/images/info/cat_icon_2.png'; // たま
-  if (playerId === 'player4') return '/assets/images/info/cat_icon_1.png'; // とら
+function getPlayerIcon(player) {
+  if (!player) return null;
+  if (player.id === 'player1') return '/assets/images/info/hito_icon_1.png'; // あなた
+  if (player.originalId === 'kuro') return '/assets/images/info/cat_icon_3.png'; // くろ
+  if (player.originalId === 'tama') return '/assets/images/info/cat_icon_2.png'; // たま
+  if (player.originalId === 'tora') return '/assets/images/info/cat_icon_1.png'; // とら
+  if (player.originalId === 'janneko') return '/assets/images/info/cat_icon_4.png'; // 雀猫様
   return null;
 }
 </script>

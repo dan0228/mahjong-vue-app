@@ -152,9 +152,10 @@
 const playerIcon = (player) => {
   if (!player) return '';
   if (player.id === 'player1') return '/assets/images/info/hito_icon_1.png'; // あなた
-  if (player.id === 'player2') return '/assets/images/info/cat_icon_3.png'; // くろ
-  if (player.id === 'player3') return '/assets/images/info/cat_icon_2.png'; // たま
-  if (player.id === 'player4') return '/assets/images/info/cat_icon_1.png'; // とら
+  if (player.originalId === 'kuro') return '/assets/images/info/cat_icon_3.png'; // くろ
+  if (player.originalId === 'tama') return '/assets/images/info/cat_icon_2.png'; // たま
+  if (player.originalId === 'tora') return '/assets/images/info/cat_icon_1.png'; // とら
+  if (player.originalId === 'janneko') return '/assets/images/info/cat_icon_4.png'; // 雀猫様
   return null;
 };
 
@@ -472,14 +473,14 @@ function onAnkanSelected(tile) { // モーダルからのイベント
 
   function handleBackToTitleFromFinalResult() {
     riichiAnimationState.value = null;
-    gameStore.returnToTitle();
     router.push('/'); // タイトル画面のパス (router/index.jsで定義) に遷移
+    gameStore.returnToTitle();
   }
 
   function returnToTitle() {
     riichiAnimationState.value = null;
-    gameStore.resetGameForNewSession();
     router.push('/');
+    gameStore.resetGameForNewSession();
   }
 
   // --- Scaling Logic ---

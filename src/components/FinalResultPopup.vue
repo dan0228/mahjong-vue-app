@@ -114,10 +114,14 @@ function backToTitle() {
 }
 
 function getPlayerIcon(playerId) {
-  if (playerId === 'player1') return '/assets/images/info/hito_icon_1.png'; // あなた
-  if (playerId === 'player2') return '/assets/images/info/cat_icon_3.png'; // くろ
-  if (playerId === 'player3') return '/assets/images/info/cat_icon_2.png'; // たま
-  if (playerId === 'player4') return '/assets/images/info/cat_icon_1.png'; // とら
+  const player = gameStore.players.find(p => p.id === playerId);
+  if (!player) return null;
+
+  if (player.id === 'player1') return '/assets/images/info/hito_icon_1.png'; // あなた
+  if (player.originalId === 'kuro') return '/assets/images/info/cat_icon_3.png'; // くろ
+  if (player.originalId === 'tama') return '/assets/images/info/cat_icon_2.png'; // たま
+  if (player.originalId === 'tora') return '/assets/images/info/cat_icon_1.png'; // とら
+  if (player.originalId === 'janneko') return '/assets/images/info/cat_icon_4.png'; // 雀猫様
   return null;
 }
 

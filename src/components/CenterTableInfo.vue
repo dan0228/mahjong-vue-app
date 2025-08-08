@@ -59,16 +59,18 @@
       </div>
       <div class="scores">
         <!-- GameBoard.vue の表示順 (自分、右、対面、左) に合わせてプレイヤー情報を表示 -->
-        <div v-for="player in orderedPlayers" :key="player.id" class="player-score">
-          <span class="player-name">
-            {{ getPlayerDisplayLabel(player) }}:
-          </span>
-          <span class="score-value">{{ player.score }}</span>
-          <span v-if="player.isDealer && player.id !== dealer?.id" class="dealer-indicator-small"> (親)</span>
-          <span v-if="player.seatWind && player.id !== dealer?.id" class="wind-indicator-small">
-            ({{ player.seatWind }})
-          </span>
-        </div>
+        <template v-for="(player, index) in orderedPlayers" :key="index">
+          <div v-if="player" class="player-score">
+            <span class="player-name">
+              {{ getPlayerDisplayLabel(player) }}:
+            </span>
+            <span class="score-value">{{ player.score }}</span>
+            <span v-if="player.isDealer && player.id !== dealer?.id" class="dealer-indicator-small"> (親)</span>
+            <span v-if="player.seatWind && player.id !== dealer?.id" class="wind-indicator-small">
+              ({{ player.seatWind }})
+            </span>
+          </div>
+        </template>
       </div>
       <div class="game-state-info">
         <span>残り牌山: {{ remainingTiles }}</span>

@@ -501,6 +501,11 @@ function onAnkanSelected(tile) { // モーダルからのイベント
   });
   onBeforeUnmount(() => { // コンポーネントがアンマウントされるときにイベントリスナーをクリーンアップ
     window.removeEventListener('resize', updateScaleFactor);
+    // 保留中のすべてのタイマーをクリア
+    let id = window.setTimeout(function() {}, 0);
+    while (id--) {
+      window.clearTimeout(id); // will do nothing if no timeout with id is present
+    }
   });
 
 </script>

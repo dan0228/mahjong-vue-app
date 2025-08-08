@@ -92,7 +92,7 @@
       
       <ParentDecisionPopup
         :show="gameStore.showDealerDeterminationPopup"
-        :dealer-determination-results="gameStore.dealerDeterminationResult.players"
+        :dealer-determination-results="sortedPlayersForPopup"
         @close="handleCloseDealerDeterminationPopup"
       />
       <FinalResultPopup
@@ -111,7 +111,7 @@
       <YakuListPopup v-if="showYakuListPopup" @close="showYakuListPopup = false" />
       <ParentDecisionPopup
         :show="gameStore.showDealerDeterminationPopup"
-        :dealer-determination-results="gameStore.dealerDeterminationResult.players"
+        :dealer-determination-results="sortedPlayersForPopup"
         @close="handleCloseDealerDeterminationPopup"
       />
       </div> <!-- End of game-board-scaler -->
@@ -227,6 +227,14 @@ const playerIcon = (player) => {
 
   const isToraAtRight = computed(() => {
     return playerAtRight.value && playerAtRight.value.id === 'player4';
+  });
+
+  const sortedPlayersForPopup = computed(() => {
+    const players = gameStore.dealerDeterminationResult.players;
+    const windOrder = ['東', '南', '西', '北'];
+    return [...players].sort((a, b) => {
+      return windOrder.indexOf(a.seatWind) - windOrder.indexOf(b.seatWind);
+    });
   });
   const dealerInfo = computed(() => {
     if (gameStore.dealerIndex !== null && gameStore.players[gameStore.dealerIndex]) {

@@ -181,8 +181,8 @@ function goToShrine() {
 }
 
 .title-logo {
-  width: 80%; /* 画面幅に対する割合でサイズを調整 */
-  max-width: 300px; /* 最大幅を指定 */
+  width: 100%; /* 画面幅に対する割合でサイズを調整 */
+  max-width: 320px; /* 最大幅を指定 */
   height: auto; /* 高さは自動調整 */
   margin-top: -20px;
   margin-bottom: -10px;

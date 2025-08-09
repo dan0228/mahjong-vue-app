@@ -65,6 +65,7 @@ onMounted(async () => {
     '/assets/images/info/cat_icon_1.png',
     '/assets/images/info/cat_icon_2.png',
     '/assets/images/info/cat_icon_3.png',
+    '/assets/images/info/cat_icon_4.png',
     '/assets/images/info/hito_icon_1.png',
     '/assets/images/info/info_bottom.png',
     '/assets/images/info/info_left.png',

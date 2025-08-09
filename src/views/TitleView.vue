@@ -5,10 +5,7 @@
         <div class="title-background-image base-image"></div>
         <div class="title-background-image eye-blink-image"></div>
       </div>
-      <h1 class="title-text">
-        <span class="main-title">よんじゃん！</span>
-        <span class="sub-title">~ 4牌で楽しむ本格麻雀 ~</span>
-      </h1>
+      <img src="/assets/images/back/タイトルロゴ.png" alt="よんじゃん！" class="title-logo" />
       <div class="audio-toggles">
         <label class="toggle-switch">
           <input type="checkbox" :checked="audioStore.isBgmEnabled" @change="audioStore.toggleBgm()">
@@ -30,7 +27,7 @@
       <nav class="menu">
         <ul>
           <li><button @click="startGame('vsCPU')">ねこAI対戦 🐈</button></li>
-          <li><button @click="goToShrine">じゃん猫神社 参拝 ⛩️</button></li>
+          <li><button @click="goToShrine">じゃん猫神社⛩️</button></li>
           <li><button @click="showRulesPopup = true">ルール 📖</button></li>
           <li><button @click="showYakuListPopup = true">役一覧 🀄</button></li>
           <li><button @click="startGame('allManual')">全操作モード</button></li>
@@ -183,36 +180,14 @@ function goToShrine() {
   animation: blink-opacity 5s infinite step-start; /* 透明度で瞬きを制御 */
 }
 
-.title-text { /* h1タグからクラスに変更 */
-  margin-top: -20px; /* 背景画像との重なりを調整 */
-  margin-bottom: 0px; /* メニューとの間隔を調整 */
-  position: relative; /* z-indexを有効にするため */
-  color: #B14B3F; /* 文字色を変更 */
-  /* 縁取りを追加 */
-  -webkit-text-stroke: 1.2px rgb(0, 0, 0); /* Safari, Chrome */
-  /* text-shadowで擬似的に縁取り*/
-  text-shadow:
-    -1.5px -1.5px 0 white, 1.5px -1.5px 0 white, -1.5px 1.5px 0 white, 1.5px 1.5px 0 white, /* 4方向の白い影 */
-    1px 1px 1px rgba(0,0,0,0.4); /* 元のドロップシャドウ */
-  padding: 0px; /* 文字の周りの余白を調整 */
-  line-height: 1.2; /* 行間を調整 */
-  width: 100%; /* h1が横にはみ出さないように */
-  z-index: 1; /* グラデーションより手前に来るように */
-}
-
-.main-title {
-  display: block; /* 改行のため */
-  font-size: 1.8em; /* 固定サイズに変更 */
-  margin-left: 20px;
-  white-space: nowrap; /* 「よんじゃん！」が途中で改行されないようにする */
-  font-weight: 700; /* 少し太めに */
-  animation: pop 10s infinite ease-in-out; /* ポヨン感アニメーションを適用 */
-}
-.sub-title {
-  display: block; /* 改行のため */
-  font-size: 0.9em; /* 固定サイズに変更 */
-  margin-top: 1px; /* メインタイトルとの間隔 */
-  color: #50927c; /* サブタイトルの色をメインより少し薄く (例) */
+.title-logo {
+  width: 80%; /* 画面幅に対する割合でサイズを調整 */
+  max-width: 300px; /* 最大幅を指定 */
+  height: auto; /* 高さは自動調整 */
+  margin-top: -20px;
+  margin-bottom: -10px;
+  position: relative;
+  z-index: 1;
 }
 
 .menu ul {
@@ -226,8 +201,9 @@ function goToShrine() {
 }
 
 .menu button {
-  width: 280px; /* 固定幅に設定 */
-  padding: 6px 20px; /* パディング調整 */
+  width: 240px; /* 固定幅に設定 */
+  height: 40px; /* 固定高さに設定 */
+  padding: 4px 20px; /* パディング調整 */
   font-size: 1.2em;
   cursor: pointer;
   border: none; /* ボーダーを削除 */

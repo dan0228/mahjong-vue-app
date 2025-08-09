@@ -223,11 +223,11 @@ const playerIcon = (player) => {
   const playerAtLeft = computed(() => orderedPlayersForDisplay.value[3]);
 
   const isKuroAtLeft = computed(() => {
-    return playerAtLeft.value && playerAtLeft.value.id === 'player2';
+    return playerAtLeft.value && playerAtLeft.value.originalId === 'kuro';
   });
 
   const isToraAtRight = computed(() => {
-    return playerAtRight.value && playerAtRight.value.id === 'player4';
+    return playerAtRight.value && playerAtRight.value.originalId === 'tora';
   });
 
   const sortedPlayersForPopup = computed(() => {

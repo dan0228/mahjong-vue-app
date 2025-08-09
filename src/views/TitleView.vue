@@ -201,7 +201,7 @@ function goToShrine() {
 }
 
 .menu button {
-  width: 240px; /* 固定幅に設定 */
+  width: 220px; /* 固定幅に設定 */
   height: 40px; /* 固定高さに設定 */
   padding: 4px 20px; /* パディング調整 */
   font-size: 1.2em;

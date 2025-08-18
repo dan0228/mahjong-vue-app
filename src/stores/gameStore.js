@@ -1061,7 +1061,11 @@ export const useGameStore = defineStore('game', {
       }
       // AIプレイヤーの場合、ポン後に自動で打牌
       if (this.gameMode === 'vsCPU' && playerId !== 'player1') {
-        this.handleAiDiscard();
+        setTimeout(() => {
+          if (this.currentTurnPlayerId === playerId && this.gamePhase === GAME_PHASES.AWAITING_DISCARD) {
+            this.handleAiDiscard();
+          }
+        }, 1500); // アニメーション時間待つ
       }
 
       // ポンアニメーションの状態を設定
@@ -1881,22 +1885,24 @@ export const useGameStore = defineStore('game', {
 
       // AI対戦モードで、かつ現在のプレイヤーがAIの場合、自動で打牌処理を呼び出す
       if (this.gameMode === 'vsCPU' && player.id !== 'player1') {
-          if (eligibility.canTsumoAgari) {
-            // ツモ和了
-            this.handleAgari(playerId, this.drawnTile, true);
-          } else if (eligibility.canAnkan && Math.random() < 1.0) { // 暗槓可能なら100%暗槓
-            this.declareAnkan(playerId, eligibility.canAnkan[0]);
-          } else if (eligibility.canKakan && Math.random() < 1.0) { // 加槓可能なら100%加槓
-            this.declareKakan(playerId, eligibility.canKakan[0]);
-          } else {
-            // ツモ和了もカンもできない場合は打牌
-            setTimeout(() => {
+        setTimeout(() => {
+          if (this.currentTurnPlayerId === player.id && this.gamePhase === GAME_PHASES.AWAITING_DISCARD) {
+            if (eligibility.canTsumoAgari) {
+              // ツモ和了
+              this.handleAgari(playerId, this.drawnTile, true);
+            } else if (eligibility.canAnkan && Math.random() < 1.0) { // 暗槓可能なら100%暗槓
+              this.declareAnkan(playerId, eligibility.canAnkan[0]);
+            } else if (eligibility.canKakan && Math.random() < 1.0) { // 加槓可能なら100%加槓
+              this.declareKakan(playerId, eligibility.canKakan[0]);
+            } else {
+              // ツモ和了もカンもできない場合は打牌
               const fullHand = [...player.hand, this.drawnTile];
               const tileToDiscard = this._getBestTileToDiscard(player, fullHand);
               const isFromDrawnTile = tileToDiscard.id === this.drawnTile.id;
               this.discardTile(playerId, tileToDiscard.id, isFromDrawnTile);
-            }, 100); // 100msの遅延
+            }
           }
+        }, 1500); // アニメーション時間待つ
       }
     }
     ,

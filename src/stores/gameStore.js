@@ -1169,10 +1169,10 @@ export const useGameStore = defineStore('game', {
 
       // ポンアニメーションの状態を設定
       this.animationState = { type: 'pon', playerId: playerId };
-      // 1秒後にアニメーションをリセット
+      // 1.5秒後にアニメーションをリセット
       setTimeout(() => {
         this.animationState = { type: null, playerId: null };
-      }, 1000);
+      }, 1500);
     },
     // 明カン宣言
     declareMinkan(playerId, targetPlayerId, tileToKan) {
@@ -1248,10 +1248,10 @@ export const useGameStore = defineStore('game', {
 
       // カンアニメーションの状態を設定
       this.animationState = { type: 'kan', playerId: playerId }; // 'kan' は新しいタイプ
-      // 1秒後にアニメーションをリセット
+      // 1.5秒後にアニメーションをリセット
       setTimeout(() => {
         this.animationState = { type: null, playerId: null };
-      }, 1000);
+      }, 1500);
     },
     // 暗カン宣言
     declareAnkan(playerId, tileToAnkan) {
@@ -1318,10 +1318,10 @@ export const useGameStore = defineStore('game', {
 
       // カンアニメーションの状態を設定
       this.animationState = { type: 'kan', playerId: playerId }; // 'kan' は新しいタイプ
-      // 1秒後にアニメーションをリセット
+      // 1.5秒後にアニメーションをリセット
       setTimeout(() => {
         this.animationState = { type: null, playerId: null };
-      }, 1000);
+      }, 1500);
     },
     // 加カン宣言
     declareKakan(playerId, tileToKakan) {
@@ -1391,10 +1391,10 @@ export const useGameStore = defineStore('game', {
 
       // カンアニメーションの状態を設定
       this.animationState = { type: 'kan', playerId: playerId }; // 'kan' は新しいタイプ
-      // 1秒後にアニメーションをリセット
+      // 1.5秒後にアニメーションをリセット
       setTimeout(() => {
         this.animationState = { type: null, playerId: null };
-      }, 1000);
+      }, 1500);
     },
     
     // 加カン後、槍槓されなかった場合に嶺上牌をツモるアクション
@@ -1577,11 +1577,11 @@ export const useGameStore = defineStore('game', {
           melds: player.melds, // 鳴き牌情報を追加
           isDraw: false,
         };
-        // アニメーション表示から1秒後にリザルトポップアップを表示
+        // アニメーション表示から1.8秒後にリザルトポップアップを表示
         setTimeout(() => {
           this.showResultPopup = true;
           this.stopRiichiBgm(); // リザルトポップアップ表示時にBGMを元に戻す
-        }, 1000);
+        }, 1800);
         
         // 箱下チェックは prepareNextRound に移動
 
@@ -2070,7 +2070,7 @@ export const useGameStore = defineStore('game', {
           const eligibility = this.playerActionEligibility[aiPlayerId];
 
           // 1. ロン可能かチェック (90%実施)
-          if (eligibility?.canRon && Math.random() < 0.9) {
+          if (eligibility?.canRon && Math.random() < 0.0) {
             this.playerDeclaresCall(aiPlayerId, 'ron', null);
             return;
           }

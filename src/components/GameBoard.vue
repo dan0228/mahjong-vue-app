@@ -101,12 +101,12 @@
         @start-new-game="handleStartNewGameFromFinalResult"
         @back-to-title="handleBackToTitleFromFinalResult"
       />
-      <img v-if="animationDisplay && animationDisplay.type === 'ron'" src="/assets/images/status/ron.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`]" alt="ロン" />
+      <img v-if="animationDisplay && animationDisplay.type === 'ron'" src="/assets/images/status/ron.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`, 'pon-animation']" alt="ロン" />
       <img v-if="animationDisplay && animationDisplay.type === 'riichi'" src="/assets/images/status/riichi.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`]" alt="リーチ" />
-      <img v-if="animationDisplay && animationDisplay.type === 'tsumo'" src="/assets/images/status/tsumo.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`]" alt="ツモ" />
+      <img v-if="animationDisplay && animationDisplay.type === 'tsumo'" src="/assets/images/status/tsumo.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`, 'kan-animation']" alt="ツモ" />
       <!-- ポンとカンの表示を追加 -->
-      <img v-if="animationDisplay && animationDisplay.type === 'pon'" src="/assets/images/status/pon.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`]" alt="ポン" />
-      <img v-if="animationDisplay && animationDisplay.type === 'kan'" src="/assets/images/status/kan.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`]" alt="カン" />
+      <img v-if="animationDisplay && animationDisplay.type === 'pon'" src="/assets/images/status/pon.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`, 'pon-animation', 'pon-kan-size']" alt="ポン" />
+      <img v-if="animationDisplay && animationDisplay.type === 'kan'" src="/assets/images/status/kan.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`, 'pon-kan-size', 'kan-animation']" alt="カン" />
       <RulePopup v-if="showRulesPopup" @close="showRulesPopup = false" />
       <YakuListPopup v-if="showYakuListPopup" @close="showYakuListPopup = false" />
       <ParentDecisionPopup
@@ -556,6 +556,49 @@ function onAnkanSelected(tile) { // モーダルからのイベント
   to {
     transform: translate(-50%, -50%) scale(1);
     opacity: 1;
+  }
+}
+
+.ron-indicator.pon-animation {
+  /* 他のインジケーターのアニメーションを上書き */
+  animation: pon-bounce-effect 0.4s ease-in-out;
+}
+
+@keyframes pon-bounce-effect {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.3);
+    filter: drop-shadow(0 0 80px rgba(255, 50, 50, 0.9)); /* 赤い光彩エフェクト */
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    filter: drop-shadow(0 0 0 transparent);
+  }
+}
+
+.pon-kan-size {
+  width: 150px; /* デフォルトの200pxより少し小さく */
+}
+
+.ron-indicator.kan-animation {
+  animation: kan-bounce-effect 0.4s ease-in-out;
+}
+
+@keyframes kan-bounce-effect {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.3);
+    filter: drop-shadow(0 0 80px rgba(50, 50, 255, 0.9)); /* 青い光彩エフェクト */
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    filter: drop-shadow(0 0 0 transparent);
   }
 }
 

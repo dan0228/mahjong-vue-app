@@ -49,7 +49,7 @@
           <CenterTableInfo :ordered-players="orderedPlayersForDisplay" />
           <!-- 自家の捨て牌エリア (中央テーブルのすぐ下) -->
           <div class="bottom-discard-container">
-            <DiscardPile v-if="playerAtBottom" :tiles="playerAtBottom.discards" position="bottom" :riichi-discarded-tile-id="gameStore.riichiDiscardedTileId[playerAtBottom.id]" class="discard-pile-bottom-player" />
+            <DiscardPile v-if="playerAtBottom" :tiles="playerAtBottom.discards" position="bottom" :riichi-discarded-tile-id="gameStore.riichiDiscardedTileId[playerAtBottom.id]" :highlighted-tile-id="gameStore.highlightedDiscardTileId" class="discard-pile-bottom-player" />
           </div>
         </div>
         <div class="player-area-container right-player-container" v-if="playerAtRight">
@@ -68,18 +68,18 @@
          <img v-if="gameStore.isTenpaiDisplay[playerAtTop.id]" src="/assets/images/status/tenpai.png" alt="テンパイ" class="tenpai-indicator top-tenpai" />
          <!-- 対面の捨て牌エリア (対面手牌のすぐ下) -->
          <div class="top-discard-container">
-           <DiscardPile v-if="playerAtTop" :tiles="playerAtTop.discards" position="top" :riichi-discarded-tile-id="gameStore.riichiDiscardedTileId[playerAtTop.id]" class="discard-pile-top-player" />
+           <DiscardPile v-if="playerAtTop" :tiles="playerAtTop.discards" position="top" :riichi-discarded-tile-id="gameStore.riichiDiscardedTileId[playerAtTop.id]" :highlighted-tile-id="gameStore.highlightedDiscardTileId" class="discard-pile-top-player" />
          </div>
       </div>
       
       <!-- 左の捨て牌エリア (絶対配置) -->
       <div class="left-discard-container">
-        <DiscardPile v-if="playerAtLeft" :tiles="playerAtLeft.discards" position="left" :riichi-discarded-tile-id="gameStore.riichiDiscardedTileId[playerAtLeft.id]" class="discard-pile-left-player" />
+        <DiscardPile v-if="playerAtLeft" :tiles="playerAtLeft.discards" position="left" :riichi-discarded-tile-id="gameStore.riichiDiscardedTileId[playerAtLeft.id]" :highlighted-tile-id="gameStore.highlightedDiscardTileId" class="discard-pile-left-player" />
       </div>
 
       <!-- 右の捨て牌エリア (絶対配置) -->
       <div class="right-discard-container">
-        <DiscardPile v-if="playerAtRight" :tiles="playerAtRight.discards" position="right" :riichi-discarded-tile-id="gameStore.riichiDiscardedTileId[playerAtRight.id]" class="discard-pile-right-player" />
+        <DiscardPile v-if="playerAtRight" :tiles="playerAtRight.discards" position="right" :riichi-discarded-tile-id="gameStore.riichiDiscardedTileId[playerAtRight.id]" :highlighted-tile-id="gameStore.highlightedDiscardTileId" class="discard-pile-right-player" />
       </div>
 
       <ResultPopup
@@ -322,11 +322,6 @@ const playerIcon = (player) => {
   });
 
   function handleTileSelection(payload) { // payload は { tile: Object, isFromDrawnTile: Boolean }
-    // リーチアニメーションが表示されている場合、牌を選択した時点で非表示にする
-    // リーチアニメーションが表示されている場合、牌を選択した時点で非表示にする
-    if (gameStore.animationState && gameStore.animationState.type === 'riichi') {
-      gameStore.animationState = { type: null, playerId: null };
-    }
     // どのプレイヤーの操作かに関わらず、現在のターンプレイヤーが打牌可能な状態であれば実行
     // PlayerHand が can-discard プロパティ経由で適切なプレイヤーのターンであること保証すると想定
     if (gameStore.currentTurnPlayerId && (gameStore.gamePhase === 'awaitingDiscard' || gameStore.gamePhase === 'awaitingRiichiDiscard')) {

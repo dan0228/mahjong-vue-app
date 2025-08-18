@@ -133,6 +133,7 @@ export const useGameStore = defineStore('game', {
     lastCoinGain: 0, // 直近で得た猫コイン
     isRiichiBgmActive: false, // リーチBGMがアクティブかどうか
     previousBgm: null, // リーチ前のBGMを保持
+    highlightedDiscardTileId: null, // ロンされた際にハイライトする捨て牌のID
   }),
   actions: {
     startRiichiBgm() {
@@ -840,6 +841,7 @@ export const useGameStore = defineStore('game', {
       this.resultMessage = '';
       this.drawnTile = null;
       this.lastDiscardedTile = null;
+      this.highlightedDiscardTileId = null; // ハイライトをリセット
       this.animationState = { type: null, playerId: null }; // アニメーション状態をリセット
       // リーチ棒は供託されたままなのでリセットしない
       if (this.isChankanChance) this.isChankanChance = false; // 局をまたぐ槍槓はない
@@ -1456,6 +1458,11 @@ export const useGameStore = defineStore('game', {
         : mahjongLogic.checkCanRon(player.hand, agariTile, gameCtxForWin);
 
       if (winResult.isWin) {
+        // 槍槓でないロン和了の場合、捨て牌をハイライトする
+        if (!isTsumo && !gameCtxForWin.isChankan) {
+          this.highlightedDiscardTileId = this.lastDiscardedTile.id;
+        }
+
         // チョンボの場合の点数計算
         if (winResult.isChombo) {
           const pointChanges = {};

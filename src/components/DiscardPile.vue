@@ -3,7 +3,11 @@
     <div
       v-for="(tile, index) in tiles"
       :key="tile.id + '-' + index"
-      :class="['tile', { 'rotated-riichi-tile-container': tile.id === riichiDiscardedTileId }]"
+      :class="[
+        'tile',
+        { 'rotated-riichi-tile-container': tile.id === riichiDiscardedTileId },
+        { 'highlighted-discard': tile.id === highlightedTileId }
+      ]"
       :style="{ order: index }"
     >
       <!-- 牌の向きはCSSで制御 -->
@@ -28,11 +32,32 @@ const props = defineProps({
   riichiDiscardedTileId: { // リーチ宣言牌のID
     type: String,
     default: null
+  },
+  highlightedTileId: { // ハイライト対象の牌ID
+    type: String,
+    default: null
   }
 });
 </script>
 
 <style scoped>
+@keyframes red-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 80, 80, 0.9);
+  }
+  70% {
+    box-shadow: 0 0 4px 8px rgba(255, 80, 80, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 80, 80, 0);
+  }
+}
+
+.highlighted-discard .discard-tile-image {
+  animation: red-pulse 1.5s infinite;
+  border-radius: 2px; /* 影の形を整える */
+}
+
 .discard-pile {
   display: grid;
   /* 3行9列にするために、列数を9に設定 */

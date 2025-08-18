@@ -101,9 +101,9 @@
         @start-new-game="handleStartNewGameFromFinalResult"
         @back-to-title="handleBackToTitleFromFinalResult"
       />
-      <img v-if="animationDisplay && animationDisplay.type === 'ron'" src="/assets/images/status/ron.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`, 'pon-animation']" alt="ロン" />
+      <img v-if="animationDisplay && animationDisplay.type === 'ron'" src="/assets/images/status/ron.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`, 'ron-animation']" alt="ロン" />
       <img v-if="animationDisplay && animationDisplay.type === 'riichi'" src="/assets/images/status/riichi.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`]" alt="リーチ" />
-      <img v-if="animationDisplay && animationDisplay.type === 'tsumo'" src="/assets/images/status/tsumo.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`, 'kan-animation']" alt="ツモ" />
+      <img v-if="animationDisplay && animationDisplay.type === 'tsumo'" src="/assets/images/status/tsumo.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`, 'tsumo-animation']" alt="ツモ" />
       <!-- ポンとカンの表示を追加 -->
       <img v-if="animationDisplay && animationDisplay.type === 'pon'" src="/assets/images/status/pon.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`, 'pon-animation', 'pon-kan-size']" alt="ポン" />
       <img v-if="animationDisplay && animationDisplay.type === 'kan'" src="/assets/images/status/kan.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`, 'pon-kan-size', 'kan-animation']" alt="カン" />
@@ -556,21 +556,30 @@ function onAnkanSelected(tile) { // モーダルからのイベント
 
 .ron-indicator.pon-animation {
   /* 他のインジケーターのアニメーションを上書き */
-  animation: pon-bounce-effect 0.4s ease-in-out;
+  animation: pon-bounce-effect 1.5s ease-in-out;
 }
 
 @keyframes pon-bounce-effect {
   0% {
     transform: translate(-50%, -50%) scale(1);
     filter: drop-shadow(0 0 0 transparent);
+    opacity: 1;
   }
-  50% {
+  10% {
     transform: translate(-50%, -50%) scale(1.3);
     filter: drop-shadow(0 0 80px rgba(255, 50, 50, 0.9)); /* 赤い光彩エフェクト */
+    opacity: 1;
   }
-  100% {
+  20% {
     transform: translate(-50%, -50%) scale(1);
     filter: drop-shadow(0 0 0 transparent);
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
   }
 }
 
@@ -579,17 +588,66 @@ function onAnkanSelected(tile) { // モーダルからのイベント
 }
 
 .ron-indicator.kan-animation {
-  animation: kan-bounce-effect 0.4s ease-in-out;
+  animation: kan-bounce-effect 1.7s ease-in-out;
 }
 
 @keyframes kan-bounce-effect {
   0% {
     transform: translate(-50%, -50%) scale(1);
     filter: drop-shadow(0 0 0 transparent);
+    opacity: 1;
+  }
+  10% {
+    transform: translate(-50%, -50%) scale(1.3);
+    filter: drop-shadow(0 0 80px rgba(50, 50, 255, 0.9)); /* 青い光彩エフェクト */
+    opacity: 1;
+  }
+  20% {
+    transform: translate(-50%, -50%) scale(1);
+    filter: drop-shadow(0 0 0 transparent);
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* For Ron (no fade-out) */
+.ron-indicator.ron-animation {
+  animation: ron-bounce-effect 0.4s ease-in-out;
+}
+
+@keyframes ron-bounce-effect {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    filter: drop-shadow(0 0 0 transparent);
   }
   50% {
     transform: translate(-50%, -50%) scale(1.3);
-    filter: drop-shadow(0 0 80px rgba(50, 50, 255, 0.9)); /* 青い光彩エフェクト */
+    filter: drop-shadow(0 0 80px rgba(255, 50, 50, 0.9));
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    filter: drop-shadow(0 0 0 transparent);
+  }
+}
+
+/* For Tsumo (no fade-out) */
+.ron-indicator.tsumo-animation {
+  animation: tsumo-bounce-effect 0.4s ease-in-out;
+}
+
+@keyframes tsumo-bounce-effect {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.3);
+    filter: drop-shadow(0 0 80px rgba(50, 50, 255, 0.9));
   }
   100% {
     transform: translate(-50%, -50%) scale(1);

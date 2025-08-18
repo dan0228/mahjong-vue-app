@@ -111,7 +111,8 @@
       <div v-if="animationDisplay && animationDisplay.type === 'riichi' && animationDisplay.position === 'top'" class="riichi-container-top riichi-slide-animation-top">
         <img src="/assets/images/status/riichi.png" alt="リーチ" class="riichi-image-scaled" />
       </div>
-      <img v-if="animationDisplay && animationDisplay.type === 'riichi' && (animationDisplay.position === 'left' || animationDisplay.position === 'right')" src="/assets/images/status/riichi.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`]" alt="リーチ" />
+      <img v-if="animationDisplay && animationDisplay.type === 'riichi' && animationDisplay.position === 'right'" src="/assets/images/status/riichi.png" alt="リーチ" class="riichi-image-right riichi-slide-animation-right" />
+      <img v-if="animationDisplay && animationDisplay.type === 'riichi' && animationDisplay.position === 'left'" src="/assets/images/status/riichi.png" alt="リーチ" class="riichi-image-left riichi-slide-animation-left" />
       <img v-if="animationDisplay && animationDisplay.type === 'tsumo'" src="/assets/images/status/tsumo.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`, 'tsumo-animation']" alt="ツモ" />
       <!-- ポンとカンの表示を追加 -->
       <img v-if="animationDisplay && animationDisplay.type === 'pon'" src="/assets/images/status/pon.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`, 'pon-animation', 'pon-kan-size']" alt="ポン" />
@@ -540,6 +541,7 @@ function onAnkanSelected(tile) { // モーダルからのイベント
   flex-direction: column-reverse; /* 内部の flex レイアウトを維持 */
   border: 1px solid #740e017e; /* 赤茶色の枠線 */
   box-sizing: border-box; /* 枠線をwidth/heightに含める */
+  overflow: hidden; /* はみ出したリーチ演出を隠す */
 }
 .ron-indicator {
   position: absolute;
@@ -738,6 +740,70 @@ function onAnkanSelected(tile) { // モーダルからのイベント
   }
   100% {
     transform: translate(-50%, -100%);
+  }
+}
+
+/* Riichi Animation for Right Player */
+.riichi-image-right {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 100%;
+  height: 243px;
+  border: 6px solid gold;
+  box-sizing: border-box;
+  z-index: 100;
+  transform: translate(100%, -50%); /* Start off-screen right */
+}
+
+.riichi-slide-animation-right {
+  animation: riichi-slide-right 1.5s ease-in-out forwards;
+}
+
+@keyframes riichi-slide-right {
+  0% {
+    transform: translate(100%, -50%);
+  }
+  20.0% {
+    transform: translate(0, -50%);
+  }
+  80.0% {
+    transform: translate(0, -50%);
+  }
+  100% {
+    transform: translate(100%, -50%);
+  }
+}
+
+/* Riichi Animation for Left Player */
+.riichi-image-left {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 243px;
+  border: 6px solid gold;
+  box-sizing: border-box;
+  z-index: 100;
+  transform: translate(-100%, -50%); /* Start off-screen left */
+}
+
+.riichi-slide-animation-left {
+  animation: riichi-slide-left 1.5s ease-in-out forwards;
+}
+
+@keyframes riichi-slide-left {
+  0% {
+    transform: translate(-100%, -50%);
+  }
+  20.0% {
+    transform: translate(0, -50%);
+  }
+  80.0% {
+    transform: translate(0, -50%);
+  }
+  100% {
+    transform: translate(-100%, -50%);
   }
 }
 

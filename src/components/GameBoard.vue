@@ -108,7 +108,10 @@
       </div>
 
       <!-- Existing Riichi animation for other players -->
-      <img v-if="animationDisplay && animationDisplay.type === 'riichi' && animationDisplay.position !== 'bottom'" src="/assets/images/status/riichi.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`]" alt="リーチ" />
+      <div v-if="animationDisplay && animationDisplay.type === 'riichi' && animationDisplay.position === 'top'" class="riichi-container-top riichi-slide-animation-top">
+        <img src="/assets/images/status/riichi.png" alt="リーチ" class="riichi-image-scaled" />
+      </div>
+      <img v-if="animationDisplay && animationDisplay.type === 'riichi' && (animationDisplay.position === 'left' || animationDisplay.position === 'right')" src="/assets/images/status/riichi.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`]" alt="リーチ" />
       <img v-if="animationDisplay && animationDisplay.type === 'tsumo'" src="/assets/images/status/tsumo.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`, 'tsumo-animation']" alt="ツモ" />
       <!-- ポンとカンの表示を追加 -->
       <img v-if="animationDisplay && animationDisplay.type === 'pon'" src="/assets/images/status/pon.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`, 'pon-animation', 'pon-kan-size']" alt="ポン" />
@@ -700,6 +703,41 @@ function onAnkanSelected(tile) { // モーダルからのイベント
   }
   100% {
     transform: translate(-50%, 100%);
+  }
+}
+
+/* Riichi Animation for Top Player */
+.riichi-container-top {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 100%;
+  height: 243px; /* Match bottom container height */
+  background-color: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  z-index: 100;
+  transform: translate(-50%, -100%); /* Start off-screen top */
+}
+
+.riichi-slide-animation-top {
+  animation: riichi-slide-top 1.5s ease-in-out forwards;
+}
+
+@keyframes riichi-slide-top {
+  0% {
+    transform: translate(-50%, -100%);
+  }
+  20.0% {
+    transform: translate(-50%, 0);
+  }
+  80.0% {
+    transform: translate(-50%, 0);
+  }
+  100% {
+    transform: translate(-50%, -100%);
   }
 }
 

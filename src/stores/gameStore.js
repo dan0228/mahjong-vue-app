@@ -18,6 +18,7 @@ export const GAME_PHASES = {
   AWAITING_DISCARD: 'awaitingDiscard', // 打牌待ち
   AWAITING_ACTION_RESPONSE: 'awaitingActionResponse', // 他家の打牌に対するロン・ポン・カン待ち
   AWAITING_KAKAN_RESPONSE: 'awaitingKakanResponse', // 加槓に対する槍槓ロン待ち
+  RIICHI_ANIMATION: 'riichiAnimation', // リーチアニメーション中
   AWAITING_RIICHI_DISCARD: 'awaitingRiichiDiscard', // リーチ宣言後の打牌選択待ち
   ROUND_END: 'roundEnd', // 局終了 (結果表示待ち)
   GAME_OVER: 'gameOver' // ゲーム終了
@@ -411,122 +412,8 @@ export const useGameStore = defineStore('game', {
 
               // 1. リーチ可能なら8%の確率でリーチを試みる
               if (this.playerActionEligibility[currentPlayer.id].canRiichi && Math.random() < 0.08) {
-                // リーチ宣言を試みる (riichiDiscardOptionsが設定される)
-                // declareRiichiはgamePhaseをAWAITING_RIICHI_DISCARDに設定するので、
-                // その後すぐにdiscardTileを呼ぶ必要がある
-                this.declareRiichi(currentPlayer.id); // これでriichiDiscardOptionsが設定される
-
-                // テンパイを維持できる捨て牌があるか確認
-                if (this.riichiDiscardOptions.length > 0) {
-                  // 最適な捨て牌を選択
-                  let bestRiichiDiscardTile = null;
-                  let minScoreForRiichiDiscard = Infinity;
-
-                  // riichiDiscardOptions は tile.id の配列なので、元のtileオブジェクトを取得する必要がある
-                  const potentialDiscardsObjects = [...currentPlayer.hand, this.drawnTile].filter(tile =>
-                    this.riichiDiscardOptions.includes(tile.id)
-                  );
-
-                  for (const tile of potentialDiscardsObjects) {
-                    // handleAiDiscard のスコアリングロジックを再利用
-                    let score = 0;
-                    const fullHandForScoring = [...currentPlayer.hand, this.drawnTile]; // リーチ後の手牌
-                    const tempHandAfterDiscard = fullHandForScoring.filter(t => t.id !== tile.id);
-
-                    // ここにhandleAiDiscardのスコアリングロジックを適用
-                    // 1. 字牌の評価 (種類優先、集めるようにする)
-                    if (tile.suit === mahjongLogic.SUITS.JIHAI) {
-                      const tileKey = mahjongLogic.getTileKey(tile);
-                      const count = tempHandAfterDiscard.filter(t => mahjongLogic.getTileKey(t) === tileKey).length; // 捨てた後の手牌でカウント
-
-                      if (count >= 2) {
-                        score -= 50;
-                      }
-                      const isWindTile = tile.rank >= mahjongLogic.JIHAI_TYPES.TON && tile.rank <= mahjongLogic.JIHAI_TYPES.PEI;
-                      const isSangenTile = tile.rank >= mahjongLogic.JIHAI_TYPES.HAKU && tile.rank <= mahjongLogic.JIHAI_TYPES.CHUN;
-
-                      if (isWindTile) {
-                        const otherWindTiles = tempHandAfterDiscard.filter(t => t.suit === mahjongLogic.SUITS.JIHAI && t.rank >= mahjongLogic.JIHAI_TYPES.TON && t.rank <= mahjongLogic.JIHAI_TYPES.PEI && mahjongLogic.getTileKey(t) !== tileKey);
-                        if (otherWindTiles.length === 0) {
-                          score += 80;
-                        } else {
-                          score -= 20;
-                        }
-                      } else if (isSangenTile) {
-                        const otherSangenTiles = tempHandAfterDiscard.filter(t => t.suit === mahjongLogic.SUITS.JIHAI && t.rank >= mahjongLogic.JIHAI_TYPES.HAKU && t.rank <= mahjongLogic.JIHAI_TYPES.CHUN && mahjongLogic.getTileKey(t) !== tileKey);
-                        if (otherSangenTiles.length === 0) {
-                          score += 80;
-                        } else {
-                          score -= 20;
-                        }
-                      } else {
-                        score += 100;
-                      }
-                    } else { // 数牌の場合
-                      const suitTiles = tempHandAfterDiscard.filter(t => t.suit === tile.suit);
-                      const rank = tile.rank;
-
-                      if (suitTiles.length <= 2) {
-                        score += 80;
-                      } else if (suitTiles.length <= 4) {
-                        score += 40;
-                      }
-
-                      let connections = 0;
-          // 1つ離れた牌のつながりを強く評価
-          if (suitTiles.some(t => t.rank === rank + 1)) {
-            connections += 2; // 1つ離れた牌は2点
-          }
-          if (suitTiles.some(t => t.rank === rank - 1)) {
-            connections += 2; // 1つ離れた牌は2点
-          }
-          // 2つ離れた牌のつながりを評価
-          if (suitTiles.some(t => t.rank === rank + 2)) {
-            connections += 1; // 2つ離れた牌は1点
-          }
-          if (suitTiles.some(t => t.rank === rank - 2)) {
-            connections += 1; // 2つ離れた牌は1点
-          }
-          score -= (connections * 10); // connectionsの合計点に応じてスコアを減算
-
-                      if (rank === 1 && !suitTiles.some(t => t.rank === 2 || t.rank === 3)) {
-                        score += 25;
-                      }
-                      if (rank === 9 && !suitTiles.some(t => t.rank === 7 || t.rank === 8)) {
-                        score += 25;
-                      }
-                      if (rank > 1 && rank < 9 && connections === 0) {
-                          score += 30;
-                      }
-                    }
-
-                    if (score < minScoreForRiichiDiscard) {
-                      minScoreForRiichiDiscard = score;
-                      bestRiichiDiscardTile = tile;
-                    }
-                  }
-
-                  // 最適な捨て牌が見つかったらそれを捨てる
-                  if (bestRiichiDiscardTile) {
-                    setTimeout(() => {
-                    this.discardTile(currentPlayer.id, bestRiichiDiscardTile.id, bestRiichiDiscardTile.id === this.drawnTile.id);
-                  }, 500); // 0.5秒のディレイ
-                  actionTaken = true;
-                  } else {
-                    // ここに来ることは稀だが、念のためリーチをキャンセルして通常打牌
-                    this.isDeclaringRiichi[currentPlayer.id] = false; // リーチ宣言状態をクリア
-                    this.gamePhase = GAME_PHASES.AWAITING_DISCARD; // フェーズを戻す
-                    this.handleAiDiscard();
-                    actionTaken = true;
-                  }
-                } else {
-                  // リーチできるが、テンパイを維持できる捨て牌がない場合（ありえないはずだが念のため）
-                  // リーチをキャンセルして通常打牌
-                  this.isDeclaringRiichi[currentPlayer.id] = false; // リーチ宣言状態をクリア
-                  this.gamePhase = GAME_PHASES.AWAITING_DISCARD; // フェーズを戻す
-                  this.handleAiDiscard();
-                  actionTaken = true;
-                }
+                this.declareRiichi(currentPlayer.id);
+                actionTaken = true;
               }
 
               if (!actionTaken) {
@@ -885,9 +772,17 @@ export const useGameStore = defineStore('game', {
     // リーチアニメーションの状態を設定するアクション
     setRiichiAnimationState(playerId) {
       this.animationState = { type: 'riichi', playerId: playerId };
-      // 1.5秒後にアニメーションをリセット
+      // 1.5秒後にアニメーションをリセットし、打牌選択フェーズへ
       setTimeout(() => {
         this.animationState = { type: null, playerId: null };
+        if (this.gamePhase === GAME_PHASES.RIICHI_ANIMATION) {
+          this.gamePhase = GAME_PHASES.AWAITING_RIICHI_DISCARD;
+          // If the current player is an AI, make them discard now
+          const currentPlayer = this.players.find(p => p.id === this.currentTurnPlayerId);
+          if (this.gameMode === 'vsCPU' && currentPlayer && currentPlayer.id !== 'player1') {
+            this.handleAiRiichiDiscard();
+          }
+        }
       }, 1500);
     },
     declareRiichi(playerId) {
@@ -903,8 +798,8 @@ export const useGameStore = defineStore('game', {
       // リーチ宣言後、次の自分のツモまでは一発のチャンス
       this.isIppatsuChance[playerId] = true;
       this.playerActionEligibility[playerId] = {}; // リーチしたので他のアクションはリセット
-      // リーチ宣言後、捨てる牌を選択させるフェーズに移行
-      this.gamePhase = GAME_PHASES.AWAITING_RIICHI_DISCARD;
+      // リーチ宣言後、アニメーションフェーズに移行
+      this.gamePhase = GAME_PHASES.RIICHI_ANIMATION;
       // 捨てられる牌の候補を計算 (手牌 + ツモ牌)
       const potentialDiscards = [...player.hand, this.drawnTile];
       this.riichiDiscardOptions = potentialDiscards.filter(tileToDiscard => {
@@ -1834,6 +1729,86 @@ export const useGameStore = defineStore('game', {
           remainingTilesCount: this.wall.length,
           currentPlayerTurnCount: this.playerTurnCount[player.id] || 0 // 現在のプレイヤーのツモ回数を追加
       };
+    },
+    handleAiRiichiDiscard() {
+      const player = this.players.find(p => p.id === this.currentTurnPlayerId);
+      if (!player || this.riichiDiscardOptions.length === 0) {
+        this.handleAiDiscard(); // Fallback
+        return;
+      }
+
+      let bestRiichiDiscardTile = null;
+      let minScoreForRiichiDiscard = Infinity;
+
+      const potentialDiscardsObjects = [...player.hand, this.drawnTile].filter(tile =>
+        tile && this.riichiDiscardOptions.includes(tile.id)
+      );
+
+      for (const tile of potentialDiscardsObjects) {
+        let score = 0;
+        const fullHandForScoring = [...player.hand, this.drawnTile];
+        const tempHandAfterDiscard = fullHandForScoring.filter(t => t.id !== tile.id);
+
+        if (tile.suit === mahjongLogic.SUITS.JIHAI) {
+          const tileKey = mahjongLogic.getTileKey(tile);
+          const count = tempHandAfterDiscard.filter(t => mahjongLogic.getTileKey(t) === tileKey).length;
+
+          if (count >= 2) {
+            score -= 50;
+          }
+          const isWindTile = tile.rank >= mahjongLogic.JIHAI_TYPES.TON && tile.rank <= mahjongLogic.JIHAI_TYPES.PEI;
+          const isSangenTile = tile.rank >= mahjongLogic.JIHAI_TYPES.HAKU && tile.rank <= mahjongLogic.JIHAI_TYPES.CHUN;
+
+          if (isWindTile) {
+            const otherWindTiles = tempHandAfterDiscard.filter(t => t.suit === mahjongLogic.SUITS.JIHAI && t.rank >= mahjongLogic.JIHAI_TYPES.TON && t.rank <= mahjongLogic.JIHAI_TYPES.PEI && mahjongLogic.getTileKey(t) !== tileKey);
+            if (otherWindTiles.length === 0) {
+              score += 80;
+            } else {
+              score -= 20;
+            }
+          } else if (isSangenTile) {
+            const otherSangenTiles = tempHandAfterDiscard.filter(t => t.suit === mahjongLogic.SUITS.JIHAI && t.rank >= mahjongLogic.JIHAI_TYPES.HAKU && t.rank <= mahjongLogic.JIHAI_TYPES.CHUN && mahjongLogic.getTileKey(t) !== tileKey);
+            if (otherSangenTiles.length === 0) {
+              score += 80;
+            } else {
+              score -= 20;
+            }
+          } else {
+            score += 100;
+          }
+        } else { // 数牌の場合
+          const suitTiles = tempHandAfterDiscard.filter(t => t.suit === tile.suit);
+          const rank = tile.rank;
+
+          if (suitTiles.length <= 2) {
+            score += 80;
+          } else if (suitTiles.length <= 4) {
+            score += 40;
+          }
+
+          let connections = 0;
+          if (suitTiles.some(t => t.rank === rank + 1)) { connections += 2; }
+          if (suitTiles.some(t => t.rank === rank - 1)) { connections += 2; }
+          if (suitTiles.some(t => t.rank === rank + 2)) { connections += 1; }
+          if (suitTiles.some(t => t.rank === rank - 2)) { connections += 1; }
+          score -= (connections * 10);
+
+          if (rank === 1 && !suitTiles.some(t => t.rank === 2 || t.rank === 3)) { score += 25; }
+          if (rank === 9 && !suitTiles.some(t => t.rank === 7 || t.rank === 8)) { score += 25; }
+          if (rank > 1 && rank < 9 && connections === 0) { score += 30; }
+        }
+
+        if (score < minScoreForRiichiDiscard) {
+          minScoreForRiichiDiscard = score;
+          bestRiichiDiscardTile = tile;
+        }
+      }
+
+      if (bestRiichiDiscardTile) {
+        this.discardTile(player.id, bestRiichiDiscardTile.id, this.drawnTile && bestRiichiDiscardTile.id === this.drawnTile.id);
+      } else {
+        this.handleAiDiscard(); // Fallback
+      }
     }
     ,
     loadCatCoins() {

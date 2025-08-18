@@ -102,7 +102,13 @@
         @back-to-title="handleBackToTitleFromFinalResult"
       />
       <img v-if="animationDisplay && animationDisplay.type === 'ron'" src="/assets/images/status/ron.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`, 'ron-animation']" alt="ロン" />
-      <img v-if="animationDisplay && animationDisplay.type === 'riichi'" src="/assets/images/status/riichi.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`]" alt="リーチ" />
+      <!-- New Riichi animation for own player -->
+      <div v-if="animationDisplay && animationDisplay.type === 'riichi' && animationDisplay.position === 'bottom'" class="riichi-container riichi-slide-animation">
+        <img src="/assets/images/status/riichi.png" alt="リーチ" class="riichi-image-scaled" />
+      </div>
+
+      <!-- Existing Riichi animation for other players -->
+      <img v-if="animationDisplay && animationDisplay.type === 'riichi' && animationDisplay.position !== 'bottom'" src="/assets/images/status/riichi.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`]" alt="リーチ" />
       <img v-if="animationDisplay && animationDisplay.type === 'tsumo'" src="/assets/images/status/tsumo.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`, 'tsumo-animation']" alt="ツモ" />
       <!-- ポンとカンの表示を追加 -->
       <img v-if="animationDisplay && animationDisplay.type === 'pon'" src="/assets/images/status/pon.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`, 'pon-animation', 'pon-kan-size']" alt="ポン" />
@@ -652,6 +658,48 @@ function onAnkanSelected(tile) { // モーダルからのイベント
   100% {
     transform: translate(-50%, -50%) scale(1);
     filter: drop-shadow(0 0 0 transparent);
+  }
+}
+
+/* New Riichi Animation Styles */
+.riichi-container {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 100%; /* Full width of the game board scaler */
+  height: 243px; /* Height of the riichi bar */
+  background-color: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  z-index: 100; /* Make sure it's on top */
+  transform: translate(-50%, 100%); /* Start off-screen */
+}
+
+.riichi-image-scaled {
+  height: 100%; /* Fit height to container */
+  width: auto;
+  border: 6px solid gold;
+  box-sizing: border-box; /* 枠線が画像のサイズに影響しないようにする */
+}
+
+.riichi-slide-animation {
+  animation: riichi-slide 1.5s ease-in-out forwards;
+}
+
+@keyframes riichi-slide {
+  0% {
+    transform: translate(-50%, 100%);
+  }
+  20.0% { /* 0.3s / 1.5s */
+    transform: translate(-50%, 0);
+  }
+  80.0% { /* 1.2s / 1.5s */
+    transform: translate(-50%, 0);
+  }
+  100% {
+    transform: translate(-50%, 100%);
   }
 }
 

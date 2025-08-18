@@ -885,10 +885,10 @@ export const useGameStore = defineStore('game', {
     // リーチアニメーションの状態を設定するアクション
     setRiichiAnimationState(playerId) {
       this.animationState = { type: 'riichi', playerId: playerId };
-      // 1秒後にアニメーションをリセット
+      // 1.5秒後にアニメーションをリセット
       setTimeout(() => {
         this.animationState = { type: null, playerId: null };
-      }, 1000);
+      }, 1500);
     },
     declareRiichi(playerId) {
       const player = this.players.find(p => p.id === playerId);

@@ -1889,7 +1889,9 @@ export const useGameStore = defineStore('game', {
           if (this.currentTurnPlayerId === player.id && this.gamePhase === GAME_PHASES.AWAITING_DISCARD) {
             if (eligibility.canTsumoAgari) {
               // ツモ和了
-              this.handleAgari(playerId, this.drawnTile, true);
+              setTimeout(() => {
+                this.handleAgari(playerId, this.drawnTile, true);
+              }, 200); // アニメーション時間待つ
             } else if (eligibility.canAnkan && Math.random() < 1.0) { // 暗槓可能なら100%暗槓
               this.declareAnkan(playerId, eligibility.canAnkan[0]);
             } else if (eligibility.canKakan && Math.random() < 1.0) { // 加槓可能なら100%加槓

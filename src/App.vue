@@ -166,6 +166,9 @@ onMounted(async () => {
     '/assets/sounds/NES-JP-A04-2(Stage3-Loop125).mp3',
     '/assets/sounds/Percussive_Accent03-1(Dry).mp3',
     '/assets/sounds/Hyoshigi01-1.mp3',
+    '/assets/sounds/Multi_Accent01-3(Dry).mp3',
+    '/assets/sounds/Single_Accent17-2(Dry).mp3',
+    '/assets/sounds/Kagura_Suzu03-1.mp3',
   ];
 
   const totalAssets = imagePaths.length + audioPaths.length;

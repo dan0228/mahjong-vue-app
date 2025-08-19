@@ -786,6 +786,7 @@ export const useGameStore = defineStore('game', {
       }, 1500);
     },
     declareRiichi(playerId) {
+      const audioStore = useAudioStore();
       const player = this.players.find(p => p.id === playerId);
       // ダブルリーチ: 自分の最初の捨て牌までで、かつ他家が誰も鳴いていない(turnCountがプレイヤー数未満)
       // リーチは、残り山牌が4枚以上あり、持ち点が1000点以上の場合のみ可能
@@ -800,6 +801,7 @@ export const useGameStore = defineStore('game', {
       this.playerActionEligibility[playerId] = {}; // リーチしたので他のアクションはリセット
       // リーチ宣言後、アニメーションフェーズに移行
       this.gamePhase = GAME_PHASES.RIICHI_ANIMATION;
+      audioStore.playSound('Kagura_Suzu03-1.mp3'); // リーチ時の効果音
       // 捨てられる牌の候補を計算 (手牌 + ツモ牌)
       const potentialDiscards = [...player.hand, this.drawnTile];
       this.riichiDiscardOptions = potentialDiscards.filter(tileToDiscard => {
@@ -994,6 +996,7 @@ export const useGameStore = defineStore('game', {
     },
     // ポン宣言
     declarePon(playerId, targetPlayerId, tileToPon) {
+      const audioStore = useAudioStore();
       const player = this.players.find(p => p.id === playerId);
       const targetPlayer = this.players.find(p => p.id === targetPlayerId);
       if (!player || !targetPlayer || !this.lastDiscardedTile || mahjongLogic.getTileKey(this.lastDiscardedTile) !== mahjongLogic.getTileKey(tileToPon)) {
@@ -1070,6 +1073,8 @@ export const useGameStore = defineStore('game', {
 
       // ポンアニメーションの状態を設定
       this.animationState = { type: 'pon', playerId: playerId };
+      // 効果音を鳴らす
+      audioStore.playSound('Percussive_Accent03-1(Dry).mp3');
       // 1.5秒後にアニメーションをリセット
       setTimeout(() => {
         this.animationState = { type: null, playerId: null };
@@ -1077,6 +1082,7 @@ export const useGameStore = defineStore('game', {
     },
     // 明カン宣言
     declareMinkan(playerId, targetPlayerId, tileToKan) {
+      const audioStore = useAudioStore();
       const player = this.players.find(p => p.id === playerId);
       const targetPlayer = this.players.find(p => p.id === targetPlayerId);
       if (!player || !targetPlayer || !this.lastDiscardedTile || mahjongLogic.getTileKey(this.lastDiscardedTile) !== mahjongLogic.getTileKey(tileToKan)) {
@@ -1149,6 +1155,8 @@ export const useGameStore = defineStore('game', {
 
       // カンアニメーションの状態を設定
       this.animationState = { type: 'kan', playerId: playerId }; // 'kan' は新しいタイプ
+      // 効果音を鳴らす
+      audioStore.playSound('Hyoshigi01-1.mp3');
       // 1.5秒後にアニメーションをリセット
       setTimeout(() => {
         this.animationState = { type: null, playerId: null };
@@ -1156,6 +1164,7 @@ export const useGameStore = defineStore('game', {
     },
     // 暗カン宣言
     declareAnkan(playerId, tileToAnkan) {
+      const audioStore = useAudioStore();
       const player = this.players.find(p => p.id === playerId);
       if (!player || !tileToAnkan) {
         console.error("Ankan declaration invalid. Player or tile not found.");
@@ -1219,6 +1228,8 @@ export const useGameStore = defineStore('game', {
 
       // カンアニメーションの状態を設定
       this.animationState = { type: 'kan', playerId: playerId }; // 'kan' は新しいタイプ
+      // 効果音を鳴らす
+      audioStore.playSound('Hyoshigi01-1.mp3');
       // 1.5秒後にアニメーションをリセット
       setTimeout(() => {
         this.animationState = { type: null, playerId: null };
@@ -1226,6 +1237,7 @@ export const useGameStore = defineStore('game', {
     },
     // 加カン宣言
     declareKakan(playerId, tileToKakan) {
+      const audioStore = useAudioStore();
       const player = this.players.find(p => p.id === playerId);
       // リーチ後は加槓できない
       if (player && (player.isRiichi || player.isDoubleRiichi)) {
@@ -1292,6 +1304,8 @@ export const useGameStore = defineStore('game', {
 
       // カンアニメーションの状態を設定
       this.animationState = { type: 'kan', playerId: playerId }; // 'kan' は新しいタイプ
+      // 効果音を鳴らす
+      audioStore.playSound('Hyoshigi01-1.mp3');
       // 1.5秒後にアニメーションをリセット
       setTimeout(() => {
         this.animationState = { type: null, playerId: null };
@@ -1330,6 +1344,7 @@ export const useGameStore = defineStore('game', {
       }
     },
     handleAgari(agariPlayerId, agariTile, isTsumo, ronTargetPlayerId = null) {
+      const audioStore = useAudioStore();
       this.actionResponseQueue = []; // 和了が発生したので他のアクションは無効
       const player = this.players.find(p => p.id === agariPlayerId);
       if (!player) {
@@ -1434,6 +1449,7 @@ export const useGameStore = defineStore('game', {
         const pointChanges = {};
         this.players.forEach(p => pointChanges[p.id] = 0);
         if (isTsumo) {
+          audioStore.playSound('Multi_Accent01-3(Dry).mp3'); // ツモ和了時の効果音
           if (player.isDealer) { // 親のツモ和了
             const scorePerKo = winResult.score / (this.players.length - 1); // 子は等分
             this.players.forEach(p => {
@@ -1456,6 +1472,7 @@ export const useGameStore = defineStore('game', {
           }
           pointChanges[agariPlayerId] = winResult.score;
         } else if (ronTargetPlayerId) {
+          audioStore.playSound('Single_Accent17-2(Dry).mp3'); // ロン和了時の効果音
           // ロン和了の場合
           pointChanges[ronTargetPlayerId] = -winResult.score;
           pointChanges[agariPlayerId] = winResult.score;
@@ -2060,7 +2077,7 @@ export const useGameStore = defineStore('game', {
           const eligibility = this.playerActionEligibility[aiPlayerId];
 
           // 1. ロン可能かチェック (90%実施)
-          if (eligibility?.canRon && Math.random() < 0.0) {
+          if (eligibility?.canRon && Math.random() < 0.9) {
             this.playerDeclaresCall(aiPlayerId, 'ron', null);
             return;
           }

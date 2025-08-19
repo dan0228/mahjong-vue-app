@@ -50,10 +50,29 @@ export const useAudioStore = defineStore('audio', {
       this.isSeEnabled = !this.isSeEnabled;
     },
     async setBgm(newBgmName) {
-      if (this.isSwitchingBgm || this.currentBgm === newBgmName) {
+      if (this.isSwitchingBgm) {
         return;
       }
       this.isSwitchingBgm = true;
+
+      // 同じBGMが指定された場合でも、再生位置をリセットして再生し直す
+      if (this.currentBgm === newBgmName) {
+        const audio = this.audioPlayers.get(`/assets/sounds/${newBgmName}`);
+        if (audio) {
+          audio.currentTime = 0;
+          if (!audio.paused && this.isBgmEnabled) {
+            // 既に再生中であれば、そのまま再生を続ける（最初からになる）
+            // そうでなければ、play()で再生を開始
+            try {
+              await audio.play();
+            } catch (e) {
+              console.error("BGMの再生に失敗しました:", e);
+            }
+          }
+        }
+        this.isSwitchingBgm = false;
+        return;
+      }
 
       const oldBgmName = this.currentBgm;
       const oldAudio = oldBgmName ? this.audioPlayers.get(`/assets/sounds/${oldBgmName}`) : null;

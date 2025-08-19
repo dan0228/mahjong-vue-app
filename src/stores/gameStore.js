@@ -1065,7 +1065,7 @@ export const useGameStore = defineStore('game', {
           if (this.currentTurnPlayerId === playerId && this.gamePhase === GAME_PHASES.AWAITING_DISCARD) {
             this.handleAiDiscard();
           }
-        }, 1500); // アニメーション時間待つ
+        }, 1550); // アニメーション時間待つ
       }
 
       // ポンアニメーションの状態を設定
@@ -1904,7 +1904,7 @@ export const useGameStore = defineStore('game', {
               this.discardTile(playerId, tileToDiscard.id, isFromDrawnTile);
             }
           }
-        }, 1500); // アニメーション時間待つ
+        }, 1550); // アニメーション時間待つ
       }
     }
     ,

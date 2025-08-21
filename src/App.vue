@@ -50,6 +50,7 @@ onMounted(async () => {
     '/assets/images/back/back_out.png',
     '/assets/images/back/mat.png',
     '/assets/images/back/タイトルロゴ.png',
+    '/assets/images/back/タイトルロゴ_en.png',
     '/assets/images/back/title_back_eye.png',
     '/assets/images/back/title_back.png',
     '/assets/images/button/buckToTitle.png',

@@ -5,7 +5,7 @@
         <div class="title-background-image base-image"></div>
         <div class="title-background-image eye-blink-image"></div>
       </div>
-      <img src="/assets/images/back/タイトルロゴ.png" alt="よんじゃん！" class="title-logo" />
+      <img :src="titleLogoSrc" alt="よんじゃん！" class="title-logo" />
       <div class="top-controls">
         <div class="audio-toggles">
           <label class="toggle-switch">
@@ -82,6 +82,13 @@ const selectLanguage = (lang) => {
   selectedLanguage.value = lang;
   // ここに言語切り替えのロジックを追加予定
 };
+
+const titleLogoSrc = computed(() => {
+  if (selectedLanguage.value === 'ja') {
+    return '/assets/images/back/タイトルロゴ.png';
+  }
+  return '/assets/images/back/タイトルロゴ_en.png';
+});
 
 
 // --- Scaling Logic ---

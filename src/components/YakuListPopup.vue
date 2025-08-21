@@ -20,16 +20,18 @@
                   <span v-if="yaku.menzenOnly"> {{ $t('yakuListPopup.menzenOnly') }}</span>
                   <span v-if="yaku.kuisagari"> {{ $t('yakuListPopup.kuisagari', { n: yaku.fans - yaku.kuisagari }) }}</span>
                 </td>
-                <td class="yaku-example example-column">
-                  <span v-if="yaku.exampleTiles && yaku.exampleTiles.length > 0">
-                    <img
-                      v-for="(tile, index) in yaku.exampleTiles"
-                      :key="index"
-                      :src="determineTileImage(yaku, tile, index)"
-                      :alt="determineTileAlt(yaku, tile, index)"
-                      :class="['tile-image-small', getTileSpecificClass(yaku, index, yaku.exampleTiles.length)]"/>
-                  </span>
-                  <span v-else>-</span>
+                <td class="example-column">
+                  <div class="yaku-example">
+                    <span v-if="yaku.exampleTiles && yaku.exampleTiles.length > 0">
+                      <img
+                        v-for="(tile, index) in yaku.exampleTiles"
+                        :key="index"
+                        :src="determineTileImage(yaku, tile, index)"
+                        :alt="determineTileAlt(yaku, tile, index)"
+                        :class="['tile-image-small', getTileSpecificClass(yaku, index, yaku.exampleTiles.length)]"/>
+                    </span>
+                    <span v-else>-</span>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -48,16 +50,18 @@
               <tr v-for="yakuman in yakumanList" :key="yakuman.key">
                 <td>{{ $t(`yaku.${yakuman.key}.name`) }}</td>
                 <td>{{ yakuman.power === 1 ? $t('yakuListPopup.yakuman') : $t('yakuListPopup.multipleYakuman', { n: yakuman.power }) }}</td>
-                <td class="yaku-example example-column">
-                  <span v-if="yakuman.exampleTiles && yakuman.exampleTiles.length > 0">
-                    <img
-                      v-for="(tile, index) in yakuman.exampleTiles"
-                      :key="index"
-                      :src="determineTileImage(yakuman, tile, index)"
-                      :alt="determineTileAlt(yakuman, tile, index)"
-                      :class="['tile-image-small', getTileSpecificClass(yakuman, index, yakuman.exampleTiles.length)]"/>
-                  </span>
-                  <span v-else>-</span>
+                <td class="example-column">
+                  <div class="yaku-example">
+                    <span v-if="yakuman.exampleTiles && yakuman.exampleTiles.length > 0">
+                      <img
+                        v-for="(tile, index) in yakuman.exampleTiles"
+                        :key="index"
+                        :src="determineTileImage(yakuman, tile, index)"
+                        :alt="determineTileAlt(yakuman, tile, index)"
+                        :class="['tile-image-small', getTileSpecificClass(yakuman, index, yakuman.exampleTiles.length)]"/>
+                    </span>
+                    <span v-else>-</span>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -146,9 +150,9 @@
 }
   .yaku-section { margin-bottom: 15px; }
   .yaku-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-  .yaku-table th, .yaku-table td { border: 1px solid #ddd; padding: 6px; text-align: left; }
+  .yaku-table th, .yaku-table td { border: 1px solid #ddd; padding: 6px; text-align: left; vertical-align: top; }
   .yaku-table th { background-color: #f2f2f2; }
-  .example-column { width: 120px; }
+  .example-column { width: 125px; }
   .yaku-example {
     display: flex;
     align-items: center;

@@ -323,43 +323,43 @@ export function checkCanKakan(hand, melds, drawnTile) {
 // kuisagari: 喰い下がりの翻数 (例: 1 なら1翻下がる) // 喰い下がり後の翻数を直接指定するのではなく、下がる値を指定
 // exampleTiles: 役の例を示す牌の配列 (例: [{suit: 'm', rank: 1}, ...])。表示しない場合は null。
 export const YONHAI_YAKU = {
-  REACH: { name: "立直", fans: 1, menzenOnly: true, exampleTiles: null },
-  TSUMO: { name: "門前清自摸和", fans: 1, menzenOnly: true, exampleTiles: null },
-  TANYAO: { name: "断么九", fans: 1, menzenOnly: false, exampleTiles: [{suit:'m',rank:2},{suit:'m',rank:3},{suit:'m',rank:4},{suit:'p',rank:5},{suit:'p',rank:5}] },
-  PINFU: { name: "平和", fans: 1, menzenOnly: true, exampleTiles: [{suit:'m',rank:9},{suit:'m',rank:9},{suit:'s',rank:5},{suit:'s',rank:6},{suit:'s',rank:7}] },
-  JIKAZE: { name: "自風牌", fans: 1, menzenOnly: false, exampleTiles: [{suit:'m',rank:2},{suit:'m',rank:2},{suit:'z',rank:JIHAI_TYPES.SHA},{suit:'z',rank:JIHAI_TYPES.SHA},{suit:'z',rank:JIHAI_TYPES.SHA}] }, // 仮に西を自風
-  BAKAZE: { name: "場風牌", fans: 1, menzenOnly: false, exampleTiles: [{suit:'m',rank:2},{suit:'m',rank:2},{suit:'z',rank:JIHAI_TYPES.TON},{suit:'z',rank:JIHAI_TYPES.TON},{suit:'z',rank:JIHAI_TYPES.TON}] }, // 仮に東を場風
-  SANGENPAI: { name: "三元牌", fans: 1, menzenOnly: false, exampleTiles: [{suit:'s',rank:4},{suit:'s',rank:4},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HAKU}] }, // 仮に白
-  CHANKAN: { name: "槍槓", fans: 1, menzenOnly: false, exampleTiles: null },
-  HAITEI_RAOYUE: { name: "海底摸月", fans: 1, menzenOnly: false, exampleTiles: null },
-  HOUTEI_RAOYUI: { name: "河底撈魚", fans: 1, menzenOnly: false, exampleTiles: null },
-  IPPATSU: { name: "一発", fans: 1, menzenOnly: true, exampleTiles: null }, // 立直が条件
-  DOUBLE_REACH: { name: "ダブル立直", fans: 2, menzenOnly: true, exampleTiles: null },
-  SANGEN_DOUKOU: { name: "三色同刻", fans: 2, menzenOnly: false, exampleTiles: [{suit:'m',rank:2},{suit:'m',rank:2},{suit:'m',rank:5},{suit:'p',rank:5},{suit:'s',rank:5}] },
-  TOITOI: { name: "対々和", fans: 2, menzenOnly: false, exampleTiles: [{suit:'m',rank:7},{suit:'m',rank:7},{suit:'p',rank:8},{suit:'p',rank:8},{suit:'p',rank:8}] },
-  SANANKOU_DAIYO: { name: "一暗刻", fans: 2, menzenOnly: false, exampleTiles: [{suit:'m',rank:7},{suit:'m',rank:7},{suit:'m',rank:7},{suit:'p',rank:8},{suit:'p',rank:8}] }, // (暗刻) の部分は別途表示
-  HONROUTOU: { name: "混老頭", fans: 2, menzenOnly: false, exampleTiles: [{suit:'p',rank:1},{suit:'p',rank:1},{suit:'p',rank:1},{suit:'z',rank:JIHAI_TYPES.NAN},{suit:'z',rank:JIHAI_TYPES.NAN}] },
-  CHANTA: { name: "混全帯么九", fans: 2, menzenOnly: false, kuisagari: 1, exampleTiles: [{suit:'m',rank:7},{suit:'m',rank:8},{suit:'m',rank:9},{suit:'z',rank:JIHAI_TYPES.PEI},{suit:'z',rank:JIHAI_TYPES.PEI}] },
-  JUNCHAN: { name: "純全帯么九", fans: 3, menzenOnly: false, kuisagari: 1, exampleTiles: [{suit:'m',rank:7},{suit:'m',rank:8},{suit:'m',rank:9},{suit:'s',rank:1},{suit:'s',rank:1}] },
-  HONITSU: { name: "混一色", fans: 3, menzenOnly: false, kuisagari: 1, exampleTiles: [{suit:'s',rank:1},{suit:'s',rank:2},{suit:'s',rank:3},{suit:'z',rank:JIHAI_TYPES.HATSU},{suit:'z',rank:JIHAI_TYPES.HATSU}] },
-  CHINITSU: { name: "清一色", fans: 4, menzenOnly: false, kuisagari: 1, exampleTiles: [{suit:'s',rank:1},{suit:'s',rank:2},{suit:'s',rank:3},{suit:'s',rank:8},{suit:'s',rank:8}] },
+  REACH: { key: "riichi", name: "立直", fans: 1, menzenOnly: true, exampleTiles: null },
+  TSUMO: { key: "tsumo", name: "門前清自摸和", fans: 1, menzenOnly: true, exampleTiles: null },
+  TANYAO: { key: "tanyao", name: "断么九", fans: 1, menzenOnly: false, exampleTiles: [{suit:'m',rank:2},{suit:'m',rank:3},{suit:'m',rank:4},{suit:'p',rank:5},{suit:'p',rank:5}] },
+  PINFU: { key: "pinfu", name: "平和", fans: 1, menzenOnly: true, exampleTiles: [{suit:'m',rank:9},{suit:'m',rank:9},{suit:'s',rank:5},{suit:'s',rank:6},{suit:'s',rank:7}] },
+  JIKAZE: { key: "jikaze", name: "自風牌", fans: 1, menzenOnly: false, exampleTiles: [{suit:'m',rank:2},{suit:'m',rank:2},{suit:'z',rank:JIHAI_TYPES.SHA},{suit:'z',rank:JIHAI_TYPES.SHA},{suit:'z',rank:JIHAI_TYPES.SHA}] }, // 仮に西を自風
+  BAKAZE: { key: "bakaze", name: "場風牌", fans: 1, menzenOnly: false, exampleTiles: [{suit:'m',rank:2},{suit:'m',rank:2},{suit:'z',rank:JIHAI_TYPES.TON},{suit:'z',rank:JIHAI_TYPES.TON},{suit:'z',rank:JIHAI_TYPES.TON}] }, // 仮に東を場風
+  SANGENPAI: { key: "sangenpai", name: "三元牌", fans: 1, menzenOnly: false, exampleTiles: [{suit:'s',rank:4},{suit:'s',rank:4},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HAKU}] }, // 仮に白
+  CHANKAN: { key: "chankan", name: "槍槓", fans: 1, menzenOnly: false, exampleTiles: null },
+  HAITEI_RAOYUE: { key: "haiteiRaoyue", name: "海底摸月", fans: 1, menzenOnly: false, exampleTiles: null },
+  HOUTEI_RAOYUI: { key: "houteiRaoyui", name: "河底撈魚", fans: 1, menzenOnly: false, exampleTiles: null },
+  IPPATSU: { key: "ippatsu", name: "一発", fans: 1, menzenOnly: true, exampleTiles: null }, // 立直が条件
+  DOUBLE_REACH: { key: "doubleRiichi", name: "ダブル立直", fans: 2, menzenOnly: true, exampleTiles: null },
+  SANGEN_DOUKOU: { key: "sanshokuDoukou", name: "三色同刻", fans: 2, menzenOnly: false, exampleTiles: [{suit:'m',rank:2},{suit:'m',rank:2},{suit:'m',rank:5},{suit:'p',rank:5},{suit:'s',rank:5}] },
+  TOITOI: { key: "toitoi", name: "対々和", fans: 2, menzenOnly: false, exampleTiles: [{suit:'m',rank:7},{suit:'m',rank:7},{suit:'p',rank:8},{suit:'p',rank:8},{suit:'p',rank:8}] },
+  IIANKOU: { key: "iiankou", name: "一暗刻", fans: 2, menzenOnly: false, exampleTiles: [{suit:'m',rank:7},{suit:'m',rank:7},{suit:'m',rank:7},{suit:'p',rank:8},{suit:'p',rank:8}] }, // (暗刻) の部分は別途表示
+  HONROUTOU: { key: "honroutou", name: "混老頭", fans: 2, menzenOnly: false, exampleTiles: [{suit:'p',rank:1},{suit:'p',rank:1},{suit:'p',rank:1},{suit:'z',rank:JIHAI_TYPES.NAN},{suit:'z',rank:JIHAI_TYPES.NAN}] },
+  CHANTA: { key: "chanta", name: "混全帯么九", fans: 2, menzenOnly: false, kuisagari: 1, exampleTiles: [{suit:'m',rank:7},{suit:'m',rank:8},{suit:'m',rank:9},{suit:'z',rank:JIHAI_TYPES.PEI},{suit:'z',rank:JIHAI_TYPES.PEI}] },
+  JUNCHAN: { key: "junchan", name: "純全帯么九", fans: 3, menzenOnly: false, kuisagari: 1, exampleTiles: [{suit:'m',rank:7},{suit:'m',rank:8},{suit:'m',rank:9},{suit:'s',rank:1},{suit:'s',rank:1}] },
+  HONITSU: { key: "honitsu", name: "混一色", fans: 3, menzenOnly: false, kuisagari: 1, exampleTiles: [{suit:'s',rank:1},{suit:'s',rank:2},{suit:'s',rank:3},{suit:'z',rank:JIHAI_TYPES.HATSU},{suit:'z',rank:JIHAI_TYPES.HATSU}] },
+  CHINITSU: { key: "chinitsu", name: "清一色", fans: 4, menzenOnly: false, kuisagari: 1, exampleTiles: [{suit:'s',rank:1},{suit:'s',rank:2},{suit:'s',rank:3},{suit:'s',rank:8},{suit:'s',rank:8}] },
   // ドラ・裏ドラは動的に fans を設定するため、ここでは固定値を入れない
-  DORA: { name: "ドラ", fans: 0, menzenOnly: false }, // fansは動的に計算
-  URA_DORA: { name: "裏ドラ", fans: 0, menzenOnly: true }, // fansは動的に計算
+  DORA: { key: "dora", name: "ドラ", fans: 0, menzenOnly: false }, // fansは動的に計算
+  URA_DORA: { key: "uraDora", name: "裏ドラ", fans: 0, menzenOnly: true }, // fansは動的に計算
 };
 
 export const YONHAI_YAKUMAN = {
-  TENHOU: { name: "天和", power: 1, exampleTiles: null },
-  CHIHOU: { name: "地和", power: 1, exampleTiles: null },
-  RENHOU: { name: "人和", power: 1, exampleTiles: null },
-  DAISANGEN: { name: "大三元", power: 1, exampleTiles: [{suit:'p',rank:4},{suit:'p',rank:4},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HATSU},{suit:'z',rank:JIHAI_TYPES.CHUN}] }, // 22萬白發中 のような形も含む
-  TSUIISOU: { name: "字一色", power: 1, exampleTiles: [{suit:'z',rank:JIHAI_TYPES.TON},{suit:'z',rank:JIHAI_TYPES.TON},{suit:'z',rank:JIHAI_TYPES.TON},{suit:'z',rank:JIHAI_TYPES.NAN},{suit:'z',rank:JIHAI_TYPES.NAN}] },
-  RYUIISOU: { name: "緑一色", power: 1, exampleTiles: [{suit:'s',rank:2},{suit:'s',rank:3},{suit:'s',rank:4},{suit:'s',rank:6},{suit:'s',rank:6}] }, // 發を含む場合は {suit:'z',rank:JIHAI_TYPES.HATSU}
-  CHINROUTOU: { name: "清老頭", power: 1, exampleTiles: [{suit:'m',rank:1},{suit:'m',rank:1},{suit:'s',rank:9},{suit:'s',rank:9},{suit:'s',rank:9}] },
-  SUUKANTSU_DAIYO: { name: "一槓子", power: 1, exampleTiles: [{suit:'m',rank:8},{suit:'m',rank:8},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HAKU}] }, // (槓子) の部分は別途表示
-  SHOUSUUSHI: { name: "小四喜", power: 1, exampleTiles: [{suit:'z',rank:JIHAI_TYPES.TON},{suit:'z',rank:JIHAI_TYPES.NAN},{suit:'z',rank:JIHAI_TYPES.NAN},{suit:'z',rank:JIHAI_TYPES.SHA},{suit:'z',rank:JIHAI_TYPES.PEI}] }, // (1面待ち) の部分は別途表示
-  DAISUUSHI: { name: "大四喜", power: 2, exampleTiles: [{suit:'z',rank:JIHAI_TYPES.TON},{suit:'z',rank:JIHAI_TYPES.NAN},{suit:'z',rank:JIHAI_TYPES.SHA},{suit:'z',rank:JIHAI_TYPES.PEI},{suit:'z',rank:JIHAI_TYPES.PEI}] }, // (4面待ち) の部分は別途表示
-  SUUANKOU_TANKI_DAIYO: { name: "一暗槓単騎", power: 2, exampleTiles: [{suit:'m',rank:8},{suit:'m',rank:8},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HAKU}] } // (暗槓) の部分は別途表示
+  TENHOU: { key: "tenhou", name: "天和", power: 1, exampleTiles: null },
+  CHIHOU: { key: "chihou", name: "地和", power: 1, exampleTiles: null },
+  RENHOU: { key: "renhou", name: "人和", power: 1, exampleTiles: null },
+  DAISANGEN: { key: "daisangen", name: "大三元", power: 1, exampleTiles: [{suit:'p',rank:4},{suit:'p',rank:4},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HATSU},{suit:'z',rank:JIHAI_TYPES.CHUN}] }, // 22萬白發中 のような形も含む
+  TSUIISOU: { key: "tsuiisou", name: "字一色", power: 1, exampleTiles: [{suit:'z',rank:JIHAI_TYPES.TON},{suit:'z',rank:JIHAI_TYPES.TON},{suit:'z',rank:JIHAI_TYPES.TON},{suit:'z',rank:JIHAI_TYPES.NAN},{suit:'z',rank:JIHAI_TYPES.NAN}] },
+  RYUIISOU: { key: "ryuiisou", name: "緑一色", power: 1, exampleTiles: [{suit:'s',rank:2},{suit:'s',rank:3},{suit:'s',rank:4},{suit:'s',rank:6},{suit:'s',rank:6}] }, // 發を含む場合は {suit:'z',rank:JIHAI_TYPES.HATSU}
+  CHINROUTOU: { key: "chinroutou", name: "清老頭", power: 1, exampleTiles: [{suit:'m',rank:1},{suit:'m',rank:1},{suit:'s',rank:9},{suit:'s',rank:9},{suit:'s',rank:9}] },
+  IIKANTSU: { key: "iikantsu", name: "一槓子", power: 1, exampleTiles: [{suit:'m',rank:8},{suit:'m',rank:8},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HAKU}] }, // (槓子) の部分は別途表示
+  SHOUSUUSHI: { key: "shousuushi", name: "小四喜", power: 1, exampleTiles: [{suit:'z',rank:JIHAI_TYPES.TON},{suit:'z',rank:JIHAI_TYPES.NAN},{suit:'z',rank:JIHAI_TYPES.NAN},{suit:'z',rank:JIHAI_TYPES.SHA},{suit:'z',rank:JIHAI_TYPES.PEI}] }, // (1面待ち) の部分は別途表示
+  DAISUUSHI: { key: "daisuushi", name: "大四喜", power: 2, exampleTiles: [{suit:'z',rank:JIHAI_TYPES.TON},{suit:'z',rank:JIHAI_TYPES.NAN},{suit:'z',rank:JIHAI_TYPES.SHA},{suit:'z',rank:JIHAI_TYPES.PEI},{suit:'z',rank:JIHAI_TYPES.PEI}] }, // (4面待ち) の部分は別途表示
+  IIANKOU_TANKI: { key: "iiankanTanki", name: "一暗槓単騎", power: 2, exampleTiles: [{suit:'m',rank:8},{suit:'m',rank:8},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HAKU}] } // (暗槓) の部分は別途表示
 };
 
 /**
@@ -649,14 +649,14 @@ function calculateYonhaiYaku(handData) {
   }
   // 一暗槓単騎 (Iiankantanki) - 四暗刻単騎の代用
   if (isYonhaiIiankantanki(handData, basicWinInfo)) {
-    yakumanList.push(YONHAI_YAKUMAN.SUUANKOU_TANKI_DAIYO);
-    totalYakumanPower += YONHAI_YAKUMAN.SUUANKOU_TANKI_DAIYO.power;
+    yakumanList.push(YONHAI_YAKUMAN.IIANKOU_TANKI);
+    totalYakumanPower += YONHAI_YAKUMAN.IIANKOU_TANKI.power;
   }
   // 一槓子 (Iikantsu) - 四槓子の代用
   // 一暗槓単騎が成立している場合は複合しない
-  if (!yakumanList.some(y => y.name === YONHAI_YAKUMAN.SUUANKOU_TANKI_DAIYO.name) && isYonhaiIikantsu(handData, basicWinInfo)) {
-    yakumanList.push(YONHAI_YAKUMAN.SUUKANTSU_DAIYO);
-    totalYakumanPower += YONHAI_YAKUMAN.SUUKANTSU_DAIYO.power;
+  if (!yakumanList.some(y => y.name === YONHAI_YAKUMAN.IIANKOU_TANKI.name) && isYonhaiIikantsu(handData, basicWinInfo)) {
+    yakumanList.push(YONHAI_YAKUMAN.IIKANTSU);
+    totalYakumanPower += YONHAI_YAKUMAN.IIKANTSU.power;
   }
 
   // 通常役判定
@@ -735,8 +735,8 @@ function calculateYonhaiYaku(handData) {
   }
   // 一暗刻 (Sanankou Daiyo)
   if (isYonhaiIianko(handData, basicWinInfo)) {
-    yakuList.push(YONHAI_YAKU.SANANKOU_DAIYO);
-    totalFans += YONHAI_YAKU.SANANKOU_DAIYO.fans;
+    yakuList.push(YONHAI_YAKU.IIANKOU);
+    totalFans += YONHAI_YAKU.IIANKOU.fans;
   }
   // 三色同刻 (Sangen Doukou)
   if (isYonhaiSanshokuDoukou(handData, basicWinInfo)) {

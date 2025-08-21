@@ -2,25 +2,25 @@
   <transition name="popup">
     <div class="popup-overlay" @click.self="$emit('close')">
       <div class="popup-content">
-        <h2>役一覧</h2>
+        <h2>{{ $t('yakuListPopup.title') }}</h2>
         <div class="yaku-section">
           <table class="yaku-table">
             <thead>
               <tr>
-                <th>役名</th>
-                <th>翻数</th>
-                <th>例</th>
+                <th>{{ $t('yakuListPopup.yakuNameHeader') }}</th>
+                <th>{{ $t('yakuListPopup.hanHeader') }}</th>
+                <th class="example-column">{{ $t('yakuListPopup.exampleHeader') }}</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="yaku in normalYakuList" :key="yaku.name">
-                <td>{{ yaku.name }}</td>
+              <tr v-for="yaku in normalYakuList" :key="yaku.key">
+                <td>{{ $t(`yaku.${yaku.key}.name`) }}</td>
                 <td>
-                  {{ yaku.fans }}翻
-                  <span v-if="yaku.menzenOnly"> (門前のみ)</span>
-                  <span v-if="yaku.kuisagari"> (喰{{ yaku.fans - yaku.kuisagari }}翻)</span>
+                  {{ $t('yakuListPopup.han', { n: yaku.fans }) }}
+                  <span v-if="yaku.menzenOnly"> {{ $t('yakuListPopup.menzenOnly') }}</span>
+                  <span v-if="yaku.kuisagari"> {{ $t('yakuListPopup.kuisagari', { n: yaku.fans - yaku.kuisagari }) }}</span>
                 </td>
-                <td class="yaku-example">
+                <td class="yaku-example example-column">
                   <span v-if="yaku.exampleTiles && yaku.exampleTiles.length > 0">
                     <img
                       v-for="(tile, index) in yaku.exampleTiles"
@@ -39,16 +39,16 @@
           <table class="yaku-table">
             <thead>
               <tr>
-                <th>役満名</th>
-                <th>役満数</th>
-                <th>例</th>
+                <th>{{ $t('yakuListPopup.yakumanNameHeader') }}</th>
+                <th>{{ $t('yakuListPopup.yakumanValueHeader') }}</th>
+                <th class="example-column">{{ $t('yakuListPopup.exampleHeader') }}</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="yakuman in yakumanList" :key="yakuman.name">
-                <td>{{ yakuman.name }}</td>
-                <td>{{ yakuman.power === 1 ? '役満' : `${yakuman.power}倍役満` }}</td>
-                <td class="yaku-example">
+              <tr v-for="yakuman in yakumanList" :key="yakuman.key">
+                <td>{{ $t(`yaku.${yakuman.key}.name`) }}</td>
+                <td>{{ yakuman.power === 1 ? $t('yakuListPopup.yakuman') : $t('yakuListPopup.multipleYakuman', { n: yakuman.power }) }}</td>
+                <td class="yaku-example example-column">
                   <span v-if="yakuman.exampleTiles && yakuman.exampleTiles.length > 0">
                     <img
                       v-for="(tile, index) in yakuman.exampleTiles"
@@ -64,7 +64,7 @@
           </table>
         </div>
         <div class="close-button-container">
-          <button @click="$emit('close')" class="close-button">閉じる</button>
+          <button @click="$emit('close')" class="close-button">{{ $t('yakuListPopup.closeButton') }}</button>
         </div>
       </div>
     </div>
@@ -73,26 +73,30 @@
 
 <script setup>
   import { computed } from 'vue';
+  import { useI18n } from 'vue-i18n';
   import { getTileImageUrl, tileToString } from '@/utils/tileUtils'; // 画像表示用ユーティリティ
   import { YONHAI_YAKU, YONHAI_YAKUMAN } from '@/services/mahjongLogic'; // 役定義をインポート
   defineEmits(['close']);
+
+  const { t } = useI18n();
+
   const normalYakuList = computed(() => {
     return Object.values(YONHAI_YAKU).filter(yaku =>
-      yaku.name !== YONHAI_YAKU.DORA.name && yaku.name !== YONHAI_YAKU.URA_DORA.name
+      yaku.key !== 'dora' && yaku.key !== 'uraDora'
     );
   });
   const yakumanList = computed(() => Object.values(YONHAI_YAKUMAN));
 
   function determineTileImage(yaku, tile, index) {
-    if (yaku.name === '一暗槓単騎' && (index === 2 || index === 5)) {
+    if (yaku.key === 'iiankanTanki' && (index === 2 || index === 5)) {
       return '/assets/images/tiles/ura.png'; // 裏向きの牌
     }
     return getTileImageUrl(tile);
   }
 
   function determineTileAlt(yaku, tile, index) {
-    if (yaku.name === '一暗槓単騎' && (index === 2 || index === 5)) {
-      return '裏向きの牌';
+    if (yaku.key === 'iiankanTanki' && (index === 2 || index === 5)) {
+      return t('yakuListPopup.facedownTile');
     }
     return tileToString(tile);
   }
@@ -100,17 +104,17 @@
   function getTileSpecificClass(yaku, index, exampleLength) {
     const classes = [];
     // 通常の5枚和了の4枚目と5枚目の間のスペース
-    if (index === 3 && yaku.name !== '一槓子' && yaku.name !== '一暗槓単騎' && exampleLength === 5) {
+    if (index === 3 && yaku.key !== 'iikantsu' && yaku.key !== 'iiankanTanki' && exampleLength === 5) {
       classes.push('last-drawn-tile-spacer');
     }
 
     // 一槓子と一暗槓単騎の1枚目と2枚目、2枚目と3枚目の間のスペース
-    if ((yaku.name === '一槓子' || yaku.name === '一暗槓単騎') && (index === 0 || index === 1)) {
+    if ((yaku.key === 'iikantsu' || yaku.key === 'iiankanTanki') && (index === 0 || index === 1)) {
       classes.push('kan-tile-spacer');
     }
 
     // 一槓子の6枚目を横向きにする
-    if (yaku.name === '一槓子' && index === 5) {
+    if (yaku.key === 'iikantsu' && index === 5) {
       classes.push('tile-rotated');
     }
     return classes;
@@ -123,11 +127,11 @@
   .popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
   .popup-content {
     background-color: white;
-    padding: 20px; border-radius: 8px;
-    max-width: 90%; max-height: 70vh;
+    padding: 5px; border-radius: 8px;
+    max-width: 100%; max-height: 100%;
     overflow-y: auto; text-align: center;
     font-family: 'M PLUS 1', sans-serif; /* フォントをM PLUS 1に統一 */
-    font-size: small;
+    font-size: 0.7em;
     transform: scale(0.85); /* ポップアップ全体を縮小して画面に収める */
     display: flex; flex-direction: column; justify-content: space-between;
     touch-action: pan-y;
@@ -139,12 +143,12 @@
 }
 .popup-enter-from, .popup-leave-to {
   opacity: 0;
-  transform: scale(0.7);
 }
   .yaku-section { margin-bottom: 15px; }
-  .yaku-table { width: 105%; border-collapse: collapse; margin-top: 10px; }
+  .yaku-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
   .yaku-table th, .yaku-table td { border: 1px solid #ddd; padding: 6px; text-align: left; }
   .yaku-table th { background-color: #f2f2f2; }
+  .example-column { width: 120px; }
   .yaku-example {
     display: flex;
     align-items: center;

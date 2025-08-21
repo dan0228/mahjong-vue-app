@@ -6,17 +6,31 @@
         <div class="title-background-image eye-blink-image"></div>
       </div>
       <img src="/assets/images/back/タイトルロゴ.png" alt="よんじゃん！" class="title-logo" />
-      <div class="audio-toggles">
-        <label class="toggle-switch">
-          <input type="checkbox" :checked="audioStore.isBgmEnabled" @change="audioStore.toggleBgm()">
-          <span class="slider round"></span>
-        </label>
-        <span class="toggle-label">BGM</span>
-        <label class="toggle-switch">
-          <input type="checkbox" :checked="audioStore.isSeEnabled" @change="audioStore.toggleSe()">
-          <span class="slider round"></span>
-        </label>
-        <span class="toggle-label">効果音</span>
+      <div class="top-controls">
+        <div class="audio-toggles">
+          <label class="toggle-switch">
+            <input type="checkbox" :checked="audioStore.isBgmEnabled" @change="audioStore.toggleBgm()">
+            <span class="slider round"></span>
+          </label>
+          <span class="toggle-label">BGM</span>
+          <label class="toggle-switch">
+            <input type="checkbox" :checked="audioStore.isSeEnabled" @change="audioStore.toggleSe()">
+            <span class="slider round"></span>
+          </label>
+          <span class="toggle-label">効果音</span>
+        </div>
+        <div class="language-selector">
+          <div 
+            class="language-flag language-flag-ja"
+            :class="{ 'selected': selectedLanguage === 'ja' }"
+            @click="selectLanguage('ja')"
+          ></div>
+          <div 
+            class="language-flag language-flag-en"
+            :class="{ 'selected': selectedLanguage === 'en' }"
+            @click="selectLanguage('en')"
+          ></div>
+        </div>
       </div>
       <div class="max-consecutive-wins">
         🏆最大連勝数: <span class="max-wins-number">{{ gameStore.maxConsecutiveWins }}</span>
@@ -34,8 +48,6 @@
         </ul>
       </nav>
 
-      <RulePopup v-if="showRulesPopup" @close="showRulesPopup = false" />
-      <YakuListPopup v-if="showYakuListPopup" @close="showYakuListPopup = false" />
       <RulePopup v-if="showRulesPopup" @close="showRulesPopup = false" />
       <YakuListPopup v-if="showYakuListPopup" @close="showYakuListPopup = false" />
       <div class="credit">BGM by OtoLogic(CC BY 4.0)</div>
@@ -64,6 +76,13 @@ const audioStore = useAudioStore();
 
 const showRulesPopup = ref(false);
 const showYakuListPopup = ref(false);
+const selectedLanguage = ref('ja');
+
+const selectLanguage = (lang) => {
+  selectedLanguage.value = lang;
+  // ここに言語切り替えのロジックを追加予定
+};
+
 
 // --- Scaling Logic ---
 const DESIGN_WIDTH = 360;
@@ -295,17 +314,58 @@ function goToShrine() {
   z-index: 1;
 }
 
-.audio-toggles {
+.top-controls {
   position: absolute;
   top: 25px;
   right: 30px;
   display: flex;
-  flex-direction: row; /* 横並びにする */
-  gap: 15px; /* 要素間の間隔 */
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
   z-index: 10;
+}
+
+.audio-toggles {
+  display: flex;
+  flex-direction: row; /* 横並びにする */
+  align-items: center;
+  gap: 5px; /* 要素間の間隔 */
   font-size: 0.8em;
   color: #333;
 }
+
+.language-selector {
+  display: flex;
+  gap: 10px;
+}
+
+.language-flag {
+  width: 24px;
+  height: 18px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: opacity 0.2s ease-in-out;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.language-flag-ja {
+  background-image: url('https://twemoji.maxcdn.com/v/latest/svg/1f1ef-1f1f5.svg');
+}
+
+.language-flag-en {
+  background-image: url('https://twemoji.maxcdn.com/v/latest/svg/1f1fa-1f1f8.svg');
+}
+
+.language-flag:not(.selected) {
+  opacity: 0.6;
+}
+
+.language-flag.selected {
+  opacity: 1;
+}
+
 
 .max-consecutive-wins {
   position: absolute;

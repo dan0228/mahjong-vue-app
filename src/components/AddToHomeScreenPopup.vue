@@ -1,14 +1,19 @@
 <template>
   <div v-if="show" class="add-to-home-screen-popup-overlay">
     <div class="add-to-home-screen-popup-content">
-      <h2 v-if="isMobile">お知らせ😸</h2>
-      <h2 v-else>お知らせ😸</h2>
-      <p v-if="isMobile">📱ホーム画面に追加したら<br>アプリのようにワンタップでゲーム開始</p>
-      <p v-else>⭐ブックマークに登録したら<br>すぐにアクセスしてゲーム開始</p>
-      <p class="note">※データはすべてブラウザに保存されます</p>
+      <h2>{{ $t('addToHomeScreenPopup.title') }}</h2>
+      <div v-if="isMobile">
+        <p><b>{{ $t('addToHomeScreenPopup.mobile.heading') }}</b></p>
+        <p>{{ $t('addToHomeScreenPopup.mobile.body') }}</p>
+      </div>
+      <div v-else>
+        <p><b>{{ $t('addToHomeScreenPopup.desktop.heading') }}</b></p>
+        <p>{{ $t('addToHomeScreenPopup.desktop.body') }}</p>
+      </div>
+      <p class="note">{{ $t('addToHomeScreenPopup.note') }}</p>
       <div class="buttons">
-        <button @click="closePopup">閉じる</button>
-        <button v-if="isMobile" @click="showInstructions">追加方法を見る</button>
+        <button @click="closePopup">{{ $t('addToHomeScreenPopup.closeButton') }}</button>
+        <button v-if="isMobile" @click="showInstructions">{{ $t('addToHomeScreenPopup.howToAddButton') }}</button>
       </div>
     </div>
   </div>
@@ -16,7 +21,10 @@
 
 <script setup>
 import { defineProps, defineEmits, ref, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useAudioStore } from '@/stores/audioStore';
+
+const { t } = useI18n();
 
 const props = defineProps({
   show: Boolean,

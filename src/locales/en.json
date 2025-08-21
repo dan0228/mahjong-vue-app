@@ -13,5 +13,78 @@
     "maxWinStreak": "🏆Max Win Streak:",
         "catCoins": "🪙Cat Coins:",
     "sfx": "SFX"
+  },
+  "addToHomeScreenPopup": {
+    "title": "Quick Tip 😸",
+    "mobile": {
+      "heading": "📱Add to Home Screen:",
+      "body": "Tap and start the game with a single tap, just like an app."
+    },
+    "desktop": {
+      "heading": "⭐Bookmark This Page:",
+      "body": "Get quick access and jump into the game instantly."
+    },
+    "note": "*Your data is saved locally in your browser.",
+    "closeButton": "Close",
+    "howToAddButton": "How to Add"
+  },
+  "howToAddPopup": {
+    "title": "📲How to Add to Home Screen📲",
+    "iphone": {
+      "title": "For iPhone (using Safari)",
+      "step1": "1. Tap the Share button at the bottom of the screen.",
+      "step2": "2. Select Add to Home Screen.",
+      "step3": "3. Tap Add in the top right corner."
+    },
+    "android": {
+      "title": "For Android (using Chrome)",
+      "step1": "1. Tap the menu icon in the top right corner.",
+      "step2": "2. Select Add to Home Screen or Install app.",
+      "step3": "3. Follow the on-screen instructions to complete the process."
+    },
+    "closeButton": "Close"
+  },
+  "rulePopup": {
+    "title": "Rules",
+    "subtitle": "Hand: 1 meld, 1 pair",
+    "closeButton": "Close",
+    "sections": {
+      "basics": {
+        "title": "Basics",
+        "description": "East round only, no South round."
+      },
+      "scoring": {
+        "title": "Scoring",
+        "description": "No bonus points. Mangan-less hands score 0, but winning is possible."
+      },
+      "dora": {
+        "title": "Dora",
+        "description": "No Red Dora."
+      },
+      "calls": {
+        "title": "Calls",
+        "description": "No Chii. Kuikae, Atozuke, and Open Tanyao are all allowed."
+      },
+      "riichi": {
+        "title": "Riichi",
+        "description": "Kan (closed) is allowed after Riichi, even if it changes the waits."
+      },
+      "draws": {
+        "title": "Draws",
+        "description": "No abortive draws (e.g., Four-Wind Discard)."
+      },
+      "priority": {
+        "title": "Winning Priority",
+        "description": "In case of multiple winners on the same discard, the player closest to the discarder wins (atama-hane)."
+      },
+      "points": {
+        "title": "Points",
+        "description": "No points below zero (the game ends if a player's score drops below 0)."
+      },
+      "endCondition": {
+        "title": "End Condition",
+        "description": "Agari-yame is enabled. The game ends in the last round if the dealer wins or is in tenpai."
+      }
+    }
   }
 }

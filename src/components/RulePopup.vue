@@ -2,50 +2,18 @@
   <transition name="popup">
     <div class="popup-overlay" @click.self="$emit('close')">
       <div class="popup-content">
-        <h2>ルール</h2>
-        <p>手牌4枚+1枚の1面子1雀頭</p>
+        <h2>{{ $t('rulePopup.title') }}</h2>
+        <p>{{ $t('rulePopup.subtitle') }}</p>
         <table class="rules-table">
           <tbody>
-            <tr>
-              <td class="rule-category">基本</td>
-              <td class="rule-description">東風戦、南入なし。</td>
-            </tr>
-            <tr>
-              <td class="rule-category">点数</td>
-              <td class="rule-description">本場による加点なし。切り上げ満貫とし、満貫未満は0点(和了自体は可能)。</td>
-            </tr>
-            <tr>
-              <td class="rule-category">ドラ</td>
-              <td class="rule-description">赤ドラなし。</td>
-            </tr>
-            <tr>
-              <td class="rule-category">鳴き</td>
-              <td class="rule-description">チーなし。喰い替えあり。後付けあり。喰いタンあり。</td>
-            </tr>
-            <tr>
-              <td class="rule-category">リーチ</td>
-              <td class="rule-description">リーチ後の暗カンはいかなる形でも可能。</td>
-            </tr>
-            <tr>
-              <td class="rule-category">流局</td>
-              <td class="rule-description">四風連打・四家リーチによる途中流局なし。</td>
-            </tr>
-            <tr>
-              <td class="rule-category">和了優先</td>
-              <td class="rule-description">ダブロン・トリロンは頭ハネ。</td>
-            </tr>
-            <tr>
-              <td class="rule-category">持ち点</td>
-              <td class="rule-description">箱下なし (0点未満になった時点で終局)。</td>
-            </tr>
-            <tr>
-              <td class="rule-category">終局条件</td>
-              <td class="rule-description">和了止めあり (東4局は親が和了またはテンパイしても終局)。</td>
+            <tr v-for="section in ruleSections" :key="section">
+              <td class="rule-category">{{ $t(`rulePopup.sections.${section}.title`) }}</td>
+              <td class="rule-description">{{ $t(`rulePopup.sections.${section}.description`) }}</td>
             </tr>
           </tbody>
         </table>
         <div class="close-button-container">
-          <button @click="$emit('close')" class="close-button">閉じる</button>
+          <button @click="$emit('close')" class="close-button">{{ $t('rulePopup.closeButton') }}</button>
         </div>
       </div>
     </div>
@@ -53,7 +21,24 @@
 </template>
 
 <script setup>
+import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+
 defineEmits(['close']);
+
+const { t } = useI18n();
+
+const ruleSections = ref([
+  'basics',
+  'scoring',
+  'dora',
+  'calls',
+  'riichi',
+  'draws',
+  'priority',
+  'points',
+  'endCondition'
+]);
 </script>
 
 <style scoped>
@@ -71,9 +56,9 @@ defineEmits(['close']);
 }
 .popup-content {
   background-color: white;
-  padding: 20px;
+  padding: 5px;
   border-radius: 8px;
-  max-width: 80%;
+  max-width: 100%;
   max-height: 85vh; /* ポップアップの最大高さを画面の85%に制限 */
   font-family: 'M PLUS 1', sans-serif; /* フォントをM PLUS 1に統一 */
   font-size: small; /* フォントサイズを小さくして全体を縮小 */

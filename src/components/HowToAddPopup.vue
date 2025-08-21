@@ -1,24 +1,24 @@
 <template>
   <div v-if="show" class="how-to-add-popup-overlay">
     <div class="how-to-add-popup-content">
-      <h2>📲ホーム画面への追加方法📲</h2>
+      <h2>{{ $t('howToAddPopup.title') }}</h2>
 
-      <h3>【iPhone（Safariの場合）】</h3>
+      <h3>{{ $t('howToAddPopup.iphone.title') }}</h3>
       <ol>
-        <li>画面下の共有ボタンをタップ</li>
-        <li>「ホーム画面に追加」を選択</li>
-        <li>右上の「追加」をタップ</li>
+        <li>{{ $t('howToAddPopup.iphone.step1') }}</li>
+        <li>{{ $t('howToAddPopup.iphone.step2') }}</li>
+        <li>{{ $t('howToAddPopup.iphone.step3') }}</li>
       </ol>
 
-      <h3>【Android（Chromeの場合）】</h3>
+      <h3>{{ $t('howToAddPopup.android.title') }}</h3>
       <ol>
-        <li>画面右上の「<span class="icon">︙</span>」メニューをタップ</li>
-        <li>「ホーム画面に追加」または「アプリをインストール」を選択</li>
-        <li>表示された指示に従って追加</li>
+        <li v-html="$t('howToAddPopup.android.step1')"></li>
+        <li>{{ $t('howToAddPopup.android.step2') }}</li>
+        <li>{{ $t('howToAddPopup.android.step3') }}</li>
       </ol>
 
       <div class="buttons">
-        <button @click="closePopup">閉じる</button>
+        <button @click="closePopup">{{ $t('howToAddPopup.closeButton') }}</button>
       </div>
     </div>
   </div>
@@ -26,6 +26,9 @@
 
 <script setup>
 import { defineProps, defineEmits } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const props = defineProps({
   show: Boolean,

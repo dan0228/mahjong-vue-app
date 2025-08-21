@@ -13,5 +13,78 @@
     "maxWinStreak": "🏆最大連勝数:",
         "catCoins": "🪙猫コイン:",
     "sfx": "効果音"
+  },
+  "addToHomeScreenPopup": {
+    "title": "お知らせ😸",
+    "mobile": {
+      "heading": "📱ホーム画面に追加したら",
+      "body": "アプリのようにワンタップでゲーム開始"
+    },
+    "desktop": {
+      "heading": "⭐ブックマークに登録したら",
+      "body": "すぐにアクセスしてゲーム開始"
+    },
+    "note": "※データはすべてブラウザに保存されます",
+    "closeButton": "閉じる",
+    "howToAddButton": "追加方法を見る"
+  },
+  "howToAddPopup": {
+    "title": "📲ホーム画面への追加方法📲",
+    "iphone": {
+      "title": "【iPhone（Safariの場合）】",
+      "step1": "画面下の共有ボタンをタップ",
+      "step2": "「ホーム画面に追加」を選択",
+      "step3": "右上の「追加」をタップ"
+    },
+    "android": {
+      "title": "【Android（Chromeの場合）】",
+      "step1": "画面右上の「<span class=\"icon\">︙</span>」メニューをタップ",
+      "step2": "「ホーム画面に追加」または「アプリをインストール」を選択",
+      "step3": "表示された指示に従って追加"
+    },
+    "closeButton": "閉じる"
+  },
+  "rulePopup": {
+    "title": "ルール",
+    "subtitle": "手牌4枚+1枚の1面子1雀頭",
+    "closeButton": "閉じる",
+    "sections": {
+      "basics": {
+        "title": "基本",
+        "description": "東風戦、南入なし。"
+      },
+      "scoring": {
+        "title": "点数",
+        "description": "本場による加点なし。切り上げ満貫とし、満貫未満は0点(和了自体は可能)。"
+      },
+      "dora": {
+        "title": "ドラ",
+        "description": "赤ドラなし。"
+      },
+      "calls": {
+        "title": "鳴き",
+        "description": "チーなし。喰い替えあり。後付けあり。喰いタンあり。"
+      },
+      "riichi": {
+        "title": "リーチ",
+        "description": "リーチ後の暗カンはいかなる形でも可能。"
+      },
+      "draws": {
+        "title": "流局",
+        "description": "四風連打・四家リーチによる途中流局なし。"
+      },
+      "priority": {
+        "title": "和了優先",
+        "description": "ダブロン・トリロンは頭ハネ。"
+      },
+      "points": {
+        "title": "持ち点",
+        "description": "箱下なし (0点未満になった時点で終局)。"
+      },
+      "endCondition": {
+        "title": "終局条件",
+        "description": "和了止めあり (東4局は親が和了またはテンパイしても終局)。"
+      }
+    }
   }
 }

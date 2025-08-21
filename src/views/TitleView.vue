@@ -40,9 +40,9 @@
       <YakuListPopup v-if="showYakuListPopup" @close="showYakuListPopup = false" />
       <div class="credit">BGM by OtoLogic(CC BY 4.0)</div>
       <div class="x-account">
-        <a href="https://x.com/yonjan_official" target="_blank" rel="noopener noreferrer">公式X: @yonjan_official</a>
+        <a href="https://x.com/danAllGreen" target="_blank" rel="noopener noreferrer">公式X: @danAllGreen</a>
       </div>
-      <div class="version-info">v1.0.3 | 2025.08.19</div>
+      <div class="version-info">v1.0.4 | 2025.08.21</div>
     </div>
   </div>
 </template>

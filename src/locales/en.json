@@ -1,0 +1,17 @@
+{
+  "titleView": {
+    "titleLogo": "/assets/images/back/タイトルロゴ_en.png",
+    "altLogo": "YonJong!",
+    "menu": {
+      "catAiMatch": "Cat AI Match 🐈",
+      "shrine": "Janeko Shrine ⛩️",
+      "rules": "Rules 📖",
+      "handList": "Hand List 🀄",
+      "manualMode": "Manual Mode"
+    },
+        "officialX": "Official X: {'@'}danAllGreen",
+    "maxWinStreak": "🏆Max Win Streak:",
+        "catCoins": "🪙Cat Coins:",
+    "sfx": "SFX"
+  }
+}

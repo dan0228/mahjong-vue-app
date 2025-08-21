@@ -1,0 +1,17 @@
+{
+  "titleView": {
+    "titleLogo": "/assets/images/back/タイトルロゴ.png",
+    "altLogo": "よんじゃん！",
+    "menu": {
+      "catAiMatch": "ねこAI対戦 🐈",
+      "shrine": "じゃん猫神社⛩️",
+      "rules": "ルール 📖",
+      "handList": "役一覧 🀄",
+      "manualMode": "全操作モード"
+    },
+        "officialX": "公式X: {'@'}danAllGreen",
+    "maxWinStreak": "🏆最大連勝数:",
+        "catCoins": "🪙猫コイン:",
+    "sfx": "効果音"
+  }
+}

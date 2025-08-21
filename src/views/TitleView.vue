@@ -5,7 +5,7 @@
         <div class="title-background-image base-image"></div>
         <div class="title-background-image eye-blink-image"></div>
       </div>
-      <img :src="titleLogoSrc" alt="よんじゃん！" class="title-logo" />
+      <img :src="$t('titleView.titleLogo')" :alt="$t('titleView.altLogo')" class="title-logo" />
       <div class="top-controls">
         <div class="audio-toggles">
           <label class="toggle-switch">
@@ -17,34 +17,34 @@
             <input type="checkbox" :checked="audioStore.isSeEnabled" @change="audioStore.toggleSe()">
             <span class="slider round"></span>
           </label>
-          <span class="toggle-label">効果音</span>
+          <span class="toggle-label">{{ $t('titleView.sfx') }}</span>
         </div>
         <div class="language-selector">
           <div 
             class="language-flag language-flag-ja"
-            :class="{ 'selected': selectedLanguage === 'ja' }"
-            @click="selectLanguage('ja')"
+            :class="{ 'selected': locale === 'ja' }"
+            @click="locale = 'ja'"
           ></div>
           <div 
             class="language-flag language-flag-en"
-            :class="{ 'selected': selectedLanguage === 'en' }"
-            @click="selectLanguage('en')"
+            :class="{ 'selected': locale === 'en' }"
+            @click="locale = 'en'"
           ></div>
         </div>
       </div>
       <div class="max-consecutive-wins">
-        🏆最大連勝数: <span class="max-wins-number">{{ gameStore.maxConsecutiveWins }}</span>
+        {{ $t('titleView.maxWinStreak') }} <span class="max-wins-number">{{ gameStore.maxConsecutiveWins }}</span>
       </div>
       <div class="cat-coins">
-        🪙猫コイン: <span class="cat-coins-number">{{ gameStore.catCoins }}</span>
+        {{ $t('titleView.catCoins') }} <span class="cat-coins-number">{{ gameStore.catCoins }}</span>
       </div>
       <nav class="menu">
         <ul>
-          <li><button @click="startGame('vsCPU')">ねこAI対戦 🐈</button></li>
-          <li><button @click="goToShrine">じゃん猫神社⛩️</button></li>
-          <li><button @click="showRulesPopup = true">ルール 📖</button></li>
-          <li><button @click="showYakuListPopup = true">役一覧 🀄</button></li>
-          <li><button @click="startGame('allManual')">全操作モード</button></li>
+          <li><button @click="startGame('vsCPU')">{{ $t('titleView.menu.catAiMatch') }}</button></li>
+          <li><button @click="goToShrine">{{ $t('titleView.menu.shrine') }}</button></li>
+          <li><button @click="showRulesPopup = true">{{ $t('titleView.menu.rules') }}</button></li>
+          <li><button @click="showYakuListPopup = true">{{ $t('titleView.menu.handList') }}</button></li>
+          <li><button @click="startGame('allManual')">{{ $t('titleView.menu.manualMode') }}</button></li>
         </ul>
       </nav>
 
@@ -52,7 +52,7 @@
       <YakuListPopup v-if="showYakuListPopup" @close="showYakuListPopup = false" />
       <div class="credit">BGM by OtoLogic(CC BY 4.0)</div>
       <div class="x-account">
-        <a href="https://x.com/danAllGreen" target="_blank" rel="noopener noreferrer">公式X: @danAllGreen</a>
+        <a href="https://x.com/danAllGreen" target="_blank" rel="noopener noreferrer">{{ $t('titleView.officialX') }}</a>
       </div>
       <div class="version-info">v1.0.4 | 2025.08.21</div>
     </div>
@@ -61,6 +61,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { useGameStore } from '@/stores/gameStore';
 import { useAudioStore } from '@/stores/audioStore';
@@ -68,6 +69,7 @@ import RulePopup from '@/components/RulePopup.vue';
 import YakuListPopup from '@/components/YakuListPopup.vue';
 import { useViewportHeight } from '@/composables/useViewportHeight';
 
+const { locale } = useI18n();
 const { viewportHeight } = useViewportHeight();
 
 const router = useRouter();
@@ -76,20 +78,6 @@ const audioStore = useAudioStore();
 
 const showRulesPopup = ref(false);
 const showYakuListPopup = ref(false);
-const selectedLanguage = ref('ja');
-
-const selectLanguage = (lang) => {
-  selectedLanguage.value = lang;
-  // ここに言語切り替えのロジックを追加予定
-};
-
-const titleLogoSrc = computed(() => {
-  if (selectedLanguage.value === 'ja') {
-    return '/assets/images/back/タイトルロゴ.png';
-  }
-  return '/assets/images/back/タイトルロゴ_en.png';
-});
-
 
 // --- Scaling Logic ---
 const DESIGN_WIDTH = 360;

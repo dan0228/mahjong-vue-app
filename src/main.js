@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
+import i18n from './i18n' // Import i18n
 import { useGameStore, GAME_PHASES } from './stores/gameStore';
 import './styles/main.css'
 import { inject } from '@vercel/analytics';
@@ -12,6 +13,7 @@ const app = createApp(App)
 const pinia = createPinia();
 
 app.use(pinia);
+app.use(i18n); // Use i18n
 
 // ページリロード時のゲーム状態のハンドリング
 router.isReady().then(() => {

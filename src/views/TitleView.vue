@@ -366,7 +366,7 @@ function goToShrine() {
   position: absolute;
   top: 19px;
   left: 30px; /* 左端からの位置を調整 */
-  font-size: 0.8em;
+  font-size: 0.7em;
   color: #333;
   z-index: 10;
   background-color: rgba(255, 255, 255, 0.6); /* 背景色 */
@@ -379,7 +379,7 @@ function goToShrine() {
   position: absolute;
   top: 50px; /* max-consecutive-wins の下に配置 */
   left: 30px;
-  font-size: 0.8em;
+  font-size: 0.7em;
   color: #333;
   z-index: 10;
   background-color: rgba(255, 255, 255, 0.6);

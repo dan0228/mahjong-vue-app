@@ -374,7 +374,7 @@ export const useGameStore = defineStore('game', {
             // 通常のツモ処理
             let canRiichi = false;
             // リーチは、残り山牌が4枚以上あり、持ち点が1000点以上の場合のみ可能
-            if (this.wall.length > 3 && currentPlayer.melds.length === 0 && currentPlayer.score >= 1000) {
+            if (this.wall.length > 3 && currentPlayer.melds.every(m => m.type === 'ankan') && currentPlayer.score >= 1000) {
               const potentialHandAfterDraw = [...currentPlayer.hand, this.drawnTile];
               for (const tileToDiscard of potentialHandAfterDraw) {
                 const tempHand = [];
@@ -386,12 +386,10 @@ export const useGameStore = defineStore('game', {
                     tempHand.push(tile);
                   }
                 }
-                if (tempHand.length === 4) {
-                  const tenpaiResult = mahjongLogic.checkYonhaiTenpai(tempHand, this.createGameContextForPlayer(currentPlayer, false));
-                  if (tenpaiResult.isTenpai && tenpaiResult.waits.length > 0) {
-                    canRiichi = true;
-                    break;
-                  }
+                const tenpaiResult = mahjongLogic.checkYonhaiTenpai(tempHand, this.createGameContextForPlayer(currentPlayer, false));
+                if (tenpaiResult.isTenpai && tenpaiResult.waits.length > 0) {
+                  canRiichi = true;
+                  break;
                 }
               }
             }
@@ -473,8 +471,10 @@ export const useGameStore = defineStore('game', {
           const tempDiscardedTile = tempFullHand.splice(discardIndex, 1)[0];
           const handAfterDiscard = tempFullHand;
 
-          const tenpaiCheck = mahjongLogic.checkYonhaiTenpai(handAfterDiscard, this.createGameContextForPlayer(player, false));
-          if (!tenpaiCheck.isTenpai) {
+          const hasAnkan = player.melds.some(m => m.type === 'ankan');
+          const isTenpai = hasAnkan ? true : mahjongLogic.checkYonhaiTenpai(handAfterDiscard, this.createGameContextForPlayer(player, false)).isTenpai;
+
+          if (!isTenpai) {
             console.warn(`Player ${player.id} tried to discard ${tempDiscardedTile.id} after Riichi, but it breaks Tenpai. Aborting.`);
             return; // テンパイが崩れるので打牌を中止
           }
@@ -790,7 +790,7 @@ export const useGameStore = defineStore('game', {
       const player = this.players.find(p => p.id === playerId);
       // ダブルリーチ: 自分の最初の捨て牌までで、かつ他家が誰も鳴いていない(turnCountがプレイヤー数未満)
       // リーチは、残り山牌が4枚以上あり、持ち点が1000点以上の場合のみ可能
-      if (!player || player.isRiichi || player.isDoubleRiichi || !this.drawnTile || player.melds.length > 0 || this.wall.length <= 3 || player.score < 1000) {
+      if (!player || player.isRiichi || player.isDoubleRiichi || !this.drawnTile || player.melds.some(m => m.type !== 'ankan') || this.wall.length <= 3 || player.score < 1000) {
         console.warn("Cannot declare Riichi now.");
         return;
       }
@@ -818,10 +818,6 @@ export const useGameStore = defineStore('game', {
           }
         }
 
-        if (tempHand.length !== 4 && discarded) { // 正しく1枚捨てられたが4枚にならなかった場合 (potentialDiscardsの重複など)
-            console.warn("Error creating tempHand for Riichi check. Expected 4 tiles, got:", tempHand.length, "Original 5:", currentFullHand.map(t=>t.id), "Discarding:", tileToDiscard.id);
-            return false; // このケースは問題があるのでテンパイとしない
-        }
         return mahjongLogic.checkYonhaiTenpai(tempHand, this.createGameContextForPlayer(player, false)).isTenpai;
       }).map(tile => tile.id); // IDのリストとして保持
 
@@ -1883,7 +1879,7 @@ export const useGameStore = defineStore('game', {
       const tsumoWinResult = mahjongLogic.checkYonhaiWin([...player.hand, this.drawnTile], this.drawnTile, true, gameContextForTsumo);
       eligibility.canTsumoAgari = tsumoWinResult.isWin;
 
-      // リーチ中でなければ、さらにカンができるかチェック
+      // リーチ中でなければ、さらにカンやリーチができるかチェック
       if (!player.isRiichi && !player.isDoubleRiichi) {
           // 海底牌では暗槓・加槓はできない
           if (this.wall.length > 0) {
@@ -1893,6 +1889,29 @@ export const useGameStore = defineStore('game', {
               const kakanOptions = mahjongLogic.checkCanKakan(player.hand, player.melds, this.drawnTile);
               eligibility.canKakan = kakanOptions.length > 0 ? kakanOptions : null;
           }
+          
+          let canRiichi = false;
+          // リーチは、残り山牌が4枚以上あり、持ち点が1000点以上の場合のみ可能
+          if (this.wall.length > 3 && player.melds.every(m => m.type === 'ankan') && player.score >= 1000) {
+            const potentialHandAfterDraw = [...player.hand, this.drawnTile];
+            for (const tileToDiscard of potentialHandAfterDraw) {
+              const tempHand = [];
+              let discarded = false;
+              for (const tile of potentialHandAfterDraw) {
+                if (tile.id === tileToDiscard.id && !discarded) {
+                  discarded = true;
+                } else {
+                  tempHand.push(tile);
+                }
+              }
+              const tenpaiResult = mahjongLogic.checkYonhaiTenpai(tempHand, this.createGameContextForPlayer(player, false));
+              if (tenpaiResult.isTenpai && tenpaiResult.waits.length > 0) {
+                canRiichi = true;
+                break;
+              }
+            }
+          }
+          eligibility.canRiichi = canRiichi;
       }
       
       this.playerActionEligibility[playerId] = eligibility;

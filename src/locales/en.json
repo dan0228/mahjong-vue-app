@@ -6,7 +6,7 @@
       "catAiMatch": "Cat AI Match 🐈",
       "shrine": "Janeko Shrine ⛩️",
       "rules": "Rules 📖",
-      "handList": "Hand List 🀄",
+      "handList": "Yaku List 🀄",
       "manualMode": "Manual Mode"
     },
         "officialX": "Official X: {'@'}danAllGreen",
@@ -88,7 +88,7 @@
     }
   },
   "yakuListPopup": {
-    "title": "Hand List",
+    "title": "Yaku List",
     "yakuNameHeader": "Yaku Name",
     "hanHeader": "Fan",
     "exampleHeader": "Example",
@@ -292,7 +292,7 @@
   },
   "gameBoard": {
     "rules": "Rules",
-    "yakuList": "Hand List",
+    "yakuList": "Yaku List",
     "backToTitle": "Back to Title",
     "bgm": "BGM",
     "sfx": "SFX",
@@ -361,5 +361,28 @@
     "altTextRiichiStickLeft": "Left player's riichi stick",
     "altTextRiichiStickTop": "Top player's riichi stick",
     "altTextRiichiStickRight": "Right player's riichi stick"
+  },
+  "resultPopup": {
+    "roundInfo": "{wind} {round}, {honba} Honba",
+    "dora": "Dora",
+    "uraDora": "UraDora",
+    "doraHidden": "Dora (Hidden)",
+    "uraDoraHidden": "UraDora",
+    "winningHand": "Winning Hand",
+    "chomboHand": "Player's Hand",
+    "yakuList": "Yaku List",
+    "scoreChanges": "Score Changes",
+    "draw": "Draw",
+    "next": "Next",
+    "han": "{count} Fan",
+    "points": "{score} pts",
+    "yakuman": "Yakuman",
+    "multipleYakuman": "{count}x Yakuman",
+    "kazoeYakuman": "Kazoe Yakuman",
+    "titleChombo": "{playerName}'s Chombo",
+    "titleWin": "{playerName}'s Win",
+    "titleResult": "Round Result",
+    "windEast": "East",
+    "windSouth": "South"
   }
 }

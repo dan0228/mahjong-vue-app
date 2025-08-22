@@ -4,7 +4,7 @@
       <div class="popup-content">
 
       <div class="result-section round-info" style="text-align: center; margin-bottom: 15px;">
-        <p class="round-main-info">{{ roundWindDisplay }}{{ resultDetails.roundNumber }}局 {{ resultDetails.honba }}本場</p>
+        <p class="round-main-info">{{ t('resultPopup.roundInfo', { wind: roundWindDisplay, round: resultDetails.roundNumber, honba: resultDetails.honba }) }}</p>
       </div>
       <div v-if="!isDrawResult" class="winner-title-container">
         <img v-if="winnerIconSrc" :src="winnerIconSrc" alt="Winner Icon" class="winner-icon" />
@@ -12,32 +12,32 @@
       </div>
       <div v-if="!isDrawResult && !isChomboResult" class="result-section round-info-details"> <!-- 和了時のみ表示 -->
         <div class="dora-display">
-          <span class="dora-label">ドラ</span>
+          <span class="dora-label">{{ t('resultPopup.dora') }}</span>
           <div class="dora-tiles">
             <!-- 表示するドラ -->
             <img v-for="(tile, index) in resultDetails.doraIndicators" :key="'dora-'+tile.id + '-' + index" :src="getTileImageUrl(tile)" :alt="tileToString(tile)" class="tile-image-small"/>
             <!-- ドラの残りを裏向きで表示 (最大4つまで) -->
-            <img v-for="n in Math.max(0, 4 - (resultDetails.doraIndicators?.length || 0))" :key="'dora-hidden-' + n" :src="getTileImageUrl({type: 'ura'})" alt="ドラ裏" class="tile-image-small"/>
+            <img v-for="n in Math.max(0, 4 - (resultDetails.doraIndicators?.length || 0))" :key="'dora-hidden-' + n" :src="getTileImageUrl({type: 'ura'})" :alt="t('resultPopup.doraHidden')" class="tile-image-small"/>
           </div>
         </div>
         <div class="dora-display">
-          <span class="dora-label">裏ドラ</span>
+          <span class="dora-label">{{ t('resultPopup.uraDora') }}</span>
           <div class="dora-tiles">
             <template v-if="isRiichiAgari">
               <!-- リーチ和了時は、表ドラの数だけ裏ドラを表示（めくれている分＋裏向き） -->
               <img v-for="(tile, index) in resultDetails.uraDoraIndicators" :key="'ura-revealed-'+tile.id + '-' + index" :src="getTileImageUrl(tile)" :alt="tileToString(tile)" class="tile-image-small" />
-              <img v-for="n in Math.max(0, 4 - (resultDetails.uraDoraIndicators?.length || 0))" :key="'ura-hidden-riichi-' + n" :src="getTileImageUrl({type: 'ura'})" alt="裏ドラ" class="tile-image-small" />
+              <img v-for="n in Math.max(0, 4 - (resultDetails.uraDoraIndicators?.length || 0))" :key="'ura-hidden-riichi-' + n" :src="getTileImageUrl({type: 'ura'})" :alt="t('resultPopup.uraDoraHidden')" class="tile-image-small" />
             </template>
             <template v-else>
               <!-- リーチなし和了や流局時は、4牌分を裏向きで表示 -->
-              <img v-for="n in 4" :key="'ura-hidden-no-riichi-' + n" :src="getTileImageUrl({type: 'ura'})" alt="裏ドラ" class="tile-image-small"/>
+              <img v-for="n in 4" :key="'ura-hidden-no-riichi-' + n" :src="getTileImageUrl({type: 'ura'})" :alt="t('resultPopup.uraDoraHidden')" class="tile-image-small"/>
             </template>
           </div>
         </div>
       </div>
 
       <div v-if="!isDrawResult && !isChomboResult" class="result-section winning-hand-info"> <!-- 和了時のみ表示 -->
-        <h3>和了手牌</h3>
+        <h3>{{ t('resultPopup.winningHand') }}</h3>
         <div class="hand-display">
           <!-- 元々持っていた4牌 -->
           <span v-for="(tile, index) in originalHandWithoutAgariTile" :key="'original-' + tile.id + '-' + index" class="tile-image-medium">
@@ -59,7 +59,7 @@
       </div>
 
       <div v-if="isChomboResult" class="result-section winning-hand-info"> <!-- チョンボ時のみ表示 -->
-        <h3>対象者の手牌</h3>
+        <h3>{{ t('resultPopup.chomboHand') }}</h3>
         <div class="hand-display">
           <span v-for="(tile, index) in resultDetails.winningHand" :key="'chombo-hand-' + tile.id + '-' + index" class="tile-image-medium">
             <img :src="getTileImageUrl(tile)" :alt="tileToString(tile)" />
@@ -68,41 +68,41 @@
       </div>
 
       <div v-if="!isDrawResult && !isChomboResult" class="result-section yaku-info"> <!-- 和了時のみ表示 -->
-        <h3>成立役</h3>
+        <h3>{{ t('resultPopup.yakuList') }}</h3>
         <ul>
           <li v-for="(yaku, index) in resultDetails.yakuList" :key="index">
-            {{ yaku.name }}
+            {{ t(`yaku.${yaku.key}.name`) }}
             <span v-if="yaku.power !== undefined"> <!-- 役満の場合 -->
-              ({{ yaku.power === 1 ? '役満' : `${yaku.power}倍役満` }})
+              ({{ yaku.power === 1 ? t('resultPopup.yakuman') : t('resultPopup.multipleYakuman', { count: yaku.power }) }})
             </span>
-            <span v-else-if="yaku.fans !== undefined"> ({{ yaku.fans }}翻)</span>
+            <span v-else-if="yaku.fans !== undefined"> ({{ t('resultPopup.han', { count: yaku.fans }) }})</span>
           </li>
         </ul>
         <p class="total-score">
           <span v-if="isKazoeYakuman">
-            {{ resultDetails.totalFans }}翻
+            {{ t('resultPopup.han', { count: resultDetails.totalFans }) }}
           </span>
           <span v-else-if="!isYakumanResult && resultDetails.totalFans > 0">
-            {{ resultDetails.totalFans }}翻
-          </span>          {{ resultDetails.scoreName ? resultDetails.scoreName : (resultDetails.score ? `${resultDetails.score}点` : '') }}
+            {{ t('resultPopup.han', { count: resultDetails.totalFans }) }}
+          </span>          {{ resultDetails.scoreName ? resultDetails.scoreName : (resultDetails.score ? t('resultPopup.points', { score: resultDetails.score }) : '') }}
         </p>
       </div>
       <div v-if="isDrawResult" class="result-section draw-info"> <!-- 流局時のみ表示 -->
-        <h2>流局</h2>
+        <h2>{{ t('resultPopup.draw') }}</h2>
         <p>{{ message }}</p>
         <!-- 必要に応じてノーテン罰符などの情報を表示 -->
       </div>
       <div class="result-section score-changes"> <!-- 点数変動は常に表示 -->
-        <h3>点数変動</h3>
+        <h3>{{ t('resultPopup.scoreChanges') }}</h3>
         <div v-for="player in gameStore.players" :key="player.id" class="player-score-change">
-          <span>{{ player.name }}: {{ (gameStore.getPlayerById(player.id)?.score ?? 0) + (resultDetails.pointChanges[player.id] ?? 0) }}点 </span>
+          <span>{{ getTranslatedPlayerName(player) }}: {{ (gameStore.getPlayerById(player.id)?.score ?? 0) + (resultDetails.pointChanges[player.id] ?? 0) }}{{ ' ' + t('resultPopup.points', { score: '' }).trim() }} </span>
           <span :class="getPointChangeClass(resultDetails.pointChanges[player.id])">
             ({{ formatPointChange(resultDetails.pointChanges[player.id]) }})
           </span>
         </div>
       </div>
 
-      <button @click="proceedToNext">次へ</button>
+      <button @click="proceedToNext">{{ t('resultPopup.next') }}</button>
       </div>
     </div>
   </transition>
@@ -110,9 +110,12 @@
 
 <script setup>
 import { defineProps, defineEmits, onMounted, onBeforeUnmount } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useGameStore } from '@/stores/gameStore';
 import { getTileImageUrl, tileToString } from '@/utils/tileUtils';
 import { computed } from 'vue';
+
+const { t } = useI18n();
 
 const props = defineProps({
   show: {
@@ -134,6 +137,17 @@ const emit = defineEmits(['close', 'proceed']);
 
 const gameStore = useGameStore();
 
+function getTranslatedPlayerName(player) {
+  if (!player) return '';
+  if (player.id === 'player1') {
+    return t('playerNames.you');
+  }
+  if (player.originalId) {
+    return t(`aiNames.${player.originalId}`);
+  }
+  return player.name; // Fallback
+}
+
 function closePopup() {
   emit('close');
 }
@@ -153,11 +167,11 @@ const resultTitle = computed(() => {
   // 1. チョンボの場合
   if (isChomboResult.value && props.resultDetails.chomboPlayerId) {
     const chomboPlayer = gameStore.getPlayerById(props.resultDetails.chomboPlayerId);
-    if (chomboPlayer) return `${chomboPlayer.name} のチョンボ`;
+    if (chomboPlayer) return t('resultPopup.titleChombo', { playerName: getTranslatedPlayerName(chomboPlayer) });
   }
 
   // 2. 流局の場合
-  if (isDrawResult.value) return '流局';
+  if (isDrawResult.value) return t('resultPopup.draw');
 
   // 3. 和了の場合
   const winnerId = Object.keys(props.resultDetails.pointChanges || {}).find(
@@ -165,15 +179,22 @@ const resultTitle = computed(() => {
   );
   if (winnerId) {
     const winner = gameStore.getPlayerById(winnerId);
-    if (winner) return `${winner.name} の和了`;
+    if (winner) return t('resultPopup.titleWin', { playerName: getTranslatedPlayerName(winner) });
   }
 
   // 4. 点数移動がない和了の場合 (0点和了など)
   const match = props.message.match(/(.+?) の和了/);
-  if (match && match[1]) return `${match[1]} の和了`;
+  if (match && match[1]) {
+    // This part is tricky as it relies on a Japanese string.
+    // It's better to rely on the winnerId logic above.
+    // For now, we can try a simple translation if possible.
+    const playerName = match[1];
+    const player = gameStore.players.find(p => p.name === playerName);
+    return t('resultPopup.titleWin', { playerName: getTranslatedPlayerName(player) });
+  }
 
   // 5. 上記で見つからない場合のフォールバック
-  return '和了結果';
+  return t('resultPopup.titleResult');
 });
 
 const isRiichiAgari = computed(() => {
@@ -233,8 +254,8 @@ const originalHandWithoutAgariTile = computed(() => {
 
 
 const roundWindDisplay = computed(() => {
-  if (props.resultDetails.roundWind === 'east') return '東';
-  if (props.resultDetails.roundWind === 'south') return '南';
+  if (props.resultDetails.roundWind === 'east') return t('resultPopup.windEast');
+  if (props.resultDetails.roundWind === 'south') return t('resultPopup.windSouth');
   // 他の風も必要なら追加
   return '';
 });

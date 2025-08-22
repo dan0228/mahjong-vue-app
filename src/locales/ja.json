@@ -361,6 +361,29 @@
     "altTextRiichiStickLeft": "上家リーチ棒",
     "altTextRiichiStickTop": "対面リーチ棒",
     "altTextRiichiStickRight": "下家リーチ棒"
+  },
+  "resultPopup": {
+    "roundInfo": "{wind}{round}局 {honba}本場",
+    "dora": "ドラ",
+    "uraDora": "裏ドラ",
+    "doraHidden": "ドラ裏",
+    "uraDoraHidden": "裏ドラ",
+    "winningHand": "和了手牌",
+    "chomboHand": "対象者の手牌",
+    "yakuList": "成立役",
+    "scoreChanges": "点数変動",
+    "draw": "流局",
+    "next": "次へ",
+    "han": "{count}翻",
+    "points": "{score}点",
+    "yakuman": "役満",
+    "multipleYakuman": "{count}倍役満",
+    "kazoeYakuman": "数え役満",
+    "titleChombo": "{playerName} のチョンボ",
+    "titleWin": "{playerName} の和了",
+    "titleResult": "和了結果",
+    "windEast": "東",
+    "windSouth": "南"
   }
 }
 

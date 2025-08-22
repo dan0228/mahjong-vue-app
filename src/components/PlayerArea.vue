@@ -29,26 +29,29 @@
     <!-- アクションボタンエリア -->
     <div v-if="isMyHand || gameStore.gameMode === 'allManual'" :class="['player-actions', `player-actions-${position}`]">
         <!-- ツモ番のアクション -->
-        <img v-if="canDeclareTsumoAgari" src="/assets/images/button/tsumo_button.png" alt="ツモ" class="action-image-button" @click="emitAction('tsumoAgari')" />
-        <img v-if="canDeclareRiichi && !player.isRiichi && !player.isDoubleRiichi" src="/assets/images/button/riichi_button.png" alt="リーチ" class="action-image-button" @click="emitAction('riichi')" />
-        <img v-if="canDeclareAnkan" src="/assets/images/button/kan_button.png" alt="暗槓" class="action-image-button" @click="emitAction('ankan')" />
-        <img v-if="canDeclareKakan && !player.isRiichi && !player.isDoubleRiichi" src="/assets/images/button/kan_button.png" alt="加槓" class="action-image-button" @click="emitAction('kakan')" />
+        <img v-if="canDeclareTsumoAgari" :src="t('playerArea.tsumoButtonImg')" :alt="t('playerArea.tsumo')" class="action-image-button" @click="emitAction('tsumoAgari')" />
+        <img v-if="canDeclareRiichi && !player.isRiichi && !player.isDoubleRiichi" :src="t('playerArea.riichiButtonImg')" :alt="t('playerArea.riichi')" class="action-image-button" @click="emitAction('riichi')" />
+        <img v-if="canDeclareAnkan" :src="t('playerArea.kanButtonImg')" :alt="t('playerArea.ankan')" class="action-image-button" @click="emitAction('ankan')" />
+        <img v-if="canDeclareKakan && !player.isRiichi && !player.isDoubleRiichi" :src="t('playerArea.kanButtonImg')" :alt="t('playerArea.kakan')" class="action-image-button" @click="emitAction('kakan')" />
         <!-- 他家の打牌/加槓に対するアクション -->
-        <img v-if="canDeclareRon" src="/assets/images/button/ron_button.png" alt="ロン" class="action-image-button" @click="emitAction('ron')" />
-        <img v-if="canDeclarePon && !player.isRiichi && !player.isDoubleRiichi" src="/assets/images/button/pon_button.png" alt="ポン" class="action-image-button" @click="emitAction('pon')" />
-        <img v-if="canDeclareMinkan && !player.isRiichi && !player.isDoubleRiichi" src="/assets/images/button/kan_button.png" alt="カン" class="action-image-button" @click="emitAction('minkan')" />
+        <img v-if="canDeclareRon" :src="t('playerArea.ronButtonImg')" :alt="t('playerArea.ron')" class="action-image-button" @click="emitAction('ron')" />
+        <img v-if="canDeclarePon && !player.isRiichi && !player.isDoubleRiichi" :src="t('playerArea.ponButtonImg')" :alt="t('playerArea.pon')" class="action-image-button" @click="emitAction('pon')" />
+        <img v-if="canDeclareMinkan && !player.isRiichi && !player.isDoubleRiichi" :src="t('playerArea.kanButtonImg')" :alt="t('playerArea.kan')" class="action-image-button" @click="emitAction('minkan')" />
         <!-- スキップボタン -->
-        <img v-if="showSkipButton" src="/assets/images/button/skip_button.png" alt="スキップ" class="action-image-button" @click="emitAction('skip')" />
+        <img v-if="showSkipButton" :src="t('playerArea.skipButtonImg')" :alt="t('playerArea.skip')" class="action-image-button" @click="emitAction('skip')" />
     </div>
   </div>
 </template>
 
 <script setup>
 import { defineProps, defineEmits, computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import PlayerHand from './PlayerHand.vue';
 import { useGameStore } from '@/stores/gameStore';
 import { GAME_PHASES } from '@/stores/gameStore';
 import { getTileImageUrl, tileToString } from '@/utils/tileUtils'; // 共通ユーティリティ
+
+const { t } = useI18n();
 
 const props = defineProps({
   player: { type: Object, required: true },
@@ -229,7 +232,7 @@ function getMeldTileImage(meld, tile, tileIndex) {
 
 function getMeldTileAlt(meld, tile, tileIndex) {
   if (meld.type === 'ankan' && (tileIndex === 1 || tileIndex === 2)) {
-    return '裏向きの牌';
+    return t('playerArea.facedownTile');
   }
   return tileToString(tile);
 }

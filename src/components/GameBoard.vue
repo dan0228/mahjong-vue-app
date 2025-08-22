@@ -4,26 +4,26 @@
       <div class="game-board-scaler" :style="scalerStyle" ref="gameBoardScalerRef">
       <!-- ルール・役一覧ボタン -->
       <div class="game-board-top-left-buttons">
-        <img src="/assets/images/button/rule_button.png" alt="ルール" @click="showRulesPopup = true" class="info-button-image" />
-        <img src="/assets/images/button/yaku_button.png" alt="役一覧" @click="showYakuListPopup = true" class="info-button-image" />
+        <img :src="t('gameBoard.ruleButtonImg')" :alt="t('gameBoard.rules')" @click="showRulesPopup = true" class="info-button-image" />
+        <img :src="t('gameBoard.yakuButtonImg')" :alt="t('gameBoard.yakuList')" @click="showYakuListPopup = true" class="info-button-image" />
         <div class="audio-toggles">
           <label class="toggle-switch">
             <input type="checkbox" :checked="audioStore.isBgmEnabled" @change="audioStore.toggleBgm()">
             <span class="slider round"></span>
           </label>
-          <span class="toggle-label">BGM</span>
+          <span class="toggle-label">{{ t('gameBoard.bgm') }}</span>
           <label class="toggle-switch">
             <input type="checkbox" :checked="audioStore.isSeEnabled" @change="audioStore.toggleSe()">
             <span class="slider round"></span>
           </label>
-          <span class="toggle-label">効果音</span>
+          <span class="toggle-label">{{ t('gameBoard.sfx') }}</span>
         </div>
       </div>
       <!-- タイトルへ戻るボタン -->
       <div class="game-board-header" v-if="showReturnButton">
         <img 
-          src="/assets/images/button/buckToTitle.png" 
-          alt="タイトルへ戻る" 
+          :src="t('gameBoard.backToTitleButtonImg')" 
+          :alt="t('gameBoard.backToTitle')" 
           @click="returnToTitle" class="return-button-image" />
       </div>
       <!-- PlayerArea コンポーネントを動的に配置 -->
@@ -32,17 +32,17 @@
       <!-- 画面の一番下に表示 -->
       <div class="player-area-container bottom-player-container" v-if="playerAtBottom">
         <!-- フリテン表示 -->
-        <img v-if="isMyPlayerInFuriTen" src="/assets/images/status/furiten.png" alt="フリテン" class="furiten-indicator bottom-furiten" />
-        <img v-if="gameStore.isTenpaiDisplay[playerAtBottom.id]" src="/assets/images/status/tenpai.png" alt="テンパイ" class="tenpai-indicator bottom-tenpai" />
+        <img v-if="isMyPlayerInFuriTen" :src="t('gameBoard.furitenImg')" :alt="t('gameBoard.furiten')" class="furiten-indicator bottom-furiten" />
+        <img v-if="gameStore.isTenpaiDisplay[playerAtBottom.id]" :src="t('gameBoard.tenpaiImg')" :alt="t('gameBoard.tenpai')" class="tenpai-indicator bottom-tenpai" />
         <PlayerArea :player="playerAtBottom" position="bottom" :is-my-hand="determineIsMyHand(playerAtBottom.id)" :drawn-tile-display="drawnTileForPlayer(playerAtBottom.id)" :can-discard="canPlayerDiscard(playerAtBottom.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
       </div>
 
       <!-- 中央エリア (左右プレイヤーと中央テーブル) -->
       <div class="middle-row">
         <div class="player-area-container left-player-container" v-if="playerAtLeft">
-          <img :src="playerIcon(playerAtLeft)" alt="Left Player Icon" :class="{'cat-icon-left-flipped': isKuroAtLeft}" class="cat-icon cat-icon-left" />
-          <img v-if="isLeftPlayerInFuriTen" src="/assets/images/status/furiten.png" alt="フリテン" class="furiten-indicator left-furiten" />
-          <img v-if="gameStore.isTenpaiDisplay[playerAtLeft.id]" src="/assets/images/status/tenpai.png" alt="テンパイ" class="tenpai-indicator left-tenpai" />
+          <img :src="playerIcon(playerAtLeft)" :alt="t('gameBoard.leftPlayerIcon')" :class="{'cat-icon-left-flipped': isKuroAtLeft}" class="cat-icon cat-icon-left" />
+          <img v-if="isLeftPlayerInFuriTen" :src="t('gameBoard.furitenImg')" :alt="t('gameBoard.furiten')" class="furiten-indicator left-furiten" />
+          <img v-if="gameStore.isTenpaiDisplay[playerAtLeft.id]" :src="t('gameBoard.tenpaiImg')" :alt="t('gameBoard.tenpai')" class="tenpai-indicator left-tenpai" />
           <PlayerArea :player="playerAtLeft" position="left" :is-my-hand="determineIsMyHand(playerAtLeft.id)" :drawn-tile-display="drawnTileForPlayer(playerAtLeft.id)" :can-discard="canPlayerDiscard(playerAtLeft.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
         </div>
         <div class="center-table">
@@ -53,19 +53,19 @@
           </div>
         </div>
         <div class="player-area-container right-player-container" v-if="playerAtRight">
-         <img :src="playerIcon(playerAtRight)" alt="Right Player Icon" :class="{'cat-icon-right-flipped': isToraAtRight}" class="cat-icon cat-icon-right" />
-         <img v-if="isRightPlayerInFuriTen" src="/assets/images/status/furiten.png" alt="フリテン" class="furiten-indicator right-furiten" />
-         <img v-if="gameStore.isTenpaiDisplay[playerAtRight.id]" src="/assets/images/status/tenpai.png" alt="テンパイ" class="tenpai-indicator right-tenpai" />
+         <img :src="playerIcon(playerAtRight)" :alt="t('gameBoard.rightPlayerIcon')" :class="{'cat-icon-right-flipped': isToraAtRight}" class="cat-icon cat-icon-right" />
+         <img v-if="isRightPlayerInFuriTen" :src="t('gameBoard.furitenImg')" :alt="t('gameBoard.furiten')" class="furiten-indicator right-furiten" />
+         <img v-if="gameStore.isTenpaiDisplay[playerAtRight.id]" :src="t('gameBoard.tenpaiImg')" :alt="t('gameBoard.tenpai')" class="tenpai-indicator right-tenpai" />
          <PlayerArea :player="playerAtRight" position="right" :is-my-hand="determineIsMyHand(playerAtRight.id)" :drawn-tile-display="drawnTileForPlayer(playerAtRight.id)" :can-discard="canPlayerDiscard(playerAtRight.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
         </div>
       </div>
 
       <!-- 画面の一番上に表示 -->
       <div class="player-area-container top-player-container" v-if="playerAtTop">
-         <img :src="playerIcon(playerAtTop)" alt="Top Player Icon" class="cat-icon cat-icon-top" />
+         <img :src="playerIcon(playerAtTop)" :alt="t('gameBoard.topPlayerIcon')" class="cat-icon cat-icon-top" />
          <PlayerArea :player="playerAtTop" position="top" :is-my-hand="determineIsMyHand(playerAtTop.id)" :drawn-tile-display="drawnTileForPlayer(playerAtTop.id)" :can-discard="canPlayerDiscard(playerAtTop.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
-         <img v-if="isTopPlayerInFuriTen" src="/assets/images/status/furiten.png" alt="フリテン" class="furiten-indicator top-furiten" />
-         <img v-if="gameStore.isTenpaiDisplay[playerAtTop.id]" src="/assets/images/status/tenpai.png" alt="テンパイ" class="tenpai-indicator top-tenpai" />
+         <img v-if="isTopPlayerInFuriTen" :src="t('gameBoard.furitenImg')" :alt="t('gameBoard.furiten')" class="furiten-indicator top-furiten" />
+         <img v-if="gameStore.isTenpaiDisplay[playerAtTop.id]" :src="t('gameBoard.tenpaiImg')" :alt="t('gameBoard.tenpai')" class="tenpai-indicator top-tenpai" />
          <!-- 対面の捨て牌エリア (対面手牌のすぐ下) -->
          <div class="top-discard-container">
            <DiscardPile v-if="playerAtTop" :tiles="playerAtTop.discards" position="top" :riichi-discarded-tile-id="gameStore.riichiDiscardedTileId[playerAtTop.id]" :highlighted-tile-id="gameStore.highlightedDiscardTileId" class="discard-pile-top-player" />
@@ -101,22 +101,22 @@
         @start-new-game="handleStartNewGameFromFinalResult"
         @back-to-title="handleBackToTitleFromFinalResult"
       />
-      <img v-if="animationDisplay && animationDisplay.type === 'ron'" src="/assets/images/status/ron.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`, 'ron-animation']" alt="ロン" />
+      <img v-if="animationDisplay && animationDisplay.type === 'ron'" :src="t('gameBoard.ronImg')" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`, 'ron-animation']" :alt="t('gameBoard.ron')" />
       <!-- New Riichi animation for own player -->
       <div v-if="animationDisplay && animationDisplay.type === 'riichi' && animationDisplay.position === 'bottom'" class="riichi-container riichi-slide-animation">
-        <img src="/assets/images/status/riichi.png" alt="リーチ" class="riichi-image-scaled" />
+        <img :src="t('gameBoard.riichiImg')" :alt="t('gameBoard.riichi')" class="riichi-image-scaled" />
       </div>
 
       <!-- Existing Riichi animation for other players -->
       <div v-if="animationDisplay && animationDisplay.type === 'riichi' && animationDisplay.position === 'top'" class="riichi-container-top riichi-slide-animation-top">
-        <img src="/assets/images/status/riichi.png" alt="リーチ" class="riichi-image-scaled" />
+        <img :src="t('gameBoard.riichiImg')" :alt="t('gameBoard.riichi')" class="riichi-image-scaled" />
       </div>
-      <img v-if="animationDisplay && animationDisplay.type === 'riichi' && animationDisplay.position === 'right'" src="/assets/images/status/riichi.png" alt="リーチ" class="riichi-image-right riichi-slide-animation-right" />
-      <img v-if="animationDisplay && animationDisplay.type === 'riichi' && animationDisplay.position === 'left'" src="/assets/images/status/riichi.png" alt="リーチ" class="riichi-image-left riichi-slide-animation-left" />
-      <img v-if="animationDisplay && animationDisplay.type === 'tsumo'" src="/assets/images/status/tsumo.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`, 'tsumo-animation']" alt="ツモ" />
+      <img v-if="animationDisplay && animationDisplay.type === 'riichi' && animationDisplay.position === 'right'" :src="t('gameBoard.riichiImg')" :alt="t('gameBoard.riichi')" class="riichi-image-right riichi-slide-animation-right" />
+      <img v-if="animationDisplay && animationDisplay.type === 'riichi' && animationDisplay.position === 'left'" :src="t('gameBoard.riichiImg')" :alt="t('gameBoard.riichi')" class="riichi-image-left riichi-slide-animation-left" />
+      <img v-if="animationDisplay && animationDisplay.type === 'tsumo'" :src="t('gameBoard.tsumoImg')" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`, 'tsumo-animation']" :alt="t('gameBoard.tsumo')" />
       <!-- ポンとカンの表示を追加 -->
-      <img v-if="animationDisplay && animationDisplay.type === 'pon'" src="/assets/images/status/pon.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`, 'pon-animation', 'pon-kan-size']" alt="ポン" />
-      <img v-if="animationDisplay && animationDisplay.type === 'kan'" src="/assets/images/status/kan.png" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`, 'pon-kan-size', 'kan-animation']" alt="カン" />
+      <img v-if="animationDisplay && animationDisplay.type === 'pon'" :src="t('gameBoard.ponImg')" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`, 'pon-animation', 'pon-kan-size']" :alt="t('gameBoard.pon')" />
+      <img v-if="animationDisplay && animationDisplay.type === 'kan'" :src="t('gameBoard.kanImg')" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`, 'pon-kan-size', 'kan-animation']" :alt="t('gameBoard.kan')" />
       <RulePopup v-if="showRulesPopup" @close="showRulesPopup = false" />
       <YakuListPopup v-if="showYakuListPopup" @close="showYakuListPopup = false" />
       <ParentDecisionPopup
@@ -130,6 +130,7 @@
   
 <script setup>
   import { computed, onMounted, ref, onBeforeUnmount, watch } from 'vue';
+  import { useI18n } from 'vue-i18n';
   import { useRouter } from 'vue-router';
   import PlayerHand from './PlayerHand.vue';
   import { useGameStore } from '@/stores/gameStore';
@@ -146,6 +147,7 @@
   import * as mahjongLogic from '@/services/mahjongLogic'; // 役判定などに使う場合 (例: checkYonhaiWin, canRiichi)
   import { GAME_PHASES } from '@/stores/gameStore'; // gameStoreからフェーズ定数をインポート
 
+  const { t } = useI18n();
   const gameStore = useGameStore(); // ストアのインスタンスを取得
   const audioStore = useAudioStore();
   const router = useRouter(); // routerインスタンスを取得

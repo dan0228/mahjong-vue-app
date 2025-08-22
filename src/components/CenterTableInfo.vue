@@ -2,42 +2,42 @@
   <div class="center-table-info">
     <div v-if="centerImageSrc" class="center-image-container">
       <img :src="centerImageSrc" :alt="centerImageAltText" class="center-info-image" />
-      <img v-if="riichiStickBaseImageSrc" :src="riichiStickBaseImageSrc" alt="供託棒ベース" class="riichi-stick-base-image" />
+      <img v-if="riichiStickBaseImageSrc" :src="riichiStickBaseImageSrc" :alt="t('centerTableInfo.altTextRiichiStickBase')" class="riichi-stick-base-image" />
       <div class="riichi-stick-count-images">
-        <img v-if="riichiStickCountImage1Src" :src="riichiStickCountImage1Src" alt="供託本数1桁目" class="riichi-stick-count-digit" />
-        <img v-if="riichiStickCountImage2Src" :src="riichiStickCountImage2Src" alt="供託本数2桁目" class="riichi-stick-count-digit" />
+        <img v-if="riichiStickCountImage1Src" :src="riichiStickCountImage1Src" :alt="t('centerTableInfo.altTextRiichiStickCount1')" class="riichi-stick-count-digit" />
+        <img v-if="riichiStickCountImage2Src" :src="riichiStickCountImage2Src" :alt="t('centerTableInfo.altTextRiichiStickCount2')" class="riichi-stick-count-digit" />
       </div>
       <div class="remaining-tiles-count-images">
-        <img v-if="remainingTilesImage1Src" :src="remainingTilesImage1Src" alt="残り牌数1桁目" class="remaining-tiles-count-digit" />
-        <img v-if="remainingTilesImage2Src" :src="remainingTilesImage2Src" alt="残り牌数2桁目" class="remaining-tiles-count-digit" />
-        <img v-if="remainingTilesImage3Src" :src="remainingTilesImage3Src" alt="残り牌数3桁目" class="remaining-tiles-count-digit" />
+        <img v-if="remainingTilesImage1Src" :src="remainingTilesImage1Src" :alt="t('centerTableInfo.altTextRemainingTiles1')" class="remaining-tiles-count-digit" />
+        <img v-if="remainingTilesImage2Src" :src="remainingTilesImage2Src" :alt="t('centerTableInfo.altTextRemainingTiles2')" class="remaining-tiles-count-digit" />
+        <img v-if="remainingTilesImage3Src" :src="remainingTilesImage3Src" :alt="t('centerTableInfo.altTextRemainingTiles3')" class="remaining-tiles-count-digit" />
       </div>
       <!-- 自家の点数表示を画像コンテナ内に移動 -->
       <div v-if="orderedPlayers[0]" class="player-score-image-container bottom-player-score">
-        <img v-if="bottomPlayerScoreInfo.sign" :src="bottomPlayerScoreInfo.sign" alt="符号" class="score-sign-image" />
-        <img v-for="(src, index) in bottomPlayerScoreInfo.digits" :key="`digit-${index}-${src}`" :src="src" :alt="`数字${index}`" class="score-digit-image" />
+        <img v-if="bottomPlayerScoreInfo.sign" :src="bottomPlayerScoreInfo.sign" :alt="t('centerTableInfo.altTextScoreSign')" class="score-sign-image" />
+        <img v-for="(src, index) in bottomPlayerScoreInfo.digits" :key="`digit-${index}-${src}`" :src="src" :alt="t('centerTableInfo.altTextScoreDigit', { index })" class="score-digit-image" />
       </div>
       <!-- 上家(画面左)の点数表示 -->
       <div v-if="orderedPlayers[3]" class="player-score-image-container side-player-score left-player-score">
-        <img v-if="leftPlayerScoreInfo.sign" :src="leftPlayerScoreInfo.sign" alt="符号" class="score-sign-image" />
-        <img v-for="(src, index) in leftPlayerScoreInfo.digits" :key="`left-digit-${index}-${src}`" :src="src" :alt="`数字${index}`" class="score-digit-image" />
+        <img v-if="leftPlayerScoreInfo.sign" :src="leftPlayerScoreInfo.sign" :alt="t('centerTableInfo.altTextScoreSign')" class="score-sign-image" />
+        <img v-for="(src, index) in leftPlayerScoreInfo.digits" :key="`left-digit-${index}-${src}`" :src="src" :alt="t('centerTableInfo.altTextScoreDigit', { index })" class="score-digit-image" />
       </div>
       <!-- 対面の点数表示 -->
       <div v-if="orderedPlayers[2]" class="player-score-image-container vertical-player-score top-player-score">
-        <img v-if="topPlayerScoreInfo.sign" :src="topPlayerScoreInfo.sign" alt="符号" class="score-sign-image" />
-        <img v-for="(src, index) in topPlayerScoreInfo.digits" :key="`top-digit-${index}-${src}`" :src="src" :alt="`数字${index}`" class="score-digit-image" />
+        <img v-if="topPlayerScoreInfo.sign" :src="topPlayerScoreInfo.sign" :alt="t('centerTableInfo.altTextScoreSign')" class="score-sign-image" />
+        <img v-for="(src, index) in topPlayerScoreInfo.digits" :key="`top-digit-${index}-${src}`" :src="src" :alt="t('centerTableInfo.altTextScoreDigit', { index })" class="score-digit-image" />
       </div>
       <!-- 下家(画面右)の点数表示 -->
       <div v-if="orderedPlayers[1]" class="player-score-image-container side-player-score right-player-score">
-        <img v-if="rightPlayerScoreInfo.sign" :src="rightPlayerScoreInfo.sign" alt="符号" class="score-sign-image" />
-        <img v-for="(src, index) in rightPlayerScoreInfo.digits" :key="`right-digit-${index}-${src}`" :src="src" :alt="`数字${index}`" class="score-digit-image" />
+        <img v-if="rightPlayerScoreInfo.sign" :src="rightPlayerScoreInfo.sign" :alt="t('centerTableInfo.altTextScoreSign')" class="score-sign-image" />
+        <img v-for="(src, index) in rightPlayerScoreInfo.digits" :key="`right-digit-${index}-${src}`" :src="src" :alt="t('centerTableInfo.altTextScoreDigit', { index })" class="score-digit-image" />
       </div>
       <!-- リーチ棒表示 -->
-      <img v-if="orderedPlayers[0]?.isRiichi || orderedPlayers[0]?.isDoubleRiichi" src="/assets/images/tenbo/tenbou1000.png" alt="自家リーチ棒" class="riichi-stick-image bottom-riichi-stick" />
-      <img v-if="orderedPlayers[3]?.isRiichi || orderedPlayers[3]?.isDoubleRiichi" src="/assets/images/tenbo/tenbou1000.png" alt="上家リーチ棒" class="riichi-stick-image left-riichi-stick" />
-      <img v-if="orderedPlayers[2]?.isRiichi || orderedPlayers[2]?.isDoubleRiichi" src="/assets/images/tenbo/tenbou1000.png" alt="対面リーチ棒" class="riichi-stick-image top-riichi-stick" />
-      <img v-if="orderedPlayers[1]?.isRiichi || orderedPlayers[1]?.isDoubleRiichi" src="/assets/images/tenbo/tenbou1000.png" alt="下家リーチ棒" class="riichi-stick-image right-riichi-stick" />
-      <img v-if="roundIndicatorImageSrc" :src="roundIndicatorImageSrc" alt="局表示" class="round-indicator-image" />
+      <img v-if="orderedPlayers[0]?.isRiichi || orderedPlayers[0]?.isDoubleRiichi" src="/assets/images/tenbo/tenbou1000.png" :alt="t('centerTableInfo.altTextRiichiStickBottom')" class="riichi-stick-image bottom-riichi-stick" />
+      <img v-if="orderedPlayers[3]?.isRiichi || orderedPlayers[3]?.isDoubleRiichi" src="/assets/images/tenbo/tenbou1000.png" :alt="t('centerTableInfo.altTextRiichiStickLeft')" class="riichi-stick-image left-riichi-stick" />
+      <img v-if="orderedPlayers[2]?.isRiichi || orderedPlayers[2]?.isDoubleRiichi" src="/assets/images/tenbo/tenbou1000.png" :alt="t('centerTableInfo.altTextRiichiStickTop')" class="riichi-stick-image top-riichi-stick" />
+      <img v-if="orderedPlayers[1]?.isRiichi || orderedPlayers[1]?.isDoubleRiichi" src="/assets/images/tenbo/tenbou1000.png" :alt="t('centerTableInfo.altTextRiichiStickRight')" class="riichi-stick-image right-riichi-stick" />
+      <img v-if="roundIndicatorImageSrc" :src="roundIndicatorImageSrc" :alt="t('centerTableInfo.altTextRound')" class="round-indicator-image" />
       <!-- 王牌ドラ表示エリア -->
       <div v-if="deadWallDisplayTiles.length > 0" class="dead-wall-display-area">
         <div v-for="(tilePair, pairIndex) in deadWallDisplayTiles" :key="`deadwall-pair-${pairIndex}`" class="dead-wall-tile-pair">
@@ -88,9 +88,11 @@
 
 <script setup>
 import { computed, defineProps } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useGameStore } from '@/stores/gameStore';
 import { getTileImageUrl, tileToString } from '@/utils/tileUtils'; // インポート
 
+const { t } = useI18n();
 const gameStore = useGameStore();
 
 const roundWind = computed(() => gameStore.currentRound.wind === 'east' ? '東' : '南'); // 東風戦のみなので基本は東
@@ -124,20 +126,20 @@ const centerImageSrc = computed(() => {
   const leftPlayerId = props.orderedPlayers[3]?.id;   // 上家 (画面左)
 
   if (dealerId === bottomPlayerId) {
-    return '/assets/images/info/info_bottom.png';
+    return t('centerTableInfo.infoBottomImg');
   } else if (dealerId === rightPlayerId) {
-    return '/assets/images/info/info_right.png';
+    return t('centerTableInfo.infoRightImg');
   } else if (dealerId === topPlayerId) {
-    return '/assets/images/info/info_top.png';
+    return t('centerTableInfo.infoTopImg');
   } else if (dealerId === leftPlayerId) {
-    return '/assets/images/info/info_left.png';
+    return t('centerTableInfo.infoLeftImg');
   }
   return null; // 上記以外の場合は画像なし (テキスト情報を表示)
 });
 
 const centerImageAltText = computed(() => {
   if (!dealer.value || !props.orderedPlayers || props.orderedPlayers.length === 0) {
-    return '中央情報';
+    return t('centerTableInfo.altTextCenterInfo');
   }
   const dealerId = dealer.value.id;
   const bottomPlayerId = props.orderedPlayers[0]?.id;
@@ -145,18 +147,18 @@ const centerImageAltText = computed(() => {
   const topPlayerId = props.orderedPlayers[2]?.id;
   const leftPlayerId = props.orderedPlayers[3]?.id;
 
-  if (dealerId === bottomPlayerId) return '自家が親';
-  if (dealerId === rightPlayerId) return '下家が親'; // 画面上は右
-  if (dealerId === topPlayerId) return '対面が親';
-  if (dealerId === leftPlayerId) return '上家が親'; // 画面上は左
-  return '親情報';
+  if (dealerId === bottomPlayerId) return t('centerTableInfo.altTextDealerBottom');
+  if (dealerId === rightPlayerId) return t('centerTableInfo.altTextDealerRight');
+  if (dealerId === topPlayerId) return t('centerTableInfo.altTextDealerTop');
+  if (dealerId === leftPlayerId) return t('centerTableInfo.altTextDealerLeft');
+  return t('centerTableInfo.altTextCenterInfo');
 });
 
 const roundIndicatorImageSrc = computed(() => {
   const wind = gameStore.currentRound.wind;
   const number = gameStore.currentRound.number;
   if (wind === 'east' && number >= 1 && number <= 4) {
-    return `/assets/images/info/ton${number}.png`;
+    return t(`centerTableInfo.round${number}Img`);
   }
   return null; // 東場以外や該当なしの場合は表示しない
 });

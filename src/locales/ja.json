@@ -384,6 +384,21 @@
     "titleResult": "和了結果",
     "windEast": "東",
     "windSouth": "南"
+  },
+  "finalResultPopup": {
+    "title": "最終結果",
+    "rank": "{rank}位",
+    "score": "{score}点",
+    "wins": "{count}連勝！",
+    "winStreak": "{count}連勝中！",
+    "newGame": "新しいゲームを開始",
+    "newGameSub": "(連勝継続)",
+    "backToTitle": "タイトルに戻る",
+    "backToTitleSub": "(連勝リセット)",
+    "shareCaption": "スクショも一緒に投稿してランキングに参加📸",
+    "tweetText": "よんじゃんで{count}連勝達成！\n\n#よんじゃん #よんじゃん連勝数",
+    "clipboardCopySuccess": "投稿用メッセージをクリップボードにコピー！貼り付けして簡単投稿！",
+    "clipboardCopyError": "キャプションのコピーに失敗しました。"
   }
 }
 

@@ -384,5 +384,20 @@
     "titleResult": "Round Result",
     "windEast": "East",
     "windSouth": "South"
+  },
+  "finalResultPopup": {
+    "title": "Final Results",
+    "rank": "Rank {rank}",
+    "score": "{score} pts",
+    "wins": "{count} Win Streak!",
+    "winStreak": "On a {count} Win Streak!",
+    "newGame": "New Game",
+    "newGameSub": "(Continue Streak)",
+    "backToTitle": "Back to Title",
+    "backToTitleSub": "(Reset Streak)",
+    "shareCaption": "Take a screenshot and share it to join the rankings! 📸",
+    "tweetText": "{count}-Win Streak Achieved in YonJong!\n\n#YonJong #YonJongWinStreak #よんじゃん #よんじゃん連勝数",
+    "clipboardCopySuccess": "Copied message to clipboard! Paste to share easily!",
+    "clipboardCopyError": "Failed to copy caption to clipboard."
   }
 }

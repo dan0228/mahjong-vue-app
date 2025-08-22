@@ -2,13 +2,13 @@
   <transition name="popup">
     <div v-if="show" class="popup-overlay">
       <div class="popup-content" ref="popupContentRef">
-        <h2>最終結果</h2>
+        <h2>{{ t('finalResultPopup.title') }}</h2>
         <div class="final-results-list">
           <div v-for="player in finalResultDetails.rankedPlayers" :key="player.name" class="player-rank-item">
-            <span class="rank">{{ `${player.rank}位` }}</span>
-            <span class="player-name">{{ player.name }}</span>          
+            <span class="rank">{{ t('finalResultPopup.rank', { rank: player.rank }) }}</span>
+            <span class="player-name">{{ getTranslatedPlayerName(player) }}</span>          
             <img v-if="getPlayerIcon(player.id)" :src="getPlayerIcon(player.id)" alt="Player Icon" class="player-icon" />
-            <span class="score">{{ player.score }}点</span>
+            <span class="score">{{ t('finalResultPopup.score', { score: player.score }) }}</span>
           </div>
         </div>
         <p class="consecutive-wins" v-if="gameStore.gameMode !== 'allManual' && winsToDisplay > 0">
@@ -22,12 +22,12 @@
         </div>
         <div class="actions">
           <button @click="startNewGame" class="action-button">
-            <span>新しいゲームを開始</span>
-            <span>(連勝継続)</span>
+            <span>{{ t('finalResultPopup.newGame') }}</span>
+            <span>{{ t('finalResultPopup.newGameSub') }}</span>
           </button>
           <button @click="backToTitle" class="action-button">
-            <span>タイトルに戻る</span>
-            <span>(連勝リセット)</span>
+            <span>{{ t('finalResultPopup.backToTitle') }}</span>
+            <span>{{ t('finalResultPopup.backToTitleSub') }}</span>
           </button>
         </div>
         <div class="social-share-buttons">
@@ -38,7 +38,7 @@
             <img src="/assets/images/info/Instagram_logo.png" alt="Instagram logo" class="social-logo-icon">
           </button>
         </div>
-        <div class="share-caption">スクショも一緒に投稿してランキングに参加📸</div>
+        <div class="share-caption">{{ t('finalResultPopup.shareCaption') }}</div>
         <div class="timestamp">{{ formattedTimestamp }}</div>
       </div>
     </div>
@@ -47,9 +47,12 @@
 
 <script setup>
 import { defineProps, defineEmits, computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useGameStore } from '@/stores/gameStore';
 import { useZoomLock } from '@/composables/useZoomLock';
 import html2canvas from 'html2canvas';
+
+const { t } = useI18n();
 
 // ズーム防止機能を有効化
 useZoomLock();
@@ -73,6 +76,18 @@ const props = defineProps({
 const emit = defineEmits(['start-new-game', 'back-to-title']);
 const gameStore = useGameStore();
 
+function getTranslatedPlayerName(player) {
+  if (!player) return '';
+  if (player.id === 'player1') {
+    return t('playerNames.you');
+  }
+  const aiPlayer = gameStore.players.find(p => p.id === player.id);
+  if (aiPlayer && aiPlayer.originalId) {
+    return t(`aiNames.${aiPlayer.originalId}`);
+  }
+  return player.name; // Fallback
+}
+
 // 連勝数表示用の算出プロパティ
 const winsToDisplay = computed(() => {
   // 現在の連勝数が0で、直前の連勝数が1以上の場合、直前の連勝数を表示
@@ -88,10 +103,10 @@ const winsMessage = computed(() => {
   const wins = winsToDisplay.value;
   // 現在の連勝数が0で、直前の連勝数が1以上の場合、「連勝！」
   if (props.finalResultDetails.consecutiveWins === 0 && gameStore.previousConsecutiveWins > 0) {
-    return `${wins}連勝！`;
+    return t('finalResultPopup.wins', { count: wins });
   }
   // それ以外（連勝中）の場合、「連勝中！」
-  return `${wins}連勝中！`;
+  return t('finalResultPopup.winStreak', { count: wins });
 });
 
 const formattedTimestamp = computed(() => {
@@ -127,26 +142,20 @@ function getPlayerIcon(playerId) {
 
 function postToX() {
   const wins = winsToDisplay.value;
-  let tweetText = `よんじゃんで${wins}連勝達成！
-
-`;
-  tweetText += `#よんじゃん #よんじゃん連勝数`;
-
+  const tweetText = t('finalResultPopup.tweetText', { count: wins });
   const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
   window.open(twitterUrl, '_blank');
 }
 
 function postToInstagram() {
   const wins = winsToDisplay.value;
-  const caption = `よんじゃんで${wins}連勝達成！
-
-#よんじゃん #よんじゃん連勝数`;
+  const caption = t('finalResultPopup.tweetText', { count: wins });
   navigator.clipboard.writeText(caption).then(() => {
-    alert("投稿用メッセージをクリップボードにコピー！貼り付けして簡単投稿！");
+    alert(t('finalResultPopup.clipboardCopySuccess'));
     window.open('https://www.instagram.com', '_blank');
   }).catch(err => {
     console.error('クリップボードへのコピーに失敗しました: ', err);
-    alert("キャプションのコピーに失敗しました。");
+    alert(t('finalResultPopup.clipboardCopyError'));
   });
 }
 </script>

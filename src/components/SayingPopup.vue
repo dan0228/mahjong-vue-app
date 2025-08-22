@@ -2,10 +2,10 @@
   <div class="popup-overlay" @click.self="$emit('close')">
     <div class="popup-content">
       <button class="close-button" @click="$emit('close')">×</button>
-      <p v-if="fortune" class="fortune-text"><strong>運勢　：</strong>{{ fortune }}</p>
+      <p v-if="fortune" class="fortune-text"><strong>{{ $t('sayingPopup.fortune') }}</strong>{{ fortune }}</p>
       <p class="saying-text-with-prefix">
-        <strong>お告げ：</strong>
-        <span v-if="sayingNumber !== null">No.{{ sayingNumber }}</span><span v-if="isNew" class="new-tag">New！</span><br>{{ saying }}
+        <strong>{{ $t('sayingPopup.oracle') }}</strong>
+        <span v-if="sayingNumber !== null">{{ $t('sayingPopup.sayingNo', { n: sayingNumber }) }}</span><span v-if="isNew" class="new-tag">{{ $t('sayingPopup.newTag') }}</span><br>{{ saying }}
       </p>
     </div>
   </div>
@@ -13,6 +13,9 @@
 
 <script setup>
 import { defineProps, defineEmits, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const props = defineProps({
   saying: String,

@@ -31,7 +31,7 @@ const routes = [
     component: JannekoShrineView,
     meta: {
       title: 'じゃんねこ神社 | よんじゃん！',
-      description: 'ゲームで集めた「にゃんこコイン」を使って、たくさんのお告げを集めよう！',
+      description: 'ゲームで集めた「猫コイン」を使って、たくさんのお告げを集めよう！',
       bgm: 'GB-JP-A02-2(Menu-Loop105).mp3'
     },
   },

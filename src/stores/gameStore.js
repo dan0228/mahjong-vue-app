@@ -1428,8 +1428,7 @@ export const useGameStore = defineStore('game', {
           };
 
           // チョンボの場合、親は流れず、本場を1つ増やす
-          this.resultMessage += `
-チョンボのため、親は流れず次の本場になります.`;
+          this.resultMessage += `チョンボのため、親は流れず次の本場になります.`;
           this.honba++;
           this.nextDealerIndex = this.dealerIndex; // 親は継続
           this.shouldAdvanceRound = false; // 局は進めない
@@ -1480,6 +1479,7 @@ export const useGameStore = defineStore('game', {
         
         // 供託リーチ棒の処理
         pointChanges[agariPlayerId] += this.riichiSticks * 1000;
+        this.riichiSticks = 0; // 供託棒をリセット
 
         this.gamePhase = GAME_PHASES.ROUND_END;
         this.resultMessage = `${player.name} の和了！ ${winResult.yaku.map(y => y.name).join(' ')} ${winResult.isYakuman ? '' : (winResult.fans + '翻')} ${winResult.score}点`;
@@ -1669,7 +1669,6 @@ export const useGameStore = defineStore('game', {
       this.previousConsecutiveWins = 0; // 新しいセッションではリセット
       this.currentRound = { wind: 'east', number: 1 };
       this.honba = 0;
-      this.riichiSticks = 0;
       this.turnCount = 0;
       this.playerTurnCount = {};
       this.isChankanChance = false;
@@ -2112,10 +2111,6 @@ export const useGameStore = defineStore('game', {
           if (player) {
             player.score += this.agariResultDetails.pointChanges[playerId];
           }
-        }
-        // 供託リーチ棒をリセット
-        if (Object.values(this.agariResultDetails.pointChanges).some(v => v > 0)) {
-            this.riichiSticks = 0;
         }
       }
     }

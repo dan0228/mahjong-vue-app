@@ -269,6 +269,26 @@
     "oracle": "お告げ：",
     "sayingNo": "No.{n}",
     "newTag": "New！"
+  },
+  "parentDecisionPopup": {
+    "title": "ゲーム開始",
+    "score": "{score}点",
+    "countdown": "{n}秒後にゲーム開始"
+  },
+  "playerNames": {
+    "you": "あなた"
+  },
+  "winds": {
+    "東": "東",
+    "南": "南",
+    "西": "西",
+    "北": "北"
+  },
+  "aiNames": {
+    "kuro": "くろ　",
+    "tama": "たま　",
+    "tora": "とら　",
+    "janneko": "雀猫様"
   }
 }
 

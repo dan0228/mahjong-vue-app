@@ -2,17 +2,17 @@
   <transition name="popup">
     <div v-if="show" class="popup-overlay">
       <div class="popup-content">
-        <h2>ゲーム開始</h2>
+        <h2>{{ $t('parentDecisionPopup.title') }}</h2>
         <div class="dealer-determination-list">
           <div v-for="player in dealerDeterminationResults" :key="player.id" class="player-item">
-            <span class="seat-wind">{{ player.seatWind }}</span>
-            <span class="player-name">{{ player.name }}</span>
+            <span class="seat-wind">{{ $t(`winds.${player.seatWind}`) }}</span>
+            <span class="player-name">{{ player.originalId ? $t(`aiNames.${player.originalId}`) : $t('playerNames.you') }}</span>
             <img v-if="getPlayerIcon(player)" :src="getPlayerIcon(player)" alt="Player Icon" class="player-icon" />
-            <span class="score">{{ player.score }}点</span>
+            <span class="score">{{ $t('parentDecisionPopup.score', { score: player.score }) }}</span>
           </div>
         </div>
         <div class="timestamp">{{ formattedTimestamp }}</div>
-        <p class="countdown-text">{{ countdown }}秒後にゲーム開始</p>
+        <p class="countdown-text">{{ $t('parentDecisionPopup.countdown', { n: countdown }) }}</p>
       </div>
     </div>
   </transition>
@@ -20,7 +20,10 @@
 
 <script setup>
 import { defineProps, defineEmits, computed, onMounted, watch, ref, onUnmounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useZoomLock } from '@/composables/useZoomLock';
+
+const { t } = useI18n();
 
 // ズーム防止機能を有効化
 useZoomLock();

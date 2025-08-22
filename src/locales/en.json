@@ -269,5 +269,25 @@
     "oracle": "Oracle:",
     "sayingNo": "No.{n}",
     "newTag": "New!"
+  },
+  "parentDecisionPopup": {
+    "title": "Game Start",
+    "score": "{score} pts",
+    "countdown": "Game starts in {n} seconds"
+  },
+  "playerNames": {
+    "you": "You"
+  },
+  "winds": {
+    "東": "E",
+    "南": "S",
+    "西": "W",
+    "北": "N"
+  },
+  "aiNames": {
+    "kuro": "Smoky",
+    "tama": "Oscar",
+    "tora": "Tiger",
+    "janneko": "Janeko"
   }
 }

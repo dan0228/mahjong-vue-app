@@ -8,7 +8,7 @@ import { TwitterApi } from 'twitter-api-v2';
 // Helper function to parse streak number from tweet text
 const parseStreak = (text) => {
   const patterns = [
-    /(?:集計用|For Tally):\s*(\d+)/i,
+    /(?:集計用|For Tally)[:：]\s*(\d+)/i, // Full-width and half-width colon
     /(\d+)\s*連勝/,
   ];
 

@@ -49,6 +49,7 @@ onMounted(async () => {
     '/assets/images/back/back_hai.png',
     '/assets/images/back/back_out.png',
     '/assets/images/back/mat.png',
+    '/assets/images/back/ranking.png',
     '/assets/images/back/タイトルロゴ.png',
     '/assets/images/back/タイトルロゴ_en.png',
     '/assets/images/back/title_back_eye.png',

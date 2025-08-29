@@ -105,7 +105,11 @@
   },
   "leaderboardView": {
     "title": "週間ランキング",
-    "description": "過去7日間のX(旧Twitter)の #よんじゃん連勝数 ハッシュタグが付いたポストに基づく連勝数ランキングです。"
+    "description": "過去7日間のXの #よんじゃん連勝数 ハッシュタグがあるポストに基づく連勝数ランキング！",
+    "tableHeaderNo": "No.",
+    "tableHeaderUserName": "ユーザ名",
+    "tableHeaderWinStreak": "連勝数",
+    "tableHeaderPost": "ポスト"
   },
   "yaku": {
     "riichi": { "name": "立直" },

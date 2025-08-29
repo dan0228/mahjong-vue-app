@@ -1368,6 +1368,16 @@ export const useGameStore = defineStore('game', {
         : mahjongLogic.checkCanRon(player.hand, agariTile, gameCtxForWin);
 
       if (winResult.isWin) {
+        // プレイヤー1が和了した場合、役の達成状況を記録する
+        if (agariPlayerId === 'player1') {
+          const yakuAchievements = JSON.parse(localStorage.getItem('mahjongYakuAchieved') || '{}');
+          winResult.yaku.forEach(yaku => {
+            if (yaku.key) { // keyが存在することを確認
+              yakuAchievements[yaku.key] = true;
+            }
+          });
+          localStorage.setItem('mahjongYakuAchieved', JSON.stringify(yakuAchievements));
+        }
         // 槍槓でないロン和了の場合、捨て牌をハイライトする
         if (!isTsumo && !gameCtxForWin.isChankan) {
           this.highlightedDiscardTileId = this.lastDiscardedTile.id;

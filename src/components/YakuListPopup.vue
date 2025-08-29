@@ -3,6 +3,7 @@
     <div class="popup-overlay" @click.self="$emit('close')">
       <div class="popup-content">
         <h2>{{ $t('yakuListPopup.title') }}</h2>
+        <p class="achievement-note">{{ $t('yakuListPopup.achievementNote') }}</p>
         <div class="yaku-section">
           <table class="yaku-table">
             <thead>
@@ -13,7 +14,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="yaku in normalYakuList" :key="yaku.key">
+              <tr v-for="yaku in normalYakuList" :key="yaku.key" :class="{ 'achieved-yaku': isAchieved(yaku.key) }">
                 <td>{{ $t(`yaku.${yaku.key}.name`) }}</td>
                 <td>
                   {{ $t('yakuListPopup.han', { n: yaku.fans }) }}
@@ -47,7 +48,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="yakuman in yakumanList" :key="yakuman.key">
+              <tr v-for="yakuman in yakumanList" :key="yakuman.key" :class="{ 'achieved-yaku': isAchieved(yakuman.key) }">
                 <td>{{ $t(`yaku.${yakuman.key}.name`) }}</td>
                 <td>{{ yakuman.power === 1 ? $t('yakuListPopup.yakuman') : $t('yakuListPopup.multipleYakuman', { n: yakuman.power }) }}</td>
                 <td class="example-column">
@@ -76,13 +77,26 @@
 </template>
 
 <script setup>
-  import { computed } from 'vue';
+  import { computed, ref, onMounted } from 'vue';
   import { useI18n } from 'vue-i18n';
   import { getTileImageUrl, tileToString } from '@/utils/tileUtils'; // 画像表示用ユーティリティ
   import { YONHAI_YAKU, YONHAI_YAKUMAN } from '@/services/mahjongLogic'; // 役定義をインポート
   defineEmits(['close']);
 
   const { t } = useI18n();
+
+  const achievedYaku = ref({});
+
+  onMounted(() => {
+    const storedYaku = localStorage.getItem('mahjongYakuAchieved');
+    if (storedYaku) {
+      achievedYaku.value = JSON.parse(storedYaku);
+    }
+  });
+
+  const isAchieved = (yakuKey) => {
+    return !!achievedYaku.value[yakuKey];
+  };
 
   const normalYakuList = computed(() => {
     return Object.values(YONHAI_YAKU).filter(yaku =>
@@ -141,6 +155,13 @@
     touch-action: pan-y;
   }
 
+  .achievement-note {
+    font-size: 0.9em;
+    color: #666;
+    margin-top: -5px; /* Adjust as needed */
+    margin-bottom: 10px;
+  }
+
   /* Transition styles */
 .popup-enter-active, .popup-leave-active {
   transition: opacity 0.3s ease, transform 0.3s ease;
@@ -152,6 +173,9 @@
   .yaku-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
   .yaku-table th, .yaku-table td { border: 1px solid #ddd; padding: 6px; text-align: left; vertical-align: top; }
   .yaku-table th { background-color: #f2f2f2; }
+  .achieved-yaku {
+    background-color: #e0f7fa; /* 明るいシアン系の色 */
+  }
   .example-column { width: 125px; }
   .yaku-example {
     display: flex;

@@ -89,6 +89,7 @@
   },
   "yakuListPopup": {
     "title": "Yaku List",
+    "achievementNote": "*Completed yaku will be highlighted.",
     "yakuNameHeader": "Yaku Name",
     "hanHeader": "Fan",
     "exampleHeader": "Example",

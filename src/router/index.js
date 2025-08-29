@@ -35,6 +35,16 @@ const routes = [
       bgm: 'GB-JP-A02-2(Menu-Loop105).mp3'
     },
   },
+  {
+    path: '/leaderboard',
+    name: 'Leaderboard',
+    component: () => import('../views/LeaderboardView.vue'),
+    meta: {
+      title: 'ランキング | よんじゃん！',
+      description: '最大連勝数のランキングです。',
+      bgm: 'GB-JP-A02-2(Menu-Loop105).mp3'
+    },
+  },
 ];
 
 const router = createRouter({

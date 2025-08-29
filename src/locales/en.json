@@ -7,7 +7,7 @@
       "shrine": "Janeko Shrine ⛩️",
       "rules": "Rules 📖",
       "handList": "Yaku List 🀄",
-      "manualMode": "Manual Mode"
+      "leaderboard": "Leaderboard 🏆"
     },
         "officialX": "Official X: {'@'}danAllGreen",
     "maxWinStreak": "🏆Max Win Streak:",
@@ -397,7 +397,7 @@
     "backToTitle": "Back to Title",
     "backToTitleSub": "(Reset Streak)",
     "shareCaption": "Take a screenshot and share it to join the rankings! 📸",
-    "tweetText": "{count}-Win Streak Achieved in YonJong!\n\n#YonJong #YonJongWinStreak #よんじゃん #よんじゃん連勝数",
+    "tweetText": "For Tally: {count}-Win Streak Achieved!\n\n#YonJong #YonJongWinStreak #よんじゃん #よんじゃん連勝数",
     "clipboardCopySuccess": "Copied message to clipboard! Paste to share easily!",
     "clipboardCopyError": "Failed to copy caption to clipboard."
   }

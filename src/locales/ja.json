@@ -7,7 +7,7 @@
       "shrine": "じゃん猫神社⛩️",
       "rules": "ルール 📖",
       "handList": "役一覧 🀄",
-      "manualMode": "全操作モード"
+      "leaderboard": "ランキング 🏆"
     },
         "officialX": "公式X: {'@'}danAllGreen",
     "maxWinStreak": "🏆最大連勝数:",
@@ -397,7 +397,7 @@
     "backToTitle": "タイトルに戻る",
     "backToTitleSub": "(連勝リセット)",
     "shareCaption": "スクショも一緒に投稿してランキングに参加📸",
-    "tweetText": "よんじゃんで{count}連勝達成！\n\n#よんじゃん #よんじゃん連勝数",
+    "tweetText": "集計用：{count}連勝達成！\n\n#よんじゃん #よんじゃん連勝数",
     "clipboardCopySuccess": "投稿用メッセージをクリップボードにコピー！貼り付けして簡単投稿！",
     "clipboardCopyError": "キャプションのコピーに失敗しました。"
   }

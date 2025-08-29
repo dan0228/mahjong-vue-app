@@ -44,7 +44,7 @@
           <li><button @click="goToShrine">{{ $t('titleView.menu.shrine') }}</button></li>
           <li><button @click="showRulesPopup = true">{{ $t('titleView.menu.rules') }}</button></li>
           <li><button @click="showYakuListPopup = true">{{ $t('titleView.menu.handList') }}</button></li>
-          <li><button @click="startGame('allManual')">{{ $t('titleView.menu.manualMode') }}</button></li>
+          <li><button @click="goToLeaderboard">{{ $t('titleView.menu.leaderboard') }}</button></li>
         </ul>
       </nav>
 
@@ -116,6 +116,10 @@ function startGame(mode) {
 
 function goToShrine() {
   router.push('/shrine');
+}
+
+function goToLeaderboard() {
+  router.push('/leaderboard');
 }
 
 

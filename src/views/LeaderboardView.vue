@@ -2,7 +2,22 @@
 <template>
   <div class="leaderboard-view-container" :style="{ height: viewportHeight }">
     <div class="leaderboard-screen" :style="scalerStyle">
+      <div class="max-consecutive-wins">
+        {{ $t('titleView.maxWinStreak') }} <span class="max-wins-number">{{ gameStore.maxConsecutiveWins }}</span>
+      </div>
       <div class="top-controls">
+        <div class="audio-toggles">
+          <label class="toggle-switch">
+            <input type="checkbox" :checked="audioStore.isBgmEnabled" @change="audioStore.toggleBgm()">
+            <span class="slider round"></span>
+          </label>
+          <span class="toggle-label">{{ $t('shrineView.bgm') }}</span>
+          <label class="toggle-switch">
+            <input type="checkbox" :checked="audioStore.isSeEnabled" @change="audioStore.toggleSe()">
+            <span class="slider round"></span>
+          </label>
+          <span class="toggle-label">{{ $t('shrineView.sfx') }}</span>
+        </div>
         <button @click="goBack" class="back-button">
           <img src="/assets/images/button/buckToTitle.png" :alt="$t('shrineView.backToTitle')">
         </button>
@@ -64,10 +79,14 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useViewportHeight } from '@/composables/useViewportHeight';
+import { useAudioStore } from '@/stores/audioStore';
+import { useGameStore } from '@/stores/gameStore';
 
 const router = useRouter();
 const { t } = useI18n();
 const { viewportHeight } = useViewportHeight();
+const audioStore = useAudioStore();
+const gameStore = useGameStore();
 
 const leaderboard = ref([]);
 const isLoading = ref(true);
@@ -144,10 +163,13 @@ onMounted(() => {
   updateScaleFactor();
   window.addEventListener('resize', updateScaleFactor);
   fetchLeaderboard();
+  gameStore.loadCatCoins(); // Load cat coins for the gameStore
+  audioStore.setBgm('GB-JP-A02-2(Menu-Loop105).mp3');
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', updateScaleFactor);
+  audioStore.setBgm(null);
 });
 
 function goBack() {
@@ -156,8 +178,6 @@ function goBack() {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap');
-
 .leaderboard-view-container {
   position: relative;
   width: 100vw;
@@ -186,6 +206,24 @@ function goBack() {
   touch-action: none !important;
 }
 
+.max-consecutive-wins {
+  position: absolute;
+  top: 12px;
+  left: 20px; /* 左端からの位置を調整 */
+  font-size: 0.7em;
+  color: #333;
+  z-index: 10;
+  background-color: rgba(255, 255, 255, 0.6); /* 背景色 */
+  padding: 3px 14px; /* パディング */
+  border-radius: 8px; /* 角丸 */
+  white-space: nowrap; /* テキストが改行されないように */
+}
+
+.max-wins-number {
+  font-weight: bold;
+  color: #CC6633; /* #C63 */
+}
+
 .top-controls {
   position: absolute;
   top: 10px;
@@ -194,6 +232,80 @@ function goBack() {
   justify-content: flex-end;
   align-items: center;
   z-index: 10;
+}
+
+.audio-toggles {
+  display: flex;
+  flex-direction: row; /* 横並びにする */
+  align-items: center;
+  gap: 5px; /* 要素間の間隔 */
+  font-size: 0.8em;
+  color: #333;
+  background-color: rgba(255, 255, 255, 0.6); /* 背景色 */
+  padding: 5px 8px; /* パディング */
+  border-radius: 8px; /* 角丸 */
+  white-space: nowrap; /* テキストが改行されないように */
+  margin-right: 10px; /* ボタンとの間隔 */
+  margin-bottom: 40px;
+  scale: 0.86; /* 少し小さくする */
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 24px;
+  height: 14px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+  border-radius: 14px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 10px;
+  width: 10px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(10px);
+  -ms-transform: translateX(10px);
+  transform: translateX(10px);
+}
+
+.toggle-label {
+  vertical-align: middle;
+  font-size: 0.9em; /* ラベルのフォントサイズも調整 */
 }
 
 .back-button {
@@ -215,11 +327,11 @@ function goBack() {
 h1 {
   margin-top: 50px; /* Adjust to make space for the back button */
   margin-bottom: -5px;
-  font-size: 1.5em;
+  font-size: 1.65em;
 }
 
 .description {
-  font-size: 0.8em;
+  font-size: 0.9em;
   color: #222222;
   margin-bottom: 10px;
   margin-left: 3%;

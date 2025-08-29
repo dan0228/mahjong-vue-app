@@ -105,7 +105,7 @@
   },
   "leaderboardView": {
     "title": "週間ランキング",
-    "description": "過去7日間のXの #よんじゃん連勝数 タグがあるポストに基づく連勝数ランキング！<br>※3時間ごとに更新",
+    "description": "過去7日間のXの #よんじゃん連勝数 タグがあるポストに基づく連勝数順！<br>※3時間ごとに更新",
     "tableHeaderNo": "No.",
     "tableHeaderUserName": "ユーザ名",
     "tableHeaderWinStreak": "連勝数",

@@ -86,8 +86,17 @@ export default async function handler(request, response) {
       rank: index + 1,
     }));
 
-    // Set cache headers. Vercel will cache this response for 15 minutes.
-    response.setHeader('Cache-Control', 's-maxage=900, stale-while-revalidate');
+    // Calculate dynamic cache time until the next 3-hour mark (0, 3, 6, ... UTC)
+    const now = new Date();
+    const currentHour = now.getUTCHours();
+    const nextMark = Math.ceil((currentHour + 1) / 3) * 3;
+    const expiryDate = new Date(now);
+    expiryDate.setUTCHours(nextMark, 0, 0, 0);
+
+    const secondsToExpiry = Math.round((expiryDate.getTime() - now.getTime()) / 1000);
+
+    // Set cache headers. Vercel will cache this response until the next 3-hour mark.
+    response.setHeader('Cache-Control', `s-maxage=${secondsToExpiry}, stale-while-revalidate`);
 
     response.status(200).json(finalLeaderboard);
 

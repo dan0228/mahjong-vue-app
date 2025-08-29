@@ -105,7 +105,7 @@
   },
   "leaderboardView": {
     "title": "Weekly Leaderboard",
-    "description": "Ranking of win streaks based on posts with the #よんじゃん連勝数 hashtag on X (Twitter) in the last 7 days.",
+    "description": "Ranking of win streaks based on posts with the #よんじゃん連勝数 hashtag on X in the last 7 days.<br>*Updates every 3 hours.",
     "tableHeaderNo": "No.",
     "tableHeaderUserName": "User Name",
     "tableHeaderWinStreak": "Win Streak",

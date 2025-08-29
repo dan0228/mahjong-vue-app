@@ -86,6 +86,9 @@ export default async function handler(request, response) {
       rank: index + 1,
     }));
 
+    // Set cache headers. Vercel will cache this response for 15 minutes.
+    response.setHeader('Cache-Control', 's-maxage=900, stale-while-revalidate');
+
     response.status(200).json(finalLeaderboard);
 
   } catch (error) {

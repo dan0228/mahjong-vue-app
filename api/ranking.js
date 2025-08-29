@@ -48,7 +48,6 @@ export default async function handler(request, response) {
       'tweet.fields': ['public_metrics', 'created_at'],
       'expansions': ['author_id'],
       'user.fields': ['name', 'username', 'profile_image_url'],
-      'start_time': '2025-08-01T00:00:00Z',
       max_results: 100, // Fetch a good number of tweets to parse
     });
 

@@ -103,6 +103,10 @@
     "closeButton": "Close",
     "facedownTile": "Facedown tile"
   },
+  "leaderboardView": {
+    "title": "Weekly Leaderboard",
+    "description": "Ranking of win streaks based on posts with the #よんじゃん連勝数 hashtag on X (Twitter) in the last 7 days."
+  },
   "yaku": {
     "riichi": { "name": "Riichi" },
     "tsumo": { "name": "Self-Draw (Tsumo)" },

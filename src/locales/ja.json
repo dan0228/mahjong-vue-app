@@ -103,6 +103,10 @@
     "closeButton": "閉じる",
     "facedownTile": "裏向きの牌"
   },
+  "leaderboardView": {
+    "title": "週間ランキング",
+    "description": "過去7日間のX(旧Twitter)の #よんじゃん連勝数 ハッシュタグが付いたポストに基づく連勝数ランキングです。"
+  },
   "yaku": {
     "riichi": { "name": "立直" },
     "tsumo": { "name": "門前清自摸和" },

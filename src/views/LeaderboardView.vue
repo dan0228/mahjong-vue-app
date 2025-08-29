@@ -1,18 +1,13 @@
+
 <template>
   <div class="leaderboard-container">
-    <h1>Leaderboard</h1>
+    <h1>{{ $t('leaderboardView.title') }}</h1>
     
-    <!-- Monthly tab is disabled for now as the API fetches all-time data -->
-    <!-- <div class="tabs">
-      <button :class="{ active: activeTab === 'all-time' }" @click="activeTab = 'all-time'">All-Time</button>
-      <button :class="{ active: activeTab === 'monthly' }" @click="activeTab = 'monthly'" disabled>This Month</button>
-    </div> -->
-
     <div v-if="isLoading" class="loading-message">Loading rankings...</div>
     <div v-if="error" class="error-message">{{ error }}</div>
 
     <div v-if="!isLoading && !error" class="ranking-table-container">
-      <p class="description">Ranking of win streaks based on posts with the #よんじゃん連勝数 hashtag on X (Twitter).</p>
+      <p class="description">{{ $t('leaderboardView.description') }}</p>
       <table class="ranking-table">
         <thead>
           <tr>
@@ -49,8 +44,10 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 
 const router = useRouter();
+const { t } = useI18n();
 const leaderboard = ref([]);
 const isLoading = ref(true);
 const error = ref(null);
@@ -59,7 +56,6 @@ async function fetchLeaderboard() {
   isLoading.value = true;
   error.value = null;
   try {
-    // The request will be proxied to our serverless function by Vercel
     const response = await fetch('/api/ranking');
     if (!response.ok) {
       const errorData = await response.json();

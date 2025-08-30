@@ -29,7 +29,6 @@
       <div v-if="error" class="error-message">{{ error }}</div>
 
       <div v-if="!isLoading && !error" class="ranking-table-container">
-        <p class="description" v-html="$t('leaderboardView.description')"></p>
         <table class="ranking-table">
           <colgroup>
             <col style="width: 12%;">
@@ -68,6 +67,12 @@
             </tr>
           </tbody>
         </table>
+        <p class="update-notice" v-html="$t('leaderboardView.updateNotice')"></p>
+        <div class="info-section">
+          <h4>{{ $t('leaderboardView.aggregationMethodTitle') }}</h4>
+          <p class="description" v-html="$t('leaderboardView.description')"></p>
+          <p class="post-prompt" v-html="$t('leaderboardView.postPrompt')"></p>
+        </div>
       </div>
 
     </div>
@@ -326,7 +331,7 @@ input:checked + .slider:before {
 
 h1 {
   margin-top: 50px; /* Adjust to make space for the back button */
-  margin-bottom: -5px;
+  margin-bottom: 5px;
   font-size: 1.65em;
 }
 
@@ -435,5 +440,48 @@ h1 {
 
 .ranking-table a:hover {
   text-decoration: underline;
+}
+
+.update-notice {
+  font-size: 0.6em;
+  color: #555;
+  text-align: center;
+  margin-top: 0px;
+}
+
+.description {
+  font-size: 0.75em;
+  color: #333;
+  margin-top: 2px;
+  margin-left: 0%;
+  text-align: center;
+  width: 100%;
+  max-width: 280px;
+}
+
+.info-section {
+  margin-top: 10px;
+  padding: 0px;
+  background-color: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  width: 100%;
+  height: 22%;
+  max-width: 280px;
+}
+
+.info-section h4 {
+  font-size: 0.85em;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 2px;
+  text-align: center;
+}
+
+.post-prompt {
+  font-size: 0.72em;
+  color: #c65b5b;
+  text-align: center;
+  margin-top: 2px;
+  font-weight: bold;
 }
 </style>

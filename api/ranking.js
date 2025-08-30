@@ -9,7 +9,6 @@ import { TwitterApi } from 'twitter-api-v2';
 const parseStreak = (text) => {
   const patterns = [
     /(?:集計用|For Tally)[:：]\s*(\d+)/i, // Full-width and half-width colon
-    /(\d+)\s*連勝/,
   ];
 
   for (const pattern of patterns) {

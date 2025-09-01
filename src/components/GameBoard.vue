@@ -101,22 +101,24 @@
         @start-new-game="handleStartNewGameFromFinalResult"
         @back-to-title="handleBackToTitleFromFinalResult"
       />
+      <!-- ロン・ツモ・ポン・カンなどの宣言アニメーション -->
       <img v-if="animationDisplay && animationDisplay.type === 'ron'" :src="t('gameBoard.ronImg')" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`, 'ron-animation']" :alt="t('gameBoard.ron')" />
-      <!-- New Riichi animation for own player -->
+      <!-- 自家のリーチアニメーション -->
       <div v-if="animationDisplay && animationDisplay.type === 'riichi' && animationDisplay.position === 'bottom'" class="riichi-container riichi-slide-animation">
         <img :src="t('gameBoard.riichiImg')" :alt="t('gameBoard.riichi')" class="riichi-image-scaled" />
       </div>
 
-      <!-- Existing Riichi animation for other players -->
+      <!-- 他家のリーチアニメーション -->
       <div v-if="animationDisplay && animationDisplay.type === 'riichi' && animationDisplay.position === 'top'" class="riichi-container-top riichi-slide-animation-top">
         <img :src="t('gameBoard.riichiImg')" :alt="t('gameBoard.riichi')" class="riichi-image-scaled" />
       </div>
       <img v-if="animationDisplay && animationDisplay.type === 'riichi' && animationDisplay.position === 'right'" :src="t('gameBoard.riichiImg')" :alt="t('gameBoard.riichi')" class="riichi-image-right riichi-slide-animation-right" />
       <img v-if="animationDisplay && animationDisplay.type === 'riichi' && animationDisplay.position === 'left'" :src="t('gameBoard.riichiImg')" :alt="t('gameBoard.riichi')" class="riichi-image-left riichi-slide-animation-left" />
       <img v-if="animationDisplay && animationDisplay.type === 'tsumo'" :src="t('gameBoard.tsumoImg')" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`, 'tsumo-animation']" :alt="t('gameBoard.tsumo')" />
-      <!-- ポンとカンの表示を追加 -->
       <img v-if="animationDisplay && animationDisplay.type === 'pon'" :src="t('gameBoard.ponImg')" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`, 'pon-animation', 'pon-kan-size']" :alt="t('gameBoard.pon')" />
       <img v-if="animationDisplay && animationDisplay.type === 'kan'" :src="t('gameBoard.kanImg')" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`, 'pon-kan-size', 'kan-animation']" :alt="t('gameBoard.kan')" />
+      
+      <!-- 各種ポップアップ -->
       <RulePopup v-if="showRulesPopup" @close="showRulesPopup = false" />
       <YakuListPopup v-if="showYakuListPopup" @close="showYakuListPopup = false" />
       <ParentDecisionPopup
@@ -124,7 +126,7 @@
         :dealer-determination-results="sortedPlayersForPopup"
         @close="handleCloseDealerDeterminationPopup"
       />
-      </div> <!-- End of game-board-scaler -->
+      </div> <!-- game-board-scaler の閉じタグ -->
     </div>
 </template>
   
@@ -144,42 +146,56 @@
   import RulePopup from './RulePopup.vue';
   import YakuListPopup from './YakuListPopup.vue';
   // import Wall from './Wall.vue'; // 将来的に使用
-  import * as mahjongLogic from '@/services/mahjongLogic'; // 役判定などに使う場合 (例: checkYonhaiWin, canRiichi)
-  import { GAME_PHASES } from '@/stores/gameStore'; // gameStoreからフェーズ定数をインポート
+  import * as mahjongLogic from '@/services/mahjongLogic'; // 役判定などに使用
+  import { GAME_PHASES } from '@/stores/gameStore'; // ゲームフェーズ定数
 
+/**
+ * ゲームボードコンポーネント。
+ * 麻雀のゲーム画面全体を管理し、各プレイヤーエリア、中央テーブル、捨て牌、ポップアップなどを描画します。
+ * ゲームの進行に合わせてUIを動的に更新し、プレイヤーのアクションをgameStoreに伝達します。
+ */
+
+  // --- リアクティブ変数とストアの初期化 ---
   const { t } = useI18n();
-  const gameStore = useGameStore(); // ストアのインスタンスを取得
+  const gameStore = useGameStore();
   const audioStore = useAudioStore();
-  const router = useRouter(); // routerインスタンスを取得
-  const showAnkanModal = ref(false);
-  const ankanOptions = ref([]); // ストアから渡される暗槓可能な牌のリスト
-  const showKakanModal = ref(false);
-  const kakanOptions = ref([]); // ストアから渡される加槓可能な牌のリスト
-  const showRulesPopup = ref(false);
-  const showYakuListPopup = ref(false);
-  const riichiAnimationState = ref(null);
-  const gameBoardScalerRef = ref(null);
-  
+  const router = useRouter();
+  const showRulesPopup = ref(false); // ルールポップアップの表示状態
+  const showYakuListPopup = ref(false); // 役一覧ポップアップの表示状態
+  const gameBoardScalerRef = ref(null); // ゲームボードのスケーリング用divへの参照
 
-const playerIcon = (player) => {
-  if (!player) return '';
-  if (player.id === 'player1') return '/assets/images/info/hito_icon_1.png'; // あなた
-  if (player.originalId === 'kuro') return '/assets/images/info/cat_icon_3.png'; // くろ
-  if (player.originalId === 'tama') return '/assets/images/info/cat_icon_2.png'; // たま
-  if (player.originalId === 'tora') return '/assets/images/info/cat_icon_1.png'; // とら
-  if (player.originalId === 'janneko') return '/assets/images/info/cat_icon_4.png'; // 雀猫様
-  return null;
-};
+  /**
+   * プレイヤー情報に基づいてアイコン画像のパスを返します。
+   * @param {object} player - プレイヤーオブジェクト
+   * @returns {string|null} アイコン画像のパス。見つからない場合はnull。
+   */
+  const playerIcon = (player) => {
+    if (!player) return '';
+    if (player.id === 'player1') return '/assets/images/info/hito_icon_1.png'; // あなた
+    if (player.originalId === 'kuro') return '/assets/images/info/cat_icon_3.png'; // くろ
+    if (player.originalId === 'tama') return '/assets/images/info/cat_icon_2.png'; // たま
+    if (player.originalId === 'tora') return '/assets/images/info/cat_icon_1.png'; // とら
+    if (player.originalId === 'janneko') return '/assets/images/info/cat_icon_4.png'; // 雀猫様
+    return null;
+  };
 
-  // --- Scaling Logic ---
+  // --- 画面スケーリング関連のロジック ---
   const DESIGN_WIDTH = 360; // ベースとなるデザインの幅 (9:16のアスペクト比)
   const DESIGN_HEIGHT = 640; // ベースとなるデザインの高さ (9:16のアスペクト比)
   const scaleFactor = ref(1); // 拡大縮小率
+
+  /**
+   * ゲームボード全体のスケーリングスタイルを計算します。
+   * ウィンドウサイズに合わせて、アスペクト比を維持しながら画面にフィットするように調整します。
+   */
   const scalerStyle = computed(() => ({
     transform: `translate(-50%, -50%) scale(${scaleFactor.value})`
   }));
 
-  // ストアのアニメーション状態を監視して、表示用の位置情報を計算する
+  /**
+   * gameStoreのアニメーション状態から、画面表示用のアニメーション情報を生成します。
+   * @returns {{type: string, position: string}|null} アニメーション種別と表示位置。アニメーションがない場合はnull。
+   */
   const animationDisplay = computed(() => {
     const state = gameStore.animationState;
     if (!state.type || !state.playerId) {
@@ -196,13 +212,19 @@ const playerIcon = (player) => {
     return { type: state.type, position };
   });
 
+  /**
+   * 「タイトルへ戻る」ボタンの表示条件を決定します。
+   */
   const showReturnButton = computed(() => {
     return (gameStore.gameMode === 'allManual' || gameStore.gameMode === 'vsCPU') &&
            !gameStore.showResultPopup &&
            !gameStore.showFinalResultPopup;
   });
-  // ユーザー自身のプレイヤーID (全操作モードでは 'player1' を仮定)
-  // 将来的にはログイン機能やモード選択に応じて設定されるべき
+
+  /**
+   * 現在操作しているプレイヤーのIDを返します。
+   * モードによって操作プレイヤーを決定します。
+   */
   const myPlayerId = computed(() => {
     // 全操作モードとCPU対戦モードでは、'player1'を操作プレイヤーと仮定
     if (gameStore.gameMode === 'allManual' || gameStore.gameMode === 'vsCPU') {
@@ -212,14 +234,17 @@ const playerIcon = (player) => {
     return gameStore.myActualPlayerId; // 例: ストアに myActualPlayerId を持つ
   });
 
-  // プレイヤーの表示順序を動的に計算する (自分を下家として表示)
+  /**
+   * 画面表示用のプレイヤー順序を計算します。
+   * 操作プレイヤー(myPlayerId)が常に画面下部に表示されるように順序を並べ替えます。
+   * @returns {Array<Object>} [下家, 右家, 対面, 左家] の順にソートされたプレイヤー配列。
+   */
   const orderedPlayersForDisplay = computed(() => {
     if (!gameStore.players.length || !myPlayerId.value) return [];
 
     const myIndex = gameStore.players.findIndex(p => p.id === myPlayerId.value);
     if (myIndex === -1) return []; // 自分のプレイヤーが見つからない場合は空配列
 
-    // 自分(下家) -> 右家 -> 対面 -> 左家 の順に並び替える
     const players = [...gameStore.players];
     const bottomP = players[myIndex];
     const rightP = players[(myIndex + 1) % 4];
@@ -228,20 +253,30 @@ const playerIcon = (player) => {
 
     return [bottomP, rightP, topP, leftP];
   });
-  // orderedPlayersForDisplay から各位置のプレイヤーを取得
+
+  // --- 各位置のプレイヤー情報を取得する算出プロパティ群 ---
   const playerAtBottom = computed(() => orderedPlayersForDisplay.value[0]);
   const playerAtRight = computed(() => orderedPlayersForDisplay.value[1]);
   const playerAtTop = computed(() => orderedPlayersForDisplay.value[2]);
   const playerAtLeft = computed(() => orderedPlayersForDisplay.value[3]);
 
+  /**
+   * 左側のプレイヤーが「くろ」であるか、また画像を反転させる必要があるかを判定します。
+   */
   const isKuroAtLeft = computed(() => {
     return playerAtLeft.value && playerAtLeft.value.originalId === 'kuro';
   });
 
+  /**
+   * 右側のプレイヤーが「とら」であるか、また画像を反転させる必要があるかを判定します。
+   */
   const isToraAtRight = computed(() => {
     return playerAtRight.value && playerAtRight.value.originalId === 'tora';
   });
 
+  /**
+   * 親決めポップアップ用に、プレイヤーを座風の順（東南西北）にソートします。
+   */
   const sortedPlayersForPopup = computed(() => {
     const players = gameStore.dealerDeterminationResult.players;
     const windOrder = ['東', '南', '西', '北'];
@@ -249,21 +284,15 @@ const playerIcon = (player) => {
       return windOrder.indexOf(a.seatWind) - windOrder.indexOf(b.seatWind);
     });
   });
-  const dealerInfo = computed(() => {
-    if (gameStore.dealerIndex !== null && gameStore.players[gameStore.dealerIndex]) {
-      const dealer = gameStore.players[gameStore.dealerIndex];
-      return { name: dealer.name, seatWind: dealer.seatWind };
-    }
-    return { name: null, seatWind: null };
-  });
 
+  // --- フリテン状態を判定する算出プロパティ群 ---
   const isMyPlayerInFuriTen = computed(() => {
     if (!playerAtBottom.value) return false;
     const playerId = playerAtBottom.value.id;
     return !!(gameStore.isFuriTen[playerId] || gameStore.isDoujunFuriTen[playerId]);
   });
 
-    const isTopPlayerInFuriTen = computed(() => {
+  const isTopPlayerInFuriTen = computed(() => {
     if (!playerAtTop.value) return false;
     const playerId = playerAtTop.value.id;
     return gameStore.gameMode === 'allManual' && !!(gameStore.isFuriTen[playerId] || gameStore.isDoujunFuriTen[playerId]);
@@ -281,32 +310,28 @@ const playerIcon = (player) => {
     return gameStore.gameMode === 'allManual' && !!(gameStore.isFuriTen[playerId] || gameStore.isDoujunFuriTen[playerId]);
   });
 
-
-  const gameMode = computed(() => gameStore.gameMode);
-
+  /**
+   * 指定されたプレイヤーの手牌を表示するかどうかを決定します。
+   * @param {string} playerId - 判定するプレイヤーのID。
+   * @returns {boolean} 手牌を表示する場合はtrue。
+   */
   function determineIsMyHand(playerId) {
-    if (gameMode.value === 'allManual') {
+    if (gameStore.gameMode === 'allManual') {
       return true; // 全操作モードでは全ての牌を表向きに
     }
     // 流局フェーズで、かつテンパイ表示が有効なプレイヤーの手牌を表向きにする
     if (gameStore.gamePhase === GAME_PHASES.ROUND_END && gameStore.isTenpaiDisplay[playerId]) {
       return true;
     }
-    // CPU対戦モードやオンライン対戦モードの場合
-    // 自分のプレイヤーIDと一致する場合のみ手牌を表示
+    // CPU対戦モードやオンライン対戦モードの場合、自分のプレイヤーIDと一致する場合のみ手牌を表示
     return myPlayerId.value === playerId;
   }
 
-  // GameBoard.vue のテンプレートで使用する場合の canPlayerDeclareRon 関数の定義例
-  const canPlayerDeclareRon = (playerId) => {
-    if (!playerId || !gameStore.playerActionEligibility[playerId]) return false;
-    // 他家の打牌後、または槍槓のチャンスがある場合
-    return (gameStore.gamePhase === GAME_PHASES.AWAITING_ACTION_RESPONSE ||
-           (gameStore.gamePhase === GAME_PHASES.AWAITING_KAKAN_RESPONSE && gameStore.isChankanChance)) &&
-           gameStore.playerActionEligibility[playerId].canRon === true;
-  };
-
-  // 渡されたプレイヤーIDに対応するツモ牌を取得
+  /**
+   * 指定されたプレイヤーのツモ牌を取得します。
+   * @param {string} playerId - プレイヤーID。
+   * @returns {Object|null} ツモ牌オブジェクト。ツモ番でない場合はnull。
+   */
   function drawnTileForPlayer(playerId) {
     if (gameStore.currentTurnPlayerId === playerId && gameStore.drawnTile) {
       return gameStore.drawnTile;
@@ -314,183 +339,128 @@ const playerIcon = (player) => {
     return null;
   }
 
-  // 渡されたプレイヤーIDが打牌可能か判定
+  /**
+   * 指定されたプレイヤーが打牌可能かどうかを判定します。
+   * @param {string} playerId - プレイヤーID。
+   * @returns {boolean} 打牌可能な場合はtrue。
+   */
   function canPlayerDiscard(playerId) {
     // 通常の打牌待ち、またはリーチ後の打牌選択待ちの場合に打牌可能
     return gameStore.currentTurnPlayerId === playerId && 
            (gameStore.gamePhase === GAME_PHASES.AWAITING_DISCARD || gameStore.gamePhase === GAME_PHASES.AWAITING_RIICHI_DISCARD);
   }
-  onMounted(() => {
-    // ゲームの初期化処理などをストア経由で実行
-    // 例: プレイヤー情報の設定、山牌の準備、配牌など
-    // if (!gameStore.isInitialized) {
-    if (gameStore.gamePhase === 'waitingToStart') { // gameStore.myPlayer のチェックは initializeGame 内で行う方が適切
-      gameStore.initializeGame(); // ストアのアクションを呼び出す
-      // 初期化後、最初のプレイヤーがツモる
-      if (gameStore.currentTurnPlayerId && gameStore.gamePhase === 'playerTurn') {
-        gameStore.drawTile();
-      }
-    }
-  });
 
-  function handleTileSelection(payload) { // payload は { tile: Object, isFromDrawnTile: Boolean }
-    // どのプレイヤーの操作かに関わらず、現在のターンプレイヤーが打牌可能な状態であれば実行
-    // PlayerHand が can-discard プロパティ経由で適切なプレイヤーのターンであること保証すると想定
+  /**
+   * プレイヤーからの牌選択イベントを処理します。
+   * @param {Object} payload - 選択された牌情報。{ tile: Object, isFromDrawnTile: Boolean }
+   */
+  function handleTileSelection(payload) {
     if (gameStore.currentTurnPlayerId && (gameStore.gamePhase === 'awaitingDiscard' || gameStore.gamePhase === 'awaitingRiichiDiscard')) {
-      gameStore.discardTile(gameStore.currentTurnPlayerId, payload.tile.id, payload.isFromDrawnTile); // 誰が打牌したか渡す
+      gameStore.discardTile(gameStore.currentTurnPlayerId, payload.tile.id, payload.isFromDrawnTile);
     } else {
-      console.warn("現在のゲームフェーズでは牌を選択できません。ターンプレイヤーが打牌可能な状態であることを確認してください。");
+      console.warn("現在のゲームフェーズでは牌を選択できません。");
     }
   }
 
-  // --- アクションボタンの表示条件 ---
-  // --- アクション実行メソッド ---
-  function handleDeclareTsumoAgari() {
-    if (canDeclareTsumoAgari.value) {
-      gameStore.handleAgari(myPlayerId.value, gameStore.drawnTile, true);
-    }
-  }
-
-  function handleDeclareRiichi() {
-    if (canDeclareRiichi.value) {
-      gameStore.declareRiichi(myPlayerId.value);
-    }
-  }
-
-  function handleDeclareAnkan() {
-    if (canDeclareAnkan.value) {
-      const options = gameStore.canDeclareAnkan[myPlayerId.value]; // ストアが具体的な牌またはtrueを返す想定
-      if (options && options.length === 1) { // 選択肢が1つで明確な場合合
-        gameStore.declareAnkan(myPlayerId.value, options[0]);
-      } else if (options && options.length > 0) { // 複数の選択肢がある場合
-        ankanOptions.value = options;
-        showAnkanModal.value = true;
-      } else if (gameStore.canDeclareAnkan[myPlayerId.value] === true) { // ストアが候補を返さず、UIで選択が必要な場合
-          // このケースはストアが候補を返すようにするのが望ましい
-          console.warn("暗槓牌の選択肢をストアから取得できませんでした。UIでの選択が必要です。");
-          // ankanOptions.value = calculatePossibleAnkans(); // GameBoard側で計算する場合（非推奨）
-          // showAnkanModal.value = true;
-      }
-    }
-  }
-
-function onAnkanSelected(tile) { // モーダルからのイベント
-  showAnkanModal.value = false;
-  if (tile) {
-    gameStore.declareAnkan(myPlayerId.value, tile);
-  }
-}
-
-// handleDeclareKakan と onKakanSelected も同様に実装が必要
-
-  function handleDeclareKakan() {
-    if (canDeclareKakan.value) {
-      const tileToKakan = gameStore.canDeclareKakan[myPlayerId.value]; // ストアが具体的な牌またはtrueを返す想定
-      if (tileToKakan) gameStore.declareKakan(myPlayerId.value, tileToKakan);
-    }
-  }
-
-  function handleDeclareRon(playerId) {
-    if (gameStore.playerActionEligibility[playerId]?.canRon && (gameStore.lastDiscardedTile || gameStore.chankanTile)) {
-      const agariTile = gameStore.isChankanChance ? gameStore.chankanTile : gameStore.lastDiscardedTile;
-      gameStore.handleAgari(playerId, agariTile, false, gameStore.lastActionPlayerId);
-    }
-  }
-
-  function handleDeclarePon(playerId, tileToPon) {
-    if (tileToPon && gameStore.lastActionPlayerId) {
-      gameStore.declarePon(playerId, gameStore.lastActionPlayerId, tileToPon);
-    }
-  }
-
-  function handleDeclareMinkan(playerId, tileToKan) {
-    if (tileToKan && gameStore.lastActionPlayerId) {
-      gameStore.declareMinkan(playerId, gameStore.lastActionPlayerId, tileToKan);
-    }
-  }
-
-  function handleSkipAction() {
-    // スキップは、応答待ちのプレイヤーが行う
-    // gameStore.playerSkipsCall(myPlayerId.value); // myPlayerIdではなく、実際にスキップするプレイヤーIDを渡す必要がある
-    // このメソッドは PlayerArea からのイベントで呼び出されるので、引数で playerId を受け取るべき
-    console.warn("handleSkipAction needs to be called with the skipping player's ID from PlayerArea event.");
-  }
-
-  function handlePlayerAction(payload) { // { playerId, actionType, tile }
+  /**
+   * PlayerAreaから発行されたアクションイベントを中央で処理します。
+   * @param {Object} payload - アクション情報。{ playerId, actionType, tile }
+   */
+  function handlePlayerAction(payload) {
     const { playerId, actionType, tile } = payload;
-    if (actionType === 'skip') {
-      gameStore.playerSkipsCall(playerId);
-    } else if (actionType === 'tsumoAgari') {
-      gameStore.handleAgari(playerId, gameStore.drawnTile, true);
-    } else if (actionType === 'riichi') {
-              gameStore.declareRiichi(playerId); }
-    else if (actionType === 'ankan') {
-      // PlayerAreaから渡されるtileは、暗槓の場合は選択された牌そのものであるべき
-      // ストアの canDeclareAnkan[playerId] が候補リストを返す場合、
-      // PlayerArea側で選択UIを出すか、GameBoardが仲介してモーダルを出す
-      if (tile) { // tile に選択された暗槓牌が渡ってくる想定
-        gameStore.declareAnkan(playerId, tile);
-      } else {
-        console.error("暗槓する牌が選択されていません。");
-      }
-    } else if (actionType === 'kakan') {
-      if (tile) { // tile に選択された加槓牌が渡ってくる想定
-        gameStore.declareKakan(playerId, tile);
-      } else {
-        console.error("加槓する牌が選択されていません。");
-      }
-    } else if (actionType === 'ron') {
-      setTimeout(() => {
-        gameStore.playerDeclaresCall(playerId, 'ron', gameStore.lastDiscardedTile);
-      }, 0); // 0秒のディレイ
-    } else if (actionType === 'pon') {
-      gameStore.playerDeclaresCall(playerId, 'pon', tile); // ポン対象牌は PlayerArea から渡される
-    } else if (actionType === 'minkan') {
-      gameStore.playerDeclaresCall(playerId, 'minkan', tile); // カン対象牌は PlayerArea から渡される
+    switch (actionType) {
+      case 'skip':
+        gameStore.playerSkipsCall(playerId);
+        break;
+      case 'tsumoAgari':
+        gameStore.handleAgari(playerId, gameStore.drawnTile, true);
+        break;
+      case 'riichi':
+        gameStore.declareRiichi(playerId);
+        break;
+      case 'ankan':
+        if (tile) {
+          gameStore.declareAnkan(playerId, tile);
+        } else {
+          console.error("暗槓する牌が選択されていません。");
+        }
+        break;
+      case 'kakan':
+        if (tile) {
+          gameStore.declareKakan(playerId, tile);
+        } else {
+          console.error("加槓する牌が選択されていません。");
+        }
+        break;
+      case 'ron':
+        // UIの応答性を保つため、わずかに遅延させて実行
+        setTimeout(() => {
+          gameStore.playerDeclaresCall(playerId, 'ron', gameStore.lastDiscardedTile);
+        }, 0);
+        break;
+      case 'pon':
+        gameStore.playerDeclaresCall(playerId, 'pon', tile);
+        break;
+      case 'minkan':
+        gameStore.playerDeclaresCall(playerId, 'minkan', tile);
+        break;
     }
   }
 
-  // ゲームコンテキスト生成のヘルパー関数 (重複を避けるため)
-  // ストアから必要な情報を集めてコンテキストオブジェクトを作成
+  // --- ポップアップの制御 --- 
 
+  /**
+   * 和了結果ポップアップを閉じる際の処理。
+   */
   function handleCloseResultPopup() {
-    // ポップアップを閉じるだけの場合 (基本的には proceed を使う)
-    riichiAnimationState.value = null;
     gameStore.showResultPopup = false;
   }
 
+  /**
+   * 和了結果ポップアップで「次へ」が押された際の処理。
+   */
   function handleProceedToNextRound() {
-    riichiAnimationState.value = null;
-    gameStore.showResultPopup = false; // まずポップアップを閉じる
-    gameStore.applyPointChanges(); // 点数変動を適用
-    gameStore.prepareNextRound(); // 次の局の準備
+    gameStore.showResultPopup = false;
+    gameStore.applyPointChanges();
+    gameStore.prepareNextRound();
   }
 
+  /**
+   * 親決めポップアップが閉じられた際の処理。
+   */
   function handleCloseDealerDeterminationPopup() {
     gameStore.showDealerDeterminationPopup = false;
-    gameStore.startGameFlow(); // ポップアップが閉じた後にゲームフローを開始
+    gameStore.startGameFlow(); // ゲームフローを開始
   }
 
+  /**
+   * 最終結果ポップアップから新しいゲームを開始する処理。
+   */
   function handleStartNewGameFromFinalResult() {
-    riichiAnimationState.value = null;
     gameStore.resetGameForNewSession({ keepStreak: true }); // 連勝数を維持
-    gameStore.initializeGame(); // 新しいゲームを開始
+    gameStore.initializeGame();
     gameStore.showDealerDeterminationPopup = true; // 親決めポップアップを表示
   }
 
+  /**
+   * 最終結果ポップアップからタイトル画面に戻る処理。
+   */
   function handleBackToTitleFromFinalResult() {
-    riichiAnimationState.value = null;
-    router.push('/'); // タイトル画面のパス (router/index.jsで定義) に遷移
+    router.push('/');
     gameStore.returnToTitle();
   }
 
+  /**
+   * ゲームを中断してタイトル画面に戻る処理。
+   */
   function returnToTitle() {
-    riichiAnimationState.value = null;
     router.push('/');
     gameStore.resetGameForNewSession();
   }
 
-  // --- Scaling Logic ---
+  /**
+   * ウィンドウサイズに基づいてスケーリング係数を更新します。
+   */
   const updateScaleFactor = () => {
     const currentWidth = window.innerWidth;
     const currentHeight = window.innerHeight;
@@ -502,16 +472,26 @@ function onAnkanSelected(tile) { // モーダルからのイベント
     scaleFactor.value = Math.min(scaleX, scaleY);
   };
 
+  // --- ライフサイクルフック ---
   onMounted(() => {
-    updateScaleFactor(); // 初期表示時にスケールを計算
-    window.addEventListener('resize', updateScaleFactor); // ウィンドウリサイズ時に再計算
+    // ゲームがまだ始まっていない場合、初期化処理を実行
+    if (gameStore.gamePhase === 'waitingToStart') {
+      gameStore.initializeGame();
+    }
+    // スケーリングの初期化とリサイズイベントの監視
+    updateScaleFactor();
+    window.addEventListener('resize', updateScaleFactor);
   });
-  onBeforeUnmount(() => { // コンポーネントがアンマウントされるときにイベントリスナーをクリーンアップ
+
+  onBeforeUnmount(() => {
+    // コンポーネントが破棄される際に、リサイズイベントのリスナーを解除
     window.removeEventListener('resize', updateScaleFactor);
-    // 保留中のすべてのタイマーをクリア
+
+    // このコンポーネントに起因する可能性のある、保留中のタイマーをすべてクリアします。
+    // 注意: この方法はページ上のすべてのsetTimeoutをクリアするため、他のコンポーネントに影響を与える可能性があります。
     let id = window.setTimeout(function() {}, 0);
     while (id--) {
-      window.clearTimeout(id); // will do nothing if no timeout with id is present
+      window.clearTimeout(id);
     }
   });
 
@@ -628,7 +608,7 @@ function onAnkanSelected(tile) { // モーダルからのイベント
   }
 }
 
-/* For Ron (no fade-out) */
+/* ロン宣言時のアニメーション (フェードアウトなし) */
 .ron-indicator.ron-animation {
   animation: ron-bounce-effect 0.4s ease-in-out;
 }
@@ -648,7 +628,7 @@ function onAnkanSelected(tile) { // モーダルからのイベント
   }
 }
 
-/* For Tsumo (no fade-out) */
+/* ツモ宣言時のアニメーション (フェードアウトなし) */
 .ron-indicator.tsumo-animation {
   animation: tsumo-bounce-effect 0.4s ease-in-out;
 }
@@ -668,7 +648,7 @@ function onAnkanSelected(tile) { // モーダルからのイベント
   }
 }
 
-/* New Riichi Animation Styles */
+/* リーチアニメーション */
 .riichi-container {
   position: absolute;
   bottom: 0;
@@ -710,7 +690,7 @@ function onAnkanSelected(tile) { // モーダルからのイベント
   }
 }
 
-/* Riichi Animation for Top Player */
+/* 対面のリーチアニメーション */
 .riichi-container-top {
   position: absolute;
   top: 0;
@@ -745,7 +725,7 @@ function onAnkanSelected(tile) { // モーダルからのイベント
   }
 }
 
-/* Riichi Animation for Right Player */
+/* 右家のリーチアニメーション */
 .riichi-image-right {
   position: absolute;
   top: 50%;
@@ -777,7 +757,7 @@ function onAnkanSelected(tile) { // モーダルからのイベント
   }
 }
 
-/* Riichi Animation for Left Player */
+/* 左家のリーチアニメーション */
 .riichi-image-left {
   position: absolute;
   top: 50%;
@@ -809,7 +789,7 @@ function onAnkanSelected(tile) { // モーダルからのイベント
   }
 }
 
-/* 各プレイヤーの位置に合わせた表示位置 */
+/* 各プレイヤーの位置に合わせた宣言画像の表示位置 */
 .ron-indicator-bottom {
   top: 75%;
   left: 50%;

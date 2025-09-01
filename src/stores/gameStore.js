@@ -795,7 +795,6 @@ export const useGameStore = defineStore('game', {
       this.shouldAdvanceRound = false; // フラグをリセット
 
       // ゲーム終了条件のチェック (東4局終了)
-      // TODO: 誰かが飛んだ場合の終了条件も追加する
       // shouldEndGameAfterRound フラグで既に判定しているので、ここでのチェックは補助的
       if (this.currentRound.wind === 'east' && this.currentRound.number > 4 && !this.shouldEndGameAfterRound) {
         // 親が和了して東4局が終了した場合も考慮 (shouldAdvanceRound が false でも局数が4を超えていれば終了)
@@ -805,7 +804,7 @@ export const useGameStore = defineStore('game', {
       // dealerIndex が更新された状態で initializeGame を呼び出す
       // initializeGame 内で、現在の dealerIndex を元に親や風が設定される
       this.initializeGame();
-      // this.startGameFlow(); // 新しい局の開始時に最初のツモを開始 (コメントアウトされていたためそのまま)
+      this.startGameFlow(); // 新しい局の開始時に最初のツモを開始
     },
     /**
      * ゲームモードを設定します。

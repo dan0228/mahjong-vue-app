@@ -1,5 +1,6 @@
 <template>
   <div class="center-table-info">
+    <!-- v-if/v-else: 親の位置を示す背景画像がある場合は画像ベースのUI、ない場合はテキストベースのUIに切り替え -->
     <div v-if="centerImageSrc" class="center-image-container">
       <img :src="centerImageSrc" :alt="centerImageAltText" class="center-info-image" />
       <img v-if="riichiStickBaseImageSrc" :src="riichiStickBaseImageSrc" :alt="t('centerTableInfo.altTextRiichiStickBase')" class="riichi-stick-base-image" />
@@ -12,42 +13,39 @@
         <img v-if="remainingTilesImage2Src" :src="remainingTilesImage2Src" :alt="t('centerTableInfo.altTextRemainingTiles2')" class="remaining-tiles-count-digit" />
         <img v-if="remainingTilesImage3Src" :src="remainingTilesImage3Src" :alt="t('centerTableInfo.altTextRemainingTiles3')" class="remaining-tiles-count-digit" />
       </div>
-      <!-- 自家の点数表示を画像コンテナ内に移動 -->
+      <!-- 各プレイヤーの点数表示 -->
       <div v-if="orderedPlayers[0]" class="player-score-image-container bottom-player-score">
         <img v-if="bottomPlayerScoreInfo.sign" :src="bottomPlayerScoreInfo.sign" :alt="t('centerTableInfo.altTextScoreSign')" class="score-sign-image" />
         <img v-for="(src, index) in bottomPlayerScoreInfo.digits" :key="`digit-${index}-${src}`" :src="src" :alt="t('centerTableInfo.altTextScoreDigit', { index })" class="score-digit-image" />
       </div>
-      <!-- 上家(画面左)の点数表示 -->
       <div v-if="orderedPlayers[3]" class="player-score-image-container side-player-score left-player-score">
         <img v-if="leftPlayerScoreInfo.sign" :src="leftPlayerScoreInfo.sign" :alt="t('centerTableInfo.altTextScoreSign')" class="score-sign-image" />
         <img v-for="(src, index) in leftPlayerScoreInfo.digits" :key="`left-digit-${index}-${src}`" :src="src" :alt="t('centerTableInfo.altTextScoreDigit', { index })" class="score-digit-image" />
       </div>
-      <!-- 対面の点数表示 -->
       <div v-if="orderedPlayers[2]" class="player-score-image-container vertical-player-score top-player-score">
         <img v-if="topPlayerScoreInfo.sign" :src="topPlayerScoreInfo.sign" :alt="t('centerTableInfo.altTextScoreSign')" class="score-sign-image" />
         <img v-for="(src, index) in topPlayerScoreInfo.digits" :key="`top-digit-${index}-${src}`" :src="src" :alt="t('centerTableInfo.altTextScoreDigit', { index })" class="score-digit-image" />
       </div>
-      <!-- 下家(画面右)の点数表示 -->
       <div v-if="orderedPlayers[1]" class="player-score-image-container side-player-score right-player-score">
         <img v-if="rightPlayerScoreInfo.sign" :src="rightPlayerScoreInfo.sign" :alt="t('centerTableInfo.altTextScoreSign')" class="score-sign-image" />
         <img v-for="(src, index) in rightPlayerScoreInfo.digits" :key="`right-digit-${index}-${src}`" :src="src" :alt="t('centerTableInfo.altTextScoreDigit', { index })" class="score-digit-image" />
       </div>
-      <!-- リーチ棒表示 -->
+      <!-- 各プレイヤーのリーチ棒表示 -->
       <img v-if="orderedPlayers[0]?.isRiichi || orderedPlayers[0]?.isDoubleRiichi" src="/assets/images/tenbo/tenbou1000.png" :alt="t('centerTableInfo.altTextRiichiStickBottom')" class="riichi-stick-image bottom-riichi-stick" />
       <img v-if="orderedPlayers[3]?.isRiichi || orderedPlayers[3]?.isDoubleRiichi" src="/assets/images/tenbo/tenbou1000.png" :alt="t('centerTableInfo.altTextRiichiStickLeft')" class="riichi-stick-image left-riichi-stick" />
       <img v-if="orderedPlayers[2]?.isRiichi || orderedPlayers[2]?.isDoubleRiichi" src="/assets/images/tenbo/tenbou1000.png" :alt="t('centerTableInfo.altTextRiichiStickTop')" class="riichi-stick-image top-riichi-stick" />
       <img v-if="orderedPlayers[1]?.isRiichi || orderedPlayers[1]?.isDoubleRiichi" src="/assets/images/tenbo/tenbou1000.png" :alt="t('centerTableInfo.altTextRiichiStickRight')" class="riichi-stick-image right-riichi-stick" />
+      <!-- 場風・局数表示 -->
       <img v-if="roundIndicatorImageSrc" :src="roundIndicatorImageSrc" :alt="t('centerTableInfo.altTextRound')" class="round-indicator-image" />
       <!-- 王牌ドラ表示エリア -->
       <div v-if="deadWallDisplayTiles.length > 0" class="dead-wall-display-area">
         <div v-for="(tilePair, pairIndex) in deadWallDisplayTiles" :key="`deadwall-pair-${pairIndex}`" class="dead-wall-tile-pair">
-          <!-- 下の牌 (奥側) -->
           <img :src="getTileImageUrl(tilePair.bottom)" :alt="tileToString(tilePair.bottom)" class="dead-wall-tile dead-wall-bottom-tile" />
-          <!-- 上の牌 (手前側) -->
           <img :src="getTileImageUrl(tilePair.top)" :alt="tileToString(tilePair.top)" class="dead-wall-tile dead-wall-top-tile" />
         </div>
       </div>
     </div>
+    <!-- テキストベースのUI -->
     <div v-else class="info-text-container">
       <div class="round-info">
         <span>{{ roundWind }}{{ roundNumber }}局</span>
@@ -58,7 +56,6 @@
         <span>現在の親: {{ dealer.name }} ({{ dealer.seatWind }})</span>
       </div>
       <div class="scores">
-        <!-- GameBoard.vue の表示順 (自分、右、対面、左) に合わせてプレイヤー情報を表示 -->
         <template v-for="(player, index) in orderedPlayers" :key="index">
           <div v-if="player" class="player-score">
             <span class="player-name">
@@ -90,17 +87,64 @@
 import { computed, defineProps } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useGameStore } from '@/stores/gameStore';
-import { getTileImageUrl, tileToString } from '@/utils/tileUtils'; // インポート
+import { getTileImageUrl, tileToString } from '@/utils/tileUtils';
 
+/**
+ * 中央テーブル情報コンポーネント。
+ * ゲームボードの中央に配置され、局、本場、供託、残り牌数、ドラ、各プレイヤーの点数などの重要なゲーム状態を表示します。
+ * 親プレイヤーの位置に応じて背景画像が切り替わる画像ベースの表示と、テキストベースの表示の2つのモードを持ちます。
+ */
+
+// --- 初期化 --- 
 const { t } = useI18n();
 const gameStore = useGameStore();
 
-const roundWind = computed(() => gameStore.currentRound.wind === 'east' ? '東' : '南'); // 東風戦のみなので基本は東
+const props = defineProps({
+  /**
+   * GameBoardから渡される、画面表示順にソートされたプレイヤーの配列。
+   * [下家(自分), 右家, 対面, 左家] の順序が想定されています。
+   */
+  orderedPlayers: {
+    type: Array,
+    required: true
+  }
+});
+
+// --- 基本情報関連の算出プロパティ ---
+
+/**
+ * 現在の場風を日本語（'東'または'南'）で返します。
+ */
+const roundWind = computed(() => gameStore.currentRound.wind === 'east' ? '東' : '南');
+
+/**
+ * 現在の局数を返します。
+ */
 const roundNumber = computed(() => gameStore.currentRound.number);
+
+/**
+ * 現在の本場数を返します。
+ */
 const honbaCount = computed(() => gameStore.honba);
+
+/**
+ * 現在の供託リーチ棒の数を返します。
+ */
 const riichiSticksCount = computed(() => gameStore.riichiSticks);
+
+/**
+ * 残りの牌山の数を返します。
+ */
 const remainingTiles = computed(() => gameStore.remainingWallTilesCount);
+
+/**
+ * 現在公開されているドラ表示牌の配列を返します。
+ */
 const doraTiles = computed(() => gameStore.revealedDoraIndicators);
+
+/**
+ * 現在の親プレイヤーのオブジェクトを返します。
+ */
 const dealer = computed(() => {
   if (gameStore.dealerIndex !== null && gameStore.players[gameStore.dealerIndex]) {
     return gameStore.players[gameStore.dealerIndex];
@@ -108,13 +152,12 @@ const dealer = computed(() => {
   return null;
 });
 
-const props = defineProps({
-  orderedPlayers: { // GameBoardから渡される表示順のプレイヤーリスト
-    type: Array,
-    required: true
-  }
-});
+// --- 画像表示関連の算出プロパティ ---
 
+/**
+ * 親プレイヤーの画面上の位置に基づいて、中央に表示する背景画像のパスを決定します。
+ * @returns {string|null} 画像のパス。決定できない場合はnull。
+ */
 const centerImageSrc = computed(() => {
   if (!dealer.value || !props.orderedPlayers || props.orderedPlayers.length === 0) {
     return null;
@@ -134,9 +177,12 @@ const centerImageSrc = computed(() => {
   } else if (dealerId === leftPlayerId) {
     return t('centerTableInfo.infoLeftImg');
   }
-  return null; // 上記以外の場合は画像なし (テキスト情報を表示)
+  return null; // 上記以外の場合は画像なし (テキストUIにフォールバック)
 });
 
+/**
+ * centerImageSrcで選択された背景画像のaltテキストを返します。
+ */
 const centerImageAltText = computed(() => {
   if (!dealer.value || !props.orderedPlayers || props.orderedPlayers.length === 0) {
     return t('centerTableInfo.altTextCenterInfo');
@@ -154,6 +200,9 @@ const centerImageAltText = computed(() => {
   return t('centerTableInfo.altTextCenterInfo');
 });
 
+/**
+ * 現在の局（東1〜4）に対応する画像のパスを返します。
+ */
 const roundIndicatorImageSrc = computed(() => {
   const wind = gameStore.currentRound.wind;
   const number = gameStore.currentRound.number;
@@ -163,12 +212,16 @@ const roundIndicatorImageSrc = computed(() => {
   return null; // 東場以外や該当なしの場合は表示しない
 });
 
-// 供託棒のベース画像 (zan_1000.png) は常に表示
+/**
+ * 供託棒カウンターのベースとなる画像のパスを返します。
+ */
 const riichiStickBaseImageSrc = computed(() => {
   return '/assets/images/info/zan_1000.png';
 });
 
-// 供託本数の1桁目の画像パス
+/**
+ * 供託リーチ棒の数の十の位の数字画像のパスを計算します。
+ */
 const riichiStickCountImage1Src = computed(() => {
   const count = gameStore.riichiSticks;
   if (count >= 0 && count <= 9) {
@@ -177,42 +230,58 @@ const riichiStickCountImage1Src = computed(() => {
     const firstDigit = Math.floor(count / 10);
     return `/assets/images/number/${firstDigit}w.png`;
   }
-  return null; // 0未満や不正な値の場合は表示しない
+  return null;
 });
 
-// 供託本数の2桁目の画像パス (10本以上の場合のみ)
+/**
+ * 供託リーチ棒の数の一の位の数字画像のパスを計算します（10以上の場合のみ）。
+ */
 const riichiStickCountImage2Src = computed(() => {
   const count = gameStore.riichiSticks;
   if (count >= 10) {
     const secondDigit = count % 10;
     return `/assets/images/number/${secondDigit}w.png`;
   }
-  return null; // 10本未満の場合は2桁目は表示しない
+  return null;
 });
 
-// 残り牌数を3桁の数字文字列配列に変換 (例: 4 -> ['0', '0', '4'])
+/**
+ * 残り牌数を3桁の数字文字列配列に変換します (例: 4 -> ['0', '0', '4'])。
+ */
 const remainingTilesDigits = computed(() => {
   const count = gameStore.remainingWallTilesCount;
-  if (count < 0) return ['0', '0', '0']; // マイナスは000と表示
+  if (count < 0) return ['0', '0', '0']; // 負数は000と表示
   const s = String(count).padStart(3, '0');
   return [s[0], s[1], s[2]];
 });
 
-// 残り牌数の各桁の画像パス
+/**
+ * 残り牌数の百の位の数字画像のパスを計算します。
+ */
 const remainingTilesImage1Src = computed(() => {
   if (!remainingTilesDigits.value) return null;
   return `/assets/images/number/${remainingTilesDigits.value[0]}ao.png`;
 });
+/**
+ * 残り牌数の十の位の数字画像のパスを計算します。
+ */
 const remainingTilesImage2Src = computed(() => {
   if (!remainingTilesDigits.value) return null;
   return `/assets/images/number/${remainingTilesDigits.value[1]}ao.png`;
 });
+/**
+ * 残り牌数の一の位の数字画像のパスを計算します。
+ */
 const remainingTilesImage3Src = computed(() => {
   if (!remainingTilesDigits.value) return null;
   return `/assets/images/number/${remainingTilesDigits.value[2]}ao.png`;
 });
 
-// プレイヤーのスコアを画像表示用にフォーマットする共通関数
+/**
+ * プレイヤーのスコアを画像表示用にフォーマットする共通ヘルパー関数。
+ * @param {Object} player - プレイヤーオブジェクト。
+ * @returns {{sign: string|null, digits: Array<string>}} 符号画像のパスと、数字画像のパスの配列。
+ */
 function formatScoreForImage(player) {
   if (!player) return { sign: null, digits: [] };
   let score = player.score;
@@ -225,35 +294,23 @@ function formatScoreForImage(player) {
   for (const digitChar of scoreStr) {
     digitImages.push(`/assets/images/number/${digitChar}.png`);
   }
-  return { sign: signImage, digits: digitImages.slice(-6) };
+  return { sign: signImage, digits: digitImages.slice(-6) }; // スコアは最大6桁と仮定
 }
 
-// 自家の点数表示用画像情報を生成
-const bottomPlayerScoreInfo = computed(() => {
-  return formatScoreForImage(props.orderedPlayers[0]);
-});
+// --- 各プレイヤーの点数表示用プロパティ ---
+const bottomPlayerScoreInfo = computed(() => formatScoreForImage(props.orderedPlayers[0]));
+const leftPlayerScoreInfo = computed(() => formatScoreForImage(props.orderedPlayers[3]));
+const topPlayerScoreInfo = computed(() => formatScoreForImage(props.orderedPlayers[2]));
+const rightPlayerScoreInfo = computed(() => formatScoreForImage(props.orderedPlayers[1]));
 
-// 上家(画面左)の点数表示用画像情報を生成
-const leftPlayerScoreInfo = computed(() => {
-  return formatScoreForImage(props.orderedPlayers[3]);
-});
-
-// 対面(画面上)の点数表示用画像情報を生成
-const topPlayerScoreInfo = computed(() => {
-  return formatScoreForImage(props.orderedPlayers[2]);
-});
-
-// 下家(画面右)の点数表示用画像情報を生成
-const rightPlayerScoreInfo = computed(() => {
-  return formatScoreForImage(props.orderedPlayers[1]);
-});
-
-// 王牌表示用の算出プロパティ
+/**
+ * 王牌（嶺上牌）とドラ表示牌の表示用データを生成します。
+ * @returns {Array<Object>} 表示用の牌ペアの配列。各要素は { bottom: 牌Object, top: 牌Object }。
+ */
 const deadWallDisplayTiles = computed(() => {
-  const deadWall = gameStore.deadWall;
   const revealedDoraIndicators = gameStore.doraIndicators;
   const displayPairs = [];
-  const numPairsToDisplay = 4; // 表示する牌のペアの数 (実質4牌分)
+  const numPairsToDisplay = 4; // 表示する牌のペアの数 (ドラ表示牌は最大4つまで)
 
   for (let i = 0; i < numPairsToDisplay; i++) {
     // この位置に表示すべきドラ表示牌があるかチェック
@@ -269,17 +326,15 @@ const deadWallDisplayTiles = computed(() => {
   return displayPairs;
 });
 
-// 表示用のプレイヤーラベルを取得する関数
+/**
+ * テキスト表示モードで使われるプレイヤーの表示ラベルを取得します。
+ * @param {Object} player - プレイヤーオブジェクト。
+ * @returns {string} 表示用のラベル。
+ */
 function getPlayerDisplayLabel(player) {
   if (!player) return '';
-  // GameBoard.vue でのプレイヤー位置割り当てロジックに基づいて名前を返す
-  // player.name を基本とし、必要に応じて seatWind や isDealer を追加表示
-  // ここでは player.name をそのまま使うか、固定的な位置名を使うか選択
-  // GameBoardから渡されるorderedPlayersの順序自体が位置を示唆するため、
-  // ここではplayer.nameと風のみで十分かもしれません。
+  // 現在はプレイヤー名をそのまま返すが、将来的に「あなた」や「CPU 1」などに変更する可能性がある
   return `${player.name}`;
-  // もしくは、席風を重視する場合
-  // return `${player.name} (${player.seatWind || '風未定'})`;
 }
 </script>
 

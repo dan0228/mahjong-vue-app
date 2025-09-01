@@ -34,9 +34,6 @@
           <button @click="postToX" class="social-button x-post-button">
             <img src="/assets/images/info/logo-black.png" alt="X logo" class="social-logo-icon">
           </button>
-          <button @click="postToInstagram" class="social-button instagram-post-button">
-            <img src="/assets/images/info/Instagram_logo.png" alt="Instagram logo" class="social-logo-icon">
-          </button>
         </div>
         <div class="share-caption">{{ t('finalResultPopup.shareCaption') }}</div>
         <div class="timestamp">{{ formattedTimestamp }}</div>
@@ -50,45 +47,67 @@ import { defineProps, defineEmits, computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useGameStore } from '@/stores/gameStore';
 import { useZoomLock } from '@/composables/useZoomLock';
-import html2canvas from 'html2canvas';
+import domtoimage from 'dom-to-image-more';
+
+/**
+ * 最終結果表示用ポップアップコンポーネント。
+ * ゲーム終了時にプレイヤーのランキング、スコア、連勝記録などを表示します。
+ * 新しいゲームの開始、タイトルへの復帰、SNSでの結果共有機能を提供します。
+ */
 
 const { t } = useI18n();
+const emit = defineEmits(['start-new-game', 'back-to-title']);
+const gameStore = useGameStore();
 
 // ズーム防止機能を有効化
 useZoomLock();
 
+// ポップアップのコンテンツ部分への参照
 const popupContentRef = ref(null);
 
 const props = defineProps({
+  /**
+   * ポップアップの表示状態を制御します。
+   */
   show: {
     type: Boolean,
     required: true,
   },
-  finalResultDetails: { // gameStore.finalResultDetails を想定
+  /**
+   * 表示する最終結果の詳細情報。
+   * gameStore.finalResultDetailsが渡されることを想定しています。
+   * 形式: { rankedPlayers: [{ id, rank, name, score }], consecutiveWins: number }
+   */
+  finalResultDetails: {
     type: Object,
     required: true,
-    // rankedPlayers: [{ id, rank, name, score }], consecutiveWins: number
     default: () => ({ rankedPlayers: [], consecutiveWins: 0 }),
   },
 });
 
-
-const emit = defineEmits(['start-new-game', 'back-to-title']);
-const gameStore = useGameStore();
-
+/**
+ * プレイヤーオブジェクトから翻訳された名前を取得します。
+ * @param {Object} player - プレイヤー情報を含むオブジェクト。
+ * @returns {string} 翻訳されたプレイヤー名。
+ */
 function getTranslatedPlayerName(player) {
   if (!player) return '';
+  // プレイヤーIDが'player1'の場合、'あなた'と表示
   if (player.id === 'player1') {
     return t('playerNames.you');
   }
+  // AIプレイヤーの場合、i18nから名前を取得
   const aiPlayer = gameStore.players.find(p => p.id === player.id);
   if (aiPlayer && aiPlayer.originalId) {
     return t(`aiNames.${aiPlayer.originalId}`);
   }
-  return player.name; // Fallback
+  return player.name; // フォールバック
 }
 
-// 連勝数表示用の算出プロパティ
+/**
+ * 表示用の連勝数を算出します。
+ * 負けた直後（現在の連勝数が0）は、途切れる前の連勝数を表示します。
+ */
 const winsToDisplay = computed(() => {
   // 現在の連勝数が0で、直前の連勝数が1以上の場合、直前の連勝数を表示
   if (props.finalResultDetails.consecutiveWins === 0 && gameStore.previousConsecutiveWins > 0) {
@@ -98,17 +117,24 @@ const winsToDisplay = computed(() => {
   return props.finalResultDetails.consecutiveWins;
 });
 
-// 連勝メッセージ用の算出プロパティ
+/**
+ * 連勝数に応じたメッセージを生成します。
+ * 連勝が途切れた場合と連勝中の場合でメッセージを切り替えます。
+ */
 const winsMessage = computed(() => {
   const wins = winsToDisplay.value;
-  // 現在の連勝数が0で、直前の連勝数が1以上の場合、「連勝！」
+  // 現在の連勝数が0で、直前の連勝数が1以上の場合、「〇連勝！」
   if (props.finalResultDetails.consecutiveWins === 0 && gameStore.previousConsecutiveWins > 0) {
     return t('finalResultPopup.wins', { count: wins });
   }
-  // それ以外（連勝中）の場合、「連勝中！」
+  // それ以外（連勝中）の場合、「〇連勝中！」
   return t('finalResultPopup.winStreak', { count: wins });
 });
 
+/**
+ * 現在の日時をフォーマットした文字列を返します。
+ * YYYY-MM-DD HH:MM:SS 形式
+ */
 const formattedTimestamp = computed(() => {
   const now = new Date();
   const year = now.getFullYear();
@@ -120,14 +146,25 @@ const formattedTimestamp = computed(() => {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 });
 
+/**
+ * 'start-new-game'イベントを発行して新しいゲームを開始します。
+ */
 function startNewGame() {
   emit('start-new-game');
 }
 
+/**
+ * 'back-to-title'イベントを発行してタイトル画面に戻ります。
+ */
 function backToTitle() {
   emit('back-to-title');
 }
 
+/**
+ * プレイヤーIDに対応するアイコンのパスを返します。
+ * @param {string} playerId - プレイヤーID。
+ * @returns {string|null} アイコン画像のパス。見つからない場合はnull。
+ */
 function getPlayerIcon(playerId) {
   const player = gameStore.players.find(p => p.id === playerId);
   if (!player) return null;
@@ -140,23 +177,86 @@ function getPlayerIcon(playerId) {
   return null;
 }
 
-function postToX() {
-  const wins = winsToDisplay.value;
-  const tweetText = t('finalResultPopup.tweetText', { count: wins });
-  const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
-  window.open(twitterUrl, '_blank');
-}
+/**
+ * X (旧Twitter) に結果を投稿します。
+ * スクリーンショットを生成し、Web Share API またはクリップボード経由で共有します。
+ */
+async function postToX() {
+  if (!popupContentRef.value) return;
 
-function postToInstagram() {
-  const wins = winsToDisplay.value;
-  const caption = t('finalResultPopup.tweetText', { count: wins });
-  navigator.clipboard.writeText(caption).then(() => {
-    alert(t('finalResultPopup.clipboardCopySuccess'));
-    window.open('https://www.instagram.com', '_blank');
-  }).catch(err => {
-    console.error('クリップボードへのコピーに失敗しました: ', err);
+  const fontCssLink = document.querySelector('link[rel="stylesheet"][href*="fonts.googleapis.com"]');
+  let newStyleElement = null;
+
+  try {
+    // --- フォント修正 開始 ---
+    if (fontCssLink) {
+      // 1. dom-to-imageがアクセスできないように、元のクロスオリジンCSSを無効化します。
+      fontCssLink.disabled = true;
+
+      // 2. CSSコンテンツを取得し、インラインの<style>タグとして埋め込みます。
+      //    これにより、フォントルールが同一オリジンとなり、ライブラリから読み取り可能になります。
+      const cssText = await (await fetch(fontCssLink.href)).text();
+      newStyleElement = document.createElement('style');
+      newStyleElement.appendChild(document.createTextNode(cssText));
+      document.head.appendChild(newStyleElement);
+    }
+    // --- フォント修正 終了 ---
+
+    const node = popupContentRef.value;
+    const scale = 3;
+    const options = {
+      bgcolor: '#ffffff',
+      width: node.offsetWidth * scale,
+      height: node.offsetHeight * scale,
+      style: {
+        transform: `scale(${scale})`,
+        transformOrigin: 'top left'
+      }
+    };
+
+    const dataUrl = await domtoimage.toPng(node, options);
+    const blob = await (await fetch(dataUrl)).blob();
+    const file = new File([blob], 'mahjong-result.png', { type: 'image/png' });
+        const baseText = t('finalResultPopup.tweetText', { count: winsToDisplay.value });
+    const gameUrl = "https://mahjong-vue-app.vercel.app";
+    const captionText = `${baseText}\n\n${gameUrl}`
+
+    // Web Share APIが利用可能な場合
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: t('finalResultPopup.title'),
+        text: captionText,
+      });
+      return; // 共有が完了したらここで終了
+    }
+
+    // --- Web Share APIが使えない場合のフォールバック処理 ---
+    try {
+      const clipboardItem = new ClipboardItem({ 'image/png': blob });
+      await navigator.clipboard.write([clipboardItem]);
+      alert("結果画像をクリップボードにコピーしました。ツイートに貼り付けて投稿できます。");
+    } catch (err) {
+      console.error("クリップボードへの画像のコピーに失敗しました: ", err);
+      alert("画像のコピーに失敗しました。手動でスクリーンショットを撮って投稿してください。");
+    } finally {
+      const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(captionText)}`;
+      window.open(twitterUrl, '_blank');
+    }
+
+  } catch (err) {
+    console.error(`Xへの共有準備中にエラーが発生しました: `, err);
     alert(t('finalResultPopup.clipboardCopyError'));
-  });
+  } finally {
+    // --- クリーンアップ ---
+    if (fontCssLink) {
+      fontCssLink.disabled = false;
+    }
+    if (newStyleElement) {
+      document.head.removeChild(newStyleElement);
+    }
+    // --- クリーンアップ 終了 ---
+  }
 }
 </script>
 

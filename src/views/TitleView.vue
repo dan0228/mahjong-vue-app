@@ -9,42 +9,53 @@
       <div class="top-controls">
         <div class="audio-toggles">
           <label class="toggle-switch">
-            <input type="checkbox" :checked="audioStore.isBgmEnabled" @change="audioStore.toggleBgm()">
+            <input type="checkbox" :checked="audioStore.isBgmEnabled" @change="audioStore.toggleBgm()" />
             <span class="slider round"></span>
           </label>
           <span class="toggle-label">BGM</span>
           <label class="toggle-switch">
-            <input type="checkbox" :checked="audioStore.isSeEnabled" @change="audioStore.toggleSe()">
+            <input type="checkbox" :checked="audioStore.isSeEnabled" @change="audioStore.toggleSe()" />
             <span class="slider round"></span>
           </label>
           <span class="toggle-label">{{ $t('titleView.sfx') }}</span>
         </div>
         <div class="language-selector">
-          <div 
+          <div
             class="language-flag language-flag-ja"
-            :class="{ 'selected': locale === 'ja' }"
+            :class="{ selected: locale === 'ja' }"
             @click="locale = 'ja'"
           ></div>
-          <div 
+          <div
             class="language-flag language-flag-en"
-            :class="{ 'selected': locale === 'en' }"
+            :class="{ selected: locale === 'en' }"
             @click="locale = 'en'"
           ></div>
         </div>
       </div>
       <div class="max-consecutive-wins">
-        {{ $t('titleView.maxWinStreak') }} <span class="max-wins-number">{{ gameStore.maxConsecutiveWins }}</span>
+        {{ $t('titleView.maxWinStreak') }}
+        <span class="max-wins-number">{{ gameStore.maxConsecutiveWins }}</span>
       </div>
       <div class="cat-coins">
         {{ $t('titleView.catCoins') }} <span class="cat-coins-number">{{ gameStore.catCoins }}</span>
       </div>
       <nav class="menu">
         <ul>
-          <li><button @click="startGame('vsCPU')">{{ $t('titleView.menu.catAiMatch') }}</button></li>
-          <li><button @click="goToShrine">{{ $t('titleView.menu.shrine') }}</button></li>
-          <li><button @click="showRulesPopup = true">{{ $t('titleView.menu.rules') }}</button></li>
-          <li><button @click="showYakuListPopup = true">{{ $t('titleView.menu.handList') }}</button></li>
-          <li><button @click="goToLeaderboard">{{ $t('titleView.menu.leaderboard') }}</button></li>
+          <li>
+            <button @click="startGame('vsCPU')">{{ $t('titleView.menu.catAiMatch') }}</button>
+          </li>
+          <li>
+            <button @click="goToShrine">{{ $t('titleView.menu.shrine') }}</button>
+          </li>
+          <li>
+            <button @click="showRulesPopup = true">{{ $t('titleView.menu.rules') }}</button>
+          </li>
+          <li>
+            <button @click="showYakuListPopup = true">{{ $t('titleView.menu.handList') }}</button>
+          </li>
+          <li>
+            <button @click="goToLeaderboard">{{ $t('titleView.menu.leaderboard') }}</button>
+          </li>
         </ul>
       </nav>
 
@@ -60,6 +71,12 @@
 </template>
 
 <script setup>
+/**
+ * タイトル画面コンポーネント。
+ * ゲームの開始、各種設定（音量、言語）、ルールや役一覧の表示、
+ * 他のビュー（神社、ランキング）へのナビゲーションを担当します。
+ * また、画面サイズに応じてUIが適切にスケールするように調整します。
+ */
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
@@ -69,43 +86,59 @@ import RulePopup from '@/components/RulePopup.vue';
 import YakuListPopup from '@/components/YakuListPopup.vue';
 import { useViewportHeight } from '@/composables/useViewportHeight';
 
-const { locale } = useI18n();
-const { viewportHeight } = useViewportHeight();
+// --- リアクティブな状態とストア ---
+const { locale } = useI18n(); // i18nのロケールを管理
+const { viewportHeight } = useViewportHeight(); // ビューポートの高さを動的に取得
+const router = useRouter(); // Vueルーター
+const gameStore = useGameStore(); // ゲーム状態ストア
+const audioStore = useAudioStore(); // 音声関連ストア
 
-const router = useRouter();
-const gameStore = useGameStore();
-const audioStore = useAudioStore();
+const showRulesPopup = ref(false); // ルールポップアップの表示状態
+const showYakuListPopup = ref(false); // 役一覧ポップアップの表示状態
 
-const showRulesPopup = ref(false);
-const showYakuListPopup = ref(false);
+// --- 画面のスケーリング処理 ---
+const DESIGN_WIDTH = 360; // デザイン基準の幅
+const DESIGN_HEIGHT = 640; // デザイン基準の高さ
+const scaleFactor = ref(1); // 計算されたスケール係数
 
-// --- Scaling Logic ---
-const DESIGN_WIDTH = 360;
-const DESIGN_HEIGHT = 640;
-const scaleFactor = ref(1);
+// UI要素に適用するtransformスタイル
 const scalerStyle = computed(() => ({
   transform: `translate(-50%, -50%) scale(${scaleFactor.value})`
 }));
 
+/**
+ * ウィンドウサイズに基づいてUIのスケール係数を計算・更新します。
+ */
 const updateScaleFactor = () => {
   const currentWidth = window.innerWidth;
   const currentHeight = window.innerHeight;
   const scaleX = currentWidth / DESIGN_WIDTH;
   const scaleY = currentHeight / DESIGN_HEIGHT;
+  // 幅と高さのスケール比のうち、小さい方を採用して全体が収まるようにする
   scaleFactor.value = Math.min(scaleX, scaleY);
 };
 
+// --- ライフサイクルフック ---
 onMounted(() => {
+  // 初期スケールを設定
   updateScaleFactor();
+  // ウィンドウリサイズ時にスケールを再計算
   window.addEventListener('resize', updateScaleFactor);
+  // ストアから猫コイン情報を読み込む
   gameStore.loadCatCoins();
 });
 
 onBeforeUnmount(() => {
+  // イベントリスナーをクリーンアップ
   window.removeEventListener('resize', updateScaleFactor);
-  audioStore.setBgm(null); // 画面離脱時にBGMを停止
+  // 画面を離れる際にBGMを停止
+  audioStore.setBgm(null);
 });
 
+/**
+ * ゲームを開始し、ゲーム画面に遷移します。
+ * @param {string} mode - ゲームモード ('vsCPU'など)
+ */
 function startGame(mode) {
   gameStore.setGameMode(mode);
   gameStore.resetGameForNewSession();
@@ -114,15 +147,19 @@ function startGame(mode) {
   router.push('/game');
 }
 
+/**
+ * 神社画面に遷移します。
+ */
 function goToShrine() {
   router.push('/shrine');
 }
 
+/**
+ * ランキング画面に遷移します。
+ */
 function goToLeaderboard() {
   router.push('/leaderboard');
 }
-
-
 </script>
 
 <style scoped>
@@ -131,7 +168,7 @@ function goToLeaderboard() {
 .title-view-container {
   position: relative;
   width: 100vw;
-  /* height: 100vh; */ /* Replaced by dynamic height */
+  /* height: 100vh; */ /* 動的な高さ指定に置き換え */
   overflow: hidden;
   background-image: url('/assets/images/back/back_out.png');
   background-repeat: repeat;
@@ -154,16 +191,20 @@ function goToLeaderboard() {
   touch-action: none !important;
 }
 
-.title-screen::before { /* 最背面の画像用疑似要素 */
-  content: "";
+.title-screen::before {
+  /* 最背面の画像用疑似要素 */
+  content: '';
   position: absolute;
-  top: 60%; left: 0; right: 0; bottom: 0%;
+  top: 60%;
+  left: 0;
+  right: 0;
+  bottom: 0%;
   background-image: url('/assets/images/back/back_hai.png');
   background-repeat: no-repeat;
-  background-position: center center; 
+  background-position: center center;
   background-size: auto 100%; /* 高さを100%に合わせて、幅は自動調整 */
   opacity: 0.9; /* 画像の透明度を調整 */
-  z-index: -1; 
+  z-index: -1;
 }
 
 .title-background-container {
@@ -236,9 +277,8 @@ function goToLeaderboard() {
   background: linear-gradient(#ffffff, #fff3e6);
 }
 
-
 .menu button:hover:not(:disabled) {
-  background-color: #4CAF50; /* 元のホバー時の背景色 */
+  background-color: #4caf50; /* 元のホバー時の背景色 */
   color: #39440c; /* 元のホバー時の文字色 */
   transform: translateY(-2px); /* ホバー時に少し浮き上がる効果 */
 }
@@ -257,22 +297,36 @@ function goToLeaderboard() {
 }
 
 @keyframes blink-opacity {
-  0%, 90% { /* ほとんどの時間は透明 (ベース画像が見える) */
+  0%,
+  90% {
+    /* ほとんどの時間は透明 (ベース画像が見える) */
     opacity: 0;
   }
-  90.1%, 95% { /* 短い間だけ不透明 (瞬き画像が見える) */
+  90.1%,
+  95% {
+    /* 短い間だけ不透明 (瞬き画像が見える) */
     opacity: 1;
   }
 }
 
 @keyframes pop {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.04); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.04);
+  }
 }
 
 @keyframes subtleFloat {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); } /* わずかに上に移動 */
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px); /* わずかに上に移動 */
+  }
 }
 
 .credit {
@@ -365,7 +419,6 @@ function goToLeaderboard() {
   opacity: 1;
 }
 
-
 .max-consecutive-wins {
   position: absolute;
   top: 19px;
@@ -399,7 +452,7 @@ function goToLeaderboard() {
 
 .max-wins-number {
   font-weight: bold;
-  color: #CC6633; /* #C63 */
+  color: #cc6633; /* #C63 */
 }
 
 .toggle-switch {
@@ -423,30 +476,30 @@ function goToLeaderboard() {
   right: 0;
   bottom: 0;
   background-color: #ccc;
-  -webkit-transition: .4s;
-  transition: .4s;
+  -webkit-transition: 0.4s;
+  transition: 0.4s;
   border-radius: 14px;
 }
 
 .slider:before {
   position: absolute;
-  content: "";
+  content: '';
   height: 10px;
   width: 10px;
   left: 2px;
   bottom: 2px;
   background-color: white;
-  -webkit-transition: .4s;
-  transition: .4s;
+  -webkit-transition: 0.4s;
+  transition: 0.4s;
   border-radius: 50%;
 }
 
 input:checked + .slider {
-  background-color: #2196F3;
+  background-color: #2196f3;
 }
 
 input:focus + .slider {
-  box-shadow: 0 0 1px #2196F3;
+  box-shadow: 0 0 1px #2196f3;
 }
 
 input:checked + .slider:before {
@@ -459,5 +512,4 @@ input:checked + .slider:before {
   vertical-align: middle;
   font-size: 0.9em; /* ラベルのフォントサイズも調整 */
 }
-
 </style>

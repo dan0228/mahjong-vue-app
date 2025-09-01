@@ -1,4 +1,5 @@
 <template>
+  <!-- ローディング画面 -->
   <div v-if="isLoading" class="loading-screen">
     <img src="/assets/images/back/loading.png" alt="Loading..." class="loading-image" />
     <div class="progress-bar-container">
@@ -6,11 +7,15 @@
     </div>
     <p class="loading-text">Loading... {{ Math.floor(loadingProgress) }}%</p>
   </div>
+
+  <!-- メインコンテンツ -->
   <router-view v-else v-slot="{ Component }">
     <transition name="fade" mode="out-in">
       <component :is="Component" />
     </transition>
   </router-view>
+
+  <!-- ホーム画面追加ポップアップ -->
   <AddToHomeScreenPopup
     :show="showAddToHomeScreenPopup"
     @close="handleCloseAddToHomeScreenPopup"
@@ -23,25 +28,30 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onUnmounted } from 'vue';
+// このコンポーネントは、アプリケーションのルートです。
+// アセットのプリロード、ローディング画面、PWAインストール関連のポップアップ、
+// そしてメインコンテンツのルーティングを管理します。
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useAudioStore } from '@/stores/audioStore';
 import { preloadImages } from '@/utils/imageLoader';
 import AddToHomeScreenPopup from '@/components/AddToHomeScreenPopup.vue';
 import HowToAddPopup from '@/components/HowToAddPopup.vue';
 
-const isLoading = ref(true);
-const loadingProgress = ref(0);
+// --- リアクティブな状態 ---
+const isLoading = ref(true); // ローディング画面の表示状態フラグ
+const loadingProgress = ref(0); // アセット読み込みの進捗率
+const showAddToHomeScreenPopup = ref(false); // 「ホーム画面に追加」ポップアップの表示状態フラグ
+const showHowToAddPopup = ref(false); // インストール方法説明ポップアップの表示状態フラグ
 
+// --- ストアの利用 ---
 const audioStore = useAudioStore();
-let hasInteracted = false;
 
-const showAddToHomeScreenPopup = ref(false);
-const showHowToAddPopup = ref(false);
-
-
-
-// アセットのプリロード処理
+// --- ライフサイクル フック ---
 onMounted(async () => {
+  // ブラウザのタブが非表示になった際に音声を停止するためのイベントリスナー
+  document.addEventListener('visibilitychange', audioStore.handleVisibilityChange);
+
+  // --- アセットのプリロード ---
   const imagePaths = [
     '/assets/images/back/loading.png',
     '/assets/images/back/shrine.png',
@@ -199,51 +209,66 @@ onMounted(async () => {
   const totalAssets = imagePaths.length + audioPaths.length;
   let loadedAssets = 0;
 
+  // アセットが1つ読み込まれるごとに進捗を更新するコールバック関数
   const updateOverallProgress = () => {
     loadedAssets++;
     loadingProgress.value = (loadedAssets / totalAssets) * 100;
   };
 
   try {
+    // 画像と音声ファイルを並行してプリロード
     await Promise.all([
       preloadImages(imagePaths, updateOverallProgress),
       audioStore.preloadAudio(audioPaths, updateOverallProgress)
     ]);
   } catch (error) {
-    console.error('Failed to preload assets:', error);
+    // 開発者向けの エラーログ
+    console.error('アセットのプリロードに失敗しました:', error);
   } finally {
-    // プリロード完了後、指定時間遅延させてローディング画面を非表示にする
+    // プリロード完了後、500ms待ってからローディング画面を非表示にし、
+    // 「ホーム画面に追加」ポップアップを表示する
     setTimeout(() => {
       isLoading.value = false;
       showAddToHomeScreenPopup.value = true;
-    }, 500); // 500msの遅延
+    }, 500);
   }
 });
 
+onUnmounted(() => {
+  // コンポーネントが破棄される際にイベントリスナーをクリーンアップ
+  document.removeEventListener('visibilitychange', audioStore.handleVisibilityChange);
+});
+
+// --- メソッド ---
+
+/**
+ * 「ホーム画面に追加」ポップアップを閉じます。
+ */
 const handleCloseAddToHomeScreenPopup = () => {
   showAddToHomeScreenPopup.value = false;
 };
 
+/**
+ * インストール方法のポップアップを表示します。
+ * この際、「ホーム画面に追加」ポップアップは閉じられます。
+ */
 const handleShowInstructions = () => {
-  showAddToHomeScreenPopup.value = false; // ポップアップを閉じる
-  showHowToAddPopup.value = true; // 追加方法モーダルを表示
+  showAddToHomeScreenPopup.value = false;
+  showHowToAddPopup.value = true;
 };
 
+/**
+ * インストール方法のポップアップを閉じます。
+ */
 const handleCloseHowToAddPopup = () => {
   showHowToAddPopup.value = false;
 };
-
-onMounted(() => {
-  document.addEventListener('visibilitychange', audioStore.handleVisibilityChange);
-});
-
-onUnmounted(() => {
-  document.removeEventListener('visibilitychange', audioStore.handleVisibilityChange);
-});
 </script>
 
 <style>
-html, body {
+/* --- グローバルスタイル --- */
+html,
+body {
   margin: 0;
   padding: 0;
   overflow: hidden; /* ルート要素でのスクロールを防止 */
@@ -257,6 +282,7 @@ html, body {
   width: 100%;
 }
 
+/* --- ローディング画面スタイル --- */
 .loading-screen {
   position: fixed;
   top: 0;
@@ -291,7 +317,7 @@ html, body {
 
 .progress-bar {
   height: 100%;
-  background-color: #4CAF50; /* プログレスバーの色（緑） */
+  background-color: #4caf50; /* プログレスバーの色（緑） */
   width: 0%; /* 初期幅 */
   transition: width 0.1s linear; /* プログレスバーの滑らかなアニメーション */
 }
@@ -300,6 +326,7 @@ html, body {
   font-size: 1.2em;
 }
 
+/* --- ルートトランジション --- */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s ease;

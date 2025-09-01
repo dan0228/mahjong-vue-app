@@ -8,34 +8,34 @@
       <div class="top-controls">
         <div class="audio-toggles">
           <label class="toggle-switch">
-            <input type="checkbox" :checked="audioStore.isBgmEnabled" @change="audioStore.toggleBgm()">
+            <input type="checkbox" :checked="audioStore.isBgmEnabled" @change="audioStore.toggleBgm()" />
             <span class="slider round"></span>
           </label>
           <span class="toggle-label">{{ $t('shrineView.bgm') }}</span>
           <label class="toggle-switch">
-            <input type="checkbox" :checked="audioStore.isSeEnabled" @change="audioStore.toggleSe()">
+            <input type="checkbox" :checked="audioStore.isSeEnabled" @change="audioStore.toggleSe()" />
             <span class="slider round"></span>
           </label>
           <span class="toggle-label">{{ $t('shrineView.sfx') }}</span>
         </div>
         <button @click="goBack" class="back-button">
-          <img src="/assets/images/button/buckToTitle.png" :alt="$t('shrineView.backToTitle')">
+          <img src="/assets/images/button/buckToTitle.png" :alt="$t('shrineView.backToTitle')" />
         </button>
       </div>
 
       <h1><span v-html="$t('leaderboardView.title')"></span></h1>
-      
-      <div v-if="isLoading" class="loading-message">Loading rankings...</div>
+
+      <div v-if="isLoading" class="loading-message">{{ $t('leaderboardView.loading') }}</div>
       <div v-if="error" class="error-message">{{ error }}</div>
 
       <div v-if="!isLoading && !error" class="ranking-table-container">
         <table class="ranking-table">
           <colgroup>
-            <col style="width: 12%;">
-            <col style="width: 20%;">
-            <col style="width: 38%;">
-            <col style="width: 15%;">
-            <col style="width: 15%;">
+            <col style="width: 12%;" />
+            <col style="width: 20%;" />
+            <col style="width: 38%;" />
+            <col style="width: 15%;" />
+            <col style="width: 15%;" />
           </colgroup>
           <thead>
             <tr>
@@ -46,10 +46,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-if="displayLeaderboard.length === 0">
-              <td colspan="5" style="text-align: center;">No rankings found.</td>
-            </tr>
-            <tr v-for="player in displayLeaderboard" :key="player.rank">
+            <tr v-for="player in displayLeaderboard" :key="player.id">
               <td>{{ player.rank }}</td>
               <td class="user-avatar-cell">
                 <img v-if="player.profile_image_url" :src="player.profile_image_url" alt="avatar" class="user-avatar" />
@@ -61,7 +58,7 @@
               </td>
               <td class="streak-cell">{{ player.streak }}</td>
               <td>
-                <a v-if="player.url !== '#'" :href="player.url" target="_blank" rel="noopener noreferrer">View</a>
+                <a v-if="player.url !== '#'" :href="player.url" target="_blank" rel="noopener noreferrer">{{ $t('leaderboardView.viewPost') }}</a>
                 <span v-else>-</span>
               </td>
             </tr>
@@ -74,12 +71,17 @@
           <p class="post-prompt" v-html="$t('leaderboardView.postPrompt')"></p>
         </div>
       </div>
-
     </div>
   </div>
 </template>
 
 <script setup>
+/**
+ * ランキング表示コンポーネント。
+ * APIから週間ランキングデータを取得し、表示します。
+ * 常に5行表示を維持し、データがない場合はプレースホルダーを表示します。
+ * 開発環境ではモックデータを使用します。
+ */
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -87,24 +89,30 @@ import { useViewportHeight } from '@/composables/useViewportHeight';
 import { useAudioStore } from '@/stores/audioStore';
 import { useGameStore } from '@/stores/gameStore';
 
+// --- リアクティブな状態とストア ---
 const router = useRouter();
 const { t } = useI18n();
 const { viewportHeight } = useViewportHeight();
 const audioStore = useAudioStore();
 const gameStore = useGameStore();
 
-const leaderboard = ref([]);
-const isLoading = ref(true);
-const error = ref(null);
+const leaderboard = ref([]); // APIから取得した生のランキングデータ
+const isLoading = ref(true); // ローディング状態フラグ
+const error = ref(null); // エラーメッセージ
 
-// --- Scaling Logic ---
-const DESIGN_WIDTH = 360;
-const DESIGN_HEIGHT = 640;
-const scaleFactor = ref(1);
+// --- 画面のスケーリング処理 ---
+const DESIGN_WIDTH = 360; // デザイン基準の幅
+const DESIGN_HEIGHT = 640; // デザイン基準の高さ
+const scaleFactor = ref(1); // 計算されたスケール係数
+
+// UI要素に適用するtransformスタイル
 const scalerStyle = computed(() => ({
   transform: `translate(-50%, -50%) scale(${scaleFactor.value})`
 }));
 
+/**
+ * ウィンドウサイズに基づいてUIのスケール係数を計算・更新します。
+ */
 const updateScaleFactor = () => {
   const currentWidth = window.innerWidth;
   const currentHeight = window.innerHeight;
@@ -113,7 +121,10 @@ const updateScaleFactor = () => {
   scaleFactor.value = Math.min(scaleX, scaleY);
 };
 
-// Computed property to ensure 5 rows are always displayed
+/**
+ * 表示用のランキングデータを生成します。
+ * 常に5行表示を保証し、データが5件未満の場合はプレースホルダーで埋めます。
+ */
 const displayLeaderboard = computed(() => {
   const data = leaderboard.value.slice(0, 5);
   while (data.length < 5) {
@@ -130,19 +141,23 @@ const displayLeaderboard = computed(() => {
   return data;
 });
 
-// Mock data for local development
+// 開発環境用のモックデータ
 const mockData = [
   { rank: 1, id: 'user1', name: 'ねこマスター', username: 'cat_master', streak: 50, url: '#', profile_image_url: '/assets/images/info/cat_icon_1.png' },
   { rank: 2, id: 'user2', name: 'とら', username: 'tora_chan', streak: 45, url: '#', profile_image_url: '/assets/images/info/cat_icon_2.png' },
-  { rank: 3, id: 'user3', name: 'たま', username: 'tama_nyan', streak: 42, url: '#', profile_image_url: '/assets/images/info/cat_icon_3.png' },
+  { rank: 3, id: 'user3', name: 'たま', username: 'tama_nyan', streak: 42, url: '#', profile_image_url: '/assets/images/info/cat_icon_3.png' }
 ];
 
+/**
+ * ランキングデータをAPIから非同期で取得します。
+ * 開発環境ではモックデータを使用します。
+ */
 async function fetchLeaderboard() {
   isLoading.value = true;
   error.value = null;
 
   if (import.meta.env.DEV) {
-    console.log("Running in local dev mode. Using mock data for leaderboard.");
+    console.log('ローカル開発モードで実行中。ランキングにモックデータを使用します。');
     setTimeout(() => {
       leaderboard.value = mockData;
       isLoading.value = false;
@@ -152,7 +167,7 @@ async function fetchLeaderboard() {
       const response = await fetch('/api/ranking');
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch leaderboard.');
+        throw new Error(errorData.error || t('leaderboardView.fetchError'));
       }
       leaderboard.value = await response.json();
     } catch (e) {
@@ -164,19 +179,23 @@ async function fetchLeaderboard() {
   }
 }
 
+// --- ライフサイクルフック ---
 onMounted(() => {
   updateScaleFactor();
   window.addEventListener('resize', updateScaleFactor);
   fetchLeaderboard();
-  gameStore.loadCatCoins(); // Load cat coins for the gameStore
+  gameStore.loadCatCoins(); // 猫コインの枚数をストアから読み込む
   audioStore.setBgm('GB-JP-A02-2(Menu-Loop105).mp3');
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', updateScaleFactor);
-  audioStore.setBgm(null);
+  audioStore.setBgm(null); // 画面を離れる際にBGMを停止
 });
 
+/**
+ * 前の画面（タイトル画面）に戻ります。
+ */
 function goBack() {
   router.push('/');
 }
@@ -226,7 +245,7 @@ function goBack() {
 
 .max-wins-number {
   font-weight: bold;
-  color: #CC6633; /* #C63 */
+  color: #cc6633; /* #C63 */
 }
 
 .top-controls {
@@ -276,30 +295,30 @@ function goBack() {
   right: 0;
   bottom: 0;
   background-color: #ccc;
-  -webkit-transition: .4s;
-  transition: .4s;
+  -webkit-transition: 0.4s;
+  transition: 0.4s;
   border-radius: 14px;
 }
 
 .slider:before {
   position: absolute;
-  content: "";
+  content: '';
   height: 10px;
   width: 10px;
   left: 2px;
   bottom: 2px;
   background-color: white;
-  -webkit-transition: .4s;
-  transition: .4s;
+  -webkit-transition: 0.4s;
+  transition: 0.4s;
   border-radius: 50%;
 }
 
 input:checked + .slider {
-  background-color: #2196F3;
+  background-color: #2196f3;
 }
 
 input:focus + .slider {
-  box-shadow: 0 0 1px #2196F3;
+  box-shadow: 0 0 1px #2196f3;
 }
 
 input:checked + .slider:before {
@@ -330,7 +349,7 @@ input:checked + .slider:before {
 }
 
 h1 {
-  margin-top: 50px; /* Adjust to make space for the back button */
+  margin-top: 50px; /* 戻るボタンのためのスペース確保 */
   margin-bottom: 5px;
   font-size: 1.65em;
 }
@@ -345,7 +364,8 @@ h1 {
   max-width: 280px;
 }
 
-.loading-message, .error-message {
+.loading-message,
+.error-message {
   margin: 20px;
   font-size: 1.2em;
 }
@@ -358,50 +378,50 @@ h1 {
   width: 100%;
   max-width: 260px;
   overflow-x: auto;
-  flex-grow: 1; /* Allow container to take up space */
-  overflow-y: auto; /* Make the table scrollable */
-  margin-bottom: 20px; /* Add some space at the bottom */
+  flex-grow: 1; /* コンテナがスペースを埋めるようにする */
+  overflow-y: auto; /* テーブルをスクロール可能にする */
+  margin-bottom: 20px; /* 下部に余白を追加 */
 }
 
 .ranking-table {
   width: 100%;
-  border-collapse: separate; /* Use separate to allow for border-radius */
+  border-collapse: separate; /* border-radiusを有効にするため */
   border-spacing: 0;
-  background-color: #FFFDF5; /* Creamy white background */
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  background-color: #fffdf5; /* クリーム色の背景 */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   table-layout: fixed;
-  border-radius: 8px; /* Rounded corners for the table */
-  overflow: hidden; /* Ensures inner elements respect the border-radius */
+  border-radius: 8px; /* テーブルの角を丸める */
+  overflow: hidden; /* 角丸を内側の要素にも適用させる */
 }
 
-.ranking-table th, .ranking-table td {
-  border-bottom: 1px solid #D6C4BE; /* Soft pinkish-brown border */
+.ranking-table th,
+.ranking-table td {
+  border-bottom: 1px solid #d6c4be; /* ソフトなピンクブラウンの境界線 */
   padding: 2px;
   text-align: center;
   vertical-align: middle;
   font-size: 0.68em;
   word-break: break-word;
-  color: #5C4B4B; /* Soft dark brown text */
+  color: #5c4b4b; /* ソフトなダークブラウンのテキスト */
 }
 
 .ranking-table td {
-    border-left: 1px solid #D6C4BE;
-    border-right: 1px solid #D6C4BE;
+  border-left: 1px solid #d6c4be;
+  border-right: 1px solid #d6c4be;
 }
 .ranking-table tr:last-child td {
-    border-bottom: none; /* No border for the last row */
+  border-bottom: none; /* 最終行のセルの下ボーダーを削除 */
 }
 
-
 .ranking-table th {
-  background-color: #E1C9C1; /* Dusty pink header */
+  background-color: #e1c9c1; /* くすんだピンクのヘッダー */
   font-weight: bold;
   position: sticky;
   top: 0;
 }
 
 .ranking-table tbody tr:nth-child(even) {
-  background-color: #F9F5F2; /* Lighter, warm grey for alternating rows */
+  background-color: #f9f5f2; /* 明るいウォームグレーの交互色 */
 }
 
 .user-avatar-cell {
@@ -433,7 +453,7 @@ h1 {
 }
 
 .ranking-table a {
-  color: #C65B5B; /* Soft, warm red */
+  color: #c65b5b; /* ソフトで温かみのある赤 */
   text-decoration: none;
   font-weight: bold;
 }

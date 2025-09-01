@@ -5,17 +5,15 @@
 </template>
 
 <script setup>
-import { useGameStore } from '@/stores/gameStore';
+/**
+ * ゲーム画面のメインコンポーネント。
+ * 主にゲームボード(`GameBoard`)をラップし、
+ * ビューポート全体の高さを調整する役割を担います。
+ */
 import GameBoard from '@/components/GameBoard.vue';
 import { useViewportHeight } from '@/composables/useViewportHeight';
 
 const { viewportHeight } = useViewportHeight();
-
-const gameStore = useGameStore();
-
-import { useAudioStore } from '@/stores/audioStore';
-
-const audioStore = useAudioStore();
 </script>
 
 <style scoped>
@@ -25,7 +23,7 @@ const audioStore = useAudioStore();
   align-items: center; /* ゲームボードを中央寄せにする */
   justify-content: center; /* ゲームボードを中央寄せにする */
   width: 100vw;
-  /* height: 100vh; */ /* Replaced by dynamic height */
-  position: relative; /* audio-toggles の配置基準 */
+  /* height: 100vh; */ /* 動的な高さ指定に置き換え */
+  position: relative;
 }
 </style>

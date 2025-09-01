@@ -112,7 +112,10 @@
     "tableHeaderNo": "No.",
     "tableHeaderUserName": "User Name",
     "tableHeaderWinStreak": "Win Streak",
-    "tableHeaderPost": "Post"
+    "tableHeaderPost": "Post",
+    "loading": "Loading rankings...",
+    "viewPost": "URL",
+    "fetchError": "Failed to fetch leaderboard."
   },
   "yaku": {
     "riichi": { "name": "Riichi" },

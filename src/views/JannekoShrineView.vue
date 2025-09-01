@@ -7,22 +7,24 @@
       <div class="top-controls">
         <div class="audio-toggles">
           <label class="toggle-switch">
-            <input type="checkbox" :checked="audioStore.isBgmEnabled" @change="audioStore.toggleBgm()">
+            <input type="checkbox" :checked="audioStore.isBgmEnabled" @change="audioStore.toggleBgm()" />
             <span class="slider round"></span>
           </label>
           <span class="toggle-label">{{ $t('shrineView.bgm') }}</span>
           <label class="toggle-switch">
-            <input type="checkbox" :checked="audioStore.isSeEnabled" @change="audioStore.toggleSe()">
+            <input type="checkbox" :checked="audioStore.isSeEnabled" @change="audioStore.toggleSe()" />
             <span class="slider round"></span>
           </label>
           <span class="toggle-label">{{ $t('shrineView.sfx') }}</span>
         </div>
         <button @click="goToTitle" class="back-button">
-          <img src="/assets/images/button/buckToTitle.png" :alt="$t('shrineView.backToTitle')">
+          <img src="/assets/images/button/buckToTitle.png" :alt="$t('shrineView.backToTitle')" />
         </button>
       </div>
-      
-      <button @click="drawOmikuji" class="omikuji-button">{{ $t('shrineView.omikujiButton.line1') }}<br><span class="coin-text">{{ $t('shrineView.omikujiButton.line2') }}</span></button>
+
+      <button @click="drawOmikuji" class="omikuji-button">
+        {{ $t('shrineView.omikujiButton.line1') }}<br /><span class="coin-text">{{ $t('shrineView.omikujiButton.line2') }}</span>
+      </button>
       <div class="sayings-container">
         <table class="sayings-table">
           <tbody>
@@ -34,15 +36,27 @@
         </table>
       </div>
       <transition name="fade">
-        <SayingPopup v-if="showPopup" :fortune="randomFortune" :saying="randomSaying" :sayingId="randomSayingId" :isNew="isNewSaying" @close="closePopup" />
+        <SayingPopup
+          v-if="showPopup"
+          :fortune="randomFortune"
+          :saying="randomSaying"
+          :sayingId="randomSayingId"
+          :isNew="isNewSaying"
+          @close="closePopup"
+        />
       </transition>
 
-      <div :class="{'fade-overlay': true, 'is-fading': isFading}"></div>
+      <div :class="{ 'fade-overlay': true, 'is-fading': isFading }"></div>
     </div>
   </div>
 </template>
 
 <script setup>
+/**
+ * じゃん猫神社コンポーネント。
+ * 猫コインを消費しておみくじを引き、ありがたいお言葉（名言）を集めることができます。
+ * 引いたお言葉は解放され、一覧で確認できるようになります。
+ */
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -51,22 +65,29 @@ import { useGameStore } from '@/stores/gameStore';
 import SayingPopup from '@/components/SayingPopup.vue';
 import { useViewportHeight } from '@/composables/useViewportHeight';
 
+// --- リアクティブな状態とストア ---
 const { t, tm } = useI18n();
 const { viewportHeight } = useViewportHeight();
-
 const router = useRouter();
 const audioStore = useAudioStore();
 const gameStore = useGameStore();
 
+// ポップアップ関連の状態
 const showPopup = ref(false);
-const randomFortune = ref('');
-const randomSaying = ref('');
-const randomSayingId = ref(null);
-const isFading = ref(false); // フェード状態を管理
-const isNewSaying = ref(false); // 新しい名言かどうか
+const randomFortune = ref(''); // ポップアップに表示する運勢
+const randomSaying = ref(''); // ポップアップに表示する名言
+const randomSayingId = ref(null); // ポップアップに表示する名言のID
+const isNewSaying = ref(false); // 新しく解放された名言かどうかのフラグ
 
-const revealedSayings = ref({}); // { sayingId: true/false }
+const isFading = ref(false); // 画面のフェード演出用フラグ
+const previousBgm = ref(null); // おみくじ演出中にBGMを一時停止・再開するために使用
 
+// 解放済みの名言IDを管理するオブジェクト { sayingId: true }
+const revealedSayings = ref({});
+
+// --- 算出プロパティ ---
+
+// i18nファイルから名言リストを生成
 const sayings = computed(() => {
   const sayingMessages = tm('shrineView.sayings');
   return Object.keys(sayingMessages).map(key => ({
@@ -75,8 +96,14 @@ const sayings = computed(() => {
   }));
 });
 
+// i18nファイルから運勢リストを生成
 const fortunes = computed(() => tm('shrineView.fortunes'));
 
+// --- メソッド ---
+
+/**
+ * ローカルストレージから解放済みの名言リストを読み込みます。
+ */
 const loadRevealedSayings = () => {
   const saved = localStorage.getItem('mahjongRevealedSayings');
   if (saved) {
@@ -84,76 +111,92 @@ const loadRevealedSayings = () => {
   }
 };
 
+/**
+ * 現在の解放済み名言リストをローカルストレージに保存します。
+ */
 const saveRevealedSayings = () => {
   localStorage.setItem('mahjongRevealedSayings', JSON.stringify(revealedSayings.value));
 };
 
-const previousBgm = ref(null);
-
+/**
+ * おみくじを引く処理。
+ * コインを消費し、運勢と名言をランダムに決定してポップアップで表示します。
+ */
 const drawOmikuji = () => {
+  // BGMを一時停止し、効果音を再生
   previousBgm.value = audioStore.currentBgm;
-  audioStore.setBgm(null); // BGMを停止
-  audioStore.playSound('Kagura_Suzu01-7.mp3'); // 神楽鈴の音を再生
+  audioStore.setBgm(null);
+  audioStore.playSound('Kagura_Suzu01-7.mp3');
 
   const cost = 100;
+  // コインが足りない場合
   if (gameStore.catCoins < cost) {
-    randomFortune.value = ""; // 運勢は表示しない
+    randomFortune.value = ''; // 運勢は表示しない
     randomSaying.value = t('shrineView.errors.notEnoughCoins');
     randomSayingId.value = null; // コイン不足時はIDをクリア
-    isNewSaying.value = false; // リセット
+    isNewSaying.value = false; // 新規フラグをリセット
     showPopup.value = true;
     return;
   }
 
+  // コイン消費処理
   if (gameStore.deductCatCoins(cost)) {
     isFading.value = true; // フェードアウト開始
     setTimeout(() => {
+      // 運勢をランダムに決定
       const fortuneValues = Object.values(fortunes.value);
       randomFortune.value = fortuneValues[Math.floor(Math.random() * fortuneValues.length)];
-      
+
+      // 名言をランダムに決定
       const sayingsList = sayings.value;
       const randomIndex = Math.floor(Math.random() * sayingsList.length);
       const drawnSaying = sayingsList[randomIndex];
       randomSaying.value = drawnSaying.text;
-      randomSayingId.value = drawnSaying.id; // 引いた名言のIDをセット
+      randomSayingId.value = drawnSaying.id;
 
-      // 新しく公開された名言かどうかを判定
+      // 新しく解放された名言かどうかを判定
       isNewSaying.value = !revealedSayings.value[drawnSaying.id];
 
-      // 引いた名言を公開状態にする
+      // 引いた名言を解放済みに設定して保存
       revealedSayings.value[drawnSaying.id] = true;
       saveRevealedSayings();
 
       showPopup.value = true;
-      isFading.value = false; // フェードイン開始
-    }, 1500); // フェードアウトの時間に合わせて調整
+      isFading.value = false; // フェードイン（白画面から戻る）
+    }, 1500); // フェードアウトの時間
   } else {
-    randomFortune.value = "";
+    // コイン消費に失敗した場合
+    randomFortune.value = '';
     randomSaying.value = t('shrineView.errors.failedToSpend');
-    randomSayingId.value = null; // コイン消費失敗時はIDをクリア
-    isNewSaying.value = false; // リセット
+    randomSayingId.value = null; // IDをクリア
+    isNewSaying.value = false; // 新規フラグをリセット
     showPopup.value = true;
   }
 };
 
-
+/**
+ * ポップアップを閉じ、BGMを再開します。
+ */
 const closePopup = () => {
   showPopup.value = false;
   if (previousBgm.value) {
     audioStore.setBgm(previousBgm.value);
-    previousBgm.value = null; // Reset for next time
+    previousBgm.value = null; // 次回のためにリセット
   }
 };
 
-
+/**
+ * タイトル画面に遷移します。
+ */
 const goToTitle = () => {
   router.push({ name: 'Title' });
 };
 
-// --- Scaling Logic ---
+// --- 画面のスケーリング処理 ---
 const DESIGN_WIDTH = 360;
 const DESIGN_HEIGHT = 640;
 const scaleFactor = ref(1);
+
 const scalerStyle = computed(() => ({
   transform: `translate(-50%, -50%) scale(${scaleFactor.value})`
 }));
@@ -166,19 +209,19 @@ const updateScaleFactor = () => {
   scaleFactor.value = Math.min(scaleX, scaleY);
 };
 
+// --- ライフサイクルフック ---
 onMounted(() => {
   updateScaleFactor();
   window.addEventListener('resize', updateScaleFactor);
   gameStore.loadCatCoins();
-  loadRevealedSayings(); // 追加
+  loadRevealedSayings(); // 解放済みの名言を読み込む
   audioStore.setBgm('GB-JP-A02-2(Menu-Loop105).mp3');
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', updateScaleFactor);
-  audioStore.setBgm(null); // 画面離脱時にBGMを停止
+  audioStore.setBgm(null); // 画面を離れる際にBGMを停止
 });
-
 </script>
 
 <style scoped>
@@ -188,7 +231,7 @@ onBeforeUnmount(() => {
 .shrine-view-container {
   position: relative;
   width: 100vw;
-  /* height: 100vh; */ /* Replaced by dynamic height */
+  /* height: 100vh; */ /* 動的な高さ指定に置き換え */
   overflow: hidden;
   background-image: url('/assets/images/back/back_out_shrine.png');
   background-repeat: repeat;
@@ -347,24 +390,24 @@ onBeforeUnmount(() => {
   right: 0;
   bottom: 0;
   background-color: #ccc;
-  transition: .4s;
+  transition: 0.4s;
   border-radius: 14px;
 }
 
 .slider:before {
   position: absolute;
-  content: "";
+  content: '';
   height: 10px;
   width: 10px;
   left: 2px;
   bottom: 2px;
   background-color: white;
-  transition: .4s;
+  transition: 0.4s;
   border-radius: 50%;
 }
 
 input:checked + .slider {
-  background-color: #2196F3;
+  background-color: #2196f3;
 }
 
 .back-button {
@@ -375,7 +418,7 @@ input:checked + .slider {
 }
 
 .back-button img {
-  width: 60px; /* Adjust size as needed */
+  width: 60px; /* 必要に応じてサイズを調整 */
   margin-left: 8px;
   height: auto;
 }

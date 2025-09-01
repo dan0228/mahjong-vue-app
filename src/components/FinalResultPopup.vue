@@ -7,7 +7,7 @@
           <div v-for="player in finalResultDetails.rankedPlayers" :key="player.name" class="player-rank-item">
             <span class="rank">{{ t('finalResultPopup.rank', { rank: player.rank }) }}</span>
             <span class="player-name">{{ getTranslatedPlayerName(player) }}</span>          
-            <img v-if="getPlayerIcon(player.id)" :src="getPlayerIcon(player.id)" alt="Player Icon" class="player-icon" />
+            <img v-if="getPlayerIcon(player.id)" :src="getPlayerIcon(player.id)" alt="Player Icon" class="player-icon" crossorigin="anonymous" />
             <span class="score">{{ t('finalResultPopup.score', { score: player.score }) }}</span>
           </div>
         </div>
@@ -15,7 +15,7 @@
           {{ winsMessage }}
         </p>
         <div class="coin-gain" v-if="gameStore.lastCoinGain !== 0">
-          <img src="/assets/images/info/cat_coin.png" alt="Cat Coin" class="cat-coin-icon">
+          <img src="/assets/images/info/cat_coin.png" alt="Cat Coin" class="cat-coin-icon" crossorigin="anonymous">
           <span :class="{ 'positive-gain': gameStore.lastCoinGain > 0, 'negative-gain': gameStore.lastCoinGain < 0 }">
             {{ gameStore.lastCoinGain > 0 ? '+' : '' }}{{ gameStore.lastCoinGain }}
           </span>
@@ -32,7 +32,7 @@
         </div>
         <div class="social-share-buttons">
           <button @click="postToX" class="social-button x-post-button">
-            <img src="/assets/images/info/logo-black.png" alt="X logo" class="social-logo-icon">
+            <img src="/assets/images/info/logo-black.png" alt="X logo" class="social-logo-icon" crossorigin="anonymous">
           </button>
         </div>
         <div class="share-caption">{{ t('finalResultPopup.shareCaption') }}</div>

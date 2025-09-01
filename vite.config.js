@@ -17,4 +17,8 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  // 開発サーバーの設定を追加
+  server: {
+    host: true, // すべてのネットワークインターフェースでリッスン
+  },
 });

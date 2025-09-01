@@ -411,7 +411,7 @@
     "backToTitle": "タイトルに戻る",
     "backToTitleSub": "(連勝リセット)",
     "shareCaption": "スクショも一緒に投稿してランキングに参加📸",
-    "tweetText": "集計用：{count}連勝 #よんじゃん #よんじゃん連勝数",
+    "tweetText": "集計用：{count}連勝\n#よんじゃん #よんじゃん連勝数",
     "clipboardCopySuccess": "投稿用メッセージをクリップボードにコピー！貼り付けして簡単投稿！",
     "clipboardCopyError": "キャプションのコピーに失敗しました。",
     "imageCopiedSuccess": "結果画像をクリップボードにコピーしました。ポストに貼り付けて投稿できます。",

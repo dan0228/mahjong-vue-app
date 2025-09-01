@@ -247,6 +247,9 @@ async function postToX() {
     restoreImages = await embedImages(node);
     // --- リソース埋め込み 終了 ---
 
+    // 埋め込まれた画像をブラウザが描画するのを待つための短い遅延
+    await new Promise(resolve => setTimeout(resolve, 50));
+
     const scale = 2;
     const options = {
       bgcolor: '#ffffff',

@@ -178,6 +178,15 @@ function getPlayerIcon(playerId) {
 }
 
 /**
+ * デバイスがモバイルであるか簡易的に判定します。
+ * @returns {boolean} モバイルデバイスであればtrue。
+ */
+function isMobile() {
+  const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+  return /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+}
+
+/**
  * X (旧Twitter) に結果を投稿します。
  * スクリーンショットを生成し、Web Share API またはクリップボード経由で共有します。
  */
@@ -217,31 +226,30 @@ async function postToX() {
     const dataUrl = await domtoimage.toPng(node, options);
     const blob = await (await fetch(dataUrl)).blob();
     const file = new File([blob], 'mahjong-result.png', { type: 'image/png' });
-        const baseText = t('finalResultPopup.tweetText', { count: winsToDisplay.value });
+    const baseText = t('finalResultPopup.tweetText', { count: winsToDisplay.value });
     const gameUrl = "https://mahjong-vue-app.vercel.app";
-    const captionText = `${baseText}\n\n${gameUrl}`
+    const captionText = `\n${gameUrl}\n${baseText}`;
 
-    // Web Share APIが利用可能な場合
-    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+    // モバイルデバイスでWeb Share APIが利用可能な場合
+    if (isMobile() && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({
         files: [file],
         title: t('finalResultPopup.title'),
         text: captionText,
       });
-      return; // 共有が完了したらここで終了
-    }
-
-    // --- Web Share APIが使えない場合のフォールバック処理 ---
-    try {
-      const clipboardItem = new ClipboardItem({ 'image/png': blob });
-      await navigator.clipboard.write([clipboardItem]);
-      alert("結果画像をクリップボードにコピーしました。ツイートに貼り付けて投稿できます。");
-    } catch (err) {
-      console.error("クリップボードへの画像のコピーに失敗しました: ", err);
-      alert("画像のコピーに失敗しました。手動でスクリーンショットを撮って投稿してください。");
-    } finally {
-      const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(captionText)}`;
-      window.open(twitterUrl, '_blank');
+    } else {
+      // PCまたはWeb Share APIが使えない場合のフォールバック処理
+      try {
+        const clipboardItem = new ClipboardItem({ 'image/png': blob });
+        await navigator.clipboard.write([clipboardItem]);
+        alert(t('finalResultPopup.imageCopiedSuccess'));
+      } catch (err) {
+        console.error("クリップボードへの画像のコピーに失敗しました: ", err);
+        alert(t('finalResultPopup.imageCopiedError'));
+      } finally {
+        const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(captionText)}`;
+        window.open(twitterUrl, '_blank');
+      }
     }
 
   } catch (err) {
@@ -316,13 +324,13 @@ async function postToX() {
 .player-rank-item:last-child {
   border-bottom: none;
 }
-.rank { 
+.rank {
   font-weight: bold; 
   width: 40px; 
   text-align: left;
   flex-shrink: 0;
 }
-.player-name { 
+.player-name {
   flex-grow: 1; 
   text-align: left; 
   margin-left: 10px;
@@ -333,7 +341,7 @@ async function postToX() {
   margin: 0 30px;
   flex-shrink: 0;
 }
-.score { 
+.score {
   font-weight: bold; 
   color: #007bff; 
   width: 90px; 

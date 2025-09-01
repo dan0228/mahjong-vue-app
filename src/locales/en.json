@@ -411,8 +411,10 @@
     "backToTitle": "Back to Title",
     "backToTitleSub": "(Reset Streak)",
     "shareCaption": "Take a screenshot and share it to join the rankings! 📸",
-    "tweetText": "For Tally: {count}-Win Streak Achieved!\n\n#YonJong #YonJongWinStreak #よんじゃん #よんじゃん連勝数",
+    "tweetText": "For Tally: {count}-Win Streak #YonJong #YonJongWinStreak #よんじゃん #よんじゃん連勝数",
     "clipboardCopySuccess": "Copied message to clipboard! Paste to share easily!",
-    "clipboardCopyError": "Failed to copy caption to clipboard."
+    "clipboardCopyError": "Failed to copy caption to clipboard.",
+    "imageCopiedSuccess": "Result image copied to clipboard. You can now paste it into your post.",
+    "imageCopiedError": "Failed to copy image. Please take a screenshot manually."
   }
 }

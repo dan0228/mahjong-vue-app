@@ -187,6 +187,42 @@ function isMobile() {
 }
 
 /**
+ * 指定されたDOM要素内のすべての<img>のsrcをdata:URLに変換して埋め込みます。
+ * @param {HTMLElement} element - 処理対象のDOM要素。
+ * @returns {Function} 元の画像ソースに戻すためのクリーンアップ関数。
+ */
+async function embedImages(element) {
+  const images = Array.from(element.querySelectorAll('img'));
+  const originalSrcs = new Map();
+
+  const promises = images.map(async (img) => {
+    if (img.src && !img.src.startsWith('data:')) {
+      originalSrcs.set(img, img.src);
+      try {
+        const blob = await (await fetch(img.src)).blob();
+        const dataUrl = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+        img.src = dataUrl;
+      } catch (e) {
+        console.error("画像の埋め込みに失敗しました:", originalSrcs.get(img), e);
+      }
+    }
+  });
+
+  await Promise.all(promises);
+
+  return () => {
+    originalSrcs.forEach((src, img) => {
+      img.src = src;
+    });
+  };
+}
+
+/**
  * X (旧Twitter) に結果を投稿します。
  * スクリーンショットを生成し、Web Share API またはクリップボード経由で共有します。
  */
@@ -195,24 +231,23 @@ async function postToX() {
 
   const fontCssLink = document.querySelector('link[rel="stylesheet"][href*="fonts.googleapis.com"]');
   let newStyleElement = null;
+  let restoreImages = () => {};
 
   try {
-    // --- フォント修正 開始 ---
-    if (fontCssLink) {
-      // 1. dom-to-imageがアクセスできないように、元のクロスオリジンCSSを無効化します。
-      fontCssLink.disabled = true;
+    const node = popupContentRef.value;
 
-      // 2. CSSコンテンツを取得し、インラインの<style>タグとして埋め込みます。
-      //    これにより、フォントルールが同一オリジンとなり、ライブラリから読み取り可能になります。
+    // --- リソース埋め込み 開始 ---
+    if (fontCssLink) {
+      fontCssLink.disabled = true;
       const cssText = await (await fetch(fontCssLink.href)).text();
       newStyleElement = document.createElement('style');
       newStyleElement.appendChild(document.createTextNode(cssText));
       document.head.appendChild(newStyleElement);
     }
-    // --- フォント修正 終了 ---
+    restoreImages = await embedImages(node);
+    // --- リソース埋め込み 終了 ---
 
-    const node = popupContentRef.value;
-    const scale = 3;
+    const scale = 2;
     const options = {
       bgcolor: '#ffffff',
       width: node.offsetWidth * scale,
@@ -263,6 +298,7 @@ async function postToX() {
     if (newStyleElement) {
       document.head.removeChild(newStyleElement);
     }
+    restoreImages(); // 画像のsrcを元に戻す
     // --- クリーンアップ 終了 ---
   }
 }

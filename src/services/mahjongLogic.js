@@ -1,43 +1,75 @@
-// src/services/mahjongLogic.js
+/**
+ * @file 四牌麻雀（よんじゃん！）のコアロジックを定義します。
+ * 牌の生成、山牌のシャッフル、配牌、和了判定、役計算など、ゲームのルールに関する純粋な関数を提供します。
+ * このモジュールはUIやゲームの状態管理（gameStore）から独立しており、再利用可能なルールセットとして機能します。
+ */
 
-export const SUITS = { MANZU: 'm', PINZU: 'p', SOZU: 's', JIHAI: 'z' };
-export const JIHAI_TYPES = { TON: 1, NAN: 2, SHA: 3, PEI: 4, HAKU: 5, HATSU: 6, CHUN: 7 }; // 東南西北白發中
-export const PLAYER_WINDS = { EAST: '東', SOUTH: '南', WEST: '西', NORTH: '北' };
-const WIND_ORDER = [PLAYER_WINDS.EAST, PLAYER_WINDS.SOUTH, PLAYER_WINDS.WEST, PLAYER_WINDS.NORTH];
+// --- 定数定義 ---
 
 /**
- * 四牌麻雀で使用する全ての牌のリストを生成します。
- * 各牌は suit, rank, idを持ちます。
- * @returns {Array<Object>} 全ての牌の配列
+ * 牌の種類（スーツ）を表す定数。
+ * @property {string} MANZU - 萬子
+ * @property {string} PINZU - 筒子
+ * @property {string} SOZU - 索子
+ * @property {string} JIHAI - 字牌
+ */
+export const SUITS = { MANZU: 'm', PINZU: 'p', SOZU: 's', JIHAI: 'z' };
+
+/**
+ * 字牌のランクを表す定数。
+ * @property {number} TON - 東
+ * @property {number} NAN - 南
+ * @property {number} SHA - 西
+ * @property {number} PEI - 北
+ * @property {number} HAKU - 白
+ * @property {number} HATSU - 發
+ * @property {number} CHUN - 中
+ */
+export const JIHAI_TYPES = { TON: 1, NAN: 2, SHA: 3, PEI: 4, HAKU: 5, HATSU: 6, CHUN: 7 }; // 東南西北白發中
+
+/**
+ * プレイヤーの席風を表す定数。
+ * @property {string} EAST - 東家
+ * @property {string} SOUTH - 南家
+ * @property {string} WEST - 西家
+ * @property {string} NORTH - 北家
+ */
+export const PLAYER_WINDS = { EAST: '東', SOUTH: '南', WEST: '西', NORTH: '北' };
+
+// 席風の割り当て順序
+const WIND_ORDER = [PLAYER_WINDS.EAST, PLAYER_WINDS.SOUTH, PLAYER_WINDS.WEST, PLAYER_WINDS.NORTH];
+
+// --- ゲーム準備関連の関数 ---
+
+/**
+ * 四牌麻雀で使用する全ての牌（136枚）のリストを生成します。
+ * 各牌は `suit`, `rank`, `id` を持ちます。
+ * @returns {Array<Object>} 全ての牌の配列。
  */
 export function getAllTiles() {
   const tiles = [];
-  let idCounter = 0;
 
-// 萬子、筒子、索子 (1-9) - 各4枚
- [SUITS.MANZU, SUITS.PINZU, SUITS.SOZU].forEach(suit => { // 検証用にコメントアウト
-  // [SUITS.MANZU].forEach(suit => {
-    for (let rank = 1; rank <= 9; rank++) { // 検証用。本来は9
-      for (let i = 0; i < 4; i++) { //検証用。本来は4
+  // 萬子(m), 筒子(p), 索子(s) の1から9までを各4枚生成
+  [SUITS.MANZU, SUITS.PINZU, SUITS.SOZU].forEach(suit => {
+    for (let rank = 1; rank <= 9; rank++) {
+      for (let i = 0; i < 4; i++) {
         tiles.push({
           suit,
           rank,
           id: `${suit}${rank}_${i}`, // 例: m1_0, m1_1, m1_2, m1_3
         });
-        idCounter++;
       }
     }
   });
 
-  // 字牌 (東南西北白發中) - 各4枚
+  // 字牌 (東南西北白發中) を各4枚生成
   Object.values(JIHAI_TYPES).forEach(rank => {
     for (let i = 0; i < 4; i++) {
       tiles.push({
         suit: SUITS.JIHAI,
         rank,
-        id: `${SUITS.JIHAI}${rank}_${i}` // 例: z1_0 (東), z5_0 (白)
+        id: `${SUITS.JIHAI}${rank}_${i}`, // 例: z1_0 (東), z5_0 (白)
       });
-      idCounter++;
     }
   });
 
@@ -45,35 +77,31 @@ export function getAllTiles() {
 }
 
 /**
- * 王牌からドラ表示牌を取得します。
- * 四牌麻雀のルールに基づき、どの牌をドラ表示とするかを決定します。
- * @param {Array<Object>} deadWall 王牌の配列
- * @returns {Array<Object>} ドラ表示牌の配列 (通常は1枚)
- * @modifies deadWall - ドラ表示牌としてマークする (例: `isDoraIndicator = true`)
+ * 王牌から初期ドラ表示牌を取得します。
+ * このゲームのルールでは、王牌の固定された位置（5枚目）をドラ表示牌とします。
+ * @param {Array<Object>} deadWall - 王牌の配列（14枚）。
+ * @returns {Array<Object>} ドラ表示牌を含む配列（要素は1つ）。王牌が足りない場合は空配列。
  */
 export function getDoraIndicators(deadWall) {
   if (!deadWall || deadWall.length === 0) {
     return [];
   }
-  // 通常の麻雀では、王牌の特定の場所からドラ表示牌をめくります。
-  // 例: 王牌の右から3幢目(5,6牌目)の上段の牌 (インデックス4)
-  const initialDoraIndicatorIndex = 4; // 仮: 0-indexed で5番目の牌
+  // このゲームでは、王牌の5枚目（インデックス4）を最初のドラ表示牌とする
+  const initialDoraIndicatorIndex = 4;
   if (deadWall.length > initialDoraIndicatorIndex) {
-    // deadWall[initialDoraIndicatorIndex].isDoraIndicator = true; // 必要であればマーク
     return [deadWall[initialDoraIndicatorIndex]];
   }
-  // 王牌が足りない場合は、取得できる範囲で返すか、空を返す
-  // return [deadWall[0]]; // 最低でも1枚目を返す場合
-  return []; // 足りなければ表示しない場合
+  // 王牌が足りない場合は空を返す
+  return [];
 }
 
 /**
- * 牌の山をシャッフルします (Fisher-Yates shuffle)。
- * @param {Array<Object>} wall シャッフルする牌の山
- * @returns {Array<Object>} シャッフルされた牌の山 (新しい配列)
+ * 牌の山をシャッフルします（Fisher-Yatesアルゴリズム）。
+ * @param {Array<Object>} wall - シャッフル対象の牌山。
+ * @returns {Array<Object>} シャッフルされた新しい牌山の配列。
  */
 export function shuffleWall(wall) {
-  const shuffledWall = [...wall]; // 元の配列をコピーして変更する
+  const shuffledWall = [...wall]; // 元の配列をコピーしてシャッフル
   for (let i = shuffledWall.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [shuffledWall[i], shuffledWall[j]] = [shuffledWall[j], shuffledWall[i]];
@@ -83,10 +111,10 @@ export function shuffleWall(wall) {
 
 /**
  * 指定されたプレイヤー数と手牌の枚数で初期手牌を配ります。
- * @param {number} playerCount プレイヤー数
- * @param {Array<Object>} wall 配牌元の山牌 (この関数内で変更されます)
- * @param {number} handSize 各プレイヤーの手牌の枚数
- * @returns {{hands: Array<Array<Object>>, wall: Array<Object>}} 各プレイヤーの手牌と配牌後の山牌
+ * @param {number} playerCount - プレイヤー数。
+ * @param {Array<Object>} wall - 配牌元の山牌。この関数内で消費されます。
+ * @param {number} handSize - 各プレイヤーの手牌の枚数。
+ * @returns {{hands: Array<Array<Object>>, wall: Array<Object>}} 各プレイヤーの手牌と、配牌後の残りの山牌。
  */
 export function dealInitialHands(playerCount, wall, handSize) {
   const hands = Array.from({ length: playerCount }, () => []);
@@ -95,41 +123,41 @@ export function dealInitialHands(playerCount, wall, handSize) {
       if (wall.length > 0) {
         hands[j].push(wall.pop());
       } else {
-        console.warn("山牌が不足しています。");
+        console.warn("配牌中に山牌が不足しました。");
         return { hands, wall }; // 山が尽きたら現在の状態で終了
       }
     }
   }
-  // 各プレイヤーの手牌をソートする
-  for (let i = 0; i < playerCount; i++) {
-    hands[i] = sortHand(hands[i]);
-  }
+  // 各プレイヤーの手牌をソート
+  hands.forEach(hand => sortHand(hand));
   return { hands, wall };
 }
 
+/**
+ * カン成立時に、王牌から新しいドラ表示牌をめくります。
+ * @param {Array<Object>} deadWall - 王牌の配列。
+ * @returns {Object|null} 新しく表示されたドラ表示牌。めくる牌がない場合はnull。
+ */
 export function revealDora(deadWall) {
-    // カンがあった場合、新しいドラ表示牌をめくる。
-    // 通常、既存のドラ表示牌の隣(嶺上牌側)の牌をめくる。
-    // deadWall 内で isDoraIndicator = true の牌を探し、その隣を新しい表示牌とする。
-    // ここでは簡略化のため、王牌の固定位置から順番にめくる想定で実装。
-    // (より正確には、ドラ表示牌の数と位置を管理する必要がある)
-    let revealedCount = deadWall.filter(t => t.isDoraIndicator).length;
-    // 例: 初期ドラ表示がインデックス4なら、次のドラ表示はインデックス6 (嶺上牌を挟む)
-    // 四牌麻雀の王牌14枚: [嶺1,嶺2,表1,裏1, 表2,裏2, 表3,裏3, 表4,裏4, 予備,予備,予備,予備]
-    // ドラ表示牌は 表1, 表2, 表3, 表4 の位置からめくられる
-    const doraIndicatorPositions = [4, 6, 8, 10]; // 0-indexed
-    if (revealedCount < doraIndicatorPositions.length && deadWall.length > doraIndicatorPositions[revealedCount]) {
-        deadWall[doraIndicatorPositions[revealedCount]].isDoraIndicator = true;
-        return deadWall[doraIndicatorPositions[revealedCount]];
-    }
-    console.warn("新しいドラ表示牌をめくるための十分な王牌がありません、または最大数です。");
-    return null;
+  // 王牌14枚の構成: [嶺上1,嶺上2,嶺上3,嶺上4, 表1,裏1, 表2,裏2, 表3,裏3, 表4,裏4, 予備,予備]
+  // ドラ表示牌は 表1, 表2, 表3, 表4 の位置からめくられる
+  const doraIndicatorPositions = [4, 6, 8, 10]; // 0-indexed
+  const revealedCount = deadWall.filter(t => t.isDoraIndicator).length;
+
+  if (revealedCount < doraIndicatorPositions.length && deadWall.length > doraIndicatorPositions[revealedCount]) {
+    const newDoraIndicator = deadWall[doraIndicatorPositions[revealedCount]];
+    newDoraIndicator.isDoraIndicator = true; // isDoraIndicatorプロパティを立てておく
+    return newDoraIndicator;
+  }
+  console.warn("新しいドラ表示牌をめくるための十分な王牌がありません、または最大数です。");
+  return null;
 }
 
 /**
- * 手牌をソートします (例: 字牌→萬子→筒子→索子の順、各スート内でランク昇順)。
- * @param {Array<Object>} hand ソートする手牌
- * @returns {Array<Object>} ソートされた手牌
+ * 手牌をルールに従ってソートします。
+ * ソート順: 萬子 → 筒子 → 索子 → 字牌。各種類の中ではランク昇順。
+ * @param {Array<Object>} hand - ソートする手牌。
+ * @returns {Array<Object>} ソートされた手牌。
  */
 export function sortHand(hand) {
   const suitOrder = { [SUITS.MANZU]: 0, [SUITS.PINZU]: 1, [SUITS.SOZU]: 2, [SUITS.JIHAI]: 3 };
@@ -141,155 +169,160 @@ export function sortHand(hand) {
   });
 }
 
+// --- プレイヤーアクション関連の関数 ---
+
 /**
- * プレイヤーに席風を割り当てます。親が東、その下家が南、対面が西、上家が北となります。
- * @param {Array<Object>} players - プレイヤーオブジェクトの配列。各オブジェクトには `seatWind` プロパティが追加されます。
- * @param {number} dealerIndex - 親（東家）となるプレイヤーのインデックス。
- * @param {number} playerCount - プレイヤーの総数 (デフォルトは4)。
- * @returns {Array<Object>} 席風が割り当てられたプレイヤーオブジェクトの配列 (新しい配列)。
+ * プレイヤーに席風（東南西北）を割り当てます。
+ * 親（dealerIndex）が東となり、反時計回りに南、西、北と割り振られます。
+ * @param {Array<Object>} players - プレイヤーオブジェクトの配列。
+ * @param {number} dealerIndex - 親となるプレイヤーのインデックス。
+ * @param {number} [playerCount=4] - プレイヤーの総数。
+ * @returns {Array<Object>} 各プレイヤーに `seatWind` プロパティが追加された新しいプレイヤー配列。
  */
 export function assignPlayerWinds(players, dealerIndex, playerCount = 4) {
   // 元のプレイヤー配列を変更しないようにコピーを作成
   const updatedPlayers = players.map(player => ({ ...player }));
 
   for (let i = 0; i < playerCount; i++) {
-    const playerActualIndex = (dealerIndex + i) % playerCount; // 親から数えてi番目のプレイヤーの実際のインデックス
+    // 親から数えてi番目のプレイヤーの実際のインデックスを計算
+    const playerActualIndex = (dealerIndex + i) % playerCount;
     updatedPlayers[playerActualIndex].seatWind = WIND_ORDER[i];
   }
   return updatedPlayers;
 }
 
 /**
- * 嶺上牌を取得します。
- * @param {Array<Object>} wall 山牌の配列
- * @returns {Object|null} 嶺上牌、または取得できない場合はnull
+ * 嶺上牌をツモります。
+ * @param {Array<Object>} wall - 山牌の配列。
+ * @returns {Object|null} 嶺上牌。山牌がない場合はnull。
  */
 export function drawRinshanTile(wall) {
-    // 通常、嶺上牌は王牌の特定の位置から取るが、簡易的な実装にするため山牌から取得する。
-    if (wall && wall.length > 0) {
-        if (wall.length >= 1) { // 最低1枚あればツモれる
-            return wall.pop(); // wallから牌を取り除く
-        }
-    }
-    console.warn("嶺上牌を取得できません。");
-    return null;
+  // 本来、嶺上牌は王牌の特定の位置から取りますが、この実装では簡略化のため山牌の末尾から取得します。
+  if (wall && wall.length > 0) {
+    return wall.pop();
+  }
+  console.warn("嶺上牌を取得できませんでした。山牌が空です。");
+  return null;
 }
 
 /**
- * ロン和了が可能か判定します。
- * @param {Array<Object>} hand 手牌
- * @param {Object} discardedTile ロン対象の捨て牌
- * @param {Object} gameContext ゲームコンテキスト (役判定用)
- * @returns {{isWin: boolean, yaku: Array, score: number, fans: number, isYakuman: boolean, yakumanPower: number}}} 和了情報
+ * 指定された捨て牌でロン和了が可能か判定します。
+ * @param {Array<Object>} hand - 現在の手牌（4枚）。
+ * @param {Object} discardedTile - ロン対象の捨て牌。
+ * @param {Object} gameContext - 役判定に必要なゲームコンテキスト。
+ * @returns {Object} 和了情報を格納したオブジェクト。詳細は `checkYonhaiWin` を参照。
  */
 export function checkCanRon(hand, discardedTile, gameContext) {
   if (!hand || !discardedTile) {
     return { isWin: false, yaku: [], score: 0, fans: 0, isYakuman: false, yakumanPower: 0 };
   }
-  // ロン和了なので、isTsumo は false
-  const handForWin = [...hand, discardedTile]; // ロン牌を手牌に加える
+  // ロン和了なので、isTsumoフラグはfalse
+  const handForWin = [...hand, discardedTile];
   return checkYonhaiWin(handForWin, discardedTile, false, gameContext);
 }
 
 /**
- * ツモ和了が可能か判定します。
- * @param {Array<Object>} hand 手牌
- * @param {Object} drawnTile ツモ牌
- * @param {Object} gameContext ゲームコンテキスト (役判定用)
- * @returns {{isWin: boolean, yaku: Array, score: number, fans: number, isYakuman: boolean, yakumanPower: number}}} 和了情報
+ * 指定されたツモ牌でツモ和了が可能か判定します。
+ * @param {Array<Object>} hand - 現在の手牌（4枚）。
+ * @param {Object} drawnTile - ツモってきた牌。
+ * @param {Object} gameContext - 役判定に必要なゲームコンテキスト。
+ * @returns {Object} 和了情報を格納したオブジェクト。詳細は `checkYonhaiWin` を参照。
  */
 export function checkCanTsumo(hand, drawnTile, gameContext) {
-    if (!hand || !drawnTile) {
-        return { isWin: false, yaku: [], score: 0, fans: 0, isYakuman: false, yakumanPower: 0 };
-    }
-    const handForWin = [...hand, drawnTile];
-    return checkYonhaiWin(handForWin, drawnTile, true, gameContext);
+  if (!hand || !drawnTile) {
+    return { isWin: false, yaku: [], score: 0, fans: 0, isYakuman: false, yakumanPower: 0 };
+  }
+  // ツモ和了なので、isTsumoフラグはtrue
+  const handForWin = [...hand, drawnTile];
+  return checkYonhaiWin(handForWin, drawnTile, true, gameContext);
 }
 
 /**
- * 役判定を行わずに、和了の基本形（1面子1雀頭）が成立するかどうかだけを高速に判定します。
- * @param {Array<Object>} hand 手牌
- * @param {Object} targetTile 和了牌（ロンまたはツモ）
- * @param {Array<Object>} melds 鳴き
- * @returns {boolean} 和了形が成立すればtrue
+ * 役を考慮せず、和了の基本形（1面子1雀頭）が成立するかどうかを判定します。
+ * テンパイ判定などで高速なチェックが必要な場合に使用します。
+ * @param {Array<Object>} hand - 手牌（4枚）。
+ * @param {Object} targetTile - 和了牌と仮定する牌。
+ * @param {Array<Object>} [melds=[]] - 鳴きの情報。
+ * @returns {boolean} 和了形が成立すればtrue。
  */
 export function canWinBasicShape(hand, targetTile, melds = []) {
-    if (!hand || !targetTile) {
-        return false;
-    }
-    const handForCheck = [...hand, targetTile];
-
-    if (melds.length > 0) {
-        // 鳴きがある場合、残りの手牌が雀頭を形成するかどうか
-        if (handForCheck.length === 2 && getTileKey(handForCheck[0]) === getTileKey(handForCheck[1])) {
-            return true;
-        }
-    } else {
-        // 門前の場合、5枚の手牌で和了形を判定
-        if (handForCheck.length === 5) {
-            const basicWinInfo = checkBasicYonhaiWinCondition(sortHand(handForCheck));
-            return basicWinInfo.isWin;
-        }
-    }
+  if (!hand || !targetTile) {
     return false;
+  }
+  const handForCheck = [...hand, targetTile];
+
+  // 鳴きがある場合、残りの手牌が雀頭を形成するかどうかで判定
+  if (melds.length > 0) {
+    return handForCheck.length === 2 && getTileKey(handForCheck[0]) === getTileKey(handForCheck[1]);
+  }
+  // 門前の場合、5枚の手牌で和了形を判定
+  else {
+    if (handForCheck.length === 5) {
+      const basicWinInfo = checkBasicYonhaiWinCondition(sortHand(handForCheck));
+      return basicWinInfo.isWin;
+    }
+  }
+  return false;
 }
 
 /**
- * ポンが可能かチェックします。
- * @param {Array<Object>} hand 手牌
- * @param {Object} discardedTile 捨てられた牌
- * @returns {boolean} ポン可能ならtrue
+ * 指定された捨て牌でポンが可能かチェックします。
+ * @param {Array<Object>} hand - 手牌。
+ * @param {Object} discardedTile - 他家から捨てられた牌。
+ * @returns {boolean} ポン可能ならtrue。
  */
 export function checkCanPon(hand, discardedTile) {
-    if (!discardedTile) return false;
-    const count = hand.filter(tile => getTileKey(tile) === getTileKey(discardedTile)).length;
-    return count >= 2;
+  if (!discardedTile) return false;
+  // 手牌に同じ牌が2枚以上あればポン可能
+  const count = hand.filter(tile => getTileKey(tile) === getTileKey(discardedTile)).length;
+  return count >= 2;
 }
 
 /**
- * 明槓が可能かチェックします。
- * @param {Array<Object>} hand 手牌
- * @param {Object} discardedTile 捨てられた牌
- * @returns {boolean} 明槓可能ならtrue
+ * 指定された捨て牌で明槓（大明槓）が可能かチェックします。
+ * @param {Array<Object>} hand - 手牌。
+ * @param {Object} discardedTile - 他家から捨てられた牌。
+ * @returns {boolean} 明槓可能ならtrue。
  */
 export function checkCanMinkan(hand, discardedTile) {
-    if (!discardedTile) return false;
-    const count = hand.filter(tile => getTileKey(tile) === getTileKey(discardedTile)).length;
-    return count >= 3;
+  if (!discardedTile) return false;
+  // 手牌に同じ牌が3枚あれば明槓可能
+  const count = hand.filter(tile => getTileKey(tile) === getTileKey(discardedTile)).length;
+  return count >= 3;
 }
 
 /**
  * 暗槓が可能かチェックします。
- * @param {Array<Object>} hand 手牌
- * @param {Object} drawnTile ツモった牌 (または手牌の4枚目の牌)
- * @returns {boolean} 暗槓可能ならtrue
- * @param {Object} drawnTile ツモった牌
- * @returns {Array<Object>} 暗槓可能な牌の配列。可能でなければ空配列。
+ * @param {Array<Object>} hand - 手牌。
+ * @param {Object} drawnTile - ツモってきた牌。
+ * @returns {Array<Object>} 暗槓可能な牌の配列。なければ空配列。
  */
 export function checkCanAnkan(hand, drawnTile) {
-    const ankanableTiles = [];
-    const fullHand = drawnTile ? [...hand, drawnTile] : [...hand];
-    const counts = {};
-    fullHand.forEach(tile => {
-        if (!tile) return;
-        const key = getTileKey(tile);
-        counts[key] = (counts[key] || 0) + 1;
-    });
-    for (const key in counts) {
-        if (counts[key] === 4) {
-            const tile = fullHand.find(t => getTileKey(t) === key);
-            if (tile) ankanableTiles.push(tile);
-        }
+  const ankanableTiles = [];
+  const fullHand = drawnTile ? [...hand, drawnTile] : [...hand];
+  const counts = {};
+  fullHand.forEach(tile => {
+    if (!tile) return;
+    const key = getTileKey(tile);
+    counts[key] = (counts[key] || 0) + 1;
+  });
+
+  // 4枚揃っている牌を探す
+  for (const key in counts) {
+    if (counts[key] === 4) {
+      const tile = fullHand.find(t => getTileKey(t) === key);
+      if (tile) ankanableTiles.push(tile);
     }
-    return ankanableTiles;
+  }
+  return ankanableTiles;
 }
 
 /**
- * 加槓が可能かチェックします。
- * @param {Array<Object>} hand 手牌
- * @param {Array<Object>} melds 既存の鳴き
- * @param {Object|null} drawnTile ツモった牌 (nullの場合もある)
- * @returns {Array<Object>} 加槓可能な牌の配列。可能でなければ空配列。
+ * 加槓（カカン）が可能かチェックします。
+ * @param {Array<Object>} hand - 手牌。
+ * @param {Array<Object>} melds - 既にポンしている鳴きの情報。
+ * @param {Object|null} drawnTile - ツモってきた牌。
+ * @returns {Array<Object>} 加槓可能な牌の配列。なければ空配列。
  */
 export function checkCanKakan(hand, melds, drawnTile) {
     const kakanableTiles = [];
@@ -315,57 +348,68 @@ export function checkCanKakan(hand, melds, drawnTile) {
 
     return kakanableTiles;}
 
-// --- 四牌麻雀用ロジック ---
+// --- 役の定義 ---
 
-// 役の定義
-// fans: 門前での翻数
-// menzenOnly: 門前のみか
-// kuisagari: 喰い下がりの翻数 (例: 1 なら1翻下がる) // 喰い下がり後の翻数を直接指定するのではなく、下がる値を指定
-// exampleTiles: 役の例を示す牌の配列 (例: [{suit: 'm', rank: 1}, ...])。表示しない場合は null。
+/**
+ * 四牌麻雀の通常役を定義したオブジェクト。
+ * @property {string} key - i18nのキーと一致する内部的なキー。
+ * @property {string} name - 日本語の役名。
+ * @property {number} fans - 門前清（メンゼン）の場合の基本翻数。
+ * @property {boolean} menzenOnly - 門前でのみ成立する役かどうかのフラグ。
+ * @property {number} [kuisagari] - 鳴いた（副露した）場合に下がる翻数。
+ * @property {Array<Object>|null} exampleTiles - 役の例を示す牌の配列。UI表示用。
+ */
 export const YONHAI_YAKU = {
   REACH: { key: "riichi", name: "立直", fans: 1, menzenOnly: true, exampleTiles: null },
   TSUMO: { key: "tsumo", name: "門前清自摸和", fans: 1, menzenOnly: true, exampleTiles: null },
   TANYAO: { key: "tanyao", name: "断么九", fans: 1, menzenOnly: false, exampleTiles: [{suit:'m',rank:2},{suit:'m',rank:3},{suit:'m',rank:4},{suit:'p',rank:5},{suit:'p',rank:5}] },
   PINFU: { key: "pinfu", name: "平和", fans: 1, menzenOnly: true, exampleTiles: [{suit:'m',rank:9},{suit:'m',rank:9},{suit:'s',rank:5},{suit:'s',rank:6},{suit:'s',rank:7}] },
-  JIKAZE: { key: "jikaze", name: "自風牌", fans: 1, menzenOnly: false, exampleTiles: [{suit:'m',rank:2},{suit:'m',rank:2},{suit:'z',rank:JIHAI_TYPES.SHA},{suit:'z',rank:JIHAI_TYPES.SHA},{suit:'z',rank:JIHAI_TYPES.SHA}] }, // 仮に西を自風
-  BAKAZE: { key: "bakaze", name: "場風牌", fans: 1, menzenOnly: false, exampleTiles: [{suit:'m',rank:2},{suit:'m',rank:2},{suit:'z',rank:JIHAI_TYPES.TON},{suit:'z',rank:JIHAI_TYPES.TON},{suit:'z',rank:JIHAI_TYPES.TON}] }, // 仮に東を場風
-  SANGENPAI: { key: "sangenpai", name: "三元牌", fans: 1, menzenOnly: false, exampleTiles: [{suit:'s',rank:4},{suit:'s',rank:4},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HAKU}] }, // 仮に白
+  JIKAZE: { key: "jikaze", name: "自風牌", fans: 1, menzenOnly: false, exampleTiles: [{suit:'m',rank:2},{suit:'m',rank:2},{suit:'z',rank:JIHAI_TYPES.SHA},{suit:'z',rank:JIHAI_TYPES.SHA},{suit:'z',rank:JIHAI_TYPES.SHA}] },
+  BAKAZE: { key: "bakaze", name: "場風牌", fans: 1, menzenOnly: false, exampleTiles: [{suit:'m',rank:2},{suit:'m',rank:2},{suit:'z',rank:JIHAI_TYPES.TON},{suit:'z',rank:JIHAI_TYPES.TON},{suit:'z',rank:JIHAI_TYPES.TON}] },
+  SANGENPAI: { key: "sangenpai", name: "三元牌", fans: 1, menzenOnly: false, exampleTiles: [{suit:'s',rank:4},{suit:'s',rank:4},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HAKU}] },
   CHANKAN: { key: "chankan", name: "槍槓", fans: 1, menzenOnly: false, exampleTiles: null },
   HAITEI_RAOYUE: { key: "haiteiRaoyue", name: "海底摸月", fans: 1, menzenOnly: false, exampleTiles: null },
   HOUTEI_RAOYUI: { key: "houteiRaoyui", name: "河底撈魚", fans: 1, menzenOnly: false, exampleTiles: null },
-  IPPATSU: { key: "ippatsu", name: "一発", fans: 1, menzenOnly: true, exampleTiles: null }, // 立直が条件
+  IPPATSU: { key: "ippatsu", name: "一発", fans: 1, menzenOnly: true, exampleTiles: null }, // リーチが成立していることが前提
   DOUBLE_REACH: { key: "doubleRiichi", name: "ダブル立直", fans: 2, menzenOnly: true, exampleTiles: null },
   SANGEN_DOUKOU: { key: "sanshokuDoukou", name: "三色同刻", fans: 2, menzenOnly: false, exampleTiles: [{suit:'m',rank:2},{suit:'m',rank:2},{suit:'m',rank:5},{suit:'p',rank:5},{suit:'s',rank:5}] },
   TOITOI: { key: "toitoi", name: "対々和", fans: 2, menzenOnly: false, exampleTiles: [{suit:'m',rank:7},{suit:'m',rank:7},{suit:'p',rank:8},{suit:'p',rank:8},{suit:'p',rank:8}] },
-  IIANKOU: { key: "iiankou", name: "一暗刻", fans: 2, menzenOnly: false, exampleTiles: [{suit:'m',rank:7},{suit:'m',rank:7},{suit:'m',rank:7},{suit:'p',rank:8},{suit:'p',rank:8}] }, // (暗刻) の部分は別途表示
+  IIANKOU: { key: "iiankou", name: "一暗刻", fans: 2, menzenOnly: false, exampleTiles: [{suit:'m',rank:7},{suit:'m',rank:7},{suit:'m',rank:7},{suit:'p',rank:8},{suit:'p',rank:8}] }, // 三暗刻の代用役
   HONROUTOU: { key: "honroutou", name: "混老頭", fans: 2, menzenOnly: false, exampleTiles: [{suit:'p',rank:1},{suit:'p',rank:1},{suit:'p',rank:1},{suit:'z',rank:JIHAI_TYPES.NAN},{suit:'z',rank:JIHAI_TYPES.NAN}] },
   CHANTA: { key: "chanta", name: "混全帯么九", fans: 2, menzenOnly: false, kuisagari: 1, exampleTiles: [{suit:'m',rank:7},{suit:'m',rank:8},{suit:'m',rank:9},{suit:'z',rank:JIHAI_TYPES.PEI},{suit:'z',rank:JIHAI_TYPES.PEI}] },
   JUNCHAN: { key: "junchan", name: "純全帯么九", fans: 3, menzenOnly: false, kuisagari: 1, exampleTiles: [{suit:'m',rank:7},{suit:'m',rank:8},{suit:'m',rank:9},{suit:'s',rank:1},{suit:'s',rank:1}] },
   HONITSU: { key: "honitsu", name: "混一色", fans: 3, menzenOnly: false, kuisagari: 1, exampleTiles: [{suit:'s',rank:1},{suit:'s',rank:2},{suit:'s',rank:3},{suit:'z',rank:JIHAI_TYPES.HATSU},{suit:'z',rank:JIHAI_TYPES.HATSU}] },
   CHINITSU: { key: "chinitsu", name: "清一色", fans: 4, menzenOnly: false, kuisagari: 1, exampleTiles: [{suit:'s',rank:1},{suit:'s',rank:2},{suit:'s',rank:3},{suit:'s',rank:8},{suit:'s',rank:8}] },
-  // ドラ・裏ドラは動的に fans を設定するため、ここでは固定値を入れない
-  DORA: { key: "dora", name: "ドラ", fans: 0, menzenOnly: false }, // fansは動的に計算
-  URA_DORA: { key: "uraDora", name: "裏ドラ", fans: 0, menzenOnly: true }, // fansは動的に計算
+  // ドラ・裏ドラは状況に応じて翻数が変動するため、ここでは基本翻数を0に設定
+  DORA: { key: "dora", name: "ドラ", fans: 0, menzenOnly: false },
+  URA_DORA: { key: "uraDora", name: "裏ドラ", fans: 0, menzenOnly: true },
 };
 
+/**
+ * 四牌麻雀の役満を定義したオブジェクト。
+ * @property {string} key - i18nのキーと一致する内部的なキー。
+ * @property {string} name - 日本語の役名。
+ * @property {number} power - 役満の倍率（例: 1倍役満、2倍役満）。
+ * @property {Array<Object>|null} exampleTiles - 役の例を示す牌の配列。UI表示用。
+ */
 export const YONHAI_YAKUMAN = {
   TENHOU: { key: "tenhou", name: "天和", power: 1, exampleTiles: null },
   CHIHOU: { key: "chihou", name: "地和", power: 1, exampleTiles: null },
   RENHOU: { key: "renhou", name: "人和", power: 1, exampleTiles: null },
-  DAISANGEN: { key: "daisangen", name: "大三元", power: 1, exampleTiles: [{suit:'p',rank:4},{suit:'p',rank:4},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HATSU},{suit:'z',rank:JIHAI_TYPES.CHUN}] }, // 22萬白發中 のような形も含む
+  DAISANGEN: { key: "daisangen", name: "大三元", power: 1, exampleTiles: [{suit:'p',rank:4},{suit:'p',rank:4},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HATSU},{suit:'z',rank:JIHAI_TYPES.CHUN}] }, // 特殊形: 白・發・中 + 任意の雀頭
   TSUIISOU: { key: "tsuiisou", name: "字一色", power: 1, exampleTiles: [{suit:'z',rank:JIHAI_TYPES.TON},{suit:'z',rank:JIHAI_TYPES.TON},{suit:'z',rank:JIHAI_TYPES.TON},{suit:'z',rank:JIHAI_TYPES.NAN},{suit:'z',rank:JIHAI_TYPES.NAN}] },
-  RYUIISOU: { key: "ryuiisou", name: "緑一色", power: 1, exampleTiles: [{suit:'s',rank:2},{suit:'s',rank:3},{suit:'s',rank:4},{suit:'s',rank:6},{suit:'s',rank:6}] }, // 發を含む場合は {suit:'z',rank:JIHAI_TYPES.HATSU}
+  RYUIISOU: { key: "ryuiisou", name: "緑一色", power: 1, exampleTiles: [{suit:'s',rank:2},{suit:'s',rank:3},{suit:'s',rank:4},{suit:'s',rank:6},{suit:'s',rank:6}] }, // 緑の牌（索子の2,3,4,6,8と發）のみで構成
   CHINROUTOU: { key: "chinroutou", name: "清老頭", power: 1, exampleTiles: [{suit:'m',rank:1},{suit:'m',rank:1},{suit:'s',rank:9},{suit:'s',rank:9},{suit:'s',rank:9}] },
-  IIKANTSU: { key: "iikantsu", name: "一槓子", power: 1, exampleTiles: [{suit:'m',rank:8},{suit:'m',rank:8},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HAKU}] }, // (槓子) の部分は別途表示
-  SHOUSUUSHI: { key: "shousuushi", name: "小四喜", power: 1, exampleTiles: [{suit:'z',rank:JIHAI_TYPES.TON},{suit:'z',rank:JIHAI_TYPES.NAN},{suit:'z',rank:JIHAI_TYPES.NAN},{suit:'z',rank:JIHAI_TYPES.SHA},{suit:'z',rank:JIHAI_TYPES.PEI}] }, // (1面待ち) の部分は別途表示
-  DAISUUSHI: { key: "daisuushi", name: "大四喜", power: 2, exampleTiles: [{suit:'z',rank:JIHAI_TYPES.TON},{suit:'z',rank:JIHAI_TYPES.NAN},{suit:'z',rank:JIHAI_TYPES.SHA},{suit:'z',rank:JIHAI_TYPES.PEI},{suit:'z',rank:JIHAI_TYPES.PEI}] }, // (4面待ち) の部分は別途表示
-  IIANKOU_TANKI: { key: "iiankanTanki", name: "一暗槓単騎", power: 2, exampleTiles: [{suit:'m',rank:8},{suit:'m',rank:8},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HAKU}] } // (暗槓) の部分は別途表示
+  IIKANTSU: { key: "iikantsu", name: "一槓子", power: 1, exampleTiles: [{suit:'m',rank:8},{suit:'m',rank:8},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HAKU}] }, // 四槓子の代用役
+  SHOUSUUSHI: { key: "shousuushi", name: "小四喜", power: 1, exampleTiles: [{suit:'z',rank:JIHAI_TYPES.TON},{suit:'z',rank:JIHAI_TYPES.NAN},{suit:'z',rank:JIHAI_TYPES.NAN},{suit:'z',rank:JIHAI_TYPES.SHA},{suit:'z',rank:JIHAI_TYPES.PEI}] }, // 特殊形: 3種の風牌 + 残り1種の風牌の雀頭
+  DAISUUSHI: { key: "daisuushi", name: "大四喜", power: 2, exampleTiles: [{suit:'z',rank:JIHAI_TYPES.TON},{suit:'z',rank:JIHAI_TYPES.NAN},{suit:'z',rank:JIHAI_TYPES.SHA},{suit:'z',rank:JIHAI_TYPES.PEI},{suit:'z',rank:JIHAI_TYPES.PEI}] }, // 特殊形: 4種の風牌 + いずれかの風牌の雀頭
+  IIANKOU_TANKI: { key: "iiankanTanki", name: "一暗槓単騎", power: 2, exampleTiles: [{suit:'m',rank:8},{suit:'m',rank:8},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HAKU},{suit:'z',rank:JIHAI_TYPES.HAKU}] } // 四暗刻単騎の代用役
 };
 
 /**
- * 牌オブジェクトからキー文字列を生成 (suitとrankを結合)
- * @param {Object} tile - { suit: 'm', rank: 1 }
- * @returns {string} 例: "m1"
+ * 牌オブジェクトから一意のキー文字列（例: "m1"）を生成します。
+ * @param {Object} tile - 牌オブジェクト。
+ * @returns {string} 牌のキー文字列。
  */
 export function getTileKey(tile) {
   if (!tile) return '';
@@ -373,10 +417,10 @@ export function getTileKey(tile) {
 }
 
 /**
- * 手牌中の特定の牌の数をカウント
- * @param {Array<Object>} hand - 手牌 (牌オブジェクトの配列)
- * @param {Object} targetTile - カウントする牌オブジェクト
- * @returns {number}
+ * 手牌中の特定の牌の数をカウントします。
+ * @param {Array<Object>} hand - 手牌の配列。
+ * @param {Object} targetTile - カウント対象の牌。
+ * @returns {number} 手牌に含まれる対象の牌の数。
  */
 function countSpecificTile(hand, targetTile) {
   const targetKey = getTileKey(targetTile);
@@ -391,22 +435,27 @@ function countSpecificTile(hand, targetTile) {
  * @returns {{isWin: boolean, mentsuType: string|null, jantou: Array<Object>|null, mentsu: Array<Object>|null}} 和了情報
  */
 export function checkBasicYonhaiWinCondition(hand5tiles) {
-  if (!hand5tiles || hand5tiles.length !== 5) { // 5枚でなければ和了形ではない
+  // 手牌が5枚でなければ和了形ではない
+  if (!hand5tiles || hand5tiles.length !== 5) {
     return { isWin: false, mentsuType: null, jantou: null, mentsu: null };
   }
 
-  // 牌の枚数をカウント
+  // 手牌中の各牌の出現回数をカウント
   const counts = {};
   hand5tiles.forEach(tile => {
-    const key = getTileKey(tile); // getTileKey を使用
+    const key = getTileKey(tile);
     counts[key] = (counts[key] || 0) + 1;
   });
 
-  // 1. 雀頭の候補を探す
+  // --- 1. 雀頭を仮定して面子を探すパターン ---
+  // 手牌中のユニークな牌の種類を取得
   const uniqueTileKeysInHand = Array.from(new Set(hand5tiles.map(t => getTileKey(t))));
 
+  // 各ユニークな牌を雀頭候補として試す
   for (const jantouCandidateKey of uniqueTileKeysInHand) {
+    // 雀頭候補が2枚以上ある場合
     if (counts[jantouCandidateKey] >= 2) {
+      // 雀頭を構成する2枚の牌を取得
       const jantou = hand5tiles.filter(t => getTileKey(t) === jantouCandidateKey).slice(0, 2);
 
       // 雀頭を除いた残りの3牌を取得
@@ -420,12 +469,14 @@ export function checkBasicYonhaiWinCondition(hand5tiles) {
         }
       }
 
+      // 残りの3牌が面子（順子または刻子）を形成するかチェック
       if (remainingForMentsuCandidate.length === 3) {
-        const sortedMentsuCandidate = sortHand(remainingForMentsuCandidate);
-        // 順子判定 (刻子より優先)
+        const sortedMentsuCandidate = sortHand(remainingForMentsuCandidate); // 面子候補をソート
+
+        // 順子判定 (字牌は順子にならない)
         if (
-          sortedMentsuCandidate[0].suit !== SUITS.JIHAI && // 字牌は順子にならない
-          sortedMentsuCandidate[0].suit === sortedMentsuCandidate[1].suit && // 牌のスーツが同じであること
+          sortedMentsuCandidate[0].suit !== SUITS.JIHAI &&
+          sortedMentsuCandidate[0].suit === sortedMentsuCandidate[1].suit &&
           sortedMentsuCandidate[1].suit === sortedMentsuCandidate[2].suit &&
           sortedMentsuCandidate[1].rank === sortedMentsuCandidate[0].rank + 1 &&
           sortedMentsuCandidate[2].rank === sortedMentsuCandidate[1].rank + 1
@@ -444,16 +495,15 @@ export function checkBasicYonhaiWinCondition(hand5tiles) {
     }
   }
 
-  // 3. game.js の isWinningHand のように、刻子を先に抜き出し、残りが雀頭になるか、
-  //    あるいは順子を先に抜き出し、残りが雀頭になるか、というアプローチも有効。
-  //    現在のロジックは雀頭を先に抜き出している。
-  //    より網羅的にするために、面子を先に抜き出すパターンも試す。
+  // --- 2. 面子を仮定して雀頭を探すパターン ---
+  // 5枚の手牌から3枚を選び、それが面子を形成するかチェック
   for (let i = 0; i < hand5tiles.length; i++) {
     for (let j = i + 1; j < hand5tiles.length; j++) {
       for (let k = j + 1; k < hand5tiles.length; k++) {
         const mentsuCandidate = sortHand([hand5tiles[i], hand5tiles[j], hand5tiles[k]]);
         let isMentsu = false;
         let mentsuType = null;
+
         // 刻子判定
         if (getTileKey(mentsuCandidate[0]) === getTileKey(mentsuCandidate[1]) && getTileKey(mentsuCandidate[1]) === getTileKey(mentsuCandidate[2])) {
           isMentsu = true; mentsuType = 'koutsu';
@@ -464,6 +514,7 @@ export function checkBasicYonhaiWinCondition(hand5tiles) {
           isMentsu = true; mentsuType = 'shuntsu';
         }
 
+        // 面子が成立した場合、残りの2牌が雀頭を形成するかチェック
         if (isMentsu) {
           const remainingForJantou = hand5tiles.filter((tile, index) => index !== i && index !== j && index !== k);
           if (remainingForJantou.length === 2 && getTileKey(remainingForJantou[0]) === getTileKey(remainingForJantou[1])) {
@@ -474,13 +525,14 @@ export function checkBasicYonhaiWinCondition(hand5tiles) {
     }
   }
 
-  // 4. 特殊な役満の形を判定 (1面子1雀頭の標準形以外で和了とみなす形)
-  // 大三元 (白發中各1枚 + 任意の雀頭2枚)
+  // --- 3. 特殊な役満の形を判定 (1面子1雀頭の標準形以外で和了とみなす形) ---
+
+  // 大三元 (白發中各1枚 + 任意の雀頭2枚) の判定
   const hasHaku = hand5tiles.some(t => t.suit === SUITS.JIHAI && t.rank === JIHAI_TYPES.HAKU);
   const hasHatsu = hand5tiles.some(t => t.suit === SUITS.JIHAI && t.rank === JIHAI_TYPES.HATSU);
   const hasChun = hand5tiles.some(t => t.suit === SUITS.JIHAI && t.rank === JIHAI_TYPES.CHUN);
   if (hasHaku && hasHatsu && hasChun) {
-    // 白發中が各1枚以上あることを確認
+    // 白發中が各1枚以上あることを確認し、それらを除いた残りの2枚が雀頭を形成するかチェック
     const sangenTileObjects = [
       { suit: SUITS.JIHAI, rank: JIHAI_TYPES.HAKU },
       { suit: SUITS.JIHAI, rank: JIHAI_TYPES.HATSU },
@@ -496,14 +548,13 @@ export function checkBasicYonhaiWinCondition(hand5tiles) {
       }
     }
 
-    const remainingAfterSangen = [];
     if (sangenCount === 3 && tempHandForSangenCheck.length === 2 && getTileKey(tempHandForSangenCheck[0]) === getTileKey(tempHandForSangenCheck[1])) {
       // 白發中が各1枚あり、残りの2枚が雀頭
       return { isWin: true, mentsuType: 'daisangen_special', jantou: tempHandForSangenCheck, mentsu: sangenTileObjects };
     }
   }
 
-  // 小四喜・大四喜の判定
+  // 小四喜・大四喜の判定 (四牌麻雀の特殊な形)
   const windTiles = [JIHAI_TYPES.TON, JIHAI_TYPES.NAN, JIHAI_TYPES.SHA, JIHAI_TYPES.PEI];
   let windCounts = {};
   windTiles.forEach(wt => windCounts[wt] = 0);
@@ -514,35 +565,34 @@ export function checkBasicYonhaiWinCondition(hand5tiles) {
   });
   const distinctPresentWinds = Object.keys(windCounts).filter(key => windCounts[key] > 0).length;
   let jantouWindKey = null;
-  let koutsuWindKeys = [];
+  let koutsuWindKeys = []; // このゲームでは刻子ではなく、単一の風牌が3枚ある場合を想定
 
   for (const key in windCounts) {
     if (windCounts[key] >= 2) jantouWindKey = key; // 雀頭候補の風牌
-    if (windCounts[key] >= 3) koutsuWindKeys.push(key); // 刻子候補の風牌
+    if (windCounts[key] >= 3) koutsuWindKeys.push(key); // 刻子候補の風牌 (大四喜の面子部分)
   }
 
-  // 小四喜: 3種類の風牌が刻子(または槓子) + 残り1種類の風牌が雀頭 (四牌麻雀では5枚なので構成が異なる)
-  // 四牌麻雀の小四喜: 3種類の風牌が各1枚 + 残り1種類の風牌が雀頭 (例: 東東南西北)
+  // 大四喜or小四喜: 4種類の風牌が全て手牌にあり、そのうち1種類が雀頭で、他3種類が各1枚
+  // 例: 東東南西北 (東が雀頭、南西北が単牌)
   if (distinctPresentWinds === 4 && jantouWindKey && koutsuWindKeys.length === 0) {
-    // 4種類の風牌があり、そのうち1種類が雀頭で、他3種類が各1枚
     return { isWin: true, mentsuType: 'shousuushi_special', jantou: hand5tiles.filter(t => getTileKey(t) === jantouWindKey).slice(0,2), mentsu: null };
   }
-  // 大四喜の判定は、通常の1面子1雀頭のパターンでカバーされることが多い (例: 東東東 南南)
-  // もし特殊な5枚構成の大四喜がある場合はここに追加
 
-  // 5. 特殊な役の形を判定 (三色同刻)
-  const sanshokuCounts = { ...counts }; // 最初に計算したcountsをコピー
+  // --- 4. 特殊な役の形を判定 (三色同刻) ---
+  const sanshokuCounts = { ...counts }; // 最初に計算した牌の出現回数をコピー
   for (let rank = 1; rank <= 9; rank++) {
     const manKey = `m${rank}`;
     const pinKey = `p${rank}`;
     const souKey = `s${rank}`;
 
+    // 萬子、筒子、索子で同じランクの牌がそれぞれ1枚以上ある場合
     if (sanshokuCounts[manKey] >= 1 && sanshokuCounts[pinKey] >= 1 && sanshokuCounts[souKey] >= 1) {
       const tempCounts = { ...sanshokuCounts };
-      tempCounts[manKey]--;
+      tempCounts[manKey]--; // 1枚ずつ消費
       tempCounts[pinKey]--;
       tempCounts[souKey]--;
 
+      // 残りの2牌が雀頭を形成するかチェック
       const remainingKeys = Object.keys(tempCounts).filter(key => tempCounts[key] > 0);
       if (remainingKeys.length === 1 && tempCounts[remainingKeys[0]] === 2) {
         const jantouTileKey = remainingKeys[0];
@@ -560,6 +610,7 @@ export function checkBasicYonhaiWinCondition(hand5tiles) {
     }
   }
 
+  // どの和了形にも当てはまらない場合
   return { isWin: false, mentsuType: null, jantou: null, mentsu: null };
 }
 
@@ -591,18 +642,20 @@ export function checkBasicYonhaiWinCondition(hand5tiles) {
  * @returns {{yaku: Array<Object>, fans: number, yakuman: Array<Object>, yakumanPower: number}}
  */
 function calculateYonhaiYaku(handData) {
-  const yakuList = [];
-  let totalFans = 0;
-  const yakumanList = [];
-  let totalYakumanPower = 0;
+  const yakuList = []; // 成立した通常役のリスト
+  let totalFans = 0; // 通常役の合計翻数
+  const yakumanList = []; // 成立した役満のリスト
+  let totalYakumanPower = 0; // 役満の合計倍率
 
-  const { hand, winTile, isTsumo, melds = [], playerWind, roundWind, doraIndicators = [], uraDoraIndicators = [], isRiichi, isDoubleRiichi, isIppatsu, isHaitei, isHoutei, isChankan, isTenho, isChiho, isRenho, remainingTilesCount, isParent, turnCount, playerCount, gameContext } = handData; // playerCount と gameContext を追加 (gameContextは人和判定で利用)
-  const currentPlayerTurnCount = gameContext.currentPlayerTurnCount || 0; // gameContextから現在のプレイヤーのツモ回数を取得、未定義なら0
-  const isMenzen = (melds || []).length === 0;
-  const basicWinInfo = handData.basicWinInfo || checkBasicYonhaiWinCondition(hand); // handDataから受け取るか、なければ再計算
+  // handDataから必要な情報を抽出
+  const { hand, winTile, isTsumo, melds = [], playerWind, roundWind, doraIndicators = [], uraDoraIndicators = [], isRiichi, isDoubleRiichi, isIppatsu, isHaitei, isHoutei, isChankan, isTenho, isChiho, isRenho, remainingTilesCount, isParent, turnCount, playerCount, gameContext } = handData;
+  const currentPlayerTurnCount = gameContext.currentPlayerTurnCount || 0; // 現在のプレイヤーのツモ回数
+  const isMenzen = (melds || []).length === 0; // 門前（鳴きなし）かどうか
+  // 基本和了形情報を取得（既に計算済みであればそれを使用、なければ再計算）
+  const basicWinInfo = handData.basicWinInfo || checkBasicYonhaiWinCondition(hand);
 
-  // 役満判定 (優先)
-  // 天和 (Tenhou)
+  // --- 役満判定 (優先的にチェックし、成立すれば通常役は計算しない) ---
+  // 天和 (Tenhou) - 親の配牌時ツモ和了
   if (isTenho) {
     yakumanList.push(YONHAI_YAKUMAN.TENHOU);
     totalYakumanPower += YONHAI_YAKUMAN.TENHOU.power;
@@ -659,8 +712,8 @@ function calculateYonhaiYaku(handData) {
     totalYakumanPower += YONHAI_YAKUMAN.IIKANTSU.power;
   }
 
-  // 通常役判定
-  // 門前清自摸和 (Menzen Tsumo)
+  // --- 通常役判定 ---
+  // 門前清自摸和 (Menzen Tsumo) - 門前でツモ和了
   if (isMenzen && isTsumo) {
     yakuList.push(YONHAI_YAKU.TSUMO);
     totalFans += YONHAI_YAKU.TSUMO.fans;
@@ -690,33 +743,39 @@ function calculateYonhaiYaku(handData) {
     yakuList.push(YONHAI_YAKU.TOITOI);
     totalFans += YONHAI_YAKU.TOITOI.fans;
   }
-  // 自風牌・場風牌・三元牌
-  const tileCounts = {};
+  // --- 役牌の判定 (自風牌、場風牌、三元牌) ---
+  const tileCounts = {}; // 手牌中の牌の出現回数をカウント
   hand.forEach(t => {
     const key = getTileKey(t);
     tileCounts[key] = (tileCounts[key] || 0) + 1;
   });
 
-  // 役牌の判定 (刻子になっている場合)
-  // 刻子になっていれば役牌
+  // 刻子になっている役牌を探す
   const koutsuTiles = [];
-  for (const key in tileCounts) { // 手牌中の刻子候補
+  // 手牌中の刻子候補
+  for (const key in tileCounts) {
     if (tileCounts[key] >= 3) koutsuTiles.push(key);
   }
+  // 鳴き（ポン、カン）で成立している刻子も追加
   melds.filter(m => m.type === 'pon' || m.type === 'ankan' || m.type === 'minkan' || m.type === 'kakan').forEach(m => {
     koutsuTiles.push(getTileKey(m.tiles[0])); // 刻子の代表牌
   });
 
+  // 成立した役牌をyakuListに追加
   koutsuTiles.forEach(koutsuKey => {
     const tileObj = { suit: koutsuKey.charAt(0), rank: parseInt(koutsuKey.substring(1)) };
     const yakuhaiInfo = isYakuhai(tileObj, playerWind, roundWind);
+    // 自風牌
     if (yakuhaiInfo.isPlayerWind && !yakuList.some(y => y.name === YONHAI_YAKU.JIKAZE.name)) {
         yakuList.push(YONHAI_YAKU.JIKAZE); totalFans += YONHAI_YAKU.JIKAZE.fans;
     }
+    // 場風牌
     if (yakuhaiInfo.isRoundWind && !yakuList.some(y => y.name === YONHAI_YAKU.BAKAZE.name)) {
         yakuList.push(YONHAI_YAKU.BAKAZE); totalFans += YONHAI_YAKU.BAKAZE.fans;
     }
+    // 三元牌
     if (yakuhaiInfo.isSangenpai) {
+      // 同じ三元牌が複数回役牌としてカウントされないようにチェック
       if (!yakuList.some(y => y.name === YONHAI_YAKU.SANGENPAI.name && getTileKey(y.tile) === getTileKey(tileObj))) {
         yakuList.push({ ...YONHAI_YAKU.SANGENPAI, tile: tileObj }); // どの三元牌かを記録
         totalFans += YONHAI_YAKU.SANGENPAI.fans;
@@ -786,12 +845,13 @@ function calculateYonhaiYaku(handData) {
     yakuList.push(YONHAI_YAKU.HOUTEI_RAOYUI);
     totalFans += YONHAI_YAKU.HOUTEI_RAOYUI.fans;
   }
-  // ドラ・裏ドラの計算
+  // --- ドラ・裏ドラの計算 ---
   const doraCount = countDora(hand, doraIndicators);
   if (doraCount > 0) {
     yakuList.push({ ...YONHAI_YAKU.DORA, fans: doraCount });
     totalFans += doraCount;
   }
+  // リーチしている場合のみ裏ドラをカウント
   if ((isRiichi || isDoubleRiichi) && uraDoraIndicators && uraDoraIndicators.length > 0) {
     const uraDoraCount = countDora(hand, uraDoraIndicators);
     if (uraDoraCount > 0) {
@@ -800,6 +860,7 @@ function calculateYonhaiYaku(handData) {
     }
   }
 
+  // --- 最終結果の返却 ---
   // 役満が成立している場合は、役満のみを返す (通常役とは複合しない)
   if (totalYakumanPower > 0) {
     return { yaku: [], fans: 0, yakuman: yakumanList, yakumanPower: totalYakumanPower };
@@ -814,14 +875,19 @@ function calculateYonhaiYaku(handData) {
  * @returns {Array<Object>} 裏ドラ表示牌の配列
  */
 export function getUraDoraIndicators(deadWall, revealedDoraIndicators) {
+  // 王牌または表ドラ表示牌がなければ、裏ドラは存在しない
   if (!deadWall || !revealedDoraIndicators || revealedDoraIndicators.length === 0) {
     return [];
   }
   const uraDoraIndicators = [];
-  const uraDoraIndicatorPositions = [5, 7, 9, 11]; // 表ドラ表示牌の真下の牌 (0-indexed)
+  // 裏ドラ表示牌の位置 (王牌の表ドラ表示牌の真下の牌)
+  // 王牌14枚の構成: [嶺上1,嶺上2,嶺上3,嶺上4, 表1,裏1, 表2,裏2, 表3,裏3, 表4,裏4, 予備,予備]
+  const uraDoraIndicatorPositions = [5, 7, 9, 11]; // 0-indexed
 
+  // 表示されている表ドラの数だけ裏ドラをめくる
   for (let i = 0; i < revealedDoraIndicators.length; i++) {
     const uraPos = uraDoraIndicatorPositions[i];
+    // 王牌の範囲内で裏ドラ表示牌が存在するかチェック
     if (deadWall.length > uraPos) {
       uraDoraIndicators.push(deadWall[uraPos]);
     }
@@ -833,29 +899,35 @@ export function getUraDoraIndicators(deadWall, revealedDoraIndicators) {
 // isTenho, isChiho, isRenho は handData のフラグで判定済み
 
 /**
- * 役牌かどうかを判定するヘルパー関数
- * @param {Object} tile - 判定対象の牌オブジェクト
- * @param {string} playerWind - 自風
- * @param {string} roundWind - 場風
- * @param {'player'|'round'|'sangen'} type - 判定タイプ
- * @returns {{isPlayerWind: boolean, isRoundWind: boolean, isSangenpai: boolean}}
+ * 役牌かどうかを判定するヘルパー関数。
+ * @param {Object} tile - 判定対象の牌オブジェクト。
+ * @param {string} playerWind - 自風（例: '東', '南'）。
+ * @param {string} roundWind - 場風（例: '東', '南'）。
+ * @returns {{isPlayerWind: boolean, isRoundWind: boolean, isSangenpai: boolean}} 役牌の成立状況を示すオブジェクト。
  */
 function isYakuhai(tile, playerWind, roundWind) {
   const result = { isPlayerWind: false, isRoundWind: false, isSangenpai: false };
+  // 字牌でなければ役牌ではない
   if (!tile || tile.suit !== SUITS.JIHAI) return result;
 
   const tileRank = tile.rank;
-  const windMap = { [PLAYER_WINDS.EAST]: JIHAI_TYPES.TON, [PLAYER_WINDS.SOUTH]: JIHAI_TYPES.NAN, [PLAYER_WINDS.WEST]: JIHAI_TYPES.SHA, [PLAYER_WINDS.NORTH]: JIHAI_TYPES.PEI };
+  // 風牌のランクと対応する風のマップ
+  const windMap = {
+    [PLAYER_WINDS.EAST]: JIHAI_TYPES.TON,
+    [PLAYER_WINDS.SOUTH]: JIHAI_TYPES.NAN,
+    [PLAYER_WINDS.WEST]: JIHAI_TYPES.SHA,
+    [PLAYER_WINDS.NORTH]: JIHAI_TYPES.PEI
+  };
 
-  // 自風
+  // 自風牌の判定
   if (windMap[playerWind] === tileRank) {
     result.isPlayerWind = true;
   }
-  // 場風 (東場のみ)
+  // 場風牌の判定 (このゲームでは場風は東のみを想定)
   if (windMap[roundWind] === tileRank && roundWind === PLAYER_WINDS.EAST) {
     result.isRoundWind = true;
   }
-  // 三元牌
+  // 三元牌の判定 (白、發、中)
   if (tileRank >= JIHAI_TYPES.HAKU && tileRank <= JIHAI_TYPES.CHUN) {
     result.isSangenpai = true;
   }
@@ -870,10 +942,13 @@ function isYakuhai(tile, playerWind, roundWind) {
  */
 function countDora(hand, doraIndicators) {
   let doraCount = 0;
+  // ドラ表示牌がなければドラは存在しない
   if (!doraIndicators || doraIndicators.length === 0) return 0;
 
+  // 各ドラ表示牌に対応する実際のドラ牌を計算
   const actualDoraTiles = doraIndicators.map(indicator => getNextTile(indicator));
 
+  // 手牌の各牌がドラ牌と一致するかをチェックし、ドラの枚数をカウント
   hand.forEach(handTile => {
     actualDoraTiles.forEach(doraTile => {
       if (doraTile && handTile.suit === doraTile.suit && handTile.rank === doraTile.rank) {
@@ -885,72 +960,110 @@ function countDora(hand, doraIndicators) {
 }
 
 /**
- * ドラ表示牌の次の牌（実際のドラ牌）を取得する
- * @param {Object} indicatorTile - ドラ表示牌
- * @returns {Object|null} ドラ牌、またはnull
+ * ドラ表示牌の次の牌（実際のドラ牌）を取得する。
+ * 数牌は次の数字、字牌は種類ごとに循環します。
+ * @param {Object} indicatorTile - ドラ表示牌オブジェクト。
+ * @returns {Object|null} 計算されたドラ牌オブジェクト、またはnull（不正な入力の場合）。
  */
 export function getNextTile(indicatorTile) {
   if (!indicatorTile) return null;
   let { suit, rank } = indicatorTile;
 
-  if (suit !== SUITS.JIHAI) { // 数牌
+  // 数牌の場合 (萬子、筒子、索子)
+  if (suit !== SUITS.JIHAI) {
+      // 9の次は1 (循環)
       rank = rank === 9 ? 1 : rank + 1;
-  } else { // 字牌
-      if (rank >= JIHAI_TYPES.TON && rank <= JIHAI_TYPES.PEI) { // 風牌
+  } else { // 字牌の場合
+      // 風牌 (東南西北) の循環
+      if (rank >= JIHAI_TYPES.TON && rank <= JIHAI_TYPES.PEI) {
+          // 北の次は東 (循環)
           rank = rank === JIHAI_TYPES.PEI ? JIHAI_TYPES.TON : rank + 1;
-      } else if (rank >= JIHAI_TYPES.HAKU && rank <= JIHAI_TYPES.CHUN) { // 三元牌
+      }
+      // 三元牌 (白發中) の循環
+      else if (rank >= JIHAI_TYPES.HAKU && rank <= JIHAI_TYPES.CHUN) {
+          // 中の次は白 (循環)
           rank = rank === JIHAI_TYPES.CHUN ? JIHAI_TYPES.HAKU : rank + 1;
       }
   }
-  return { suit, rank, id: `${suit}${rank}_dora` }; // idは仮
+  // 新しいドラ牌オブジェクトを生成 (IDは仮)
+  return { suit, rank, id: `${suit}${rank}_dora` };
 }
 
 
-// 四牌麻雀: 大三元 (白發中各1枚 + 雀頭2枚)
+/**
+ * 四牌麻雀における大三元役満の判定。
+ * 白・發・中がそれぞれ1枚以上あり、残りの2枚が雀頭を形成している場合に成立します。
+ * @param {Object} handData - 役判定に必要な手牌データ。
+ * @param {Array<Object>} handData.hand - 和了時の手牌5枚。
+ * @returns {boolean} 大三元が成立すればtrue。
+ */
 function isYonhaiDaisangen(handData) {
   const { hand } = handData;
+  // 手牌が5枚でなければ大三元は成立しない
   if (hand.length !== 5) return false;
 
+  // 白・發・中が手牌にそれぞれ1枚以上存在するかチェック
   const hasHaku = hand.some(t => t.suit === SUITS.JIHAI && t.rank === JIHAI_TYPES.HAKU);
   const hasHatsu = hand.some(t => t.suit === SUITS.JIHAI && t.rank === JIHAI_TYPES.HATSU);
   const hasChun = hand.some(t => t.suit === SUITS.JIHAI && t.rank === JIHAI_TYPES.CHUN);
 
+  // 3種類の三元牌が全て揃っていなければ不成立
   if (!(hasHaku && hasHatsu && hasChun)) return false;
 
-  // 白發中を1枚ずつ除いた残りの2枚が雀頭になっているか
+  // 白・發・中を1枚ずつ除いた残りの2枚が雀頭になっているかを確認
   const sangenTilesKeys = [
     getTileKey({ suit: SUITS.JIHAI, rank: JIHAI_TYPES.HAKU }),
     getTileKey({ suit: SUITS.JIHAI, rank: JIHAI_TYPES.HATSU }),
     getTileKey({ suit: SUITS.JIHAI, rank: JIHAI_TYPES.CHUN }),
   ];
-  const remaining = [];
-  const handKeys = hand.map(t => getTileKey(t));
-  const usedSangen = new Set();
+  const remaining = []; // 三元牌を除いた残りの牌
+  const handKeys = hand.map(t => getTileKey(t)); // 手牌の牌キーリスト
+  const usedSangen = new Set(); // 使用済みの三元牌キーを追跡
 
+  // 手牌をループし、三元牌を1枚ずつ取り除き、残りをremainingに格納
   for (const tileKey of handKeys) {
     if (sangenTilesKeys.includes(tileKey) && !usedSangen.has(tileKey)) {
-      usedSangen.add(tileKey);
+      usedSangen.add(tileKey); // 未使用の三元牌であれば使用済みとしてマーク
     } else {
+      // 三元牌でなければ、または既に1枚使用済みの三元牌であれば、残りの牌として追加
       remaining.push(hand.find(t => getTileKey(t) === tileKey)); // 元の牌オブジェクトを保持
     }
   }
-  // remainingの長さが2で、かつ同じ牌（雀頭）であれば大三元
+  // remainingの長さが2で、かつ同じ牌（雀頭）であれば大三元成立
   return remaining.length === 2 && getTileKey(remaining[0]) === getTileKey(remaining[1]);
 }
 
-// 四牌麻雀: 字一色 
+/**
+ * 四牌麻雀における字一色役満の判定。
+ * 全ての牌が字牌（東、南、西、北、白、發、中）で構成されている場合に成立します。
+ * @param {Object} handData - 役判定に必要な手牌データ。
+ * @param {Object} basicWinInfo - `checkBasicYonhaiWinCondition` の結果。
+ * @returns {boolean} 字一色が成立すればtrue。
+ */
 function isYonhaiTsuiisou(handData, basicWinInfo) {
   const { hand, melds } = handData;
+  // 基本和了形が成立していなければ不成立
   if (!basicWinInfo.isWin) return false;
-  const allTiles = [...hand, ...melds.flatMap(m => m.tiles)]; // meldsの牌も考慮
+  // 手牌と鳴き牌（あれば）を全て結合
+  const allTiles = [...hand, ...melds.flatMap(m => m.tiles)];
+  // 全ての牌が字牌であるかチェック
   return allTiles.every(tile => tile.suit === SUITS.JIHAI);
 }
 
-// 四牌麻雀: 緑一色
+/**
+ * 四牌麻雀における緑一色役満の判定。
+ * 全ての牌が緑色の牌（索子の2,3,4,6,8と發）で構成されている場合に成立します。
+ * @param {Object} handData - 役判定に必要な手牌データ。
+ * @param {Object} basicWinInfo - `checkBasicYonhaiWinCondition` の結果。
+ * @returns {boolean} 緑一色が成立すればtrue。
+ */
 function isYonhaiRyuiisou(handData, basicWinInfo) {
   const { hand, melds } = handData;
+  // 基本和了形が成立していなければ不成立
   if (!basicWinInfo.isWin) return false;
+  // 手牌と鳴き牌（あれば）を全て結合
   const allTiles = [...hand, ...melds.flatMap(m => m.tiles)];
+  // 緑色の牌のキーリスト
   const greenTiles = [
     getTileKey({ suit: SUITS.SOZU, rank: 2 }),
     getTileKey({ suit: SUITS.SOZU, rank: 3 }),
@@ -959,37 +1072,70 @@ function isYonhaiRyuiisou(handData, basicWinInfo) {
     getTileKey({ suit: SUITS.SOZU, rank: 8 }),
     getTileKey({ suit: SUITS.JIHAI, rank: JIHAI_TYPES.HATSU }), // 發
   ];
+  // 全ての牌が緑色の牌であるかチェック
   return allTiles.every(tile => greenTiles.includes(getTileKey(tile)));
 }
 
-// 四牌麻雀: 清老頭
+/**
+ * 四牌麻雀における清老頭役満の判定。
+ * 全ての牌が老頭牌（数牌の1と9）で構成されている場合に成立します。
+ * @param {Object} handData - 役判定に必要な手牌データ。
+ * @param {Object} basicWinInfo - `checkBasicYonhaiWinCondition` の結果。
+ * @returns {boolean} 清老頭が成立すればtrue。
+ */
 function isYonhaiChinroutou(handData, basicWinInfo) {
   const { hand, melds } = handData;
+  // 基本和了形が成立していなければ不成立
   if (!basicWinInfo.isWin) return false;
+  // 手牌と鳴き牌（あれば）を全て結合
   const allTiles = [...hand, ...melds.flatMap(m => m.tiles)];
+  // 老頭牌のランク
   const terminalTiles = [1, 9];
+  // 全ての牌が字牌ではなく、かつ老頭牌であるかチェック
   return allTiles.every(tile =>
     tile.suit !== SUITS.JIHAI && terminalTiles.includes(tile.rank)
   );
 }
 
-// 四牌麻雀: 一槓子 (四槓子の代用)
+/**
+ * 四牌麻雀における一槓子役満の判定（四槓子の代用役）。
+ * 1つの槓子（暗槓、明槓、加槓のいずれか）が含まれている場合に成立します。
+ * @param {Object} handData - 役判定に必要な手牌データ。
+ * @param {Object} basicWinInfo - `checkBasicYonhaiWinCondition` の結果。
+ * @returns {boolean} 一槓子が成立すればtrue。
+ */
 function isYonhaiIikantsu(handData, basicWinInfo) {
-  const { melds, hand } = handData;
+  const { melds } = handData;
+  // 基本和了形が成立していなければ不成立
   if (!basicWinInfo.isWin) return false;
+  // 成立している槓子の数をカウント
   const kanCount = melds.filter(m => m.type === 'ankan' || m.type === 'minkan' || m.type === 'kakan').length;
+  // 槓子が1つであれば成立
   return kanCount === 1;
 }
 
-// 四牌麻雀: 小四喜
+/**
+ * 四牌麻雀における小四喜役満の判定。
+ * 門前で、風牌4種全てが手牌にあり、そのうち3種が単牌、残り1種が雀頭を形成し、
+ * その雀頭が和了牌ではない場合に成立します。
+ * @param {Object} handData - 役判定に必要な手牌データ。
+ * @param {Array<Object>} handData.hand - 和了時の手牌5枚。
+ * @param {Object} handData.winTile - 和了牌。
+ * @param {Array<Object>} handData.melds - 鳴きの情報。
+ * @param {Object} basicWinInfo - `checkBasicYonhaiWinCondition` の結果。
+ * @returns {boolean} 小四喜が成立すればtrue。
+ */
 function isYonhaiShousuushi(handData, basicWinInfo) {
   const { hand, winTile, melds } = handData; // hand は和了形5枚
+  // 基本和了形が成立していなければ不成立
   if (!basicWinInfo.isWin) return false;
+  // 手牌が5枚でなければ不成立
   if (hand.length !== 5) return false;
-  if ((melds || []).length > 0) return false; // 門前限定
+  // 門前限定
+  if ((melds || []).length > 0) return false;
 
   const windTiles = [JIHAI_TYPES.TON, JIHAI_TYPES.NAN, JIHAI_TYPES.SHA, JIHAI_TYPES.PEI];
-  const handWindCounts = {};
+  const handWindCounts = {}; // 手牌中の風牌の出現回数をカウント
   windTiles.forEach(wt => handWindCounts[wt] = 0);
 
   hand.forEach(tile => {
@@ -1001,7 +1147,7 @@ function isYonhaiShousuushi(handData, basicWinInfo) {
   // 和了牌を除いた手牌4枚を考える
   const winTileKey = getTileKey(winTile);
   let winTileRemoved = false;
-  const originalHand4 = [];
+  const originalHand4 = []; // 和了牌を除いた手牌
   for (const tile of hand) {
     if (getTileKey(tile) === winTileKey && !winTileRemoved) {
       winTileRemoved = true;
@@ -1009,12 +1155,13 @@ function isYonhaiShousuushi(handData, basicWinInfo) {
       originalHand4.push(tile);
     }
   }
-  if (originalHand4.length !== 4) return false; // 和了牌が手牌になかった場合など
+  // 和了牌が手牌になかった場合など、手牌が4枚でなければ不成立
+  if (originalHand4.length !== 4) return false;
 
-  const originalHandWindCounts = {};
+  const originalHandWindCounts = {}; // 和了牌を除いた手牌4枚中の風牌の出現回数
   windTiles.forEach(wt => originalHandWindCounts[wt] = 0);
-  let distinctWindTypesInOriginalHand4 = 0;
-  let jantouWindInOriginalHand4 = null;
+  let distinctWindTypesInOriginalHand4 = 0; // 4枚の手牌に含まれる風牌の種類数
+  let jantouWindInOriginalHand4 = null; // 4枚の手牌中の雀頭を形成する風牌
 
   originalHand4.forEach(tile => {
     if (tile.suit === SUITS.JIHAI && windTiles.includes(tile.rank)) {
@@ -1034,29 +1181,41 @@ function isYonhaiShousuushi(handData, basicWinInfo) {
   }
 
   // 和了牌が、手牌4枚に存在しない残り1種類の風牌であるか
-  let missingWindType = null;
+  let missingWindType = null; // 手牌4枚に含まれていない風牌
   for (const wt of windTiles) {
-    if (originalHandWindCounts[wt] === 0) { // 手牌4枚の中に含まれていない風牌
+    if (originalHandWindCounts[wt] === 0) {
       missingWindType = wt;
       break;
     }
   }
+  // 和了牌が字牌であり、かつ手牌4枚に含まれていなかった風牌である場合に成立
   return winTile.suit === SUITS.JIHAI && winTile.rank === missingWindType;
 }
 
-// 四牌麻雀: 大四喜
+/**
+ * 四牌麻雀における大四喜役満の判定。
+ * 門前で、風牌4種全てが刻子（または槓子）と雀頭を形成している場合に成立します。
+ * @param {Object} handData - 役判定に必要な手牌データ。
+ * @param {Array<Object>} handData.hand - 和了時の手牌5枚。
+ * @param {Object} handData.winTile - 和了牌。
+ * @param {Array<Object>} handData.melds - 鳴きの情報。
+ * @param {Object} basicWinInfo - `checkBasicYonhaiWinCondition` の結果。
+ * @returns {boolean} 大四喜が成立すればtrue。
+ */
 function isYonhaiDaisuushi(handData, basicWinInfo) {
   const { hand, winTile, melds } = handData; // hand は和了形5枚
+  // 基本和了形が成立していなければ不成立
   if (!basicWinInfo.isWin) return false;
+  // 手牌が5枚でなければ不成立
   if (hand.length !== 5) return false;
-  if ((melds || []).length > 0) return false; // 門前限定
-
+  // 門前限定
+  if ((melds || []).length > 0) return false;
 
   const windTiles = [JIHAI_TYPES.TON, JIHAI_TYPES.NAN, JIHAI_TYPES.SHA, JIHAI_TYPES.PEI];
   // 和了牌を除いた手牌4枚を考える
   const winTileKey = getTileKey(winTile);
   let winTileRemoved = false;
-  const originalHand4 = [];
+  const originalHand4 = []; // 和了牌を除いた手牌
   for (const tile of hand) {
     if (getTileKey(tile) === winTileKey && !winTileRemoved) {
       winTileRemoved = true;
@@ -1064,25 +1223,38 @@ function isYonhaiDaisuushi(handData, basicWinInfo) {
       originalHand4.push(tile);
     }
   }
-  if (originalHand4.length !== 4) return false; // 和了牌が手牌になかった場合など
+  // 和了牌が手牌になかった場合など、手牌が4枚でなければ不成立
+  if (originalHand4.length !== 4) return false;
 
-  // originalHand4 に4種類の風牌が全て含まれているか
+  // originalHand4 に4種類の風牌が全て含まれているかチェック
   let distinctWindsInOriginalHand4 = 0;
   for (const wt of windTiles) {
     if (originalHand4.some(t => t.suit === SUITS.JIHAI && t.rank === wt)) {
       distinctWindsInOriginalHand4++;
     }
   }
+  // 4種類の風牌が全て含まれていなければ不成立
   if (distinctWindsInOriginalHand4 !== 4) return false;
 
   // 和了牌がその4種類の風牌のいずれかであること
   return winTile.suit === SUITS.JIHAI && windTiles.includes(winTile.rank);
 }
 
-// 四牌麻雀: 一暗槓単騎 (四暗刻単騎の代用)
-function isYonhaiIiankantanki(handData) { // 四暗刻単騎の代用 (一暗槓単騎)
-  const { melds, hand, winTile, basicWinInfo } = handData; // basicWinInfo を追加
+/**
+ * 四牌麻雀における一暗槓単騎役満の判定（四暗刻単騎の代用役）。
+ * 1つの暗槓が含まれ、かつ手牌が2枚で雀頭を形成し、その雀頭が和了牌である場合に成立します。
+ * @param {Object} handData - 役判定に必要な手牌データ。
+ * @param {Array<Object>} handData.melds - 鳴きの情報。
+ * @param {Array<Object>} handData.hand - 和了時の手牌5枚。
+ * @param {Object} handData.winTile - 和了牌。
+ * @param {Object} handData.basicWinInfo - `checkBasicYonhaiWinCondition` の結果。
+ * @returns {boolean} 一暗槓単騎が成立すればtrue。
+ */
+function isYonhaiIiankantanki(handData) {
+  const { melds, hand, winTile, basicWinInfo } = handData;
+  // 基本和了形が成立していなければ不成立
   if (!basicWinInfo.isWin) return false;
+  // 暗槓が1つでなければ不成立
   const ankanCount = melds.filter(m => m.type === 'ankan').length;
   if (ankanCount !== 1) return false;
 
@@ -1090,19 +1262,41 @@ function isYonhaiIiankantanki(handData) { // 四暗刻単騎の代用 (一暗槓
   return hand.length === 2 && getTileKey(hand[0]) === getTileKey(hand[1]) && getTileKey(hand[0]) === getTileKey(winTile);
 }
 
-// 四牌麻雀：タンヤオ
+/**
+ * 四牌麻雀における断么九（タンヤオ）の判定。
+ * 全ての牌が中張牌（数牌の2～8）で構成されている場合に成立します。
+ * @param {Object} handData - 役判定に必要な手牌データ。
+ * @param {Array<Object>} handData.hand - 和了時の手牌5枚。
+ * @param {Array<Object>} handData.melds - 鳴きの情報。
+ * @param {Object} basicWinInfo - `checkBasicYonhaiWinCondition` の結果。
+ * @returns {boolean} 断么九が成立すればtrue。
+ */
 function isYonhaiTanyao(handData) {
-  const { hand, melds, basicWinInfo } = handData; // basicWinInfo を追加
+  const { hand, melds, basicWinInfo } = handData;
+  // 基本和了形が成立していなければ不成立
   if (!basicWinInfo.isWin) return false;
+  // 手牌と鳴き牌（あれば）を全て結合
   const allTiles = [...hand, ...melds.flatMap(m => m.tiles)];
+  // 全ての牌が字牌ではなく、かつ1と9の牌でもない（中張牌である）かチェック
   return allTiles.every(tile =>
     tile.suit !== SUITS.JIHAI && tile.rank !== 1 && tile.rank !== 9
   );
 }
 
-// 四牌麻雀: 平和
+/**
+ * 四牌麻雀における平和（ピンフ）の判定。
+ * 門前で、面子が順子、雀頭が役牌でなく、待ちが両面待ちの場合に成立します。
+ * @param {Object} handData - 役判定に必要な手牌データ。
+ * @param {Array<Object>} handData.hand - 和了時の手牌5枚。
+ * @param {Object} handData.winTile - 和了牌。
+ * @param {Array<Object>} handData.melds - 鳴きの情報。
+ * @param {string} handData.playerWind - 自風。
+ * @param {string} handData.roundWind - 場風。
+ * @param {Object} basicWinInfo - `checkBasicYonhaiWinCondition` の結果。
+ * @returns {boolean} 平和が成立すればtrue。
+ */
 function isYonhaiPinfu(handData, basicWinInfo) {
-  const { hand, winTile, melds, playerWind, roundWind } = handData;
+  const { winTile, melds, playerWind, roundWind } = handData;
 
   // 1. 門前限定
   if (melds && melds.length > 0) return false;
@@ -1134,6 +1328,7 @@ function isYonhaiPinfu(handData, basicWinInfo) {
   // 辺張待ち(123の3、789の7)を除外
   const isPenchanWait = (mentsu[0].rank === 1 && winTile.rank === 3) || (mentsu[0].rank === 7 && winTile.rank === 7);
 
+  // 両面待ちであり、かつ辺張待ちではない場合に成立
   if (isRyanmenWait && !isPenchanWait) {
     return true; // 全ての平和の条件を満たす
   }
@@ -1141,19 +1336,26 @@ function isYonhaiPinfu(handData, basicWinInfo) {
   return false;
 }
 
-// 四牌麻雀: 対々和
+/**
+ * 四牌麻雀における対々和（トイトイホー）の判定。
+ * 全ての面子が刻子（または槓子）で構成されている場合に成立します。
+ * 平和とは複合しません。
+ * @param {Object} handData - 役判定に必要な手牌データ。
+ * @param {Object} basicWinInfo - `checkBasicYonhaiWinCondition` の結果。
+ * @returns {boolean} 対々和が成立すればtrue。
+ */
 function isYonhaiToitoi(handData, basicWinInfo) {
-  // 平和とは複合しない
+  // 平和とは複合しないため、平和が成立していれば不成立
   if (isYonhaiPinfu(handData, basicWinInfo)) {
     return false;
   }
 
-  // 三色同刻の特殊形の場合、無条件で対々和とする
+  // 三色同刻の特殊形（三色同刻の刻子形）の場合、無条件で対々和とみなす
   if (basicWinInfo.mentsuType === 'sanshoku_special') {
     return true;
   }
 
-  // 基本的な和了形で、面子が刻子(koutsu)であれば対々和
+  // 基本的な和了形が成立しており、かつ面子が刻子(koutsu)であれば対々和
   if (!basicWinInfo.isWin || basicWinInfo.mentsuType !== 'koutsu') {
     return false;
   }
@@ -1161,21 +1363,31 @@ function isYonhaiToitoi(handData, basicWinInfo) {
   return true;
 }
 
-// 四牌麻雀: 一暗刻 (三暗刻の代用で一暗刻)
+/**
+ * 四牌麻雀における一暗刻の判定（三暗刻の代用役）。
+ * 鳴きがなく、手牌中に1つ以上の暗刻（暗槓またはツモ和了による暗刻）がある場合に成立します。
+ * @param {Object} handData - 役判定に必要な手牌データ。
+ * @param {Array<Object>} handData.hand - 和了時の手牌5枚。
+ * @param {Array<Object>} handData.melds - 鳴きの情報。
+ * @param {Object} handData.winTile - 和了牌。
+ * @param {boolean} handData.isTsumo - ツモ和了か。
+ * @param {Object} basicWinInfo - `checkBasicYonhaiWinCondition` の結果。
+ * @returns {boolean} 一暗刻が成立すればtrue。
+ */
 function isYonhaiIianko(handData, basicWinInfo) {
-  const { hand, melds, winTile, isTsumo } = handData;
+  const { melds, winTile, isTsumo } = handData;
 
-  // そもそも和了していなければ役はつかない
+  // そもそも和了形が成立していなければ不成立
   if (!basicWinInfo.isWin) {
     return false;
   }
 
-  // 鳴き（ポン、明槓、加槓）がある場合は一暗刻は成立しない
+  // 鳴き（ポン、明槓、加槓）がある場合は一暗刻は成立しない（門前限定ではないが、鳴くと暗刻にならないため）
   if (melds.some(m => m.type === 'pon' || m.type === 'minkan' || m.type === 'kakan')) {
     return false;
   }
 
-  let ankouCount = 0;
+  let ankouCount = 0; // 暗刻の数
 
   // 1. 暗槓(ankan)をチェック
   if (melds) {
@@ -1183,11 +1395,11 @@ function isYonhaiIianko(handData, basicWinInfo) {
   }
 
   // 2. 手牌の中の暗刻をチェック
-  // 和了形が刻子を含んでいるか
+  // 基本和了形が刻子を含んでいるか
   if (basicWinInfo.mentsuType === 'koutsu') {
-    const koutsu = basicWinInfo.mentsu;
-    const koutsuKey = getTileKey(koutsu[0]);
-    const winTileKey = getTileKey(winTile);
+    const koutsu = basicWinInfo.mentsu; // 刻子を構成する牌
+    const koutsuKey = getTileKey(koutsu[0]); // 刻子の牌の種類
+    const winTileKey = getTileKey(winTile); // 和了牌の種類
 
     // ツモ和了の場合は、その刻子は常に暗刻
     // ロン和了の場合は、和了牌で完成した刻子は明刻扱いになるため、暗刻ではない
@@ -1196,88 +1408,163 @@ function isYonhaiIianko(handData, basicWinInfo) {
     }
   }
 
+  // 暗刻が1つ以上あれば成立
   return ankouCount >= 1;
 }
 
-// 四牌麻雀: 混老頭 (全て幺九牌)
+/**
+ * 四牌麻雀における混老頭（ホンロウトウ）の判定。
+ * 全ての牌が幺九牌（数牌の1,9と字牌）で構成されている場合に成立します。
+ * @param {Object} handData - 役判定に必要な手牌データ。
+ * @param {Array<Object>} handData.hand - 和了時の手牌5枚。
+ * @param {Array<Object>} handData.melds - 鳴きの情報。
+ * @param {Object} basicWinInfo - `checkBasicYonhaiWinCondition` の結果。
+ * @returns {boolean} 混老頭が成立すればtrue。
+ */
 function isYonhaiHonroutou(handData, basicWinInfo) {
   const { hand, melds } = handData;
+  // 基本和了形が成立していなければ不成立
   if (!basicWinInfo.isWin) return false;
+  // 手牌と鳴き牌（あれば）を全て結合
   const allTiles = [...hand, ...melds.flatMap(m => m.tiles)];
+  // 幺九牌であるかどうかの判定ヘルパー関数
   const isYaochuhai = (tile) => {
-    if (tile.suit === SUITS.JIHAI) return true;
-    return tile.rank === 1 || tile.rank === 9;
+    if (tile.suit === SUITS.JIHAI) return true; // 字牌は全て幺九牌
+    return tile.rank === 1 || tile.rank === 9; // 数牌の1と9は幺九牌
   };
+  // 全ての牌が幺九牌であるかチェック
   return allTiles.every(isYaochuhai);
 }
 
-// 四牌麻雀: 混全帯么九 (チャンタ)
+/**
+ * 四牌麻雀における混全帯么九（チャンタ）の判定。
+ * 全ての面子と雀頭が幺九牌（数牌の1,9と字牌）を含み、かつ字牌が含まれる場合に成立します。
+ * @param {Object} handData - 役判定に必要な手牌データ。
+ * @param {Array<Object>} handData.hand - 和了時の手牌5枚。
+ * @param {Array<Object>} handData.melds - 鳴きの情報。
+ * @param {Object} basicWinInfo - `checkBasicYonhaiWinCondition` の結果。
+ * @returns {boolean} 混全帯么九が成立すればtrue。
+ */
 function isYonhaiChanta(handData, basicWinInfo) {
-  const { hand, melds } = handData;
+  const { melds } = handData;
+  // 基本和了形が成立していなければ不成立
   if (!basicWinInfo.isWin) return false;
 
-  // 順子が含まれている必要がある。四麻の鳴きは刻子のみなので、門前限定。
+  // 順子が含まれている必要がある。四牌麻雀の鳴きは刻子のみなので、門前限定。
+  // 鳴きがある場合、または面子が順子でなければ不成立
   if (melds.length > 0 || basicWinInfo.mentsuType !== 'shuntsu') {
     return false;
   }
 
-  const allGroups = []; // [ [雀頭], [面子] ]
+  const allGroups = []; // 雀頭と面子を格納する配列
   if (basicWinInfo.jantou) allGroups.push(basicWinInfo.jantou);
   if (basicWinInfo.mentsu) allGroups.push(basicWinInfo.mentsu);
 
+  // 各グループ（雀頭、面子）が幺九牌（字牌または数牌の1,9）を含んでいるかチェック
   const isYaochuhai = (tile) => (tile.suit === SUITS.JIHAI || tile.rank === 1 || tile.rank === 9);
   if (!allGroups.every(group => Array.isArray(group) && group.some(isYaochuhai))) return false;
+
+  // 全ての牌の中に字牌が1枚でも含まれているかチェック
   return allGroups.flat().filter(Boolean).some(tile => tile.suit === SUITS.JIHAI);
 }
 
-// 四牌麻雀: 純全帯么九 (ジュンチャン)
+/**
+ * 四牌麻雀における純全帯么九（ジュンチャン）の判定。
+ * 全ての面子と雀頭が老頭牌（数牌の1,9）を含む順子で構成され、字牌を含まない場合に成立します。
+ * @param {Object} handData - 役判定に必要な手牌データ。
+ * @param {Array<Object>} handData.hand - 和了時の手牌5枚。
+ * @param {Array<Object>} handData.melds - 鳴きの情報。
+ * @param {Object} basicWinInfo - `checkBasicYonhaiWinCondition` の結果。
+ * @returns {boolean} 純全帯么九が成立すればtrue。
+ */
 function isYonhaiJunchan(handData, basicWinInfo) {
-  const { hand, melds } = handData;
+  const { melds } = handData;
+  // 基本和了形が成立していなければ不成立
   if (!basicWinInfo.isWin) return false;
 
-  // 順子が含まれている必要がある。四麻の鳴きは刻子のみなので、門前限定。
+  // 順子が含まれている必要がある。四牌麻雀の鳴きは刻子のみなので、門前限定。
+  // 鳴きがある場合、または面子が順子でなければ不成立
   if (melds.length > 0 || basicWinInfo.mentsuType !== 'shuntsu') {
     return false;
   }
 
-  const allGroups = [];
+  const allGroups = []; // 雀頭と面子を格納する配列
   if (basicWinInfo.jantou) allGroups.push(basicWinInfo.jantou);
   if (basicWinInfo.mentsu) allGroups.push(basicWinInfo.mentsu);
 
+  // 各グループ（雀頭、面子）が老頭牌（数牌の1,9）を含んでいるかチェック
   const isTerminal = (tile) => (tile.suit !== SUITS.JIHAI && (tile.rank === 1 || tile.rank === 9));
   if (!allGroups.every(group => Array.isArray(group) && group.some(isTerminal))) return false;
+
+  // 全ての牌の中に字牌が1枚も含まれていないかチェック
   return !allGroups.flat().filter(Boolean).some(tile => tile.suit === SUITS.JIHAI);
 }
 
-// 四牌麻雀: 混一色 (ホンイツ)
+/**
+ * 四牌麻雀における混一色（ホンイツ）の判定。
+ * 字牌と一種類の数牌のみで構成されている場合に成立します。
+ * @param {Object} handData - 役判定に必要な手牌データ。
+ * @param {Array<Object>} handData.hand - 和了時の手牌5枚。
+ * @param {Array<Object>} handData.melds - 鳴きの情報。
+ * @param {Object} basicWinInfo - `checkBasicYonhaiWinCondition` の結果。
+ * @returns {boolean} 混一色が成立すればtrue。
+ */
 function isYonhaiHonitsu(handData, basicWinInfo) {
   const { hand, melds } = handData;
+  // 基本和了形が成立していなければ不成立
   if (!basicWinInfo.isWin) return false;
+  // 手牌と鳴き牌（あれば）を全て結合
   const allTiles = [...hand, ...melds.flatMap(m => m.tiles)];
 
+  // 含まれる牌の種類（スーツ）をセットで取得
   const suitsPresent = new Set(allTiles.map(t => t.suit));
+
+  // 数牌が2種類以上含まれていれば不成立
   if (suitsPresent.has(SUITS.MANZU) && suitsPresent.has(SUITS.PINZU)) return false;
   if (suitsPresent.has(SUITS.MANZU) && suitsPresent.has(SUITS.SOZU)) return false;
   if (suitsPresent.has(SUITS.PINZU) && suitsPresent.has(SUITS.SOZU)) return false;
   
-  return suitsPresent.has(SUITS.JIHAI) && // 字牌を含む
-         (suitsPresent.has(SUITS.MANZU) || suitsPresent.has(SUITS.PINZU) || suitsPresent.has(SUITS.SOZU)); // かつ数牌を1種類含む
+  // 字牌を含み、かつ数牌を1種類のみ含む場合に成立
+  return suitsPresent.has(SUITS.JIHAI) &&
+         (suitsPresent.has(SUITS.MANZU) || suitsPresent.has(SUITS.PINZU) || suitsPresent.has(SUITS.SOZU));
 }
 
-// 四牌麻雀: 清一色 (チンイツ)
+/**
+ * 四牌麻雀における清一色（チンイツ）の判定。
+ * 一種類の数牌のみで構成されている場合に成立します。字牌は含みません。
+ * @param {Object} handData - 役判定に必要な手牌データ。
+ * @param {Array<Object>} handData.hand - 和了時の手牌5枚。
+ * @param {Array<Object>} handData.melds - 鳴きの情報。
+ * @param {Object} basicWinInfo - `checkBasicYonhaiWinCondition` の結果。
+ * @returns {boolean} 清一色が成立すればtrue。
+ */
 function isYonhaiChinitsu(handData, basicWinInfo) {
   const { hand, melds } = handData;
+  // 基本和了形が成立していなければ不成立
   if (!basicWinInfo.isWin) return false;
+  // 手牌と鳴き牌（あれば）を全て結合
   const allTiles = [...hand, ...melds.flatMap(m => m.tiles)];
 
+  // 字牌が含まれていれば不成立
   if (allTiles.some(tile => tile.suit === SUITS.JIHAI)) return false;
+  // 最初の牌のスーツを取得
   const firstSuit = allTiles[0].suit;
+  // 全ての牌が最初の牌と同じスーツであるかチェック
   return allTiles.every(tile => tile.suit === firstSuit);
 }
 
-// 四牌麻雀: 三色同刻 (サンショクドウコウ)
+/**
+ * 四牌麻雀における三色同刻（サンショクドウコウ）の判定。
+ * 萬子、筒子、索子で同じ数字の刻子（または槓子）をそれぞれ1つずつ持っている場合に成立します。
+ * @param {Object} handData - 役判定に必要な手牌データ。
+ * @param {Array<Object>} handData.hand - 和了時の手牌5枚。
+ * @param {Array<Object>} handData.melds - 鳴きの情報。
+ * @param {Object} basicWinInfo - `checkBasicYonhaiWinCondition` の結果。
+ * @returns {boolean} 三色同刻が成立すればtrue。
+ */
 function isYonhaiSanshokuDoukou(handData, basicWinInfo) {
-  const { hand, melds } = handData;
+  const { melds } = handData;
+  // 基本和了形が成立していなければ不成立
   if (!basicWinInfo || !basicWinInfo.isWin) return false;
 
   // 鳴いている場合は対象外 (このゲームのルール)
@@ -1285,22 +1572,23 @@ function isYonhaiSanshokuDoukou(handData, basicWinInfo) {
     return false;
   }
 
-  // checkBasicYonhaiWinCondition で sanshoku_special と判定された場合
+  // checkBasicYonhaiWinCondition で sanshoku_special と判定された場合（特殊な5枚構成）
   if (basicWinInfo.mentsuType === 'sanshoku_special') {
     return true;
   }
 
-  // 通常の三色同刻（3つの刻子）の判定も残す場合
+  // 通常の三色同刻（3つの刻子）の判定
+  // 基本和了形が刻子を含んでいる場合
   if (basicWinInfo.mentsuType === 'koutsu') {
-      const koutsu = basicWinInfo.mentsu;
-      const jantou = basicWinInfo.jantou;
+      const koutsu = basicWinInfo.mentsu; // 基本和了形を構成する刻子
+      const jantou = basicWinInfo.jantou; // 基本和了形を構成する雀頭
 
-      // 刻子と雀頭が同じ数字・スーツであってはならない
+      // 刻子と雀頭が同じ数字・スーツであってはならない（対々和との複合を避けるため）
       if (getTileKey(koutsu[0]) === getTileKey(jantou[0])) {
           return false;
       }
 
-      // 3つの異なるスーツの同じランクの刻子を探す
+      // 全ての刻子（手牌中の暗刻、鳴きによるポン・カン）の牌の種類をカウント
       const koutsuCounts = {};
       const allKoutsuTiles = [...melds.filter(m => m.type.includes('kan') || m.type === 'pon').flatMap(m => m.tiles), ...koutsu];
       
@@ -1309,6 +1597,7 @@ function isYonhaiSanshokuDoukou(handData, basicWinInfo) {
           koutsuCounts[key] = (koutsuCounts[key] || 0) + 1;
       });
 
+      // 萬子、筒子、索子で同じランクの刻子が存在するかチェック
       for (let rank = 1; rank <= 9; rank++) {
           const manKey = `m${rank}`;
           const pinKey = `p${rank}`;
@@ -1336,8 +1625,8 @@ export function checkYonhaiWin(currentHandWithWinTile, winTile, isTsumo, gameCon
   const isParent = gameContext.isParent || false;
   let basicWinInfo = { isWin: false, mentsuType: null, jantou: null, mentsu: null };
 
+  // --- 鳴き（ポン、カン）がある場合の和了形判定 ---
   if (melds.length > 0) {
-    // 鳴き（ポン、カン）がある場合
     // 手牌から鳴き牌を除外し、残りの2枚が雀頭を形成するかどうかを判定します。
     // 暗槓も他の鳴きと同様に、手牌から除外して雀頭判定を行います。
 
@@ -1377,7 +1666,8 @@ export function checkYonhaiWin(currentHandWithWinTile, winTile, isTsumo, gameCon
       };
     }
   } else {
-    // 鳴きがない場合（門前）、5枚の手牌全体で和了形を判定します。
+    // --- 鳴きがない場合（門前）の和了形判定 ---
+    // 5枚の手牌全体で和了形を判定します。
     const sortedHand = sortHand([...currentHandWithWinTile]);
     basicWinInfo = checkBasicYonhaiWinCondition(sortedHand);
   }
@@ -1411,13 +1701,13 @@ export function checkYonhaiWin(currentHandWithWinTile, winTile, isTsumo, gameCon
     const isParent = gameContext.isParent || false;
     const yakuResult = calculateYonhaiYaku(handDataForYaku);
 
-    // 役なし和了は認めないため、役がない場合は isWin = false
+    // --- 役なし和了（チョンボ）の処理 ---
+    // 役なし和了は認めないため、役がない場合はチョンボとして扱う
     if (yakuResult.fans === 0 && yakuResult.yakumanPower === 0) {
-        // 役なしチョンボとして扱う
-        const chomboScore = isParent ? -12000 : -8000;
+        const chomboScore = isParent ? -12000 : -8000; // 親か子かでチョンボの点数を設定
         return {
             isWin: true, // 和了形は成立しているが、役がない状態
-            yaku: [{ name: "役なしチョンボ", fans: 0, isChombo: true }],
+            yaku: [{ name: "役なしチョンボ", fans: 0, isChombo: true }], // チョンボ役を追加
             score: chomboScore, // チョンボしたプレイヤーが失う点数
             fans: 0,
             isYakuman: false,
@@ -1425,7 +1715,7 @@ export function checkYonhaiWin(currentHandWithWinTile, winTile, isTsumo, gameCon
             scoreName: "役なしチョンボ",
             isChombo: true, // チョンボであることを示すフラグ
             chomboPlayerIsParent: isParent, // チョンボしたのが親かどうかのフラグ
-            chomboHand: currentHandWithWinTile
+            chomboHand: currentHandWithWinTile // チョンボ時の手牌
         };
     }
 
@@ -1500,6 +1790,7 @@ export function checkYonhaiWin(currentHandWithWinTile, winTile, isTsumo, gameCon
       isWinResult = false;
     }
 
+    // 最終的な和了結果を返却
     if (isWinResult) {
       return { 
         isWin: true, 
@@ -1517,16 +1808,20 @@ export function checkYonhaiWin(currentHandWithWinTile, winTile, isTsumo, gameCon
 }
 
 /**
- * 四牌麻雀の4枚手牌におけるテンパイ判定と待ち牌を返す
- * @param {Array<Object>} hand4tiles - ソート済みの手牌4枚 (牌オブジェクトの配列)
- * @returns {{isTenpai: boolean, waits: Array<Object>}}
+ * 四牌麻雀の4枚手牌におけるテンパイ判定と待ち牌を返します。
+ * @param {Array<Object>} hand4tiles - ソート済みの手牌4枚 (牌オブジェクトの配列)。
+ * @param {Object} gameContext - ゲームのコンテキスト情報 (現在は未使用だが将来的な拡張用)。
+ * @returns {{isTenpai: boolean, waits: Array<Object>}} テンパイ状況と待ち牌の配列。
  */
-export function checkYonhaiTenpai(hand4tiles, gameContext = {}) { // gameContext を追加
+export function checkYonhaiTenpai(hand4tiles, gameContext = {}) {
+  // 手牌が4枚または1枚でなければテンパイ判定は行わない
   if (!hand4tiles || (hand4tiles.length !== 4 && hand4tiles.length !== 1)) {
     return { isTenpai: false, waits: [] };
   }
 
-  const waits = [];
+  const waits = []; // 待ち牌を格納する配列
+
+  // 手牌が1枚の場合（単騎待ち）
   if (hand4tiles.length === 1) {
     const waitingTile = { ...hand4tiles[0] }; // 待ち牌は手牌のコピー
     waits.push(waitingTile);
@@ -1534,9 +1829,10 @@ export function checkYonhaiTenpai(hand4tiles, gameContext = {}) { // gameContext
   }
 
   // 手牌が4枚の場合、ありえる待ち牌を全て試す
+  // 全ての牌種（重複なし）のリストを取得
   const allPossibleTiles = getAllTiles().filter(
     (tile, index, self) => index === self.findIndex(t => t.suit === tile.suit && t.rank === tile.rank)
-  ); // getAllTiles() から重複を除いた牌種リストを取得
+  );
 
   // 手牌の牌の枚数をカウント
   const handCounts = {};
@@ -1545,26 +1841,30 @@ export function checkYonhaiTenpai(hand4tiles, gameContext = {}) { // gameContext
     handCounts[key] = (handCounts[key] || 0) + 1;
   });
 
+  // 全ての可能な牌を1枚ずつ手牌に加えて和了形になるか試す
   for (const potentialTile of allPossibleTiles) {
     // 既に4枚持っている牌は、5枚目を待つことはできないのでスキップ
     const potentialTileKey = getTileKey(potentialTile);
     if ((handCounts[potentialTileKey] || 0) >= 4) {
       continue;
     }
+    // 仮想的に手牌に1枚加えて5枚にする
     const tempHand5 = sortHand([...hand4tiles, potentialTile]);
+    // 5枚の手牌で基本和了形が成立するかチェック
     const basicWinResult = checkBasicYonhaiWinCondition(tempHand5);
     if (basicWinResult.isWin) {
-      waits.push(potentialTile); // 実際に試した牌 (ID付き) を待ち牌として追加
+      waits.push(potentialTile); // 成立すれば待ち牌として追加
     }
   }
-  // 待ち牌の重複を除去
+  // 待ち牌の重複を除去し、ユニークな待ち牌のリストを作成
   const uniqueWaitKeys = new Set();
   const uniqueWaits = waits.filter(tile => {
       if (!tile) return false;
       const key = getTileKey(tile);
-      if (uniqueWaitKeys.has(key)) return false;
-      uniqueWaitKeys.add(key);
+      if (uniqueWaitKeys.has(key)) return false; // 既にリストにあればスキップ
+      uniqueWaitKeys.add(key); // セットに追加
       return true;
   });
+  // 待ち牌があればテンパイ、なければノーテン
   return { isTenpai: uniqueWaits.length > 0, waits: uniqueWaits };
 }

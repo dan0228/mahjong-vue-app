@@ -1,4 +1,4 @@
-/* src/assets/main.css (または既存のグローバルCSSファイル) */
+/* グローバルCSSスタイル */
 body, html, #app {
   -webkit-user-select: none; /* Safari */
   -moz-user-select: none;    /* Firefox */
@@ -24,10 +24,9 @@ input, textarea {
 }
 
 img {
-  -webkit-user-drag: none; /* Safari */
+  -webkit-user-drag: none; /* Safari, Chrome, Edge (WebKitベース) */
   -khtml-user-drag: none;  /* Konqueror HTML */
   -moz-user-drag: none;    /* Firefox */
   -o-user-drag: none;      /* Opera */
-  user-drag: none;         /* Standard syntax */
-  pointer-events: none;    /* クリックイベントなども無効化する場合 */
+  pointer-events: none;    /* クリックイベントなども無効化 */
 }

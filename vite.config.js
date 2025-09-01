@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import path from 'path';
+import fs from 'fs'; // fs モジュールをインポート
 
 // Viteの設定
 // https://vitejs.dev/config/
@@ -20,5 +21,9 @@ export default defineConfig({
   // 開発サーバーの設定を追加
   server: {
     host: true, // すべてのネットワークインターフェースでリッスン
+    https: {
+      key: fs.readFileSync(path.resolve(__dirname, 'localhost+1-key.pem')),
+      cert: fs.readFileSync(path.resolve(__dirname, 'localhost+1.pem')),
+    },
   },
 });

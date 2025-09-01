@@ -187,51 +187,6 @@ function isMobile() {
 }
 
 /**
- * 指定されたDOM要素内のすべての<img>のsrcを、canvasを使ってdata:URLに変換して埋め込みます。
- * @param {HTMLElement} element - 処理対象のDOM要素。
- * @returns {Function} 元の画像ソースに戻すためのクリーンアップ関数。
- */
-async function embedImages(element) {
-  const images = Array.from(element.querySelectorAll('img'));
-  const originalSrcs = new Map();
-
-  const promises = images.map(async (img) => {
-    if (img.src && !img.src.startsWith('data:')) {
-      originalSrcs.set(img, img.src);
-      try {
-        const imageLoader = new Image();
-        imageLoader.crossOrigin = "Anonymous";
-        
-        const dataUrl = await new Promise((resolve, reject) => {
-          imageLoader.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = imageLoader.naturalWidth;
-            canvas.height = imageLoader.naturalHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(imageLoader, 0, 0);
-            resolve(canvas.toDataURL('image/png'));
-          };
-          imageLoader.onerror = reject;
-          imageLoader.src = img.src;
-        });
-        img.src = dataUrl;
-
-      } catch (e) {
-        console.error("画像の埋め込みに失敗しました:", originalSrcs.get(img), e);
-      }
-    }
-  });
-
-  await Promise.all(promises);
-
-  return () => {
-    originalSrcs.forEach((src, img) => {
-      img.src = src;
-    });
-  };
-}
-
-/**
  * X (旧Twitter) に結果を投稿します。
  * スクリーンショットを生成し、Web Share API またはクリップボード経由で共有します。
  */
@@ -240,12 +195,11 @@ async function postToX() {
 
   const fontCssLink = document.querySelector('link[rel="stylesheet"][href*="fonts.googleapis.com"]');
   let newStyleElement = null;
-  let restoreImages = () => {};
 
   try {
     const node = popupContentRef.value;
 
-    // --- リソース埋め込み 開始 ---
+    // --- フォント修正 開始 ---
     if (fontCssLink) {
       fontCssLink.disabled = true;
       const cssText = await (await fetch(fontCssLink.href)).text();
@@ -253,13 +207,9 @@ async function postToX() {
       newStyleElement.appendChild(document.createTextNode(cssText));
       document.head.appendChild(newStyleElement);
     }
-    restoreImages = await embedImages(node);
-    // --- リソース埋め込み 終了 ---
+    // --- フォント修正 終了 ---
 
-    // 埋め込まれた画像をブラウザが描画するのを待つための短い遅延
-    await new Promise(resolve => setTimeout(resolve, 50));
-
-    const scale = 2;
+    const scale = 3;
     const options = {
       bgcolor: '#ffffff',
       width: node.offsetWidth * scale,
@@ -267,7 +217,8 @@ async function postToX() {
       style: {
         transform: `scale(${scale})`,
         transformOrigin: 'top left'
-      }
+      },
+      cacheBust: true // キャッシュを無効化して画像を再取得
     };
 
     const dataUrl = await domtoimage.toPng(node, options);
@@ -310,7 +261,6 @@ async function postToX() {
     if (newStyleElement) {
       document.head.removeChild(newStyleElement);
     }
-    restoreImages(); // 画像のsrcを元に戻す
     // --- クリーンアップ 終了 ---
   }
 }

@@ -187,7 +187,7 @@ function isMobile() {
 }
 
 /**
- * 指定されたDOM要素内のすべての<img>のsrcをdata:URLに変換して埋め込みます。
+ * 指定されたDOM要素内のすべての<img>のsrcを、canvasを使ってdata:URLに変換して埋め込みます。
  * @param {HTMLElement} element - 処理対象のDOM要素。
  * @returns {Function} 元の画像ソースに戻すためのクリーンアップ関数。
  */
@@ -199,14 +199,23 @@ async function embedImages(element) {
     if (img.src && !img.src.startsWith('data:')) {
       originalSrcs.set(img, img.src);
       try {
-        const blob = await (await fetch(img.src)).blob();
+        const imageLoader = new Image();
+        imageLoader.crossOrigin = "Anonymous";
+        
         const dataUrl = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(blob);
+          imageLoader.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = imageLoader.naturalWidth;
+            canvas.height = imageLoader.naturalHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(imageLoader, 0, 0);
+            resolve(canvas.toDataURL('image/png'));
+          };
+          imageLoader.onerror = reject;
+          imageLoader.src = img.src;
         });
         img.src = dataUrl;
+
       } catch (e) {
         console.error("画像の埋め込みに失敗しました:", originalSrcs.get(img), e);
       }

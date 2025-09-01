@@ -81,30 +81,56 @@
   import { useI18n } from 'vue-i18n';
   import { getTileImageUrl, tileToString } from '@/utils/tileUtils'; // 画像表示用ユーティリティ
   import { YONHAI_YAKU, YONHAI_YAKUMAN } from '@/services/mahjongLogic'; // 役定義をインポート
+
+  /**
+   * 役一覧ポップアップコンポーネント。
+   * 通常役と役満の一覧を表示し、達成済みの役をハイライトします。
+   */
   defineEmits(['close']);
 
   const { t } = useI18n();
 
-  const achievedYaku = ref({});
+  const achievedYaku = ref({}); // 達成済みの役を格納するリアクティブな参照
 
+  // コンポーネントがマウントされた時に実行
   onMounted(() => {
+    // ローカルストレージから達成済みの役を読み込む
     const storedYaku = localStorage.getItem('mahjongYakuAchieved');
     if (storedYaku) {
       achievedYaku.value = JSON.parse(storedYaku);
     }
   });
 
+  /**
+   * 指定された役が達成済みかどうかを判定します。
+   * @param {string} yakuKey - 役のキー。
+   * @returns {boolean} 達成済みであればtrue。
+   */
   const isAchieved = (yakuKey) => {
     return !!achievedYaku.value[yakuKey];
   };
 
+  /**
+   * ドラと裏ドラを除いた通常の役のリストを返します。
+   */
   const normalYakuList = computed(() => {
     return Object.values(YONHAI_YAKU).filter(yaku =>
       yaku.key !== 'dora' && yaku.key !== 'uraDora'
     );
   });
+  /**
+   * 役満のリストを返します。
+   */
   const yakumanList = computed(() => Object.values(YONHAI_YAKUMAN));
 
+  /**
+   * 役の例示牌の画像URLを決定します。
+   * 特定の役（例: 一暗槓単騎）では裏向きの牌を表示します。
+   * @param {Object} yaku - 役オブジェクト。
+   * @param {Object} tile - 牌オブジェクト。
+   * @param {number} index - 牌のインデックス。
+   * @returns {string} 牌の画像URL。
+   */
   function determineTileImage(yaku, tile, index) {
     if (yaku.key === 'iiankanTanki' && (index === 2 || index === 5)) {
       return '/assets/images/tiles/ura.png'; // 裏向きの牌
@@ -112,6 +138,14 @@
     return getTileImageUrl(tile);
   }
 
+  /**
+   * 役の例示牌のaltテキストを決定します。
+   * 特定の役（例: 一暗槓単騎）では裏向きの牌であることを示します。
+   * @param {Object} yaku - 役オブジェクト。
+   * @param {Object} tile - 牌オブジェクト。
+   * @param {number} index - 牌のインデックス。
+   * @returns {string} 牌のaltテキスト。
+   */
   function determineTileAlt(yaku, tile, index) {
     if (yaku.key === 'iiankanTanki' && (index === 2 || index === 5)) {
       return t('yakuListPopup.facedownTile');
@@ -119,6 +153,14 @@
     return tileToString(tile);
   }
 
+  /**
+   * 役の例示牌に適用するCSSクラスを決定します。
+   * 特定の役（例: 一槓子）では牌の配置や回転を調整します。
+   * @param {Object} yaku - 役オブジェクト。
+   * @param {number} index - 牌のインデックス。
+   * @param {number} exampleLength - 例示牌の総数。
+   * @returns {Array<string>} 適用するCSSクラスの配列。
+   */
   function getTileSpecificClass(yaku, index, exampleLength) {
     const classes = [];
     // 通常の5枚和了の4枚目と5枚目の間のスペース

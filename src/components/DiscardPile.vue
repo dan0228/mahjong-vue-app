@@ -20,6 +20,13 @@
 import { defineProps } from 'vue';
 import { getTileImageUrl, tileToString } from '@/utils/tileUtils';
 
+/**
+ * コンポーネントのプロパティを定義。
+ * @property {Array<Object>} tiles - 表示する捨て牌の配列。
+ * @property {string} position - 捨て牌の表示位置 ('bottom', 'right', 'top', 'left')。
+ * @property {string|null} riichiDiscardedTileId - リーチ宣言牌のID。この牌は横向きに表示されます。
+ * @property {string|null} highlightedTileId - ハイライト表示する牌のID。
+ */
 const props = defineProps({
   tiles: {
     type: Array,
@@ -41,6 +48,7 @@ const props = defineProps({
 </script>
 
 <style scoped>
+/* ハイライトアニメーションのキーフレーム */
 @keyframes red-pulse {
   0% {
     box-shadow: 0 0 0 0 rgba(255, 80, 80, 0.9);
@@ -53,16 +61,18 @@ const props = defineProps({
   }
 }
 
+/* ハイライト表示される捨て牌のスタイル */
 .highlighted-discard .discard-tile-image {
-  animation: red-pulse 1.5s infinite;
+  animation: red-pulse 1.5s infinite; /* 赤いパルスアニメーション */
   border-radius: 2px; /* 影の形を整える */
 }
 
+/* 捨て牌エリアの基本スタイル */
 .discard-pile {
   display: grid;
   /* 3行9列にするために、列数を9に設定 */
   grid-template-columns: repeat(9, 1fr);
-  gap: 0px;
+  gap: 0px; /* 牌間の隙間 */
   padding: 0px;
   position: relative; /* 回転の基点や調整のため */
   /* 共通のデフォルトスタイル */
@@ -107,6 +117,7 @@ const props = defineProps({
   width: calc(9 * 16px + 2 * 3px); /* 牌9枚分の幅 */
 }
 
+/* 各捨て牌のコンテナスタイル */
 .tile {
   width: 16px; /* 3行9列に合わせた牌の幅 */
   height: 21px; /* 3行9列に合わせた牌の高さ */
@@ -120,6 +131,7 @@ const props = defineProps({
   object-fit: contain;
 }
 
+/* 横向きリーチ牌のコンテナスタイル */
 .rotated-riichi-tile-container {
   width: 21px; /* 横向きになった牌の幅 (元の高さ) */
   height: 21px; /* 横向きになった牌の高さ (元の幅) */
@@ -128,6 +140,7 @@ const props = defineProps({
   overflow: visible; /* 牌がはみ出しても表示されるように */
 }
 
+/* 横向きリーチ牌の画像スタイル */
 .rotated-riichi-tile-container .discard-tile-image {
   transform: rotate(-90deg); /* 牌を横向きにする */
   position: absolute;
@@ -136,6 +149,7 @@ const props = defineProps({
   width: 20px;
 }
 
+/* 対面プレイヤーの横向きリーチ牌の画像スタイル */
 .discard-pile-top .rotated-riichi-tile-container .discard-tile-image {
   transform: rotate(90deg); /* 対面は180度回転しているので、さらに90度回転 */
 }

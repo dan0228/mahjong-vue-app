@@ -115,6 +115,10 @@ import { useGameStore } from '@/stores/gameStore';
 import { getTileImageUrl, tileToString } from '@/utils/tileUtils';
 import { computed } from 'vue';
 
+/**
+ * 局の結果を表示するポップアップコンポーネント。
+ * 和了、流局、チョンボの情報を表示し、次の局への進行を促します。
+ */
 const { t } = useI18n();
 
 const props = defineProps({
@@ -133,10 +137,20 @@ const props = defineProps({
   },
 });
 
+/**
+ * コンポーネントが発行するイベントを定義。
+ * @event close - ポップアップを閉じる際に発行されます。
+ * @event proceed - 次の局へ進む際に発行されます。
+ */
 const emit = defineEmits(['close', 'proceed']);
 
 const gameStore = useGameStore();
 
+/**
+ * プレイヤーIDに基づいて翻訳されたプレイヤー名を返します。
+ * @param {Object} player - プレイヤーオブジェクト。
+ * @returns {string} 翻訳されたプレイヤー名。
+ */
 function getTranslatedPlayerName(player) {
   if (!player) return '';
   if (player.id === 'player1') {
@@ -148,21 +162,37 @@ function getTranslatedPlayerName(player) {
   return player.name; // Fallback
 }
 
+/**
+ * ポップアップを閉じる処理を行います。
+ */
 function closePopup() {
   emit('close');
 }
 
+/**
+ * 次の局へ進む処理を行います。
+ */
 function proceedToNext() {
   emit('proceed');
 }
 
+/**
+ * 結果が流局かどうかを判定します。
+ */
 const isDrawResult = computed(() => {
   return props.resultDetails?.isDraw;
 });
 
+/**
+ * 結果がチョンボかどうかを判定します。
+ */
 const isChomboResult = computed(() => {
   return props.resultDetails?.isChombo;
 });
+/**
+ * ポップアップのタイトルテキストを計算して返します。
+ * チョンボ、流局、和了の状況に応じて動的に変化します。
+ */
 const resultTitle = computed(() => {
   // 1. チョンボの場合
   if (isChomboResult.value && props.resultDetails.chomboPlayerId) {
@@ -185,9 +215,6 @@ const resultTitle = computed(() => {
   // 4. 点数移動がない和了の場合 (0点和了など)
   const match = props.message.match(/(.+?) の和了/);
   if (match && match[1]) {
-    // This part is tricky as it relies on a Japanese string.
-    // It's better to rely on the winnerId logic above.
-    // For now, we can try a simple translation if possible.
     const playerName = match[1];
     const player = gameStore.players.find(p => p.name === playerName);
     return t('resultPopup.titleWin', { playerName: getTranslatedPlayerName(player) });
@@ -197,6 +224,9 @@ const resultTitle = computed(() => {
   return t('resultPopup.titleResult');
 });
 
+/**
+ * 和了がリーチによるものかどうかを判定します。
+ */
 const isRiichiAgari = computed(() => {
   const winnerId = Object.keys(props.resultDetails.pointChanges || {}).find(playerId => props.resultDetails.pointChanges[playerId] > 0);
   if (!winnerId) return false;
@@ -204,6 +234,9 @@ const isRiichiAgari = computed(() => {
   return winner?.isRiichi || winner?.isDoubleRiichi;
 });
 
+/**
+ * 和了者またはチョンボ者のアイコン画像URLを返します。
+ */
 const winnerIconSrc = computed(() => {
   if (isDrawResult.value) return null;
 
@@ -229,14 +262,23 @@ const winnerIconSrc = computed(() => {
   return null;
 });
 
+/**
+ * 結果が役満かどうかを判定します。
+ */
 const isYakumanResult = computed(() => {
   return props.resultDetails.scoreName && props.resultDetails.scoreName.includes('役満');
 });
 
+/**
+ * 結果が数え役満かどうかを判定します。
+ */
 const isKazoeYakuman = computed(() => {
   return props.resultDetails.scoreName === '数え役満';
 });
 
+/**
+ * 和了牌を除いた元々の手牌を返します。
+ */
 const originalHandWithoutAgariTile = computed(() => {
   if (!props.resultDetails.winningHand || !props.resultDetails.agariTile) {
     return props.resultDetails.winningHand || [];
@@ -253,6 +295,9 @@ const originalHandWithoutAgariTile = computed(() => {
 });
 
 
+/**
+ * 現在の局の場風を翻訳して返します。
+ */
 const roundWindDisplay = computed(() => {
   if (props.resultDetails.roundWind === 'east') return t('resultPopup.windEast');
   if (props.resultDetails.roundWind === 'south') return t('resultPopup.windSouth');
@@ -260,16 +305,35 @@ const roundWindDisplay = computed(() => {
   return '';
 });
 
+/**
+ * 点数変動をフォーマットして返します。
+ * プラスの場合は '+' を付与します。
+ * @param {number} change - 点数変動の数値。
+ * @returns {string} フォーマットされた点数変動文字列。
+ */
 function formatPointChange(change) {
   if (change == null) return '';
   return change > 0 ? `+${change}` : `${change}`;
 }
 
+/**
+ * 点数変動に応じたCSSクラスを返します。
+ * 点数増加なら 'point-increase'、減少なら 'point-decrease'。
+ * @param {number} change - 点数変動の数値。
+ * @returns {string} CSSクラス名。
+ */
 function getPointChangeClass(change) {
   if (change == null) return '';
   return change > 0 ? 'point-increase' : (change < 0 ? 'point-decrease' : '');
 }
 
+/**
+ * 面子内の牌に適用するCSSクラスを返します。
+ * 特に鳴き牌の向き（横向き）を制御します。
+ * @param {Object} meld - 面子オブジェクト。
+ * @param {number} tileIndex - 面子内の牌のインデックス。
+ * @returns {string} CSSクラス名。
+ */
 function getMeldTileClass(meld, tileIndex) {
   if (!meld.takenTileRelativePosition) return '';
   

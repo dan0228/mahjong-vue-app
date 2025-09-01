@@ -24,30 +24,47 @@ import { defineProps, defineEmits, ref, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAudioStore } from '@/stores/audioStore';
 
-const { t } = useI18n();
+const { t } = useI18n(); // i18nの翻訳関数を取得
 
+/**
+ * コンポーネントのプロパティを定義。
+ * @property {boolean} show - ポップアップの表示/非表示を制御します。
+ */
 const props = defineProps({
   show: Boolean,
 });
 
+/**
+ * コンポーネントが発行するイベントを定義。
+ * @event close - ポップアップを閉じる際に発行されます。
+ * @event showInstructions - インストール方法の指示を表示する際に発行されます。
+ */
 const emit = defineEmits(['close', 'showInstructions']);
 
-const audioStore = useAudioStore();
+const audioStore = useAudioStore(); // オーディオストアのインスタンスを取得
 
-const isMobile = ref(false);
+const isMobile = ref(false); // モバイルデバイスかどうかを示すリアクティブな参照
 
+// コンポーネントがマウントされた時に実行
 onMounted(() => {
+  // ユーザーエージェントをチェックしてモバイルデバイスかどうかを判定
   isMobile.value = /Mobi|Android/i.test(navigator.userAgent);
 });
 
+/**
+ * ポップアップを閉じ、BGMをタイトル画面のBGMに設定します。
+ */
 const closePopup = () => {
   audioStore.setBgm('NES-JP-A01-2(Title-Loop115).mp3'); // 音楽再生
-  emit('close');
+  emit('close'); // 'close'イベントを発行してポップアップを閉じる
 };
 
+/**
+ * インストール方法の指示ポップアップを表示し、BGMをタイトル画面のBGMに設定します。
+ */
 const showInstructions = () => {
   audioStore.setBgm('NES-JP-A01-2(Title-Loop115).mp3'); // 音楽再生
-  emit('showInstructions');
+  emit('showInstructions'); // 'showInstructions'イベントを発行
 };
 </script>
 

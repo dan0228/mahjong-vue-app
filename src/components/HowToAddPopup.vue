@@ -28,16 +28,27 @@
 import { defineProps, defineEmits } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-const { t } = useI18n();
+const { t } = useI18n(); // i18nの翻訳関数を取得
 
+/**
+ * コンポーネントのプロパティを定義。
+ * @property {boolean} show - ポップアップの表示/非表示を制御します。
+ */
 const props = defineProps({
   show: Boolean,
 });
 
+/**
+ * コンポーネントが発行するイベントを定義。
+ * @event close - ポップアップを閉じる際に発行されます。
+ */
 const emit = defineEmits(['close']);
 
+/**
+ * ポップアップを閉じる処理を行います。
+ */
 const closePopup = () => {
-  emit('close');
+  emit('close'); // 'close'イベントを発行してポップアップを閉じる
 };
 </script>
 

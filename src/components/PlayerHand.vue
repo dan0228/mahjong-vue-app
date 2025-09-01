@@ -28,6 +28,11 @@
   import { defineProps, defineEmits, computed } from 'vue';
   import { useGameStore } from '@/stores/gameStore'; // gameStore をインポート
   import { getTileImageUrl, tileToString } from '@/utils/tileUtils'; // 共通ユーティリティをインポート
+
+  /**
+   * プレイヤーの手牌とツモ牌を表示するコンポーネント。
+   * 牌の選択可否や表示向きを制御します。
+   */
   const props = defineProps({
     player: {
       type: Object,
@@ -52,15 +57,26 @@
     }
   });
 
-  const emit = defineEmits(['tile-selected']);
+  const emit = defineEmits(['tile-selected']); // 'tile-selected'イベントを定義
   const gameStore = useGameStore(); // gameStore を使用
 
-  // player プロパティから手牌を取得する算出プロパティ
+  /**
+   * プレイヤーの手牌を取得する算出プロパティ。
+   * @returns {Array<Object>} プレイヤーの手牌の配列。
+   */
   const playerDisplayHand = computed(() => {
     return props.player?.hand || [];
   });
 
+  /**
+   * 指定された牌が選択可能かどうかを判定します。
+   * リーチ中のプレイヤーはツモ牌しか選択できません。
+   * @param {Object} tile - 判定する牌オブジェクト。
+   * @param {boolean} isFromDrawnTile - 牌がツモ牌かどうか。
+   * @returns {boolean} 牌が選択可能であればtrue。
+   */
   function canSelectTile(tile, isFromDrawnTile) {
+    // 自分の手牌でなく、打牌可能状態でもなく、牌がなければ選択不可
     if (!props.isMyHand || !props.canDiscard || !tile) return false;
 
     // リーチ宣言直後の打牌選択
@@ -82,13 +98,25 @@
     return true;
   }
 
+  /**
+   * 牌が選択された時にイベントを発行します。
+   * 選択可能かどうかを `canSelectTile` で判定します。
+   * @param {Object} tile - 選択された牌オブジェクト。
+   * @param {boolean} isFromDrawnTile - 牌がツモ牌かどうか。
+   */
   function selectTile(tile, isFromDrawnTile) {
     if (canSelectTile(tile, isFromDrawnTile)) { // canSelectTile で選択可否を判定
       emit('tile-selected', { tile, isFromDrawnTile });
     }
   }
 
-    // 牌のCSSクラスを動的に生成するヘルパー関数
+    /**
+   * 牌のCSSクラスを動的に生成するヘルパー関数。
+   * 選択可能状態や無効化状態に応じてクラスを付与します。
+   * @param {Object} tile - 牌オブジェクト。
+   * @param {boolean} isDrawnTile - 牌がツモ牌かどうか。
+   * @returns {Array<string|Object>} 適用するCSSクラスの配列。
+   */
   function getTileClasses(tile, isDrawnTile) {
     const isSelectable = canSelectTile(tile, isDrawnTile);
     const isRiichiPhase = gameStore.gamePhase === 'awaitingRiichiDiscard';

@@ -15,17 +15,32 @@
 import { defineProps, defineEmits, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-const { t } = useI18n();
+const { t } = useI18n(); // i18nの翻訳関数を取得
 
+/**
+ * コンポーネントのプロパティを定義。
+ * @property {string} saying - 表示する名言のテキスト。
+ * @property {string} fortune - 表示する運勢のテキスト。
+ * @property {string} sayingId - 名言のID（例: 's001'）。
+ * @property {boolean} isNew - 新しく解放された名言かどうか。
+ */
 const props = defineProps({
   saying: String,
   fortune: String,
   sayingId: String,
-  isNew: Boolean, // 追加
+  isNew: Boolean,
 });
 
+/**
+ * コンポーネントが発行するイベントを定義。
+ * @event close - ポップアップを閉じる際に発行されます。
+ */
 defineEmits(['close']);
 
+/**
+ * `sayingId` から名言の番号を抽出して返します。
+ * 例: 's001' -> 1
+ */
 const sayingNumber = computed(() => {
   if (props.sayingId) {
     const match = props.sayingId.match(/s(\d+)/);

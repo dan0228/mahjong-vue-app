@@ -51,6 +51,10 @@ import { useGameStore } from '@/stores/gameStore';
 import { GAME_PHASES } from '@/stores/gameStore';
 import { getTileImageUrl, tileToString } from '@/utils/tileUtils'; // 共通ユーティリティ
 
+/**
+ * 各プレイヤーの手牌、鳴き牌、およびアクションボタンを表示するコンポーネント。
+ * プレイヤーの位置（下家、右家、対面、上家）に応じてレイアウトを調整します。
+ */
 const { t } = useI18n();
 
 const props = defineProps({
@@ -61,6 +65,11 @@ const props = defineProps({
   canDiscard: { type: Boolean, default: false },
 });
 
+/**
+ * コンポーネントが発行するイベントを定義。
+ * @event tile-selected - 牌が選択された際に発行されます。
+ * @event action-declared - アクション（ツモ、リーチ、ポンなど）が宣言された際に発行されます。
+ */
 const emit = defineEmits(['tile-selected', 'action-declared']);
 
 const gameStore = useGameStore();
@@ -70,47 +79,79 @@ const actionInProgress = ref(false);
 const positionClass = computed(() => `player-area-${props.position}`);
 const isCurrentTurn = computed(() => gameStore.currentTurnPlayerId === props.player.id);
 
+/**
+ * PlayerHandコンポーネントから牌選択イベントを受け取り、親コンポーネントに再発行します。
+ * @param {Object} payload - 選択された牌の情報を含むペイロード。
+ */
 function onTileSelected(payload) {
   emit('tile-selected', payload);
 }
 
-const playerEligibility = computed(() => gameStore.playerActionEligibility[props.player.id] || {});
+const playerEligibility = computed(() => gameStore.playerActionEligibility[props.player.id] || {}); // プレイヤーのアクション資格
 
 // プレイヤーのアクション資格が変更されたときに actionInProgress をリセット
 watch(playerEligibility, () => {
   actionInProgress.value = false;
 });
 
-// 自分のターンで、かつ打牌前のアクション（ツモ和了、リーチ、カン）が可能なフェーズか
+/**
+ * 自分のターンで、かつ打牌前のアクション（ツモ和了、リーチ、カン）が可能なフェーズかどうかを判定します。
+ */
 const isMyTurnAndCanActBeforeDiscard = computed(() => {
   return gameStore.currentTurnPlayerId === props.player.id &&
          (gameStore.gamePhase === GAME_PHASES.AWAITING_DISCARD || gameStore.gamePhase === GAME_PHASES.AWAITING_RIICHI_DISCARD);
 });
 
-// 自分のターンのアクション
+/**
+ * ツモ和了が可能かどうかを判定します。
+ */
 const canDeclareTsumoAgari = computed(() => {
   const result = !actionInProgress.value && isMyTurnAndCanActBeforeDiscard.value && playerEligibility.value.canTsumoAgari;
   return result;
 });
+/**
+ * リーチが可能かどうかを判定します。
+ */
 const canDeclareRiichi = computed(() => !actionInProgress.value && isMyTurnAndCanActBeforeDiscard.value && playerEligibility.value.canRiichi);
+/**
+ * 暗槓が可能かどうかを判定します。
+ */
 const canDeclareAnkan = computed(() => {
   if (actionInProgress.value || !isMyTurnAndCanActBeforeDiscard.value) return false;
   const ankanInfo = gameStore.canDeclareAnkan[props.player.id];
   return ankanInfo === true || (Array.isArray(ankanInfo) && ankanInfo.length > 0);
 });
+/**
+ * 加槓が可能かどうかを判定します。
+ */
 const canDeclareKakan = computed(() => {
   if (actionInProgress.value || !isMyTurnAndCanActBeforeDiscard.value) return false;
   const kakanOptions = gameStore.canDeclareKakan[props.player.id];
   return Array.isArray(kakanOptions) && kakanOptions.length > 0;
 });
 
-// 他家のアクションに対する応答
+/**
+ * ロンが可能かどうかを判定します。
+ */
 const canDeclareRon = computed(() => !actionInProgress.value && gameStore.activeActionPlayerId === props.player.id && playerEligibility.value.canRon);
+/**
+ * ポンが可能かどうかを判定します。
+ */
 const canDeclarePon = computed(() => !actionInProgress.value && gameStore.activeActionPlayerId === props.player.id && playerEligibility.value.canPon);
+/**
+ * 明槓が可能かどうかを判定します。
+ */
 const canDeclareMinkan = computed(() => !actionInProgress.value && gameStore.activeActionPlayerId === props.player.id && playerEligibility.value.canMinkan);
 
+/**
+ * スキップボタンを表示するかどうかを判定します。
+ */
 const showSkipButton = computed(() => !actionInProgress.value && gameStore.activeActionPlayerId === props.player.id);
 
+/**
+ * プレイヤーがアクションを宣言した時にイベントを発行します。
+ * @param {string} actionType - 宣言されたアクションのタイプ（例: 'tsumoAgari', 'riichi', 'pon'）。
+ */
 function emitAction(actionType) {
     // ボタンが押されたら、すぐに非表示にする
     actionInProgress.value = true;
@@ -143,6 +184,13 @@ function emitAction(actionType) {
     emit('action-declared', { playerId: props.player.id, actionType, tile: tileData });
 }
 
+/**
+ * 面子内の牌に適用する回転クラスを決定します。
+ * 鳴かれた牌は横向きに表示されます。
+ * @param {Object} meld - 面子オブジェクト。
+ * @param {number} tileIndex - 面子内の牌のインデックス。
+ * @returns {string} 適用するCSSクラス名（'rotated-meld-tile'など）。
+ */
 function getMeldTileRotationClass(meld, tileIndex) {
   
   // ポンと明槓以外は対象外
@@ -219,6 +267,15 @@ function getMeldTileRotationClass(meld, tileIndex) {
   return resultClass;
 }
 
+
+/**
+ * 面子内の牌の画像URLを決定します。
+ * 暗槓の場合、真ん中の2枚は裏向きの画像になります。
+ * @param {Object} meld - 面子オブジェクト。
+ * @param {Object} tile - 牌オブジェクト。
+ * @param {number} tileIndex - 面子内の牌のインデックス。
+ * @returns {string} 牌の画像URL。
+ */
 function getMeldTileImage(meld, tile, tileIndex) {
   
   // 暗槓の場合、真ん中の2枚を裏向きにする
@@ -230,6 +287,14 @@ function getMeldTileImage(meld, tile, tileIndex) {
   return imageUrl;
 }
 
+/**
+ * 面子内の牌のaltテキストを決定します。
+ * 暗槓の場合、真ん中の2枚は裏向きであることを示します。
+ * @param {Object} meld - 面子オブジェクト。
+ * @param {Object} tile - 牌オブジェクト。
+ * @param {number} tileIndex - 面子内の牌のインデックス。
+ * @returns {string} 牌のaltテキスト。
+ */
 function getMeldTileAlt(meld, tile, tileIndex) {
   if (meld.type === 'ankan' && (tileIndex === 1 || tileIndex === 2)) {
     return t('playerArea.facedownTile');

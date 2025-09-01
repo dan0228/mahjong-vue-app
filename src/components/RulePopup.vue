@@ -24,10 +24,15 @@
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
+/**
+ * コンポーネントが発行するイベントを定義。
+ * @event close - ポップアップを閉じる際に発行されます。
+ */
 defineEmits(['close']);
 
-const { t } = useI18n();
+const { t } = useI18n(); // i18nの翻訳関数を取得
 
+// 表示するルールセクションのキーリスト
 const ruleSections = ref([
   'basics',
   'scoring',

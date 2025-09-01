@@ -23,11 +23,16 @@ import { defineProps, defineEmits, computed, onMounted, watch, ref, onUnmounted 
 import { useI18n } from 'vue-i18n';
 import { useZoomLock } from '@/composables/useZoomLock';
 
-const { t } = useI18n();
+const { t } = useI18n(); // i18nの翻訳関数を取得
 
 // ズーム防止機能を有効化
 useZoomLock();
 
+/**
+ * コンポーネントのプロパティを定義。
+ * @property {boolean} show - ポップアップの表示/非表示を制御します。
+ * @property {Array<Object>} dealerDeterminationResults - 親決め結果のプレイヤーリスト。
+ */
 const props = defineProps({
   show: {
     type: Boolean,
@@ -40,54 +45,71 @@ const props = defineProps({
   },
 });
 
+/**
+ * コンポーネントが発行するイベントを定義。
+ * @event close - ポップアップを閉じる際に発行されます。
+ */
 const emit = defineEmits(['close']);
 
-const countdown = ref(3); // カウントダウンの初期値
-let timer = null;
-let interval = null;
+const countdown = ref(3); // ポップアップが自動で閉じるまでのカウントダウンの初期値
+let timer = null; // setTimeoutのタイマーID
+let interval = null; // setIntervalのタイマーID
 
-// showプロパティがtrueになったときにタイマーを開始
+/**
+ * `show` プロパティの変更を監視し、ポップアップが表示されたときにタイマーを開始します。
+ */
 watch(() => props.show, (newVal) => {
   if (newVal) {
     countdown.value = 3; // ポップアップ表示時にカウントダウンをリセット
-    startCloseTimer();
-    startCountdownInterval();
+    startCloseTimer(); // 自動クローズタイマーを開始
+    startCountdownInterval(); // カウントダウン表示のインターバルを開始
   } else {
-    clearTimeout(timer); // ポップアップが非表示になったらタイマーをクリア
-    clearInterval(interval); // インターバルもクリア
+    clearTimeout(timer); // ポップアップが非表示になったら自動クローズタイマーをクリア
+    clearInterval(interval); // カウントダウン表示のインターバルもクリア
   }
 });
 
+// コンポーネントがマウントされた時に実行
 onMounted(() => {
   if (props.show) {
-    startCloseTimer();
-    startCountdownInterval();
+    startCloseTimer(); // 自動クローズタイマーを開始
+    startCountdownInterval(); // カウントダウン表示のインターバルを開始
   }
 });
 
+// コンポーネントがアンマウントされる時に実行
 onUnmounted(() => {
-  clearTimeout(timer);
-  clearInterval(interval);
+  clearTimeout(timer); // タイマーをクリア
+  clearInterval(interval); // インターバルをクリア
 });
 
+/**
+ * ポップアップを自動で閉じるタイマーを開始します。
+ */
 const startCloseTimer = () => {
   clearTimeout(timer); // 既存のタイマーがあればクリア
   timer = setTimeout(() => {
-    emit('close');
+    emit('close'); // 'close'イベントを発行してポップアップを閉じる
   }, 3000); // 3秒後に自動で閉じる
 };
 
+/**
+ * カウントダウン表示を1秒ごとに更新するインターバルを開始します。
+ */
 const startCountdownInterval = () => {
   clearInterval(interval); // 既存のインターバルがあればクリア
   interval = setInterval(() => {
     if (countdown.value > 0) {
-      countdown.value--;
+      countdown.value--; // カウントダウンを減らす
     } else {
-      clearInterval(interval);
+      clearInterval(interval); // カウントダウンが0になったらインターバルをクリア
     }
-  }, 1000); // 1秒ごとにカウントダウン
+  }, 1000); // 1秒ごとに実行
 };
 
+/**
+ * 現在のタイムスタンプをフォーマットして返します。
+ */
 const formattedTimestamp = computed(() => {
   const now = new Date();
   const year = now.getFullYear();
@@ -99,6 +121,11 @@ const formattedTimestamp = computed(() => {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 });
 
+/**
+ * プレイヤーのアイコン画像URLを返します。
+ * @param {Object} player - プレイヤーオブジェクト。
+ * @returns {string|null} プレイヤーアイコンのURL、またはnull。
+ */
 function getPlayerIcon(player) {
   if (!player) return null;
   if (player.id === 'player1') return '/assets/images/info/hito_icon_1.png'; // あなた

@@ -47,7 +47,7 @@ import { defineProps, defineEmits, computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useGameStore } from '@/stores/gameStore';
 import { useZoomLock } from '@/composables/useZoomLock';
-import domtoimage from 'dom-to-image-more';
+import * as htmlToImage from 'html-to-image';
 
 /**
  * 最終結果表示用ポップアップコンポーネント。
@@ -221,7 +221,7 @@ async function postToX() {
       cacheBust: true // キャッシュを無効化して画像を再取得
     };
 
-    const dataUrl = await domtoimage.toPng(node, options);
+    const dataUrl = await htmlToImage.toPng(node, options);
     const blob = await (await fetch(dataUrl)).blob();
     const file = new File([blob], 'mahjong-result.png', { type: 'image/png' });
     const baseText = t('finalResultPopup.tweetText', { count: winsToDisplay.value });

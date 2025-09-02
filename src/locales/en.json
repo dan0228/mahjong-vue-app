@@ -394,7 +394,7 @@
     "yakuman": "Yakuman",
     "multipleYakuman": "{count}x Yakuman",
     "kazoeYakuman": "Kazoe Yakuman",
-    "titleChombo": "{playerName}'s Chombo",
+    "titleChombo": "{playerName}'s No Yaku\nChombo",
     "titleWin": "{playerName}'s Win",
     "titleResult": "Round Result",
     "windEast": "East",

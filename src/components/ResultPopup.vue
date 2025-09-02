@@ -402,6 +402,7 @@ function getMeldTileClass(meld, tileIndex) {
   align-items: center;
   justify-content: center;
   gap: 10px;
+  white-space: pre-line;
 }
 .popup-content h2 { margin-top: 0; color: #333; }
 .popup-content h3 { margin-top: 15px; margin-bottom: 8px; color: #444; border-bottom: 1px solid #eee; padding-bottom: 5px;}

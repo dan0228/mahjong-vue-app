@@ -1522,6 +1522,10 @@ export const useGameStore = defineStore('game', {
 
         // --- チョンボの場合の点数計算 ---
         if (winResult.isChombo) {
+          // チョンボであってもロン宣言自体は行われているため、アニメーションと効果音を再生
+          this.animationState = { type: 'ron', playerId: agariPlayerId };
+          audioStore.playSound('Single_Accent17-2(Dry).mp3'); // ロン和了時の効果音
+
           const pointChanges = {};
           this.players.forEach(p => pointChanges[p.id] = 0);
 

@@ -846,6 +846,7 @@ function calculateYonhaiYaku(handData) {
     totalFans += YONHAI_YAKU.HOUTEI_RAOYUI.fans;
   }
   // --- ドラ・裏ドラの計算 ---
+  let pureFans = totalFans; // ここで純粋な役の翻数を保持
   const doraCount = countDora(hand, doraIndicators);
   if (doraCount > 0) {
     yakuList.push({ ...YONHAI_YAKU.DORA, fans: doraCount });
@@ -863,9 +864,9 @@ function calculateYonhaiYaku(handData) {
   // --- 最終結果の返却 ---
   // 役満が成立している場合は、役満のみを返す (通常役とは複合しない)
   if (totalYakumanPower > 0) {
-    return { yaku: [], fans: 0, yakuman: yakumanList, yakumanPower: totalYakumanPower };
+    return { yaku: [], fans: 0, yakuman: yakumanList, yakumanPower: totalYakumanPower, pureFans: 0 }; // 役満の場合は pureFans も 0
   }
-  return { yaku: yakuList, fans: totalFans, yakuman: [], yakumanPower: 0 };
+  return { yaku: yakuList, fans: totalFans, yakuman: [], yakumanPower: 0, pureFans: pureFans };
 }
 
 /**
@@ -1703,7 +1704,8 @@ export function checkYonhaiWin(currentHandWithWinTile, winTile, isTsumo, gameCon
 
     // --- 役なし和了（チョンボ）の処理 ---
     // 役なし和了は認めないため、役がない場合はチョンボとして扱う
-    if (yakuResult.fans === 0 && yakuResult.yakumanPower === 0) {
+    // ドラのみの場合もチョンボとするため、pureFans を参照する
+    if (yakuResult.pureFans === 0 && yakuResult.yakumanPower === 0) {
         const chomboScore = isParent ? -12000 : -8000; // 親か子かでチョンボの点数を設定
         return {
             isWin: true, // 和了形は成立しているが、役がない状態

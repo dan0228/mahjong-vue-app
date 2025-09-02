@@ -394,7 +394,7 @@
     "yakuman": "役満",
     "multipleYakuman": "{count}倍役満",
     "kazoeYakuman": "数え役満",
-    "titleChombo": "{playerName} のチョンボ",
+    "titleChombo": "{playerName} の役なし\nチョンボ",
     "titleWin": "{playerName} の和了",
     "titleResult": "和了結果",
     "windEast": "東",

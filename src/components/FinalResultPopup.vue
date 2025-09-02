@@ -324,19 +324,20 @@ async function postToX() {
 }
 .rank {
   font-weight: bold; 
-  width: 40px; 
+  width: 55px; 
   text-align: left;
   flex-shrink: 0;
+  margin-right: 10px;
 }
 .player-name {
   flex-grow: 1; 
   text-align: left; 
-  margin-left: 10px;
+  width: 50px; 
 }
 .player-icon {
   width: 60px;
   height: 60px;
-  margin: 0 30px;
+  margin: 0 15px;
   flex-shrink: 0;
 }
 .score {
@@ -352,7 +353,7 @@ async function postToX() {
   color: #ff9800; /* オレンジ色 */
   margin-top: 0px;
   margin-bottom: 0px;
-  margin-left: 40px;
+  margin-left: 0px;
 }
 
 .coin-gain {

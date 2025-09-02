@@ -79,12 +79,13 @@
           </li>
         </ul>
         <p class="total-score">
-          <span v-if="isKazoeYakuman">
-            {{ t('resultPopup.han', { count: resultDetails.totalFans }) }}
+          <span v-if="isYakumanResult">
+            {{ translatedScoreName }}
           </span>
-          <span v-else-if="!isYakumanResult && resultDetails.totalFans > 0">
-            {{ t('resultPopup.han', { count: resultDetails.totalFans }) }}
-          </span>          {{ resultDetails.scoreName ? resultDetails.scoreName : (resultDetails.score ? t('resultPopup.points', { score: resultDetails.score }) : '') }}
+          <span v-else-if="resultDetails.totalFans > 0">
+            {{ t('resultPopup.totalFans', { count: resultDetails.totalFans }) }} {{ translatedScoreName }}
+          </span>
+          {{ resultDetails.score ? t('resultPopup.points', { score: resultDetails.score }) : '' }}
         </p>
       </div>
       <div v-if="isDrawResult" class="result-section draw-info"> <!-- 流局時のみ表示 -->
@@ -135,6 +136,27 @@ const props = defineProps({
     required: true,
     default: () => ({ pointChanges: {} }) // default を設定
   },
+});
+
+const translatedScoreName = computed(() => {
+  const scoreName = props.resultDetails.scoreName;
+  if (!scoreName) return '';
+
+  const scoreNameMap = {
+    '満貫': 'mangan',
+    '跳満': 'haneman',
+    '倍満': 'baiman',
+    '三倍満': 'sanbaiman',
+    '役満': 'yakuman',
+    '数え役満': 'kazoeYakuman',
+  };
+
+  const key = scoreNameMap[scoreName];
+  if (key) {
+    return t(`resultPopup.scoreNames.${key}`);
+  }
+
+  return scoreName; // fallback
 });
 
 /**

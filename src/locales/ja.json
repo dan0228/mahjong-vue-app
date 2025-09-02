@@ -398,7 +398,16 @@
     "titleWin": "{playerName} の和了",
     "titleResult": "和了結果",
     "windEast": "東",
-    "windSouth": "南"
+    "windSouth": "南",
+    "totalFans": "合計 {count}翻",
+    "scoreNames": {
+      "mangan": "満貫",
+      "haneman": "跳満",
+      "baiman": "倍満",
+      "sanbaiman": "三倍満",
+      "yakuman": "役満",
+      "kazoeYakuman": "数え役満"
+    }
   },
   "finalResultPopup": {
     "title": "最終結果",

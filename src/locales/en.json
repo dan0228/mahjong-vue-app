@@ -398,7 +398,16 @@
     "titleWin": "{playerName}'s Win",
     "titleResult": "Round Result",
     "windEast": "East",
-    "windSouth": "South"
+    "windSouth": "South",
+    "totalFans": "Total: {count} Fan",
+    "scoreNames": {
+      "mangan": "Mangan",
+      "haneman": "Haneman",
+      "baiman": "Baiman",
+      "sanbaiman": "Sanbaiman",
+      "yakuman": "Yakuman",
+      "kazoeYakuman": "Kazoe Yakuman"
+    }
   },
   "finalResultPopup": {
     "title": "Final Results",

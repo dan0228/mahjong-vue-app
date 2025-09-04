@@ -193,13 +193,31 @@ function isMobile() {
 async function postToX() {
   if (!popupContentRef.value) return;
 
+  // --- PC向け: ポップアップブロック回避のため、先にウィンドウを開く ---
+  if (!isMobile()) {
+    const baseText = t('finalResultPopup.tweetText', { count: winsToDisplay.value });
+    const gameUrl = "https://mahjong-vue-app.vercel.app";
+    const captionText = `\n${gameUrl}\n${baseText}`;
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(captionText)}`;
+    window.open(twitterUrl, '_blank');
+  }
+  // ---
+
   const fontCssLink = document.querySelector('link[rel="stylesheet"][href*="fonts.googleapis.com"]');
   let newStyleElement = null;
+  
+  // --- モバイル用スクリーンショットのクリーンアップ用 ---
+  let tempNode = null;
+  const originalChildren = [];
+  const originalPadding = popupContentRef.value ? popupContentRef.value.style.padding : '';
+  // ---
 
   try {
-    const node = popupContentRef.value;
+    let nodeToCapture = popupContentRef.value;
+    const scale = 3;
+    let options;
 
-    // --- フォント修正 開始 ---
+    // --- フォント修正 ---
     if (fontCssLink) {
       fontCssLink.disabled = true;
       const cssText = await (await fetch(fontCssLink.href)).text();
@@ -207,36 +225,71 @@ async function postToX() {
       newStyleElement.appendChild(document.createTextNode(cssText));
       document.head.appendChild(newStyleElement);
     }
-    // --- フォント修正 終了 ---
+    // ---
 
-    const scale = 3;
-    const options = {
+    if (isMobile()) {
+      // モバイルでは、ポップアップの中身を一時的にカスタムノードに入れ替える
+      tempNode = document.createElement('div');
+      tempNode.style.textAlign = 'center';
+      tempNode.style.fontFamily = "'Noto Sans JP', sans-serif";
+      
+      const winsElement = document.createElement('p');
+      if (winsToDisplay.value > 0) {
+        winsElement.textContent = winsMessage.value;
+      } else {
+        winsElement.textContent = t('finalResultPopup.wins', { count: 0 });
+      }
+      winsElement.style.color = '#ff9800';
+      winsElement.style.fontSize = '2.5em';
+      winsElement.style.fontWeight = 'bold';
+      winsElement.style.margin = '0 0 20px 0';
+      tempNode.appendChild(winsElement);
+
+      const timestampElement = document.createElement('div');
+      timestampElement.textContent = formattedTimestamp.value;
+      timestampElement.style.color = '#666';
+      timestampElement.style.fontSize = '1em';
+      tempNode.appendChild(timestampElement);
+
+      for (const child of nodeToCapture.children) {
+        originalChildren.push(child);
+        child.style.display = 'none';
+      }
+      
+      nodeToCapture.style.padding = '20px';
+      nodeToCapture.appendChild(tempNode);
+    }
+
+    options = {
       bgcolor: '#ffffff',
-      width: node.offsetWidth * scale,
-      height: node.offsetHeight * scale,
+      width: nodeToCapture.offsetWidth * scale,
+      height: nodeToCapture.offsetHeight * scale,
       style: {
         transform: `scale(${scale})`,
         transformOrigin: 'top left'
       },
-      cacheBust: true // キャッシュを無効化して画像を再取得
+      cacheBust: true
     };
 
-    const dataUrl = await htmlToImage.toPng(node, options);
-    const blob = await (await fetch(dataUrl)).blob();
+    const blob = await htmlToImage.toBlob(nodeToCapture, options);
+    if (!blob) {
+      throw new Error('画像のBlob生成に失敗しました。');
+    }
+
     const file = new File([blob], 'mahjong-result.png', { type: 'image/png' });
     const baseText = t('finalResultPopup.tweetText', { count: winsToDisplay.value });
     const gameUrl = "https://mahjong-vue-app.vercel.app";
     const captionText = `\n${gameUrl}\n${baseText}`;
 
-    // モバイルデバイスでWeb Share APIが利用可能な場合
-    if (isMobile() && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+    // モバイルはWeb Share API、PCはクリップボードへのコピー
+    if (isMobile() && navigator.share && navigator.canShare({ files: [file] })) {
       await navigator.share({
         files: [file],
         title: t('finalResultPopup.title'),
         text: captionText,
       });
-    } else {
-      // PCまたはWeb Share APIが使えない場合のフォールバック処理
+    } else if (!isMobile()) {
+      // PCの場合、ウィンドウは既に開かれているのでクリップボードにコピーするだけ
       try {
         const clipboardItem = new ClipboardItem({ 'image/png': blob });
         await navigator.clipboard.write([clipboardItem]);
@@ -244,9 +297,6 @@ async function postToX() {
       } catch (err) {
         console.error("クリップボードへの画像のコピーに失敗しました: ", err);
         alert(t('finalResultPopup.imageCopiedError'));
-      } finally {
-        const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(captionText)}`;
-        window.open(twitterUrl, '_blank');
       }
     }
 
@@ -255,13 +305,20 @@ async function postToX() {
     alert(t('finalResultPopup.clipboardCopyError'));
   } finally {
     // --- クリーンアップ ---
+    if (isMobile() && tempNode) {
+      popupContentRef.value.removeChild(tempNode);
+      originalChildren.forEach(child => {
+        child.style.display = '';
+      });
+      popupContentRef.value.style.padding = originalPadding;
+    }
     if (fontCssLink) {
       fontCssLink.disabled = false;
     }
     if (newStyleElement) {
       document.head.removeChild(newStyleElement);
     }
-    // --- クリーンアップ 終了 ---
+    // ---
   }
 }
 </script>

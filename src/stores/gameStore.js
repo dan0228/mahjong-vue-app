@@ -1489,249 +1489,168 @@ export const useGameStore = defineStore('game', {
       if (player.isRiichi || player.isDoubleRiichi) {
         this.uraDoraIndicators = mahjongLogic.getUraDoraIndicators(this.deadWall, this.doraIndicators);
       } else {
-        this.uraDoraIndicators = []; // リーチ和了でなければ裏ドラはなし
+        this.uraDoraIndicators = [];
       }
 
       const handForWin = isTsumo ? [...player.hand, this.drawnTile] : [...player.hand, agariTile];
-      if (handForWin.some(tile => !tile)) { // handForWin に null/undefined が含まれていないかチェック
+      if (handForWin.some(tile => !tile)) {
           console.error('[handleAgari] Invalid tile in handForWin:', handForWin);
           return;
       }
 
-      // ここで初めて、完全な役判定と点数計算を行う
       const gameCtxForWin = this.createGameContextForPlayer(player, isTsumo, agariTile);
       const winResult = isTsumo 
         ? mahjongLogic.checkCanTsumo(player.hand, this.drawnTile, gameCtxForWin)
         : mahjongLogic.checkCanRon(player.hand, agariTile, gameCtxForWin);
 
-      if (winResult.isWin) {
-        // プレイヤー1が和了した場合、役の達成状況を記録する
-        if (agariPlayerId === 'player1') {
-          const yakuAchievements = JSON.parse(localStorage.getItem('mahjongYakuAchieved') || '{}');
-          winResult.yaku.forEach(yaku => {
-            if (yaku.key) { // keyが存在することを確認
-              yakuAchievements[yaku.key] = true;
-            }
+      if (!winResult.isWin) {
+        console.error("handleAgari called but win condition not met.");
+        return;
+      }
+
+      // --- 役達成状況の記録 ---
+      if (agariPlayerId === 'player1' && !winResult.isChombo) {
+        const yakuAchievements = JSON.parse(localStorage.getItem('mahjongYakuAchieved') || '{}');
+        winResult.yaku.forEach(yaku => {
+          if (yaku.key) { yakuAchievements[yaku.key] = true; }
+        });
+        localStorage.setItem('mahjongYakuAchieved', JSON.stringify(yakuAchievements));
+      }
+
+      // --- ロン牌のハイライト ---
+      if (!isTsumo && !gameCtxForWin.isChankan) {
+        this.highlightedDiscardTileId = this.lastDiscardedTile.id;
+      }
+
+      // --- アニメーションと効果音 ---
+      this.animationState = { type: winResult.isChombo ? 'ron' : (isTsumo ? 'tsumo' : 'ron'), playerId: agariPlayerId };
+      if (winResult.isChombo) {
+        audioStore.playSound('Single_Accent17-2(Dry).mp3');
+      } else if (isTsumo) {
+        audioStore.playSound('Multi_Accent01-3(Dry).mp3');
+      } else {
+        audioStore.playSound('Single_Accent17-2(Dry).mp3');
+      }
+
+      // --- 点数計算 ---
+      const pointChanges = {};
+      this.players.forEach(p => pointChanges[p.id] = 0);
+
+      if (winResult.isChombo) {
+        const isChomboParent = winResult.chomboPlayerIsParent;
+        if (isChomboParent) {
+          pointChanges[agariPlayerId] = -12000;
+          this.players.forEach(p => { if (p.id !== agariPlayerId) pointChanges[p.id] = 4000; });
+        } else {
+          pointChanges[agariPlayerId] = -8000;
+          this.players.forEach(p => {
+            if (p.id !== agariPlayerId) pointChanges[p.id] = p.isDealer ? 4000 : 2000;
           });
-          localStorage.setItem('mahjongYakuAchieved', JSON.stringify(yakuAchievements));
         }
-        // 槍槓でないロン和了の場合、捨て牌をハイライトする
-        if (!isTsumo && !gameCtxForWin.isChankan) {
-          this.highlightedDiscardTileId = this.lastDiscardedTile.id;
-        }
-
-        // --- チョンボの場合の点数計算 ---
-        if (winResult.isChombo) {
-          // チョンボであってもロン宣言自体は行われているため、アニメーションと効果音を再生
-          this.animationState = { type: 'ron', playerId: agariPlayerId };
-          audioStore.playSound('Single_Accent17-2(Dry).mp3'); // ロン和了時の効果音
-
-          const pointChanges = {};
-          this.players.forEach(p => pointChanges[p.id] = 0);
-
-          const isChomboParent = winResult.chomboPlayerIsParent;
-
-          if (isChomboParent) {
-            // 親がチョンボ
-            pointChanges[agariPlayerId] = -12000;
-            this.players.forEach(p => {
-              if (p.id !== agariPlayerId) {
-                pointChanges[p.id] = 4000;
-              }
-            });
-          } else {
-            // 子がチョンボ
-            pointChanges[agariPlayerId] = -8000;
-            this.players.forEach(p => {
-              if (p.id !== agariPlayerId) {
-                if (p.isDealer) {
-                  pointChanges[p.id] = 4000;
-                } else {
-                  pointChanges[p.id] = 2000;
-                }
-              }
-            });
-          }
-
-          this.gamePhase = GAME_PHASES.ROUND_END;
-          this.resultMessage = `${player.name} が役なしチョンボ！`;
-          this.agariResultDetails = {
-            roundWind: this.currentRound.wind,
-            roundNumber: this.currentRound.number,
-            honba: this.honba,
-            doraIndicators: [...this.doraIndicators],
-            uraDoraIndicators: [],
-            winningHand: winResult.chomboHand || [],
-            agariTile: null,
-            yakuList: [{ name: "役なしチョンボ", fans: 0 }],
-            totalFans: 0,
-            fu: 0,
-            score: winResult.score,
-            scoreName: "役なしチョンボ",
-            pointChanges: pointChanges,
-            isChombo: true,
-            chomboPlayerId: agariPlayerId,
-            isDraw: false,
-          };
-
-          // チョンボの場合、親は流れず、本場を1つ増やす
-          this.resultMessage += `チョンボのため、親は流れず次の本場になります.`;
-          this.honba++;
-          this.nextDealerIndex = this.dealerIndex; // 親は継続
-          this.shouldAdvanceRound = false; // 局は進めない
-
-          setTimeout(() => {
-            this.showResultPopup = true;
-            this.stopRiichiBgm();
-          }, 1000);
-          return;
-        }
-
-        // --- 通常の和了処理 ---
-        // 和了アニメーションの状態を即座に設定
-        this.animationState = { type: isTsumo ? 'tsumo' : 'ron', playerId: agariPlayerId };
-
-
-        const pointChanges = {};
-        this.players.forEach(p => pointChanges[p.id] = 0);
+      } else {
+        // 通常和了
         if (isTsumo) {
-          audioStore.playSound('Multi_Accent01-3(Dry).mp3'); // ツモ和了時の効果音
-          if (player.isDealer) { // 親のツモ和了
-            const scorePerKo = winResult.score / (this.players.length - 1); // 子は等分
-            this.players.forEach(p => {
-              if (p.id !== agariPlayerId) {
-                pointChanges[p.id] = -scorePerKo;
-              }
-            });
+          if (player.isDealer) {
+            const scorePerKo = winResult.score / (this.players.length - 1);
+            this.players.forEach(p => { if (p.id !== agariPlayerId) pointChanges[p.id] = -scorePerKo; });
           } else {
-            let parentPayment = 0;
-            let koPayment = 0;
-            parentPayment = Math.ceil(winResult.score / 2); // 親の支払い (切り上げ)
-            koPayment = Math.ceil(winResult.score / 4);     // 他の子の支払い (切り上げ)
-
-            this.players.forEach(p => {
-              if (p.id !== agariPlayerId) {
-                const payment = p.isDealer ? -parentPayment : -koPayment;
-                pointChanges[p.id] = payment;
-              }
-            });
+            const parentPayment = Math.ceil(winResult.score / 2);
+            const koPayment = Math.ceil(winResult.score / 4);
+            this.players.forEach(p => { if (p.id !== agariPlayerId) pointChanges[p.id] = p.isDealer ? -parentPayment : -koPayment; });
           }
           pointChanges[agariPlayerId] = winResult.score;
         } else if (ronTargetPlayerId) {
-          audioStore.playSound('Single_Accent17-2(Dry).mp3'); // ロン和了時の効果音
-          // ロン和了の場合
           pointChanges[ronTargetPlayerId] = -winResult.score;
           pointChanges[agariPlayerId] = winResult.score;
         }
-        
-        // --- 供託リーチ棒の処理 ---
-        pointChanges[agariPlayerId] += this.riichiSticks * 1000; // 和了者が供託棒を受け取る
-        this.riichiSticks = 0; // 供託棒をリセット
-
-        this.gamePhase = GAME_PHASES.ROUND_END;
-        this.resultMessage = `${player.name} の和了！ ${winResult.yaku.map(y => y.name).join(' ')} ${winResult.isYakuman ? '' : (winResult.fans + '翻')} ${winResult.score}点`;
-        this.agariResultDetails = {
-          roundWind: this.currentRound.wind,
-          roundNumber: this.currentRound.number,
-          honba: this.honba, // 本場情報を追加
-          doraIndicators: [...this.doraIndicators],
-          uraDoraIndicators: (player.isRiichi || player.isDoubleRiichi) ? [...this.uraDoraIndicators] : [],
-          winningHand: mahjongLogic.sortHand([...handForWin]), // ソートされた和了手牌
-          agariTile: { ...agariTile }, // 和了牌
-          yakuList: winResult.yaku, // 役リスト (役満の場合はpower、通常役はfansプロパティを持つ)
-          totalFans: winResult.fans,
-          fu: winResult.fu || 0, // 符 (四牌麻雀では簡略化されることが多い)
-          score: winResult.score,
-          scoreName: winResult.scoreName, // 役満名や満貫などの名称
-          pointChanges: pointChanges,
-          melds: player.melds, // 鳴き牌情報を追加
-          isDraw: false,
-        };
-        // アニメーション表示から1.8秒後にリザルトポップアップを表示
-        setTimeout(() => {
-          this.showResultPopup = true;
-          this.stopRiichiBgm(); // リザルトポップアップ表示時にBGMを元に戻す
-        }, 1800);
-        
-        // 箱下チェックは prepareNextRound に移動
-
-        // isDealerHola の設定など、局の継続/終了に関わるフラグもここで設定
-        if (player.isDealer) {
-          if (this.currentRound.wind === 'east' && this.currentRound.number === 4) {
-            this.resultMessage += `\n親が和了、東4局のため終局`;
-            this.honba = 0; // 終局なので本場はリセット
-            this.nextDealerIndex = (this.dealerIndex + 1) % this.players.length; // 形式的に親流れ
-            this.shouldAdvanceRound = true; // 局を進めてゲーム終了へ
-            this.shouldEndGameAfterRound = true; // 東4局親和了でもゲーム終了
-          } else {
-            this.resultMessage += `\n親が和了し、連荘`;
-            this.honba++; // 親和了で本場プラス (連荘)
-            this.nextDealerIndex = this.dealerIndex; // 親は継続
-            this.shouldAdvanceRound = false;
-          }
-        } else {
-            this.resultMessage += `\n子が和了、親流れ`;
-            this.honba = 0; // 子和了で本場リセット
-            this.nextDealerIndex = (this.dealerIndex + 1) % this.players.length; // 親流れ
-            this.shouldAdvanceRound = true;
-        }
-        // shouldEndGameAfterRound が true の場合、ResultPopup のボタンで prepareNextRound が呼ばれ、そこで handleGameEnd が呼ばれる
-        if (this.shouldEndGameAfterRound) {
-            this.resultMessage += ` (最終局)`; // メッセージに最終局であることを示唆
-        }
-
-        // 東4局かつ親が和了した場合の終局条件を判定
-        let shouldEndGameDueToEast4DealerWin = false;
-        if (this.currentRound.wind === 'east' && this.currentRound.number === 4 && player.isDealer) {
-            // 東4局で親が和了 かつ 親がトップであるかチェック
-            const rankedPlayers = getRankedPlayers(this.players); // 点数変動後の順位を取得
-            const dealerRank = rankedPlayers.find(p => p.id === player.id)?.rank;
-            if (dealerRank === 1) {
-                shouldEndGameDueToEast4DealerWin = true; // 親がトップなら終局
-            }
-        }
-
-        // 局の継続/終了に関わるフラグを設定
-        if (shouldEndGameDueToEast4DealerWin || (player.isDealer && this.currentRound.wind === 'east' && this.currentRound.number === 4)) {
-           // 東4局で親が和了かつトップの場合、または箱下で既に終局フラグが立っている場合
-           // shouldEndGameDueToEast4DealerWin の条件に箱下チェックも含めるか、shouldEndGameAfterRound を優先するか検討
-           // ここでは shouldEndGameDueToEast4DealerWin が true の場合のみ終局条件として扱う
-           if (shouldEndGameDueToEast4DealerWin) {
-              this.resultMessage += `\n親が和了、東4局終了、親がトップのため終局`;
-              this.honba = 0; // 終局なので本場はリセット
-              this.nextDealerIndex = (this.dealerIndex + 1) % this.players.length; // 形式的に親流れ
-              this.shouldAdvanceRound = true; // 局を進めてゲーム終了へ
-              this.shouldEndGameAfterRound = true; // ゲーム終了をトリガー
-           } else {
-              // 東4局で親が和了だがトップではない場合 -> 連荘
-              this.resultMessage += `\n親が和了、東4局終了、親がトップでないため連荘`;
-              this.honba++; // 連荘なので本場プラス
-              this.nextDealerIndex = this.dealerIndex; // 親は継続
-              this.shouldAdvanceRound = false;
-              this.shouldEndGameAfterRound = false; // ゲーム終了しない
-           }
-        } else if (player.isDealer) { // 東4局以外で親が和了
-            this.resultMessage += `\n親が和了、連荘`;
-            this.honba++; // 親和了で本場プラス (連荘)
-            this.nextDealerIndex = this.dealerIndex; // 親は継続
-            this.shouldAdvanceRound = false;
-        } else { // 子が和了
-            this.resultMessage += `\n子が和了、親流れ`;
-            this.honba = 0; // 子和了で本場リセット
-            this.nextDealerIndex = (this.dealerIndex + 1) % this.players.length; // 親流れ
-            this.shouldAdvanceRound = true;
-        }
-
-        // 箱下による終局フラグが既に立っている場合は、メッセージに追記
-        if (this.shouldEndGameAfterRound && !shouldEndGameDueToEast4DealerWin) { // 東4局親トップ以外での箱下終局
-             const playerBelowZero = this.players.find(p => p.score < 0);
-             if (playerBelowZero) {
-                 this.resultMessage += `\n${playerBelowZero.name} の持ち点が0点未満になったため終局`;
-             }
-            }
-      } else {
-        // チョンボ処理など
+        pointChanges[agariPlayerId] += this.riichiSticks * 1000;
+        this.riichiSticks = 0;
       }
+
+      // --- 結果詳細をストアに保存 ---
+      this.gamePhase = GAME_PHASES.ROUND_END;
+      this.agariResultDetails = {
+        roundWind: this.currentRound.wind,
+        roundNumber: this.currentRound.number,
+        honba: this.honba,
+        doraIndicators: [...this.doraIndicators],
+        uraDoraIndicators: (player.isRiichi || player.isDoubleRiichi) ? [...this.uraDoraIndicators] : [],
+        winningHand: mahjongLogic.sortHand([...handForWin]),
+        agariTile: { ...agariTile },
+        yakuList: winResult.yaku,
+        totalFans: winResult.fans,
+        fu: winResult.fu || 0,
+        score: winResult.score,
+        scoreName: winResult.scoreName,
+        pointChanges: pointChanges,
+        melds: player.melds,
+        isDraw: false,
+        isChombo: winResult.isChombo,
+        chomboPlayerId: winResult.isChombo ? agariPlayerId : null,
+      };
+      
+      // --- 局の継続/終了判定 ---
+      const playersWithNewScores = this.players.map(p => ({
+        ...p,
+        score: p.score + (pointChanges[p.id] || 0)
+      }));
+
+      const isLastRound = this.currentRound.wind === 'east' && this.currentRound.number === 4;
+      const agariPlayerIsDealer = player.isDealer;
+      let baseMessage = winResult.isChombo ? `${player.name} が役なしチョンボ！` : `${player.name} の和了！`;
+      let roundEndMessage = '';
+
+      if (winResult.isChombo) {
+        roundEndMessage = `チョンボのため、親は流れず次の本場になります。`;
+        this.honba++;
+        this.nextDealerIndex = this.dealerIndex;
+        this.shouldAdvanceRound = false;
+      } else if (agariPlayerIsDealer) { // 親の和了
+        const rankedPlayers = getRankedPlayers(playersWithNewScores);
+        const dealerIsTop = rankedPlayers.find(p => p.id === agariPlayerId)?.rank === 1;
+
+        if (isLastRound && dealerIsTop) {
+          roundEndMessage = `親がトップで和了したため、ゲーム終了です。`;
+          this.honba = 0;
+          this.nextDealerIndex = (this.dealerIndex + 1) % this.players.length;
+          this.shouldAdvanceRound = true;
+          this.shouldEndGameAfterRound = true;
+        } else {
+          roundEndMessage = `親が和了したため、連荘します。`;
+          this.honba++;
+          this.nextDealerIndex = this.dealerIndex;
+          this.shouldAdvanceRound = false;
+        }
+      } else { // 子の和了
+        roundEndMessage = `子が和了したため、親が流れます。`;
+        this.honba = 0;
+        this.nextDealerIndex = (this.dealerIndex + 1) % this.players.length;
+        this.shouldAdvanceRound = true;
+      }
+
+      // 箱下チェック
+      if (!this.shouldEndGameAfterRound && playersWithNewScores.some(p => p.score < 0)) {
+        this.shouldEndGameAfterRound = true;
+        const playerBelowZero = playersWithNewScores.find(p => p.score < 0);
+        const originalPlayer = this.players.find(p => p.id === playerBelowZero.id);
+        roundEndMessage += `\n${originalPlayer.name}の持ち点が0点未満になったため終局します。`;
+      }
+      
+      // 東4局終了（親流れ）
+      if (isLastRound && this.shouldAdvanceRound && !this.shouldEndGameAfterRound) {
+          this.shouldEndGameAfterRound = true;
+          if (!roundEndMessage.includes('ゲーム終了')) {
+            roundEndMessage += `\n東4局が終了したため、ゲーム終了です。`;
+          }
+      }
+
+      this.resultMessage = `${baseMessage}\n${roundEndMessage}`;
+
+      // --- ポップアップ表示 ---
+      setTimeout(() => {
+        this.showResultPopup = true;
+        this.stopRiichiBgm();
+      }, 1800);
     },
     /**
      * ゲーム終了時の処理を行います。

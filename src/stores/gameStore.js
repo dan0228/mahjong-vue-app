@@ -47,7 +47,7 @@ function getRankedPlayers(players) {
 export const useGameStore = defineStore('game', {
   state: () => ({
     players: [
-      { id: 'player1', name: 'あなた', hand: [], discards: [], melds: [], isDealer: false, score: 25000, seatWind: null },
+      { id: 'player1', name: 'あなた', hand: [], discards: [], melds: [], isDealer: false, score: 50000, seatWind: null },
     ],
     wall: [], // 山牌
     deadWall: [], // 王牌 (嶺上牌、ドラ表示牌など)
@@ -178,7 +178,7 @@ export const useGameStore = defineStore('game', {
           discards: [],
           melds: [],
           isDealer: false,
-          score: 25000,
+          score: 50000,
           seatWind: null
         }));
 
@@ -285,7 +285,7 @@ export const useGameStore = defineStore('game', {
         name: p.name,
         seatWind: p.seatWind,
         isDealer: p.isDealer,
-        score: 25000, // 初期点数
+        score: 50000, // 初期点数
         originalId: p.originalId, // アイコン表示用に元のIDを渡す
       }));
     },
@@ -1722,7 +1722,7 @@ export const useGameStore = defineStore('game', {
         player.hand = [];
         player.discards = [];
         player.melds = [];
-        player.score = 25000; // 初期スコアに戻す
+        player.score = 50000; // 初期スコアに戻す
         player.isDealer = false; // isDealer も初期状態に戻す
         player.seatWind = null; // seatWind もリセット
         player.isRiichi = false;

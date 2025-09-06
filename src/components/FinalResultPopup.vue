@@ -193,15 +193,7 @@ function isMobile() {
 async function postToX() {
   if (!popupContentRef.value) return;
 
-  // --- PC向け: ポップアップブロック回避のため、先にウィンドウを開く ---
-  if (!isMobile()) {
-    const baseText = t('finalResultPopup.tweetText', { count: winsToDisplay.value });
-    const gameUrl = "https://mahjong-vue-app.vercel.app";
-    const captionText = `\n${gameUrl}\n${baseText}`;
-    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(captionText)}`;
-    window.open(twitterUrl, '_blank');
-  }
-  // ---
+  // --- PC向けロジックは後で実行するため、先行するウィンドウオープンは削除 ---
 
   const fontCssLink = document.querySelector('link[rel="stylesheet"][href*="fonts.googleapis.com"]');
   let newStyleElement = null;
@@ -211,7 +203,6 @@ async function postToX() {
   let tempNode = null;
   const originalChildren = [];
   const originalPadding = nodeToCapture.style.padding;
-  // ★ 変更するインラインスタイルを保存
   const originalInlineStyles = {
     background: nodeToCapture.style.background,
     backgroundColor: nodeToCapture.style.backgroundColor,
@@ -221,8 +212,7 @@ async function postToX() {
   };
 
   try {
-    // ★ キャプチャ対象のノードに直接、和柄のインラインスタイルを適用
-    nodeToCapture.style.backgroundColor = '#f0fff0'; // 背景色: ハニーデュー（薄い緑）
+    nodeToCapture.style.backgroundColor = '#f0fff0';
     nodeToCapture.style.backgroundImage = [
       'radial-gradient(circle at 50% 100%, transparent 30%, #cce8cc 30%, #cce8cc 45%, transparent 45%)',
       'radial-gradient(circle at 0 50%, transparent 30%, #cce8cc 30%, #cce8cc 45%, transparent 45%)',
@@ -235,7 +225,6 @@ async function postToX() {
     const scale = 3;
     let options;
 
-    // --- フォント修正 ---
     if (fontCssLink) {
       fontCssLink.disabled = true;
       const cssText = await (await fetch(fontCssLink.href)).text();
@@ -243,22 +232,19 @@ async function postToX() {
       newStyleElement.appendChild(document.createTextNode(cssText));
       document.head.appendChild(newStyleElement);
     }
-    // ---
 
     if (isMobile()) {
-      // モバイルでは、ポップアップの中身を一時的にカスタムノードに入れ替える
       tempNode = document.createElement('div');
       tempNode.style.textAlign = 'center';
       tempNode.style.fontFamily = "'Noto Sans JP', sans-serif";
       tempNode.style.padding = '40px 20px';
       tempNode.style.background = 'transparent';
 
-      // ★ タイトル要素を追加
       const titleElement = document.createElement('h1');
       titleElement.textContent = t('titleView.altLogo');
       titleElement.style.color = '#4a4a4a';
-      titleElement.style.fontSize = '2.2em'; // ★ フォントサイズを調整
-      titleElement.style.whiteSpace = 'nowrap'; // ★ 改行を禁止
+      titleElement.style.fontSize = '2.2em';
+      titleElement.style.whiteSpace = 'nowrap';
       titleElement.style.fontWeight = 'bold';
       titleElement.style.margin = '0 0 20px 0';
       tempNode.appendChild(titleElement);
@@ -269,7 +255,7 @@ async function postToX() {
       } else {
         winsElement.textContent = t('finalResultPopup.wins', { count: 0 });
       }
-      winsElement.style.color = '#ff9800'; // ★ 色をオレンジに戻す
+      winsElement.style.color = '#ff9800';
       winsElement.style.fontSize = '2.5em';
       winsElement.style.fontWeight = 'bold';
       winsElement.style.margin = '0 0 20px 0';
@@ -308,9 +294,9 @@ async function postToX() {
     const file = new File([blob], 'mahjong-result.png', { type: 'image/png' });
     const baseText = t('finalResultPopup.tweetText', { count: winsToDisplay.value });
     const gameUrl = "https://mahjong-vue-app.vercel.app";
-    const captionText = `\n${gameUrl}\n${baseText}`;
 
     if (isMobile() && navigator.share && navigator.canShare({ files: [file] })) {
+      const captionText = `\n${gameUrl}\n${baseText}`;
       await navigator.share({
         files: [file],
         title: t('finalResultPopup.title'),
@@ -320,7 +306,13 @@ async function postToX() {
       try {
         const clipboardItem = new ClipboardItem({ 'image/png': blob });
         await navigator.clipboard.write([clipboardItem]);
-        alert(t('finalResultPopup.imageCopiedSuccess'));
+        
+        const pastePrompt = t('finalResultPopup.pastePromptPC');
+        const pcCaptionText = `${pastePrompt}\n\n${baseText}\n${gameUrl}`;
+
+        const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(pcCaptionText)}`;
+        window.open(twitterUrl, '_blank');
+
       } catch (err) {
         console.error("クリップボードへの画像のコピーに失敗しました: ", err);
         alert(t('finalResultPopup.imageCopiedError'));
@@ -331,7 +323,6 @@ async function postToX() {
     console.error(`Xへの共有準備中にエラーが発生しました: `, err);
     alert(t('finalResultPopup.clipboardCopyError'));
   } finally {
-    // --- クリーンアップ ---
     nodeToCapture.style.background = originalInlineStyles.background;
     nodeToCapture.style.backgroundColor = originalInlineStyles.backgroundColor;
     nodeToCapture.style.backgroundImage = originalInlineStyles.backgroundImage;
@@ -351,7 +342,6 @@ async function postToX() {
     if (newStyleElement) {
       document.head.removeChild(newStyleElement);
     }
-    // ---
   }
 }
 </script>

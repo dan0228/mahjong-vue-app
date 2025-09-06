@@ -206,14 +206,32 @@ async function postToX() {
   const fontCssLink = document.querySelector('link[rel="stylesheet"][href*="fonts.googleapis.com"]');
   let newStyleElement = null;
   
-  // --- モバイル用スクリーンショットのクリーンアップ用 ---
+  // --- クリーンアップ用変数の準備 ---
+  const nodeToCapture = popupContentRef.value;
   let tempNode = null;
   const originalChildren = [];
-  const originalPadding = popupContentRef.value ? popupContentRef.value.style.padding : '';
-  // ---
+  const originalPadding = nodeToCapture.style.padding;
+  // ★ 変更するインラインスタイルを保存
+  const originalInlineStyles = {
+    background: nodeToCapture.style.background,
+    backgroundColor: nodeToCapture.style.backgroundColor,
+    backgroundImage: nodeToCapture.style.backgroundImage,
+    backgroundSize: nodeToCapture.style.backgroundSize,
+    backgroundPosition: nodeToCapture.style.backgroundPosition,
+  };
 
   try {
-    let nodeToCapture = popupContentRef.value;
+    // ★ キャプチャ対象のノードに直接、和柄のインラインスタイルを適用
+    nodeToCapture.style.backgroundColor = '#f0fff0'; // 背景色: ハニーデュー（薄い緑）
+    nodeToCapture.style.backgroundImage = [
+      'radial-gradient(circle at 50% 100%, transparent 30%, #cce8cc 30%, #cce8cc 45%, transparent 45%)',
+      'radial-gradient(circle at 0 50%, transparent 30%, #cce8cc 30%, #cce8cc 45%, transparent 45%)',
+      'radial-gradient(circle at 100% 50%, transparent 30%, #cce8cc 30%, #cce8cc 45%, transparent 45%)',
+      'radial-gradient(circle at 50% 0, transparent 30%, #cce8cc 30%, #cce8cc 45%, transparent 45%)'
+    ].join(', ');
+    nodeToCapture.style.backgroundSize = '50px 50px';
+    nodeToCapture.style.backgroundPosition = '25px 25px, 0 25px, 25px 0, 0 0';
+
     const scale = 3;
     let options;
 
@@ -232,14 +250,26 @@ async function postToX() {
       tempNode = document.createElement('div');
       tempNode.style.textAlign = 'center';
       tempNode.style.fontFamily = "'Noto Sans JP', sans-serif";
-      
+      tempNode.style.padding = '40px 20px';
+      tempNode.style.background = 'transparent';
+
+      // ★ タイトル要素を追加
+      const titleElement = document.createElement('h1');
+      titleElement.textContent = t('titleView.altLogo');
+      titleElement.style.color = '#4a4a4a';
+      titleElement.style.fontSize = '2.2em'; // ★ フォントサイズを調整
+      titleElement.style.whiteSpace = 'nowrap'; // ★ 改行を禁止
+      titleElement.style.fontWeight = 'bold';
+      titleElement.style.margin = '0 0 20px 0';
+      tempNode.appendChild(titleElement);
+
       const winsElement = document.createElement('p');
       if (winsToDisplay.value > 0) {
         winsElement.textContent = winsMessage.value;
       } else {
         winsElement.textContent = t('finalResultPopup.wins', { count: 0 });
       }
-      winsElement.style.color = '#ff9800';
+      winsElement.style.color = '#ff9800'; // ★ 色をオレンジに戻す
       winsElement.style.fontSize = '2.5em';
       winsElement.style.fontWeight = 'bold';
       winsElement.style.margin = '0 0 20px 0';
@@ -247,7 +277,7 @@ async function postToX() {
 
       const timestampElement = document.createElement('div');
       timestampElement.textContent = formattedTimestamp.value;
-      timestampElement.style.color = '#666';
+      timestampElement.style.color = '#7d6b6b';
       timestampElement.style.fontSize = '1em';
       tempNode.appendChild(timestampElement);
 
@@ -261,7 +291,6 @@ async function postToX() {
     }
 
     options = {
-      bgcolor: '#ffffff',
       width: nodeToCapture.offsetWidth * scale,
       height: nodeToCapture.offsetHeight * scale,
       style: {
@@ -281,7 +310,6 @@ async function postToX() {
     const gameUrl = "https://mahjong-vue-app.vercel.app";
     const captionText = `\n${gameUrl}\n${baseText}`;
 
-    // モバイルはWeb Share API、PCはクリップボードへのコピー
     if (isMobile() && navigator.share && navigator.canShare({ files: [file] })) {
       await navigator.share({
         files: [file],
@@ -289,7 +317,6 @@ async function postToX() {
         text: captionText,
       });
     } else if (!isMobile()) {
-      // PCの場合、ウィンドウは既に開かれているのでクリップボードにコピーするだけ
       try {
         const clipboardItem = new ClipboardItem({ 'image/png': blob });
         await navigator.clipboard.write([clipboardItem]);
@@ -305,12 +332,18 @@ async function postToX() {
     alert(t('finalResultPopup.clipboardCopyError'));
   } finally {
     // --- クリーンアップ ---
+    nodeToCapture.style.background = originalInlineStyles.background;
+    nodeToCapture.style.backgroundColor = originalInlineStyles.backgroundColor;
+    nodeToCapture.style.backgroundImage = originalInlineStyles.backgroundImage;
+    nodeToCapture.style.backgroundSize = originalInlineStyles.backgroundSize;
+    nodeToCapture.style.backgroundPosition = originalInlineStyles.backgroundPosition;
+
     if (isMobile() && tempNode) {
-      popupContentRef.value.removeChild(tempNode);
+      nodeToCapture.removeChild(tempNode);
       originalChildren.forEach(child => {
         child.style.display = '';
       });
-      popupContentRef.value.style.padding = originalPadding;
+      nodeToCapture.style.padding = originalPadding;
     }
     if (fontCssLink) {
       fontCssLink.disabled = false;

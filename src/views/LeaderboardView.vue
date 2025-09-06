@@ -1,4 +1,3 @@
-
 <template>
   <div class="leaderboard-view-container" :style="{ height: viewportHeight }">
     <div class="leaderboard-screen" :style="scalerStyle">
@@ -26,9 +25,8 @@
       <h1><span v-html="$t('leaderboardView.title')"></span></h1>
 
       <div v-if="isLoading" class="loading-message">{{ $t('leaderboardView.loading') }}</div>
-      <div v-if="error" class="error-message">{{ error }}</div>
 
-      <div v-if="!isLoading && !error" class="ranking-table-container">
+      <div v-if="!isLoading" class="ranking-table-container">
         <table class="ranking-table">
           <colgroup>
             <col style="width: 12%;" />
@@ -79,7 +77,7 @@
 /**
  * ランキング表示コンポーネント。
  * APIから週間ランキングデータを取得し、表示します。
- * 常に5行表示を維持し、データがない場合はプレースホルダーを表示します。
+ * 常に5行表示を維持し、データがない場合や取得に失敗した場合はプレースホルダーを表示します。
  * 開発環境ではモックデータを使用します。
  */
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
@@ -98,7 +96,7 @@ const gameStore = useGameStore();
 
 const leaderboard = ref([]); // APIから取得した生のランキングデータ
 const isLoading = ref(true); // ローディング状態フラグ
-const error = ref(null); // エラーメッセージ
+const error = ref(null); // エラーメッセージ（デバッグ用）
 
 // --- 画面のスケーリング処理 ---
 const DESIGN_WIDTH = 360; // デザイン基準の幅
@@ -172,7 +170,9 @@ async function fetchLeaderboard() {
       leaderboard.value = await response.json();
     } catch (e) {
       console.error(e);
-      error.value = e.message;
+      // エラーが発生した場合、ランキングを空にしてプレースホルダー表示にフォールバック
+      leaderboard.value = [];
+      error.value = e.message; // エラー情報を保持（デバッグ用）
     } finally {
       isLoading.value = false;
     }

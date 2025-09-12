@@ -61,7 +61,7 @@
 
       <RulePopup v-if="showRulesPopup" @close="showRulesPopup = false" />
       <YakuListPopup v-if="showYakuListPopup" @close="showYakuListPopup = false" />
-      <div class="credit">BGM by OtoLogic(CC BY 4.0) </div>
+      <div class="credit">BGM by OtoLogic(CC BY 4.0)</div>
       <div class="x-account">
         <a href="https://x.com/danAllGreen" target="_blank" rel="noopener noreferrer">{{ $t('titleView.officialX') }}</a>
       </div>

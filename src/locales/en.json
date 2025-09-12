@@ -105,7 +105,7 @@
   },
   "leaderboardView": {
     "title": "Weekly Leaderboard",
-    "description": "Get the number from posts with the #よんじゃん連勝数 hashtag on X that contain \"For Tally: [Number]-Win Streak Achieved!\"",
+    "description": "Get the number from posts with the #よんじゃん連勝数 hashtag on X that contain \"For Tally: [Number]-Win Streak\"",
     "updateNotice": "*Updates every 3 hours.",
     "aggregationMethodTitle": "How to Aggregate",
     "postPrompt": "Post from the final result to join the ranking!",

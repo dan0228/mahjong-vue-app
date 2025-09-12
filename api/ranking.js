@@ -1,14 +1,14 @@
 // api/ranking.js
 
-// This is a Vercel Serverless Function that acts as a backend.
-// It fetches tweets with a specific hashtag, parses them, and creates a leaderboard.
+// これはバックエンドとして機能するVercelサーバーレス関数です。
+// 特定のハッシュタグを持つツイートを取得し、解析してリーダーボードを作成します。
 
 import { TwitterApi } from 'twitter-api-v2';
 
-// Helper function to parse streak number from tweet text
+// ツイート本文から連勝数を解析するためのヘルパー関数
 const parseStreak = (text) => {
   const patterns = [
-    /(?:集計用|For Tally)[:：]\s*(\d+)/i, // Full-width and half-width colon
+    /(?:集計用|For Tally)[:：]\s*(\d+)/i, // 全角および半角コロン
   ];
 
   for (const pattern of patterns) {
@@ -21,8 +21,8 @@ const parseStreak = (text) => {
 };
 
 export default async function handler(request, response) {
-  // Allow CORS for all origins for simplicity in this example.
-  // In a real-world scenario, you might want to restrict this to your frontend's domain.
+  // この例では簡単にするため、すべてのオリジンからのCORSを許可します。
+  // 実際のアプリケーションでは、フロントエンドのドメインに制限することをお勧めします。
   response.setHeader('Access-Control-Allow-Origin', '*');
   response.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -34,20 +34,20 @@ export default async function handler(request, response) {
   const { X_API_KEY } = process.env;
 
   if (!X_API_KEY) {
-    return response.status(500).json({ error: 'X_API_KEY is not configured on the server.' });
+    return response.status(500).json({ error: 'X_API_KEYがサーバーに設定されていません。' });
   }
 
   try {
-    // Initialize the client with your App-only Bearer Token
+    // アプリ専用のBearerトークンでクライアントを初期化します
     const twitterClient = new TwitterApi(X_API_KEY);
     const readOnlyClient = twitterClient.readOnly;
 
-    // Search for recent tweets with the specified hashtag
+    // 指定されたハッシュタグを持つ最近のツイートを検索します
     const searchResult = await readOnlyClient.v2.search('#よんじゃん連勝数 -is:retweet', {
       'tweet.fields': ['public_metrics', 'created_at'],
       'expansions': ['author_id'],
       'user.fields': ['name', 'username', 'profile_image_url'],
-      max_results: 100, // Fetch a good number of tweets to parse
+      max_results: 100, // 解析のために十分な数のツイートを取得します
     });
 
     const users = searchResult.includes.users;
@@ -61,7 +61,7 @@ export default async function handler(request, response) {
       if (streak !== null) {
         const user = users.find(u => u.id === tweet.author_id);
         if (user) {
-          // Only keep the highest streak for each user
+          // 各ユーザーの最高の連勝数のみを保持します
           if (!userStreaks[user.id] || streak > userStreaks[user.id].streak) {
             userStreaks[user.id] = {
               id: user.id,
@@ -76,16 +76,16 @@ export default async function handler(request, response) {
       }
     }
 
-    // Sort by streak descending
+    // 連勝数で降順にソートします
     const sortedLeaderboard = Object.values(userStreaks).sort((a, b) => b.streak - a.streak);
 
-    // Assign ranks and take the top 10
+    // 順位を割り当て、トップ10を取得します
     const finalLeaderboard = sortedLeaderboard.slice(0, 10).map((player, index) => ({
       ...player,
       rank: index + 1,
     }));
 
-    // Calculate dynamic cache time until the next 3-hour mark (0, 3, 6, ... UTC)
+    // 次の3時間マーク（0, 3, 6, ... UTC）までの動的なキャッシュ時間を計算します
     const now = new Date();
     const currentHour = now.getUTCHours();
     const nextMark = Math.ceil((currentHour + 1) / 3) * 3;
@@ -94,15 +94,15 @@ export default async function handler(request, response) {
 
     const secondsToExpiry = Math.round((expiryDate.getTime() - now.getTime()) / 1000);
 
-    // Set cache headers. Vercel will cache this response until the next 3-hour mark.
+    // キャッシュヘッダーを設定します。Vercelはこのレスポンスを次の3時間マークまでキャッシュします。
     response.setHeader('Cache-Control', `s-maxage=${secondsToExpiry}, stale-while-revalidate`);
 
     response.status(200).json(finalLeaderboard);
 
   } catch (error) {
-    console.error('Error fetching from X API:', error);
+    console.error('X APIからのデータ取得中にエラーが発生しました:', error);
     response.status(500).json({ 
-      error: 'Failed to fetch data from X API.',
+      error: 'X APIからのデータ取得に失敗しました。',
       details: error.message 
     });
   }

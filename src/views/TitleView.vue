@@ -48,6 +48,9 @@
             <button @click="goToShrine">{{ $t('titleView.menu.shrine') }}</button>
           </li>
           <li>
+            <button @click="showHowToPlayPopup = true">{{ $t('titleView.menu.howToPlay') }}</button>
+          </li>
+          <li>
             <button @click="showRulesPopup = true">{{ $t('titleView.menu.rules') }}</button>
           </li>
           <li>
@@ -61,11 +64,12 @@
 
       <RulePopup v-if="showRulesPopup" @close="showRulesPopup = false" />
       <YakuListPopup v-if="showYakuListPopup" @close="showYakuListPopup = false" />
+      <HowToPlayPopup v-if="showHowToPlayPopup" @close="showHowToPlayPopup = false" />
       <div class="credit">BGM by OtoLogic(CC BY 4.0)</div>
       <div class="x-account">
         <a href="https://x.com/danAllGreen" target="_blank" rel="noopener noreferrer">{{ $t('titleView.officialX') }}</a>
       </div>
-      <div class="version-info">v1.3.9 | 2025.09.12</div>
+      <div class="version-info">v1.4.0 | 2025.09.13</div>
     </div>
   </div>
 </template>
@@ -84,6 +88,7 @@ import { useGameStore } from '@/stores/gameStore';
 import { useAudioStore } from '@/stores/audioStore';
 import RulePopup from '@/components/RulePopup.vue';
 import YakuListPopup from '@/components/YakuListPopup.vue';
+import HowToPlayPopup from '@/components/HowToPlayPopup.vue'; // 遊び方ポップアップをインポート
 import { useViewportHeight } from '@/composables/useViewportHeight';
 
 // --- リアクティブな状態とストア ---
@@ -95,6 +100,7 @@ const audioStore = useAudioStore(); // 音声関連ストア
 
 const showRulesPopup = ref(false); // ルールポップアップの表示状態
 const showYakuListPopup = ref(false); // 役一覧ポップアップの表示状態
+const showHowToPlayPopup = ref(false); // 遊び方ポップアップの表示状態
 
 // --- 画面のスケーリング処理 ---
 const DESIGN_WIDTH = 360; // デザイン基準の幅
@@ -244,7 +250,7 @@ function goToLeaderboard() {
   max-width: 320px; /* 最大幅を指定 */
   height: auto; /* 高さは自動調整 */
   margin-top: -20px;
-  margin-bottom: -10px;
+  margin-bottom: -20px;
   position: relative;
   z-index: 1;
 }
@@ -256,14 +262,14 @@ function goToLeaderboard() {
   z-index: 1; /* グラデーションより手前に来るように */
 }
 .menu li {
-  margin-bottom: 8px;
+  margin-bottom: 7px;
 }
 
 .menu button {
   width: 220px; /* 固定幅に設定 */
-  height: 40px; /* 固定高さに設定 */
+  height: 36px; /* 固定高さに設定 */
   padding: 4px 20px; /* パディング調整 */
-  font-size: 1.2em;
+  font-size: 1.15em;
   cursor: pointer;
   border: none; /* ボーダーを削除 */
   border: 2px solid #586810; /* 元のボーダー色 */

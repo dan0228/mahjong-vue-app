@@ -6,6 +6,7 @@
       "catAiMatch": "Cat AI Match 🐈",
       "shrine": "Janeko Shrine ⛩️",
       "rules": "Rules 📖",
+      "howToPlay": "How to Play ❓",
       "handList": "Yaku List 🀄",
       "leaderboard": "Leaderboard 🏆"
     },
@@ -43,6 +44,71 @@
       "step3": "3. Follow the on-screen instructions to complete the process."
     },
     "closeButton": "Close"
+  },
+  "howToPlayPopup": {
+    "title": "How to Play",
+    "closeButton": "Close",
+    "section1": {
+      "title": "🎉 Game Features 🎉",
+      "line1": "'YonJong!' is a casual mahjong game based on Japanese Riichi Mahjong.",
+      "line2": "Instead of 13 tiles, you only have <strong>4</strong>! This makes for quick games where it's easy to form winning hands.",
+      "line3": "Enjoy a game that's simple yet deep, blending luck and strategy.",
+      "line4": "It's also perfect as an introduction for mahjong beginners!"
+    },
+    "section2": {
+      "title": "🀄 What is Mahjong? 🀄",
+      "objective": "<strong>Objective:</strong> Be the first to create a specific combination of tiles (a 'yaku' or winning hand) to win ('agari').",
+      "tileTypesTitle": "<strong>Tile Types:</strong>",
+      "tileTypes": [
+        "<strong>Suits:</strong> There are three suits: Characters (Manzu), Circles (Pinzu), and Bamboo (Souzu).",
+        "<strong>Honor Tiles:</strong> These include Wind tiles (East, South, West, North) and Dragon tiles (White, Green, Red)."
+      ],
+      "handCompositionTitle": "<strong>Hand Composition:</strong>",
+      "handComposition": "Normally, you build a hand with 13 tiles, but in 'YonJong!', you only use <strong>4</strong> (drawing one tile makes a total of 5).<br>The basics are to form <strong>'melds' (mentsu)</strong>, which are sets of three, and a <strong>'pair' (toitsu)</strong>, which is a set of two.<br>In 'YonJong!', you win by forming <strong>1 meld + 1 pair</strong>!"
+    },
+    "section3": {
+      "title": "📖 Basic Flow 📖",
+      "intro": "Mahjong progresses in units called 'rounds' (kyoku).<br>*'YonJong!' is played only in the East round (Tonpuusen).",
+      "flow": [
+        "In each round, a 'dealer' (oya) and 'non-dealers' (ko) are determined, and players draw tiles in order, starting with the dealer.",
+        "If the dealer wins, they remain the dealer for the next round (renchan).",
+        "If the dealer loses or the round ends in a draw (ryuukyoku), the dealership passes to the next player.",
+        "The game proceeds from East 1 -> East 2 -> East 3 -> East 4. The game ends after the East 4 round.<br>The player with the highest final score wins!"
+      ],
+      "roundFlowTitle": "<strong>Flow of a Single Round:</strong>",
+      "roundFlow": [
+        "You start with 4 tiles in your hand.",
+        "You draw ('tsumo') one tile from the wall.",
+        "You discard one tile from your hand, always keeping 4 tiles.",
+        "The round ends when someone wins or when the wall runs out of tiles."
+      ]
+    },
+    "section4": {
+      "title": "⚡ Actions ⚡",
+      "actions": {
+        "ron": {
+          "term": "Ron",
+          "definition": "Declare a win using a tile discarded by another player to complete your hand."
+        },
+        "tsumo": {
+          "term": "Tsumo",
+          "definition": "Declare a win using a tile you drew yourself from the wall to complete your hand."
+        },
+        "pon": {
+          "term": "Pon",
+          "definition": "When you have two identical tiles, you can call 'Pon' to take a third identical tile discarded by another player to complete a meld (a set of three)."
+        },
+        "kan": {
+          "term": "Kan",
+          "definition": "Form a meld of four identical tiles. There are three types: 'Ankan' (a concealed quad in your hand), 'Kakan' (adding a fourth tile to a meld you already called 'Pon'), and 'Daiminkan' (using a discarded tile to complete a quad)."
+        },
+        "riichi": {
+          "term": "Riichi",
+          "definition": "If your hand is one tile away from completion ('tenpai') and you haven't called 'Pon' or 'Daiminkan', you can declare 'Riichi'. This adds a yaku (winning hand value) to your hand."
+        }
+      }
+    },
+    "conclusion": "Now, it's OK to learn the rules little by little while having fun playing!"
   },
   "rulePopup": {
     "title": "Rules",

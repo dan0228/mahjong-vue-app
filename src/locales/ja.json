@@ -64,7 +64,7 @@
         "<strong>字牌：</strong>東・南・西・北 や 白・發・中 などがあります。"
       ],
       "handCompositionTitle": "<strong>手牌の構成：</strong>",
-      "handComposition": "通常は13枚の手牌ですが、「よんじゃん！」では<strong>4枚</strong>です（1枚引いて合計5枚）。<br><strong>「面子（メンツ）」</strong>と呼ばれる3枚セットと、<strong>「対子（トイツ）」</strong>と呼ばれる2枚セットを揃えるのが基本です。<br>「よんじゃん！」では、<strong>1面子 + 1対子</strong>の形を作ればアガリです！"
+      "handComposition": "通常は13枚の手牌ですが、「よんじゃん！」では<strong>4枚</strong>です（1枚引いて合計5枚）。<br><strong>「面子（メンツ）」</strong>と呼ばれる3枚セット(222や567など)と、<strong>「対子（トイツ）」</strong>と呼ばれる2枚セット(88や99など)を揃えるのが基本です。<br>「よんじゃん！」では、<strong>1面子 + 1対子</strong>の形を作ればアガリです！"
     },
     "section3": {
       "title": "📖 基本の流れ 📖",
@@ -486,7 +486,7 @@
     "backToTitle": "タイトルに戻る",
     "backToTitleSub": "(連勝リセット)",
     "shareCaption": "スクショも一緒に投稿してランキングに参加📸",
-    "tweetText": "集計用：{count}連勝\n#よんじゃん #よんじゃん連勝数",
+    "tweetText": "集計用：{count}連勝\n#よんじゃん #よんじゃん連勝数\n👇以下リンクからすぐにプレイ可能👇",
     "clipboardCopySuccess": "投稿用メッセージをクリップボードにコピー！貼り付けして簡単投稿！",
     "clipboardCopyError": "キャプションのコピーに失敗しました。",
     "imageCopiedSuccess": "結果画像をクリップボードにコピーしました。ポストに貼り付けて投稿できます。",

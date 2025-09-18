@@ -69,7 +69,7 @@
       <div class="x-account">
         <a href="https://x.com/danAllGreen" target="_blank" rel="noopener noreferrer">{{ $t('titleView.officialX') }}</a>
       </div>
-      <div class="version-info">v1.4.0 | 2025.09.13</div>
+      <div class="version-info">v1.4.1 | 2025.09.18</div>
     </div>
   </div>
 </template>

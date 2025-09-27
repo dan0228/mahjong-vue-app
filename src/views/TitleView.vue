@@ -34,10 +34,10 @@
       </div>
       <div class="max-consecutive-wins">
         {{ $t('titleView.maxWinStreak') }}
-        <span class="max-wins-number">{{ gameStore.maxConsecutiveWins }}</span>
+        <span class="max-wins-number">{{ userStore.profile?.max_win_streak || 0 }}</span>
       </div>
       <div class="cat-coins">
-        {{ $t('titleView.catCoins') }} <span class="cat-coins-number">{{ gameStore.catCoins }}</span>
+        {{ $t('titleView.catCoins') }} <span class="cat-coins-number">{{ userStore.profile?.cat_coins || 0 }}</span>
       </div>
       <nav class="menu">
         <ul>
@@ -86,6 +86,7 @@ import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { useGameStore } from '@/stores/gameStore';
 import { useAudioStore } from '@/stores/audioStore';
+import { useUserStore } from '@/stores/userStore'; // userStoreをインポート
 import RulePopup from '@/components/RulePopup.vue';
 import YakuListPopup from '@/components/YakuListPopup.vue';
 import HowToPlayPopup from '@/components/HowToPlayPopup.vue'; // 遊び方ポップアップをインポート
@@ -97,6 +98,7 @@ const { viewportHeight } = useViewportHeight(); // ビューポートの高さ�
 const router = useRouter(); // Vueルーター
 const gameStore = useGameStore(); // ゲーム状態ストア
 const audioStore = useAudioStore(); // 音声関連ストア
+const userStore = useUserStore(); // userStoreを使用
 
 const showRulesPopup = ref(false); // ルールポップアップの表示状態
 const showYakuListPopup = ref(false); // 役一覧ポップアップの表示状態
@@ -130,8 +132,7 @@ onMounted(() => {
   updateScaleFactor();
   // ウィンドウリサイズ時にスケールを再計算
   window.addEventListener('resize', updateScaleFactor);
-  // ストアから猫コイン情報を読み込む
-  gameStore.loadCatCoins();
+  // gameStore.loadCatCoins(); // userStoreから取得するため不要
 });
 
 onBeforeUnmount(() => {

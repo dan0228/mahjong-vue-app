@@ -1,4 +1,5 @@
 import { useAudioStore } from './audioStore';
+import { useUserStore } from './userStore'; // ★追加
 
 // src/stores/gameStore.js
 import { defineStore } from 'pinia';
@@ -63,7 +64,7 @@ export const useGameStore = defineStore('game', {
     showFinalResultPopup: false,
     finalResultDetails: { // 最終結果の詳細情報 (構造化)
       rankedPlayers: [],
-      consecutiveWins: 0,
+      consecutiveWins: 0, // ★userStoreから取得する
     },
     currentRound: { wind: 'east', number: 1 }, // 例: 東1局
     honba: 0, // 本場
@@ -124,13 +125,11 @@ export const useGameStore = defineStore('game', {
       playerId: null,
     },
     riichiDiscardedTileId: {}, // { [playerId: string]: string | null } リーチ宣言牌のIDを保持
-    maxConsecutiveWins: parseInt(localStorage.getItem('mahjongMaxConsecutiveWins') || '0'), // ローカルストレージから最大連勝数を読み込み
     previousConsecutiveWins: 0, // 連勝が途切れる直前の連勝数
     showDealerDeterminationPopup: false, // 親決め結果ポップアップの表示フラグ
     dealerDeterminationResult: { // 親決め結果の詳細情報
       players: [], // { id, name, seatWind, isDealer } の配列
     },
-    catCoins: 0, // 猫コインの合計
     lastCoinGain: 0, // 直近で得た猫コイン
     isRiichiBgmActive: false, // リーチBGMがアクティブかどうか
     previousBgm: null, // リーチ前のBGMを保持
@@ -166,6 +165,8 @@ export const useGameStore = defineStore('game', {
      * プレイヤーのシャッフル、親の決定、牌の準備、配牌などを行います。
      */
     initializeGame() {
+      const userStore = useUserStore(); // userStoreを取得
+
       // ゲーム初回開始時にプレイヤーの順番をランダム化
       if (this.dealerIndex === null) {
         // AIプレイヤーをランダムに3人選ぶ
@@ -181,6 +182,11 @@ export const useGameStore = defineStore('game', {
           score: 50000,
           seatWind: null
         }));
+
+        // 人間プレイヤーの情報をuserStoreから更新
+        if (userStore.profile) {
+          this.players[0].name = userStore.profile.username;
+        }
 
         // 人間プレイヤーと選択されたAIプレイヤーを結合
         this.players = [
@@ -1510,11 +1516,10 @@ export const useGameStore = defineStore('game', {
 
       // --- 役達成状況の記録 ---
       if (agariPlayerId === 'player1' && !winResult.isChombo) {
-        const yakuAchievements = JSON.parse(localStorage.getItem('mahjongYakuAchieved') || '{}');
+        const userStore = useUserStore(); // userStoreを取得
         winResult.yaku.forEach(yaku => {
-          if (yaku.key) { yakuAchievements[yaku.key] = true; }
+          if (yaku.key) { userStore.updateYakuAchievement(yaku.key); }
         });
-        localStorage.setItem('mahjongYakuAchieved', JSON.stringify(yakuAchievements));
       }
 
       // --- ロン牌のハイライト ---
@@ -1656,35 +1661,44 @@ export const useGameStore = defineStore('game', {
      * ゲーム終了時の処理を行います。
      * プレイヤーの最終順位付け、連勝数の更新、猫コインの計算、最終結果ポップアップの表示などを行います。
      */
-    handleGameEnd() {
+    async handleGameEnd() { // asyncにする
+      const userStore = useUserStore(); // userStoreを取得
+
       this.gamePhase = GAME_PHASES.GAME_OVER; // ゲームフェーズをゲーム終了に設定
       // プレイヤーを最終スコアでランク付け
       const rankedPlayers = getRankedPlayers(this.players);
+      const myPlayerRank = rankedPlayers.find(p => p.id === 'player1')?.rank;
 
       // 全操作モードでない場合のみ連勝数を更新
-      if (this.gameMode !== 'allManual') {
-        // ユーザープレイヤー ('player1') が1位か判定し、連勝数を更新
-        const myPlayerRank = rankedPlayers.find(p => p.id === 'player1')?.rank;
-        const currentWins = this.finalResultDetails.consecutiveWins;
+      if (this.gameMode !== 'allManual' && userStore.profile) {
+        let currentConsecutiveWins = userStore.profile.current_win_streak || 0;
+        let maxConsecutiveWins = userStore.profile.max_win_streak || 0;
 
         if (myPlayerRank === 1) {
-          this.finalResultDetails.consecutiveWins++; // 1位なら連勝数をインクリメント
+          currentConsecutiveWins++; // 1位なら連勝数をインクリメント
           this.previousConsecutiveWins = 0; // 連勝が継続しているのでリセット
         } else {
           // 1位でなく、かつ現在の連勝数が1以上の場合、その数を記録
-          if (currentWins > 0) {
-            this.previousConsecutiveWins = currentWins;
+          if (currentConsecutiveWins > 0) {
+            this.previousConsecutiveWins = currentConsecutiveWins;
           } else {
             this.previousConsecutiveWins = 0;
           }
-          this.finalResultDetails.consecutiveWins = 0; // 1位でなければ連勝数をリセット
+          currentConsecutiveWins = 0; // 1位でなければ連勝数をリセット
         }
         // 最大連勝数を更新
-        if (this.finalResultDetails.consecutiveWins > this.maxConsecutiveWins) {
-          this.maxConsecutiveWins = this.finalResultDetails.consecutiveWins;
-          localStorage.setItem('mahjongMaxConsecutiveWins', this.maxConsecutiveWins.toString());
+        if (currentConsecutiveWins > maxConsecutiveWins) {
+          maxConsecutiveWins = currentConsecutiveWins;
         }
+
+        // userStore経由で連勝数を更新
+        await userStore.updateWinStreaks({ current: currentConsecutiveWins, max: maxConsecutiveWins });
+        this.finalResultDetails.consecutiveWins = currentConsecutiveWins; // finalResultDetailsも更新
+      } else if (userStore.profile) {
+        // 全操作モードの場合でも、finalResultDetails.consecutiveWinsはuserStoreから取得
+        this.finalResultDetails.consecutiveWins = userStore.profile.current_win_streak || 0;
       }
+
 
       // 最終結果の詳細情報をセット
       this.finalResultDetails.rankedPlayers = rankedPlayers.map(p => ({
@@ -1693,7 +1707,33 @@ export const useGameStore = defineStore('game', {
         name: p.name,
         score: p.score,
       }));
-      this.updateCatCoins(); // 猫コインを更新
+
+      // 猫コインを更新
+      const player1 = this.players.find(p => p.id === 'player1');
+      if (player1 && userStore.profile) {
+        let gain = 0; // 獲得コイン数
+        if (myPlayerRank === 1) {
+          gain = Math.floor(player1.score / 500) + 200; // 1位はスコアに応じたコイン + 200コインボーナス
+        } else if (myPlayerRank === 2) {
+          gain = Math.floor(player1.score / 500); // 2位はスコアに応じたコイン
+        } else if (myPlayerRank === 3) {
+          gain = -Math.floor(player1.score / 400); // 3位はスコアに応じたマイナス
+        } else if (myPlayerRank === 4) {
+          if (player1.score < 0) {
+            gain = -300; // 4位で持ち点マイナスなら固定で-300
+          } else {
+            gain = -Math.floor(player1.score / 300) - 100; // 4位で持ち点プラスでもマイナスボーナス
+          }
+        }
+        this.lastCoinGain = gain; // 直近のコイン獲得数を記録
+        await userStore.updateCatCoins(gain); // userStore経由で猫コインを更新
+      }
+
+      // ゲーム結果を記録 (平均順位計算用)
+      if (myPlayerRank && userStore.profile) {
+        await userStore.recordGameResult(myPlayerRank);
+      }
+
       this.showFinalResultPopup = true; // 最終結果ポップアップを表示
     },
     /**
@@ -1712,10 +1752,16 @@ export const useGameStore = defineStore('game', {
      * @param {boolean} [options.keepStreak=false] - 連勝数を維持するかどうか。
      */
     resetGameForNewSession(options = { keepStreak: false }) {
-      const wins = options.keepStreak ? this.finalResultDetails.consecutiveWins : 0;
+      const userStore = useUserStore(); // userStoreを取得
+      const currentStreakFromUserStore = userStore.profile?.current_win_streak || 0;
+      const wins = options.keepStreak ? currentStreakFromUserStore : 0;
 
       // 人間プレイヤーのみ残し、AIプレイヤーを削除
       this.players = [this.players.find(p => p.id === 'player1')];
+      // ユーザー名をuserStoreから再設定
+      if (userStore.profile) {
+        this.players[0].name = userStore.profile.username;
+      }
 
       // 各プレイヤーの状態を初期化
       this.players.forEach(player => {
@@ -1941,58 +1987,7 @@ export const useGameStore = defineStore('game', {
       }
     }
     ,
-    /**
-     * ローカルストレージから猫コインの残高を読み込み、ストアに設定します。
-     */
-    loadCatCoins() {
-      const coins = localStorage.getItem('mahjongCatCoins');
-      this.catCoins = coins ? parseInt(coins, 10) : 0;
-    },
-    /**
-     * ゲーム終了時のプレイヤーの順位とスコアに基づいて猫コインを計算し、更新します。
-     * 計算されたコインはローカルストレージに保存されます。
-     */
-    updateCatCoins() {
-      const player1 = this.players.find(p => p.id === 'player1');
-      if (player1) {
-        const rankedPlayers = getRankedPlayers(this.players);
-        const myRank = rankedPlayers.find(p => p.id === 'player1')?.rank;
-        let gain = 0; // 獲得コイン数
-
-        if (myRank === 1) {
-          gain = Math.floor(player1.score / 500) + 200; // 1位はスコアに応じたコイン + 200コインボーナス
-        } else if (myRank === 2) {
-          gain = Math.floor(player1.score / 500); // 2位はスコアに応じたコイン
-        } else if (myRank === 3) {
-          gain = -Math.floor(player1.score / 400); // 3位はスコアに応じたマイナス
-        } else if (myRank === 4) {
-          if (player1.score < 0) {
-            gain = -300; // 4位で持ち点マイナスなら固定で-300
-          } else {
-            gain = -Math.floor(player1.score / 300) - 100; // 4位で持ち点プラスでもマイナスボーナス
-          }
-        }
-
-        this.lastCoinGain = gain; // 直近のコイン獲得数を記録
-        // 猫コインの合計を更新 (0～9999の範囲に制限)
-        this.catCoins = Math.min(9999, Math.max(0, this.catCoins + gain));
-        localStorage.setItem('mahjongCatCoins', this.catCoins.toString()); // ローカルストレージに保存
-      }
-    },
-    /**
-     * 指定された量の猫コインを消費します。
-     * コインが足りない場合は消費せず、falseを返します。
-     * @param {number} amount - 消費する猫コインの量。
-     * @returns {boolean} コインの消費に成功した場合はtrue、足りない場合はfalse。
-     */
-    deductCatCoins(amount) {
-      if (this.catCoins >= amount) {
-        this.catCoins -= amount;
-        localStorage.setItem('mahjongCatCoins', this.catCoins.toString());
-        return true;
-      }
-      return false;
-    },
+    
     /**
      * 嶺上牌をツモった後の処理を行います。
      * ツモ和了、暗槓、加槓、リーチの可能性をチェックし、AIプレイヤーの場合は自動で行動を決定します。

@@ -29,7 +29,7 @@ export const useUserStore = defineStore('user', () => {
         if (data) {
           profile.value = data;
           // 初回取得時にlocalStorageからデータ移行を試みる
-          migrateDataFromLocalStorage(data);
+          await migrateDataFromLocalStorage(data);
         }
       } else {
         // ユーザーがいない場合はプロフィールをnullに設定
@@ -70,7 +70,7 @@ export const useUserStore = defineStore('user', () => {
    * localStorageに古いデータが存在する場合、Supabaseに移行します。
    * @param {Object} supabaseProfile - Supabaseから取得した現在のプロフィール
    */
-  function migrateDataFromLocalStorage(supabaseProfile) {
+  async function migrateDataFromLocalStorage(supabaseProfile) {
     const updates = {};
     let needsUpdate = false;
 
@@ -83,6 +83,7 @@ export const useUserStore = defineStore('user', () => {
 
     // 役達成状況の移行
     const localYaku = JSON.parse(localStorage.getItem('mahjongYakuAchieved') || '{}');
+    // Supabaseのデータが空、またはlocalStorageのデータの方が新しい場合
     if (Object.keys(localYaku).length > Object.keys(supabaseProfile.yaku_achievements || {}).length) {
       updates.yaku_achievements = localYaku;
       needsUpdate = true;
@@ -90,14 +91,27 @@ export const useUserStore = defineStore('user', () => {
 
     // おみくじ解放状況の移行
     const localSayings = JSON.parse(localStorage.getItem('mahjongRevealedSayings') || '{}');
+    // Supabaseのデータが空、またはlocalStorageのデータの方が新しい場合
     if (Object.keys(localSayings).length > Object.keys(supabaseProfile.revealed_sayings || {}).length) {
       updates.revealed_sayings = localSayings;
       needsUpdate = true;
     }
 
+    // 猫コインの移行
+    const localCatCoins = parseInt(localStorage.getItem('mahjongCatCoins') || '0');
+    if (localCatCoins > (supabaseProfile.cat_coins || 0)) {
+      updates.cat_coins = localCatCoins;
+      needsUpdate = true;
+    }
+
     if (needsUpdate) {
       console.log('ローカルストレージからデータを移行します...', updates);
-      updateUserProfile(updates);
+      await updateUserProfile(updates);
+      // 移行後、localStorageのデータをクリアすることも検討
+      localStorage.removeItem('mahjongMaxConsecutiveWins');
+      localStorage.removeItem('mahjongYakuAchieved');
+      localStorage.removeItem('mahjongRevealedSayings');
+      localStorage.removeItem('mahjongCatCoins');
     }
   }
 
@@ -116,11 +130,61 @@ export const useUserStore = defineStore('user', () => {
     await updateUserProfile({ recent_games: recentGames });
   }
 
+  /**
+   * 連勝数を更新します。
+   * @param {Object} streaks - { current: number, max: number }
+   */
+  async function updateWinStreaks({ current, max }) {
+    if (!profile.value) return;
+    await updateUserProfile({ current_win_streak: current, max_win_streak: max });
+  }
+
+  /**
+   * 役の達成状況を更新します。
+   * @param {string} yakuKey - 達成した役のキー
+   */
+  async function updateYakuAchievement(yakuKey) {
+    if (!profile.value) return;
+    const achievements = { ...(profile.value.yaku_achievements || {}) };
+    if (!achievements[yakuKey]) {
+      achievements[yakuKey] = true;
+      await updateUserProfile({ yaku_achievements: achievements });
+    }
+  }
+
+  /**
+   * おみくじの解放状況を更新します。
+   * @param {string} sayingId - 解放したおみくじのID
+   */
+  async function updateRevealedSaying(sayingId) {
+    if (!profile.value) return;
+    const revealed = { ...(profile.value.revealed_sayings || {}) };
+    if (!revealed[sayingId]) {
+      revealed[sayingId] = true;
+      await updateUserProfile({ revealed_sayings: revealed });
+    }
+  }
+
+  /**
+   * 猫コインを更新します。
+   * @param {number} amount - 更新する猫コインの量（加算または減算）
+   */
+  async function updateCatCoins(amount) {
+    if (!profile.value) return;
+
+    const newCatCoins = Math.max(0, (profile.value.cat_coins || 0) + amount); // 0未満にならないように
+    await updateUserProfile({ cat_coins: newCatCoins });
+  }
+
   return {
     profile,
     loading,
     fetchUserProfile,
     updateUserProfile,
     recordGameResult,
+    updateWinStreaks,
+    updateYakuAchievement,
+    updateRevealedSaying,
+    updateCatCoins,
   };
 });

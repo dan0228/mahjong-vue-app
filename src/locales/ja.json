@@ -11,8 +11,9 @@
       "leaderboard": "ランキング 🏆"
     },
         "officialX": "公式X: {'@'}danAllGreen",
-    "maxWinStreak": "🏆最大連勝数:",
-        "catCoins": "🪙猫コイン:",
+    "maxWinStreak": "🏆最大連勝数",
+    "currentWinStreak": "🎉現在連勝数",
+    "catCoins": "🪙猫コイン",
     "sfx": "効果音"
   },
   "addToHomeScreenPopup": {
@@ -481,9 +482,7 @@
     "wins": "{count}連勝！",
     "winStreak": "{count}連勝中！",
     "newGame": "新しいゲームを開始",
-    "newGameSub": "(連勝継続)",
     "backToTitle": "タイトルに戻る",
-    "backToTitleSub": "(連勝リセット)",
     "shareCaption": "スクショも一緒に投稿してランキングに参加📸",
     "tweetText": "集計用：{count}連勝\n#よんじゃん #よんじゃん連勝数\n👇以下リンクからすぐにプレイ可能👇",
     "clipboardCopySuccess": "投稿用メッセージをクリップボードにコピー！貼り付けして簡単投稿！",

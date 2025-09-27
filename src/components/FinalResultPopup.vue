@@ -23,11 +23,9 @@
         <div class="actions">
           <button @click="startNewGame" class="action-button">
             <span>{{ t('finalResultPopup.newGame') }}</span>
-            <span>{{ t('finalResultPopup.newGameSub') }}</span>
           </button>
           <button @click="backToTitle" class="action-button">
             <span>{{ t('finalResultPopup.backToTitle') }}</span>
-            <span>{{ t('finalResultPopup.backToTitleSub') }}</span>
           </button>
         </div>
         <div class="social-share-buttons">

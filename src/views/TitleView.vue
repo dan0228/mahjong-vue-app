@@ -33,11 +33,16 @@
         </div>
       </div>
       <div class="max-consecutive-wins">
-        {{ $t('titleView.maxWinStreak') }}
+        <span>{{ $t('titleView.maxWinStreak') }}</span>
         <span class="max-wins-number">{{ userStore.profile?.max_win_streak || 0 }}</span>
       </div>
+      <div class="current-consecutive-wins">
+        <span>{{ $t('titleView.currentWinStreak') }}</span>
+        <span class="current-wins-number">{{ userStore.profile?.current_win_streak || 0 }}</span>
+      </div>
       <div class="cat-coins">
-        {{ $t('titleView.catCoins') }} <span class="cat-coins-number">{{ userStore.profile?.cat_coins || 0 }}</span>
+        <span>{{ $t('titleView.catCoins') }}</span>
+        <span class="cat-coins-number">{{ userStore.profile?.cat_coins || 0 }}</span>
       </div>
       <nav class="menu">
         <ul>
@@ -426,40 +431,53 @@ function goToLeaderboard() {
   opacity: 1;
 }
 
-.max-consecutive-wins {
+.max-consecutive-wins,
+.current-consecutive-wins,
+.cat-coins {
   position: absolute;
-  top: 19px;
-  left: 30px; /* 左端からの位置を調整 */
-  font-size: 0.7em;
-  color: #333;
+  left: 20px;
   z-index: 10;
-  background-color: rgba(255, 255, 255, 0.6); /* 背景色 */
-  padding: 3px 14px; /* パディング */
-  border-radius: 8px; /* 角丸 */
-  white-space: nowrap; /* テキストが改行されないように */
+  background-color: rgba(255, 255, 255, 0.6);
+  border-radius: 5px;
+  white-space: nowrap;
+  font-size: 0.6em;
+  color: #333;
+  width: 125px;
+  padding: 1px 8px;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.max-consecutive-wins {
+  top: 20px;
+}
+
+.current-consecutive-wins {
+  top: 39px;
 }
 
 .cat-coins {
-  position: absolute;
-  top: 50px; /* max-consecutive-wins の下に配置 */
-  left: 30px;
-  font-size: 0.7em;
-  color: #333;
-  z-index: 10;
-  background-color: rgba(255, 255, 255, 0.6);
-  padding: 3px 8px;
-  border-radius: 8px;
-  white-space: nowrap;
+  top: 58px;
 }
 
-.cat-coins-number {
+.cat-coins-number,
+.max-wins-number,
+.current-wins-number {
   font-weight: bold;
-  color: #f59e0b; /* 黄色っぽい色 */
 }
 
 .max-wins-number {
-  font-weight: bold;
   color: #cc6633; /* #C63 */
+}
+
+.current-wins-number {
+  color: #4caf50; /* 緑色 */
+}
+
+.cat-coins-number {
+  color: #f59e0b; /* 黄色 */
 }
 
 .toggle-switch {

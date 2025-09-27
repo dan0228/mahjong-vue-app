@@ -16,7 +16,7 @@
   </router-view>
 
   <!-- 通信中ローディングインジケーター -->
-  <LoadingIndicator v-if="userStore.loading" />
+  <LoadingIndicator v-if="userStore.loading && !isLoading" />
 
   <!-- ユーザー名登録ポップアップ -->
   <UsernameRegistrationPopup
@@ -223,38 +223,33 @@ onMounted(async () => {
   const totalAssets = imagePaths.length + audioPaths.length;
   let loadedAssets = 0;
 
-  // アセットが1つ読み込まれるごとに進捗を更新するコールバック関数
   const updateOverallProgress = () => {
     loadedAssets++;
     loadingProgress.value = (loadedAssets / totalAssets) * 100;
   };
 
   try {
-    // 画像と音声ファイルを並行してプリロード
+    // アセットのプリロードとユーザー情報の取得を並行して実行
     await Promise.all([
       preloadImages(imagePaths, updateOverallProgress),
-      audioStore.preloadAudio(audioPaths, updateOverallProgress)
+      audioStore.preloadAudio(audioPaths, updateOverallProgress),
+      userStore.fetchUserProfile()
     ]);
-  } catch (error) {
-    // 開発者向けの エラーログ
-    console.error('アセットのプリロードに失敗しました:', error);
-  } finally {
-    // 「ホーム画面に追加」ポップアップを表示する
-    setTimeout(() => {
-      isLoading.value = false;
 
-      // ★追加：Supabaseからユーザー情報を取得
-      userStore.fetchUserProfile().then(() => {
-        // ユーザー名が保存されているかチェック（Supabaseに登録済みか）
-        if (!userStore.profile) {
-          // 保存されていなければ、ユーザー名登録ポップアップを表示
-          showUsernamePopup.value = true;
-        } else {
-          // 保存されていれば、ホーム画面追加ポップアップを直接表示
-          showAddToHomeScreenPopup.value = true;
-        }
-      });
-    }, 500);
+    // ユーザープロファイルが取得できた後の処理
+    if (!userStore.profile) {
+      showUsernamePopup.value = true;
+    } else {
+      showAddToHomeScreenPopup.value = true;
+    }
+  } catch (error) {
+    console.error('初期読み込み処理でエラーが発生しました:', error);
+    // エラーが起きてもポップアップは表示する（フォールバック）
+    showAddToHomeScreenPopup.value = true;
+  } finally {
+    // すべての初期化処理が終わったので、ローディング画面を非表示にする
+    loadingProgress.value = 100;
+    isLoading.value = false;
   }
 });
 

@@ -10,7 +10,6 @@
         <p><b>{{ $t('addToHomeScreenPopup.desktop.heading') }}</b></p>
         <p>{{ $t('addToHomeScreenPopup.desktop.body') }}</p>
       </div>
-      <p class="note">{{ $t('addToHomeScreenPopup.note') }}</p>
       <div class="buttons">
         <button @click="closePopup">{{ $t('addToHomeScreenPopup.closeButton') }}</button>
         <button v-if="isMobile" @click="showInstructions">{{ $t('addToHomeScreenPopup.howToAddButton') }}</button>

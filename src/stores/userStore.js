@@ -46,12 +46,13 @@ export const useUserStore = defineStore('user', () => {
   /**
    * ユーザーのプロフィール情報を更新します。
    * @param {Object} updates - 更新するデータのオブジェクト。例: { username: '新しい名前' }
+   * @param {Object} options - { showLoading: boolean } ローディング表示を制御するオプション
    */
-  async function updateUserProfile(updates) {
+  async function updateUserProfile(updates, options = { showLoading: true }) {
     if (!profile.value) return;
 
     try {
-      loading.value = true;
+      if (options.showLoading) loading.value = true;
       const { data: { user } } = await supabase.auth.getUser();
 
       const { error } = await supabase.from('users').update(updates).eq('id', user.id);
@@ -63,7 +64,7 @@ export const useUserStore = defineStore('user', () => {
     } catch (error) {
       console.error('プロフィール更新エラー:', error.message);
     } finally {
-      loading.value = false;
+      if (options.showLoading) loading.value = false;
     }
   }
 
@@ -119,8 +120,9 @@ export const useUserStore = defineStore('user', () => {
   /**
    * ゲーム終了時の結果を記録します。
    * @param {number} rank - ゲームの最終順位
+   * @param {Object} options - { showLoading: boolean } ローディング表示を制御するオプション
    */
-  async function recordGameResult(rank) {
+  async function recordGameResult(rank, options = { showLoading: true }) {
     if (!profile.value) return;
 
     const recentGames = profile.value.recent_games || [];
@@ -128,16 +130,17 @@ export const useUserStore = defineStore('user', () => {
     if (recentGames.length > 10) {
       recentGames.shift(); // 古いものから削除して10件に保つ
     }
-    await updateUserProfile({ recent_games: recentGames });
+    await updateUserProfile({ recent_games: recentGames }, options);
   }
 
   /**
    * 連勝数を更新します。
    * @param {Object} streaks - { current: number, max: number }
+   * @param {Object} options - { showLoading: boolean } ローディング表示を制御するオプション
    */
-  async function updateWinStreaks({ current, max }) {
+  async function updateWinStreaks({ current, max }, options = { showLoading: true }) {
     if (!profile.value) return;
-    await updateUserProfile({ current_win_streak: current, max_win_streak: max });
+    await updateUserProfile({ current_win_streak: current, max_win_streak: max }, options);
   }
 
   /**
@@ -155,31 +158,34 @@ export const useUserStore = defineStore('user', () => {
   /**
    * おみくじの解放状況を更新します。
    * @param {string} sayingId - 解放したおみくじのID
+   * @param {Object} options - { showLoading: boolean } ローディング表示を制御するオプション
    */
-  async function updateRevealedSaying(sayingId) {
+  async function updateRevealedSaying(sayingId, options = { showLoading: true }) {
     if (!profile.value) return;
     const revealed = { ...(profile.value.revealed_sayings || {}) };
     if (!revealed[sayingId]) {
       revealed[sayingId] = true;
-      await updateUserProfile({ revealed_sayings: revealed });
+      await updateUserProfile({ revealed_sayings: revealed }, options);
     }
   }
 
   /**
    * 猫コインを更新します。
    * @param {number} amount - 更新する猫コインの量（加算または減算）
+   * @param {Object} options - { showLoading: boolean } ローディング表示を制御するオプション
    */
-  async function updateCatCoins(amount) {
+  async function updateCatCoins(amount, options = { showLoading: true }) {
     if (!profile.value) return;
 
     const newCatCoins = Math.max(0, (profile.value.cat_coins || 0) + amount); // 0未満にならないように
-    await updateUserProfile({ cat_coins: newCatCoins });
+    await updateUserProfile({ cat_coins: newCatCoins }, options);
   }
 
   /**
    * ゲーム中に達成した役をまとめてSupabaseに保存します。
+   * @param {Object} options - { showLoading: boolean } ローディング表示を制御するオプション
    */
-  async function saveAchievedYaku() {
+  async function saveAchievedYaku(options = { showLoading: true }) {
     if (Object.keys(newlyAchievedYaku.value).length === 0) {
       return; // 新しく達成した役がなければ何もしない
     }
@@ -189,9 +195,8 @@ export const useUserStore = defineStore('user', () => {
     const currentAchievements = profile.value.yaku_achievements || {};
     const updatedAchievements = { ...currentAchievements, ...newlyAchievedYaku.value };
 
-    // updateUserProfile を直接呼ぶ代わりに、Supabaseに直接書き込む
     try {
-      loading.value = true;
+      if (options.showLoading) loading.value = true;
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("ユーザーが見つかりません");
 
@@ -206,7 +211,7 @@ export const useUserStore = defineStore('user', () => {
     } catch (error) {
       console.error('役達成状況の一括保存エラー:', error.message);
     } finally {
-      loading.value = false;
+      if (options.showLoading) loading.value = false;
     }
   }
 

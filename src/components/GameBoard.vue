@@ -101,6 +101,9 @@
         @start-new-game="handleStartNewGameFromFinalResult"
         @back-to-title="handleBackToTitleFromFinalResult"
       />
+      <!-- 最終結果へのフェードアウト用オーバーレイ -->
+      <div class="fade-overlay" :class="{ 'is-fading': isFadingToFinalResult }"></div>
+
       <!-- ロン・ツモ・ポン・カンなどの宣言アニメーション -->
       <img v-if="animationDisplay && animationDisplay.type === 'ron'" :src="t('gameBoard.ronImg')" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`, 'ron-animation']" :alt="t('gameBoard.ron')" />
       <!-- 自家のリーチアニメーション -->
@@ -163,6 +166,7 @@
   const showRulesPopup = ref(false); // ルールポップアップの表示状態
   const showYakuListPopup = ref(false); // 役一覧ポップアップの表示状態
   const gameBoardScalerRef = ref(null); // ゲームボードのスケーリング用divへの参照
+  const isFadingToFinalResult = ref(false); // 最終結果へのフェードアウト用フラグ
 
   /**
    * プレイヤー情報に基づいてアイコン画像のパスを返します。
@@ -418,11 +422,26 @@
 
   /**
    * 和了結果ポップアップで「次へ」が押された際の処理。
+   * ゲーム終了条件を判定し、次の局へ進むか、最終結果画面へ遷移するかを決定します。
    */
-  function handleProceedToNextRound() {
+  async function handleProceedToNextRound() {
     gameStore.showResultPopup = false;
-    gameStore.applyPointChanges();
-    gameStore.prepareNextRound();
+    gameStore.applyPointChanges(); // 点数を先に反映させる
+
+    // 最終局で親が和了・テンパイでトップの場合や、誰かが飛んだ場合など、
+    // handleAgari/handleRyuukyoku内でshouldEndGameAfterRoundがtrueに設定される
+    // ここではそのフラグを見て遷移を決定する
+    if (gameStore.shouldEndGameAfterRound) {
+      // ゲーム終了時の処理
+      isFadingToFinalResult.value = true;
+      const gameEndPromise = gameStore.handleGameEnd({ showLoading: false });
+      const delayPromise = new Promise(resolve => setTimeout(resolve, 1500));
+      await Promise.all([gameEndPromise, delayPromise]);
+      // isFadingToFinalResult は FinalResultPopup が閉じられるときにリセットする
+    } else {
+      // 次の局へ
+      gameStore.prepareNextRound();
+    }
   }
 
   /**
@@ -437,6 +456,7 @@
    * 最終結果ポップアップから新しいゲームを開始する処理。
    */
   function handleStartNewGameFromFinalResult() {
+    isFadingToFinalResult.value = false; // フェードをリセット
     gameStore.resetGameForNewSession({ keepStreak: true }); // 連勝数を維持
     gameStore.initializeGame();
     gameStore.showDealerDeterminationPopup = true; // 親決めポップアップを表示
@@ -446,6 +466,7 @@
    * 最終結果ポップアップからタイトル画面に戻る処理。
    */
   function handleBackToTitleFromFinalResult() {
+    isFadingToFinalResult.value = false; // フェードをリセット
     router.push('/');
     gameStore.returnToTitle();
   }
@@ -1109,4 +1130,21 @@ input:checked + .slider:before {
   transform-origin: top right;
 }
 
+.fade-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: white;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 1.5s ease-in-out, visibility 1.5s ease-in-out;
+  z-index: 999; /* ポップアップより手前、ローディングスピナーよりは奥 */
+}
+
+.fade-overlay.is-fading {
+  opacity: 1;
+  visibility: visible;
+}
 </style>

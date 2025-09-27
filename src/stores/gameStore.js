@@ -1662,86 +1662,105 @@ export const useGameStore = defineStore('game', {
      * ゲーム終了時の処理を行います。
      * プレイヤーの最終順位付け、連勝数の更新、猫コインの計算、最終結果ポップアップの表示などを行います。
      */
-    async handleGameEnd() { // asyncにする
-      const userStore = useUserStore(); // userStoreを取得
+    /**
+   * ゲーム終了時の処理を行います。
+   * プレイヤーの最終順位付け、連勝数の更新、猫コインの計算、最終結果ポップアップの表示などを行います。
+   * @param {Object} options - { showLoading: boolean } ローディング表示を制御するオプション
+   */
+  async handleGameEnd(options = { showLoading: true }) {
+    const userStore = useUserStore(); // userStoreを取得
 
-      this.gamePhase = GAME_PHASES.GAME_OVER; // ゲームフェーズをゲーム終了に設定
-      // プレイヤーを最終スコアでランク付け
-      const rankedPlayers = getRankedPlayers(this.players);
-      const myPlayerRank = rankedPlayers.find(p => p.id === 'player1')?.rank;
+    this.gamePhase = GAME_PHASES.GAME_OVER; // ゲームフェーズをゲーム終了に設定
+    // プレイヤーを最終スコアでランク付け
+    const rankedPlayers = getRankedPlayers(this.players);
+    const myPlayerRank = rankedPlayers.find(p => p.id === 'player1')?.rank;
 
-      // 全操作モードでない場合のみ連勝数を更新
-      if (this.gameMode !== 'allManual' && userStore.profile) {
-        let currentConsecutiveWins = userStore.profile.current_win_streak || 0;
-        let maxConsecutiveWins = userStore.profile.max_win_streak || 0;
+    // 全操作モードでない場合のみ連勝数を更新
+    if (this.gameMode !== 'allManual' && userStore.profile) {
+      let currentConsecutiveWins = userStore.profile.current_win_streak || 0;
+      let maxConsecutiveWins = userStore.profile.max_win_streak || 0;
 
-        if (myPlayerRank === 1) {
-          currentConsecutiveWins++; // 1位なら連勝数をインクリメント
-          this.previousConsecutiveWins = 0; // 連勝が継続しているのでリセット
+      if (myPlayerRank === 1) {
+        currentConsecutiveWins++; // 1位なら連勝数をインクリメント
+        this.previousConsecutiveWins = 0; // 連勝が継続しているのでリセット
+      } else {
+        // 1位でなく、かつ現在の連勝数が1以上の場合、その数を記録
+        if (currentConsecutiveWins > 0) {
+          this.previousConsecutiveWins = currentConsecutiveWins;
         } else {
-          // 1位でなく、かつ現在の連勝数が1以上の場合、その数を記録
-          if (currentConsecutiveWins > 0) {
-            this.previousConsecutiveWins = currentConsecutiveWins;
-          } else {
-            this.previousConsecutiveWins = 0;
-          }
-          currentConsecutiveWins = 0; // 1位でなければ連勝数をリセット
+          this.previousConsecutiveWins = 0;
         }
-        // 最大連勝数を更新
-        if (currentConsecutiveWins > maxConsecutiveWins) {
-          maxConsecutiveWins = currentConsecutiveWins;
+        currentConsecutiveWins = 0; // 1位でなければ連勝数をリセット
+      }
+      // 最大連勝数を更新
+      if (currentConsecutiveWins > maxConsecutiveWins) {
+        maxConsecutiveWins = currentConsecutiveWins;
+      }
+
+      // userStore経由で連勝数を更新
+      await userStore.updateWinStreaks({ current: currentConsecutiveWins, max: maxConsecutiveWins }, options);
+      this.finalResultDetails.consecutiveWins = currentConsecutiveWins; // finalResultDetailsも更新
+    } else if (userStore.profile) {
+      // 全操作モードの場合でも、finalResultDetails.consecutiveWinsはuserStoreから取得
+      this.finalResultDetails.consecutiveWins = userStore.profile.current_win_streak || 0;
+    }
+
+
+    // 最終結果の詳細情報をセット
+    this.finalResultDetails.rankedPlayers = rankedPlayers.map(p => ({
+      id: p.id,
+      rank: p.rank,
+      name: p.name,
+      score: p.score,
+    }));
+
+    // ゲーム中に達成した役をまとめて保存
+    if (userStore.profile) {
+      await userStore.saveAchievedYaku(options);
+    }
+
+    // 猫コインを更新
+    const player1 = this.players.find(p => p.id === 'player1');
+    if (player1 && userStore.profile) {
+      let gain = 0; // 獲得コイン数
+      if (myPlayerRank === 1) {
+        gain = Math.floor(player1.score / 500) + 200; // 1位はスコアに応じたコイン + 200コインボーナス
+      } else if (myPlayerRank === 2) {
+        gain = Math.floor(player1.score / 500); // 2位はスコアに応じたコイン
+      } else if (myPlayerRank === 3) {
+        gain = -Math.floor(player1.score / 400); // 3位はスコアに応じたマイナス
+      } else if (myPlayerRank === 4) {
+        if (player1.score < 0) {
+          gain = -300; // 4位で持ち点マイナスなら固定で-300
+        } else {
+          gain = -Math.floor(player1.score / 300) - 100; // 4位で持ち点プラスでもマイナスボーナス
         }
-
-        // userStore経由で連勝数を更新
-        await userStore.updateWinStreaks({ current: currentConsecutiveWins, max: maxConsecutiveWins });
-        this.finalResultDetails.consecutiveWins = currentConsecutiveWins; // finalResultDetailsも更新
-      } else if (userStore.profile) {
-        // 全操作モードの場合でも、finalResultDetails.consecutiveWinsはuserStoreから取得
-        this.finalResultDetails.consecutiveWins = userStore.profile.current_win_streak || 0;
       }
+      this.lastCoinGain = gain; // 直近のコイン獲得数を記録
+      await userStore.updateCatCoins(gain, options); // userStore経由で猫コインを更新
+    }
 
+    // ゲーム結果を記録 (平均順位計算用)
+    if (myPlayerRank && userStore.profile) {
+      await userStore.recordGameResult(myPlayerRank, options);
+    }
 
-      // 最終結果の詳細情報をセット
-      this.finalResultDetails.rankedPlayers = rankedPlayers.map(p => ({
-        id: p.id,
-        rank: p.rank,
-        name: p.name,
-        score: p.score,
-      }));
+    this.showFinalResultPopup = true; // 最終結果ポップアップを表示
+  },
 
-      // ゲーム中に達成した役をまとめて保存
-      if (userStore.profile) {
-        await userStore.saveAchievedYaku();
-      }
-
-      // 猫コインを更新
-      const player1 = this.players.find(p => p.id === 'player1');
-      if (player1 && userStore.profile) {
-        let gain = 0; // 獲得コイン数
-        if (myPlayerRank === 1) {
-          gain = Math.floor(player1.score / 500) + 200; // 1位はスコアに応じたコイン + 200コインボーナス
-        } else if (myPlayerRank === 2) {
-          gain = Math.floor(player1.score / 500); // 2位はスコアに応じたコイン
-        } else if (myPlayerRank === 3) {
-          gain = -Math.floor(player1.score / 400); // 3位はスコアに応じたマイナス
-        } else if (myPlayerRank === 4) {
-          if (player1.score < 0) {
-            gain = -300; // 4位で持ち点マイナスなら固定で-300
-          } else {
-            gain = -Math.floor(player1.score / 300) - 100; // 4位で持ち点プラスでもマイナスボーナス
-          }
+  /**
+   * agariResultDetails に基づいてプレイヤーのスコアを更新します。
+   */
+  applyPointChanges() {
+    const pointChanges = this.agariResultDetails.pointChanges;
+    if (pointChanges) {
+      this.players.forEach(player => {
+        if (pointChanges[player.id]) {
+          player.score += pointChanges[player.id];
         }
-        this.lastCoinGain = gain; // 直近のコイン獲得数を記録
-        await userStore.updateCatCoins(gain); // userStore経由で猫コインを更新
-      }
-
-      // ゲーム結果を記録 (平均順位計算用)
-      if (myPlayerRank && userStore.profile) {
-        await userStore.recordGameResult(myPlayerRank);
-      }
-
-      this.showFinalResultPopup = true; // 最終結果ポップアップを表示
-    },
+      });
+    }
+  },
     /**
      * タイトル画面に戻る処理を行います。
      * 最終結果ポップアップを閉じ、ゲーム状態を完全にリセットします。

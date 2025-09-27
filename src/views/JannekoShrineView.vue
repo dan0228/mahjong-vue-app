@@ -109,59 +109,65 @@ const fortunes = computed(() => tm('shrineView.fortunes'));
  * おみくじを引く処理。
  * コインを消費し、運勢と名言をランダムに決定してポップアップで表示します。
  */
-const drawOmikuji = async () => { // ★ async に変更
+const drawOmikuji = async () => {
+  // コインが足りない場合
+  const cost = 100;
+  if (!userStore.profile || userStore.profile.cat_coins < cost) {
+    randomFortune.value = '';
+    randomSaying.value = t('shrineView.errors.notEnoughCoins');
+    randomSayingId.value = null;
+    isNewSaying.value = false;
+    showPopup.value = true;
+    return;
+  }
+
   // BGMを一時停止し、効果音を再生
   previousBgm.value = audioStore.currentBgm;
   audioStore.setBgm(null);
   audioStore.playSound('Kagura_Suzu01-7.mp3');
 
-  const cost = 100;
-  // コインが足りない場合
-  if (!userStore.profile || userStore.profile.cat_coins < cost) { // ★ userStore を参照
-    randomFortune.value = ''; // 運勢は表示しない
-    randomSaying.value = t('shrineView.errors.notEnoughCoins');
-    randomSayingId.value = null; // コイン不足時はIDをクリア
-    isNewSaying.value = false; // 新規フラグをリセット
-    showPopup.value = true;
-    return;
-  }
+  // フェードアウトを開始
+  isFading.value = true;
 
-  // コイン消費処理
   try {
-    await userStore.updateCatCoins(-cost); // ★ userStore のアクションを呼び出し
+    // コイン消費処理をバックグラウンドで開始（スピナーは表示しない）
+    const coinPromise = userStore.updateCatCoins(-cost, { showLoading: false });
 
-    isFading.value = true; // フェードアウト開始
-    setTimeout(async () => { // ★ async に変更
-      // 運勢をランダムに決定
-      const fortuneValues = Object.values(fortunes.value);
-      randomFortune.value = fortuneValues[Math.floor(Math.random() * fortuneValues.length)];
+    // 1.5秒待つ（フェードアウトの時間）
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
-      // 名言をランダムに決定
-      const sayingsList = sayings.value;
-      const randomIndex = Math.floor(Math.random() * sayingsList.length);
-      const drawnSaying = sayingsList[randomIndex];
-      randomSaying.value = drawnSaying.text;
-      randomSayingId.value = drawnSaying.id;
+    // 1.5秒待った後、コイン消費処理が完了していることを確認
+    await coinPromise;
 
-      // 新しく解放された名言かどうかを判定
-      isNewSaying.value = !revealedSayings.value[drawnSaying.id];
+    // 結果を計算
+    const fortuneValues = Object.values(fortunes.value);
+    randomFortune.value = fortuneValues[Math.floor(Math.random() * fortuneValues.length)];
+    const sayingsList = sayings.value;
+    const randomIndex = Math.floor(Math.random() * sayingsList.length);
+    const drawnSaying = sayingsList[randomIndex];
+    randomSaying.value = drawnSaying.text;
+    randomSayingId.value = drawnSaying.id;
+    isNewSaying.value = !revealedSayings.value[drawnSaying.id];
 
-      // 引いた名言を解放済みに設定して保存
-      if (isNewSaying.value) {
-        await userStore.updateRevealedSaying(drawnSaying.id); // ★ userStore のアクションを呼び出し
-      }
+    // 新しい名言なら保存（これもスピナーなし）
+    if (isNewSaying.value) {
+      await userStore.updateRevealedSaying(drawnSaying.id, { showLoading: false });
+    }
 
-      showPopup.value = true;
-      isFading.value = false; // フェードイン（白画面から戻る）
-    }, 1500); // フェードアウトの時間
+    // ポップアップ表示 & フェードイン
+    showPopup.value = true;
+    isFading.value = false;
+
   } catch (error) {
     console.error('おみくじ処理中にエラー:', error);
     // エラー時のフォールバック
     randomFortune.value = '';
     randomSaying.value = t('shrineView.errors.failedToSpend');
-    randomSayingId.value = null; // IDをクリア
-    isNewSaying.value = false; // 新規フラグをリセット
+    randomSayingId.value = null;
+    isNewSaying.value = false;
     showPopup.value = true;
+    // フェードを戻す
+    isFading.value = false;
     // BGMを戻す
     if (previousBgm.value) {
       audioStore.setBgm(previousBgm.value);

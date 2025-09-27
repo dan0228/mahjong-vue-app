@@ -481,7 +481,7 @@ function goToLeaderboard() {
   font-size: 0.6em;
   color: #333;
   width: 125px;
-  padding: 1px 8px;
+  padding: 0.6px 8px;
   box-sizing: border-box;
   display: flex;
   justify-content: space-between;
@@ -493,11 +493,11 @@ function goToLeaderboard() {
 }
 
 .current-consecutive-wins {
-  top: 39px;
+  top: 39.3px;;
 }
 
 .cat-coins {
-  top: 58px;
+  top: 58.1px;
 }
 
 .cat-coins-number,

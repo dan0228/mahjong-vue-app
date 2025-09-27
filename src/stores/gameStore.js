@@ -226,6 +226,7 @@ export const useGameStore = defineStore('game', {
         this.animationState = { type: null, playerId: null }; // アニメーション状態をリセット
         this.riichiDiscardedTileId[player.id] = null; // リーチ宣言牌IDをリセット
       });
+      this.highlightedDiscardTileId = null; // ★ハイライトをリセット
       this.rinshanKaihouChance = false;
       this.lastActionPlayerId = null;
       this.shouldEndGameAfterRound = false; // ゲーム開始時にリセット

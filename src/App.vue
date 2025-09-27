@@ -15,6 +15,9 @@
     </transition>
   </router-view>
 
+  <!-- 通信中ローディングインジケーター -->
+  <LoadingIndicator v-if="userStore.loading" />
+
   <!-- ユーザー名登録ポップアップ -->
   <UsernameRegistrationPopup
     :show="showUsernamePopup"
@@ -44,6 +47,7 @@ import { preloadImages } from '@/utils/imageLoader';
 import UsernameRegistrationPopup from '@/components/UsernameRegistrationPopup.vue'; // 追加
 import AddToHomeScreenPopup from '@/components/AddToHomeScreenPopup.vue';
 import HowToAddPopup from '@/components/HowToAddPopup.vue';
+import LoadingIndicator from '@/components/LoadingIndicator.vue';
 
 // --- リアクティブな状態 ---
 const isLoading = ref(true); // ローディング画面の表示状態フラグ

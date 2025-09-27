@@ -2,7 +2,7 @@
   <div class="shrine-view-container" :style="{ height: viewportHeight }">
     <div class="shrine-screen" :style="scalerStyle">
       <div class="cat-coins">
-        {{ $t('shrineView.catCoins') }} <span class="cat-coins-number">{{ gameStore.catCoins }}</span>
+        {{ $t('shrineView.catCoins') }} <span class="cat-coins-number">{{ userStore.profile?.cat_coins || 0 }}</span>
       </div>
       <div class="top-controls">
         <div class="audio-toggles">
@@ -61,7 +61,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useAudioStore } from '../stores/audioStore';
-import { useGameStore } from '@/stores/gameStore';
+import { useUserStore } from '@/stores/userStore'; // ★ useGameStore から変更
 import SayingPopup from '@/components/SayingPopup.vue';
 import { useViewportHeight } from '@/composables/useViewportHeight';
 
@@ -70,7 +70,7 @@ const { t, tm } = useI18n();
 const { viewportHeight } = useViewportHeight();
 const router = useRouter();
 const audioStore = useAudioStore();
-const gameStore = useGameStore();
+const userStore = useUserStore(); // ★ gameStore から userStore に変更
 
 // ポップアップ関連の状態
 const showPopup = ref(false);
@@ -82,10 +82,12 @@ const isNewSaying = ref(false); // 新しく解放された名言かどうかの
 const isFading = ref(false); // 画面のフェード演出用フラグ
 const previousBgm = ref(null); // おみくじ演出中にBGMを一時停止・再開するために使用
 
-// 解放済みの名言IDを管理するオブジェクト { sayingId: true }
-const revealedSayings = ref({});
+// ★ revealedSayings の ref は削除し、userStoreから取得する算出プロパティに変更
 
 // --- 算出プロパティ ---
+
+// 解放済みの名言リストを userStore から取得
+const revealedSayings = computed(() => userStore.profile?.revealed_sayings || {});
 
 // i18nファイルから名言リストを生成
 const sayings = computed(() => {
@@ -101,28 +103,13 @@ const fortunes = computed(() => tm('shrineView.fortunes'));
 
 // --- メソッド ---
 
-/**
- * ローカルストレージから解放済みの名言リストを読み込みます。
- */
-const loadRevealedSayings = () => {
-  const saved = localStorage.getItem('mahjongRevealedSayings');
-  if (saved) {
-    revealedSayings.value = JSON.parse(saved);
-  }
-};
-
-/**
- * 現在の解放済み名言リストをローカルストレージに保存します。
- */
-const saveRevealedSayings = () => {
-  localStorage.setItem('mahjongRevealedSayings', JSON.stringify(revealedSayings.value));
-};
+// ★ loadRevealedSayings と saveRevealedSayings は不要になったので削除
 
 /**
  * おみくじを引く処理。
  * コインを消費し、運勢と名言をランダムに決定してポップアップで表示します。
  */
-const drawOmikuji = () => {
+const drawOmikuji = async () => { // ★ async に変更
   // BGMを一時停止し、効果音を再生
   previousBgm.value = audioStore.currentBgm;
   audioStore.setBgm(null);
@@ -130,7 +117,7 @@ const drawOmikuji = () => {
 
   const cost = 100;
   // コインが足りない場合
-  if (gameStore.catCoins < cost) {
+  if (!userStore.profile || userStore.profile.cat_coins < cost) { // ★ userStore を参照
     randomFortune.value = ''; // 運勢は表示しない
     randomSaying.value = t('shrineView.errors.notEnoughCoins');
     randomSayingId.value = null; // コイン不足時はIDをクリア
@@ -140,9 +127,11 @@ const drawOmikuji = () => {
   }
 
   // コイン消費処理
-  if (gameStore.deductCatCoins(cost)) {
+  try {
+    await userStore.updateCatCoins(-cost); // ★ userStore のアクションを呼び出し
+
     isFading.value = true; // フェードアウト開始
-    setTimeout(() => {
+    setTimeout(async () => { // ★ async に変更
       // 運勢をランダムに決定
       const fortuneValues = Object.values(fortunes.value);
       randomFortune.value = fortuneValues[Math.floor(Math.random() * fortuneValues.length)];
@@ -158,19 +147,25 @@ const drawOmikuji = () => {
       isNewSaying.value = !revealedSayings.value[drawnSaying.id];
 
       // 引いた名言を解放済みに設定して保存
-      revealedSayings.value[drawnSaying.id] = true;
-      saveRevealedSayings();
+      if (isNewSaying.value) {
+        await userStore.updateRevealedSaying(drawnSaying.id); // ★ userStore のアクションを呼び出し
+      }
 
       showPopup.value = true;
       isFading.value = false; // フェードイン（白画面から戻る）
     }, 1500); // フェードアウトの時間
-  } else {
-    // コイン消費に失敗した場合
+  } catch (error) {
+    console.error('おみくじ処理中にエラー:', error);
+    // エラー時のフォールバック
     randomFortune.value = '';
     randomSaying.value = t('shrineView.errors.failedToSpend');
     randomSayingId.value = null; // IDをクリア
     isNewSaying.value = false; // 新規フラグをリセット
     showPopup.value = true;
+    // BGMを戻す
+    if (previousBgm.value) {
+      audioStore.setBgm(previousBgm.value);
+    }
   }
 };
 
@@ -210,11 +205,15 @@ const updateScaleFactor = () => {
 };
 
 // --- ライフサイクルフック ---
-onMounted(() => {
+onMounted(async () => { // ★ async に変更
   updateScaleFactor();
   window.addEventListener('resize', updateScaleFactor);
-  gameStore.loadCatCoins();
-  loadRevealedSayings(); // 解放済みの名言を読み込む
+  
+  // ユーザープロファイルがまだ読み込まれていない場合は読み込む
+  if (!userStore.profile) {
+    await userStore.fetchUserProfile();
+  }
+
   audioStore.setBgm('GB-JP-A02-2(Menu-Loop105).mp3');
 });
 

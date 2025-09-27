@@ -1709,6 +1709,11 @@ export const useGameStore = defineStore('game', {
         score: p.score,
       }));
 
+      // ゲーム中に達成した役をまとめて保存
+      if (userStore.profile) {
+        await userStore.saveAchievedYaku();
+      }
+
       // 猫コインを更新
       const player1 = this.players.find(p => p.id === 'player1');
       if (player1 && userStore.profile) {
@@ -1754,6 +1759,8 @@ export const useGameStore = defineStore('game', {
      */
     resetGameForNewSession(options = { keepStreak: false }) {
       const userStore = useUserStore(); // userStoreを取得
+      userStore.resetTemporaryData(); // ★一時的な役達成データをリセット
+
       const currentStreakFromUserStore = userStore.profile?.current_win_streak || 0;
       const wins = options.keepStreak ? currentStreakFromUserStore : 0;
 

@@ -6,6 +6,7 @@ export const useUserStore = defineStore('user', () => {
   // --- State ---
   const profile = ref(null); // ユーザープロフィール情報を保持
   const loading = ref(false); // データ読み込み中のフラグ
+  const newlyAchievedYaku = ref({}); // 今回のゲームで新たに達成した役を一時的に保持
 
   // --- Actions ---
 
@@ -140,15 +141,14 @@ export const useUserStore = defineStore('user', () => {
   }
 
   /**
-   * 役の達成状況を更新します。
+   * 役の達成状況を一時的に記録します。
    * @param {string} yakuKey - 達成した役のキー
    */
-  async function updateYakuAchievement(yakuKey) {
+  function updateYakuAchievement(yakuKey) {
     if (!profile.value) return;
-    const achievements = { ...(profile.value.yaku_achievements || {}) };
-    if (!achievements[yakuKey]) {
-      achievements[yakuKey] = true;
-      await updateUserProfile({ yaku_achievements: achievements });
+    // 既存の達成状況と、今回新しく達成した役の両方に含まれていない場合のみ追加
+    if (!profile.value.yaku_achievements?.[yakuKey] && !newlyAchievedYaku.value[yakuKey]) {
+      newlyAchievedYaku.value[yakuKey] = true;
     }
   }
 
@@ -176,6 +176,47 @@ export const useUserStore = defineStore('user', () => {
     await updateUserProfile({ cat_coins: newCatCoins });
   }
 
+  /**
+   * ゲーム中に達成した役をまとめてSupabaseに保存します。
+   */
+  async function saveAchievedYaku() {
+    if (Object.keys(newlyAchievedYaku.value).length === 0) {
+      return; // 新しく達成した役がなければ何もしない
+    }
+
+    if (!profile.value) return;
+
+    const currentAchievements = profile.value.yaku_achievements || {};
+    const updatedAchievements = { ...currentAchievements, ...newlyAchievedYaku.value };
+
+    // updateUserProfile を直接呼ぶ代わりに、Supabaseに直接書き込む
+    try {
+      loading.value = true;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("ユーザーが見つかりません");
+
+      const { error } = await supabase.from('users').update({ yaku_achievements: updatedAchievements }).eq('id', user.id);
+      if (error) throw error;
+
+      // ローカルのstateも更新
+      profile.value.yaku_achievements = updatedAchievements;
+      // 保存が完了したら一時リストをクリア
+      newlyAchievedYaku.value = {};
+
+    } catch (error) {
+      console.error('役達成状況の一括保存エラー:', error.message);
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  /**
+   * 新しいゲームセッションのために一時データをリセットします。
+   */
+  function resetTemporaryData() {
+    newlyAchievedYaku.value = {};
+  }
+
   return {
     profile,
     loading,
@@ -186,5 +227,7 @@ export const useUserStore = defineStore('user', () => {
     updateYakuAchievement,
     updateRevealedSaying,
     updateCatCoins,
+    saveAchievedYaku,
+    resetTemporaryData,
   };
 });

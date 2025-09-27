@@ -1781,6 +1781,7 @@ export function checkYonhaiWin(currentHandWithWinTile, winTile, isTsumo, gameCon
           score = 0; // 特殊ルールにより0点
         } else {
           score = isParent ? MANGAN_BASE_OYA : MANGAN_BASE_KO; // 通常の満貫点
+          scoreName = "満貫";
         }
       } else {
         // 満貫未満の場合は点数移動なし (score は 0 のまま)

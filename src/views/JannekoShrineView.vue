@@ -331,16 +331,20 @@ onBeforeUnmount(() => {
 
 .cat-coins {
   position: absolute;
-  top: 10px;
+  top: 14px;
   left: 15px;
   font-size: 0.8em;
   color: #333;
   z-index: 10;
   background-color: rgba(255, 255, 255, 0.6);
-  padding: 5px 8px;
+  padding: 4px 8px;
   border-radius: 8px;
   white-space: nowrap;
-  scale: 0.9; /* サイズを小さく */
+  scale: 0.9;
+  display: flex;
+  align-items: center;
+  height: 28px;
+  box-sizing: border-box;
 }
 
 .cat-coins-number {
@@ -350,23 +354,26 @@ onBeforeUnmount(() => {
 
 .top-controls {
   position: absolute;
-  top: 4px;
+  top: 10px;
   right: 15px;
   display: flex;
-  justify-content: flex-end; /* 右寄せに変更 */
+  justify-content: flex-end;
   align-items: center;
   z-index: 10;
-  scale: 0.9; /* サイズを小さく */
+  scale: 0.9;
+  gap: 10px;
+  margin-top: -14px; 
 }
 
 .audio-toggles {
   display: flex;
   align-items: center;
-  margin-top: -14px;
   gap: 5px;
   background-color: rgba(255, 255, 255, 0.6);
-  padding: 5px 8px;
+  padding: 4px 8px;
   border-radius: 8px;
+  height: 28px;
+  box-sizing: border-box;
 }
 
 .toggle-label {

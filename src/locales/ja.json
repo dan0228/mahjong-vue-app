@@ -492,6 +492,21 @@
     "imageCopiedSuccess": "結果画像をクリップボードにコピーしました。ポストに貼り付けて投稿できます。",
     "imageCopiedError": "画像のコピーに失敗しました。手動でスクリーンショットを撮って投稿してください。",
     "pastePromptPC": "クリップボードにスクショをコピー済み！貼り付けてください！"
+  },
+  "usernameRegistration": {
+    "title": "ユーザー登録🐈‍⬛",
+    "description": "👇ゲーム内で使用する名前を登録してください👇",
+    "usernameLabel": "ユーザー名 (必須)",
+    "usernamePlaceholder": "全角3文字、半角6文字以内",
+    "xAccountLabel": "Xアカウント (任意)",
+    "xAccountDescription": "ランキングにXアカウントを表示するために使用します",
+    "xAccountPlaceholder": "{'@'}ユーザー名",
+    "registerButton": "登録",
+    "errors": {
+      "usernameRequired": "ユーザー名は必須です。",
+      "usernameTooLong": "ユーザー名は全角3文字、半角6文字以内で入力してください",
+      "xAccountInvalid": "Xアカウントは{'@'}で始まる正しい形式で入力してください"
+    }
   }
 }
 

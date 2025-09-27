@@ -15,6 +15,12 @@
     </transition>
   </router-view>
 
+  <!-- ユーザー名登録ポップアップ -->
+  <UsernameRegistrationPopup
+    :show="showUsernamePopup"
+    @close="handleCloseUsernamePopup"
+  />
+
   <!-- ホーム画面追加ポップアップ -->
   <AddToHomeScreenPopup
     :show="showAddToHomeScreenPopup"
@@ -34,12 +40,14 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useAudioStore } from '@/stores/audioStore';
 import { preloadImages } from '@/utils/imageLoader';
+import UsernameRegistrationPopup from '@/components/UsernameRegistrationPopup.vue'; // 追加
 import AddToHomeScreenPopup from '@/components/AddToHomeScreenPopup.vue';
 import HowToAddPopup from '@/components/HowToAddPopup.vue';
 
 // --- リアクティブな状態 ---
 const isLoading = ref(true); // ローディング画面の表示状態フラグ
 const loadingProgress = ref(0); // アセット読み込みの進捗率
+const showUsernamePopup = ref(false); // ★追加：ユーザー名登録ポップアップの表示状態
 const showAddToHomeScreenPopup = ref(false); // 「ホーム画面に追加」ポップアップの表示状態フラグ
 const showHowToAddPopup = ref(false); // インストール方法説明ポップアップの表示状態フラグ
 
@@ -225,11 +233,18 @@ onMounted(async () => {
     // 開発者向けの エラーログ
     console.error('アセットのプリロードに失敗しました:', error);
   } finally {
-    // プリロード完了後、500ms待ってからローディング画面を非表示にし、
     // 「ホーム画面に追加」ポップアップを表示する
     setTimeout(() => {
       isLoading.value = false;
-      showAddToHomeScreenPopup.value = true;
+      // ★追加：ユーザー名が保存されているかチェック
+      const existingUsername = localStorage.getItem('mahjongUsername');
+      if (!existingUsername) {
+        // 保存されていなければ、ユーザー名登録ポップアップを表示
+        showUsernamePopup.value = true;
+      } else {
+        // 保存されていれば、ホーム画面追加ポップアップを直接表示
+        showAddToHomeScreenPopup.value = true;
+      }
     }, 500);
   }
 });
@@ -240,6 +255,15 @@ onUnmounted(() => {
 });
 
 // --- メソッド ---
+
+/**
+ * ★追加：ユーザー名登録ポップアップを閉じ、
+ * 次の「ホーム画面に追加」ポップアップを表示します。
+ */
+const handleCloseUsernamePopup = () => {
+  showUsernamePopup.value = false;
+  showAddToHomeScreenPopup.value = true;
+};
 
 /**
  * 「ホーム画面に追加」ポップアップを閉じます。

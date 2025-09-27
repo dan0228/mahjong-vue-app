@@ -95,12 +95,19 @@
       </div>
       <div class="result-section score-changes"> <!-- 点数変動は常に表示 -->
         <h3>{{ t('resultPopup.scoreChanges') }}</h3>
-        <div v-for="player in gameStore.players" :key="player.id" class="player-score-change">
-          <span>{{ getTranslatedPlayerName(player) }}: {{ (gameStore.getPlayerById(player.id)?.score ?? 0) + (resultDetails.pointChanges[player.id] ?? 0) }}{{ ' ' + t('resultPopup.points', { score: '' }).trim() }} </span>
-          <span :class="getPointChangeClass(resultDetails.pointChanges[player.id])">
-            ({{ formatPointChange(resultDetails.pointChanges[player.id]) }})
-          </span>
-        </div>
+        <table class="score-change-table">
+          <tbody>
+            <tr v-for="player in gameStore.players" :key="player.id">
+              <td class="player-name-cell">{{ getTranslatedPlayerName(player) }}</td>
+              <td class="score-cell">{{ (gameStore.getPlayerById(player.id)?.score ?? 0) + (resultDetails.pointChanges[player.id] ?? 0) }}{{ ' ' + t('resultPopup.points', { score: '' }).trim() }}</td>
+              <td class="change-cell">
+                <span :class="getPointChangeClass(resultDetails.pointChanges[player.id])">
+                  ({{ formatPointChange(resultDetails.pointChanges[player.id]) }})
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       <button @click="proceedToNext">{{ t('resultPopup.next') }}</button>
@@ -175,9 +182,6 @@ const gameStore = useGameStore();
  */
 function getTranslatedPlayerName(player) {
   if (!player) return '';
-  if (player.id === 'player1') {
-    return t('playerNames.you');
-  }
   if (player.originalId) {
     return t(`aiNames.${player.originalId}`);
   }
@@ -469,12 +473,24 @@ function getMeldTileClass(meld, tileIndex) {
 .yaku-info ul { list-style: none; padding: 0; margin: 0 0 10px 0; }
 .yaku-info li { margin-bottom: 3px; }
 .total-score { font-weight: bold; font-size: 1.5em;  color: red;}
-.score-changes .player-score-change {
-  display: flex; /* Flexbox を使用して内部要素を配置 */
-  justify-content: space-between; /* 名前と点数変動を両端に配置 */
-  margin: 3px auto; /* 上下マージン3px、左右マージンautoでブロック自体を中央寄せ */
-  width: 230px; /* 固定幅を設定して中央揃えを安定させる (値は調整可能) */
-  /* width: fit-content; から変更 */
+.score-change-table {
+  width: 230px;
+  margin: 0 auto;
+  border-collapse: collapse;
+}
+.score-change-table td {
+  padding: 1px 0;
+}
+.player-name-cell {
+  width: 4.5em; /* 半角6文字(全角3文字)分の幅を確保 */
+  text-align: left;
+}
+.score-cell {
+  text-align: left;
+  padding-left: 5px;
+}
+.change-cell {
+  text-align: right;
 }
 .point-increase { color: green; }
 .point-decrease { color: red; }

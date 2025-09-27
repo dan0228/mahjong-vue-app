@@ -47,7 +47,7 @@ function getRankedPlayers(players) {
 export const useGameStore = defineStore('game', {
   state: () => ({
     players: [
-      { id: 'player1', name: 'あなた', hand: [], discards: [], melds: [], isDealer: false, score: 50000, seatWind: null },
+      { id: 'player1', name: localStorage.getItem('mahjongUsername') || 'あなた', hand: [], discards: [], melds: [], isDealer: false, score: 50000, seatWind: null },
     ],
     wall: [], // 山牌
     deadWall: [], // 王牌 (嶺上牌、ドラ表示牌など)

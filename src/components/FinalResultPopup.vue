@@ -92,10 +92,6 @@ const props = defineProps({
  */
 function getTranslatedPlayerName(player) {
   if (!player) return '';
-  // プレイヤーIDが'player1'の場合、'あなた'と表示
-  if (player.id === 'player1') {
-    return t('playerNames.you');
-  }
   // AIプレイヤーの場合、i18nから名前を取得
   const aiPlayer = gameStore.players.find(p => p.id === player.id);
   if (aiPlayer && aiPlayer.originalId) {

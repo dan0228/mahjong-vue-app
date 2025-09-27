@@ -6,7 +6,7 @@
         <div class="dealer-determination-list">
           <div v-for="player in dealerDeterminationResults" :key="player.id" class="player-item">
             <span class="seat-wind">{{ $t(`winds.${player.seatWind}`) }}</span>
-            <span class="player-name">{{ player.originalId ? $t(`aiNames.${player.originalId}`) : $t('playerNames.you') }}</span>
+            <span class="player-name">{{ player.originalId ? $t(`aiNames.${player.originalId}`) : player.name }}</span>
             <img v-if="getPlayerIcon(player)" :src="getPlayerIcon(player)" alt="Player Icon" class="player-icon" />
             <span class="score">{{ $t('parentDecisionPopup.score', { score: player.score }) }}</span>
           </div>

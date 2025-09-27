@@ -7,29 +7,36 @@
       </div>
       <img :src="$t('titleView.titleLogo')" :alt="$t('titleView.altLogo')" class="title-logo" />
       <div class="top-controls">
-        <div class="audio-toggles">
-          <label class="toggle-switch">
-            <input type="checkbox" :checked="audioStore.isBgmEnabled" @change="audioStore.toggleBgm()" />
-            <span class="slider round"></span>
-          </label>
-          <span class="toggle-label">BGM</span>
-          <label class="toggle-switch">
-            <input type="checkbox" :checked="audioStore.isSeEnabled" @change="audioStore.toggleSe()" />
-            <span class="slider round"></span>
-          </label>
-          <span class="toggle-label">{{ $t('titleView.sfx') }}</span>
+        <div class="top-controls-group">
+          <div class="audio-toggles">
+            <label class="toggle-switch">
+              <input type="checkbox" :checked="audioStore.isBgmEnabled" @change="audioStore.toggleBgm()" />
+              <span class="slider round"></span>
+            </label>
+            <span class="toggle-label">BGM</span>
+            <label class="toggle-switch">
+              <input type="checkbox" :checked="audioStore.isSeEnabled" @change="audioStore.toggleSe()" />
+              <span class="slider round"></span>
+            </label>
+            <span class="toggle-label">{{ $t('titleView.sfx') }}</span>
+          </div>
         </div>
-        <div class="language-selector">
-          <div
-            class="language-flag language-flag-ja"
-            :class="{ selected: locale === 'ja' }"
-            @click="locale = 'ja'"
-          ></div>
-          <div
-            class="language-flag language-flag-en"
-            :class="{ selected: locale === 'en' }"
-            @click="locale = 'en'"
-          ></div>
+        <div class="top-controls-group">
+          <div class="language-selector">
+            <div
+              class="language-flag language-flag-ja"
+              :class="{ selected: locale === 'ja' }"
+              @click="locale = 'ja'"
+            ></div>
+            <div
+              class="language-flag language-flag-en"
+              :class="{ selected: locale === 'en' }"
+              @click="locale = 'en'"
+            ></div>
+          </div>
+          <button @click="showSettingsPopup = true" class="settings-button">
+            <img src="/assets/images/button/setting_button.png" alt="Settings" class="settings-button-image" />
+          </button>
         </div>
       </div>
       <div class="max-consecutive-wins">
@@ -70,6 +77,7 @@
       <RulePopup v-if="showRulesPopup" @close="showRulesPopup = false" />
       <YakuListPopup v-if="showYakuListPopup" @close="showYakuListPopup = false" />
       <HowToPlayPopup v-if="showHowToPlayPopup" @close="showHowToPlayPopup = false" />
+      <SettingsPopup :show="showSettingsPopup" @close="showSettingsPopup = false" />
       <div class="credit">BGM by OtoLogic(CC BY 4.0)</div>
       <div class="x-account">
         <a href="https://x.com/danAllGreen" target="_blank" rel="noopener noreferrer">{{ $t('titleView.officialX') }}</a>
@@ -94,20 +102,22 @@ import { useAudioStore } from '@/stores/audioStore';
 import { useUserStore } from '@/stores/userStore'; // userStoreをインポート
 import RulePopup from '@/components/RulePopup.vue';
 import YakuListPopup from '@/components/YakuListPopup.vue';
-import HowToPlayPopup from '@/components/HowToPlayPopup.vue'; // 遊び方ポップアップをインポート
+import HowToPlayPopup from '@/components/HowToPlayPopup.vue';
+import SettingsPopup from '@/components/SettingsPopup.vue'; // ★追加
 import { useViewportHeight } from '@/composables/useViewportHeight';
 
 // --- リアクティブな状態とストア ---
-const { locale } = useI18n(); // i18nのロケールを管理
-const { viewportHeight } = useViewportHeight(); // ビューポートの高さを動的に取得
-const router = useRouter(); // Vueルーター
-const gameStore = useGameStore(); // ゲーム状態ストア
-const audioStore = useAudioStore(); // 音声関連ストア
-const userStore = useUserStore(); // userStoreを使用
+const { locale } = useI18n();
+const { viewportHeight } = useViewportHeight();
+const router = useRouter();
+const gameStore = useGameStore();
+const audioStore = useAudioStore();
+const userStore = useUserStore();
 
-const showRulesPopup = ref(false); // ルールポップアップの表示状態
-const showYakuListPopup = ref(false); // 役一覧ポップアップの表示状態
-const showHowToPlayPopup = ref(false); // 遊び方ポップアップの表示状態
+const showRulesPopup = ref(false);
+const showYakuListPopup = ref(false);
+const showHowToPlayPopup = ref(false);
+const showSettingsPopup = ref(false); // ★追加：設定ポップアップの表示状態
 
 // --- 画面のスケーリング処理 ---
 const DESIGN_WIDTH = 360; // デザイン基準の幅
@@ -384,10 +394,17 @@ function goToLeaderboard() {
   top: 25px;
   right: 30px;
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 10px;
+  flex-direction: column; /* 縦並びに戻す */
+  align-items: flex-end; /* 右寄せ */
+  gap: 5px; /* グループ間の間隔 */
   z-index: 10;
+}
+
+.top-controls-group {
+  display: flex;
+  flex-direction: row; /* グループ内は横並び */
+  align-items: center;
+  gap: 10px; /* 要素間の間隔 */
 }
 
 .audio-toggles {
@@ -428,6 +445,27 @@ function goToLeaderboard() {
 }
 
 .language-flag.selected {
+  opacity: 1;
+}
+
+.settings-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-button-image {
+  width: 24px;
+  height: 24px;
+  opacity: 0.8;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.settings-button:hover .settings-button-image {
   opacity: 1;
 }
 

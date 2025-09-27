@@ -505,6 +505,11 @@
       "usernameTooLong": "ユーザー名は全角3文字、半角6文字以内で入力してください",
       "xAccountInvalid": "Xアカウントは{'@'}で始まる正しい形式で入力してください"
     }
+  },
+  "settingsPopup": {
+    "title": "設定",
+    "description": "プロフィール情報を編集します。",
+    "saveButton": "保存"
   }
 }
 

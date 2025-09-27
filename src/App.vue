@@ -95,6 +95,7 @@ onMounted(async () => {
     '/assets/images/button/skip_button_en.png',
     '/assets/images/button/tsumo_button_en.png',
     '/assets/images/button/yaku_button_en.png',
+    '/assets/images/button/setting_button.png',
     '/assets/images/info/cat_coin.png',
     '/assets/images/info/cat_icon_1.png',
     '/assets/images/info/cat_icon_2.png',

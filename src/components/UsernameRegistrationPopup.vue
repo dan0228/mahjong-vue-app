@@ -30,6 +30,7 @@
 <script setup>
 import { ref, computed, defineProps, defineEmits } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { supabase } from '@/supabaseClient'; // Supabaseクライアントをインポート
 
 const props = defineProps({
   show: Boolean,
@@ -72,13 +73,46 @@ const isFormValid = computed(() => {
 
 /**
  * 登録処理を実行します。
- * バリデーション後、入力内容をローカルストレージに保存し、ポップアップを閉じます。
+ * Supabaseで匿名ユーザーを作成し、usersテーブルに情報を保存します。
  */
-const register = () => {
-  if (isFormValid.value) {
-    localStorage.setItem('mahjongUsername', username.value);
-    localStorage.setItem('mahjongXAccount', xAccount.value);
-    emit('close');
+const register = async () => {
+  if (!isFormValid.value) return;
+
+  try {
+    // 1. 匿名でサインアップ（またはサインイン）
+    const { data: { user }, error: authError } = await supabase.auth.signInAnonymously();
+
+    if (authError) {
+      console.error('匿名サインインエラー:', authError);
+      // TODO: ユーザーにエラーを通知
+      return;
+    }
+
+    if (user) {
+      // 2. usersテーブルにユーザー情報を挿入
+      const { error: insertError } = await supabase
+        .from('users')
+        .insert({
+          id: user.id, // AuthのユーザーIDを紐付ける
+          username: username.value,
+          x_account: xAccount.value || null, // 空の場合はnullを保存
+        });
+
+      if (insertError) {
+        console.error('ユーザー情報挿入エラー:', insertError);
+        // TODO: ユーザーにエラーを通知
+        return;
+      }
+
+      // 3. 従来のlocalStorageにも保存（既存のロジックのため）
+      localStorage.setItem('mahjongUsername', username.value);
+      localStorage.setItem('mahjongXAccount', xAccount.value);
+
+      // 4. ポップアップを閉じる
+      emit('close');
+    }
+  } catch (error) {
+    console.error('登録処理中に予期せぬエラーが発生しました:', error);
   }
 };
 </script>

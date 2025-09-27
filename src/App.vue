@@ -39,6 +39,7 @@
 // そしてメインコンテンツのルーティングを管理します。
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useAudioStore } from '@/stores/audioStore';
+import { useUserStore } from '@/stores/userStore'; // ★追加
 import { preloadImages } from '@/utils/imageLoader';
 import UsernameRegistrationPopup from '@/components/UsernameRegistrationPopup.vue'; // 追加
 import AddToHomeScreenPopup from '@/components/AddToHomeScreenPopup.vue';
@@ -53,6 +54,7 @@ const showHowToAddPopup = ref(false); // インストール方法説明ポップ
 
 // --- ストアの利用 ---
 const audioStore = useAudioStore();
+const userStore = useUserStore(); // ★追加
 
 // --- ライフサイクル フック ---
 onMounted(async () => {
@@ -236,15 +238,18 @@ onMounted(async () => {
     // 「ホーム画面に追加」ポップアップを表示する
     setTimeout(() => {
       isLoading.value = false;
-      // ★追加：ユーザー名が保存されているかチェック
-      const existingUsername = localStorage.getItem('mahjongUsername');
-      if (!existingUsername) {
-        // 保存されていなければ、ユーザー名登録ポップアップを表示
-        showUsernamePopup.value = true;
-      } else {
-        // 保存されていれば、ホーム画面追加ポップアップを直接表示
-        showAddToHomeScreenPopup.value = true;
-      }
+
+      // ★追加：Supabaseからユーザー情報を取得
+      userStore.fetchUserProfile().then(() => {
+        // ユーザー名が保存されているかチェック（Supabaseに登録済みか）
+        if (!userStore.profile) {
+          // 保存されていなければ、ユーザー名登録ポップアップを表示
+          showUsernamePopup.value = true;
+        } else {
+          // 保存されていれば、ホーム画面追加ポップアップを直接表示
+          showAddToHomeScreenPopup.value = true;
+        }
+      });
     }, 500);
   }
 });

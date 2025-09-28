@@ -44,6 +44,7 @@
 import { defineProps, defineEmits, computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useGameStore } from '@/stores/gameStore';
+import { useUserStore } from '@/stores/userStore'; // userStoreをインポート
 import { useZoomLock } from '@/composables/useZoomLock';
 import * as htmlToImage from 'html-to-image';
 
@@ -56,6 +57,7 @@ import * as htmlToImage from 'html-to-image';
 const { t } = useI18n();
 const emit = defineEmits(['start-new-game', 'back-to-title']);
 const gameStore = useGameStore();
+const userStore = useUserStore(); // userStoreのインスタンスを取得
 
 // ズーム防止機能を有効化
 useZoomLock();
@@ -163,6 +165,15 @@ function getPlayerIcon(playerId) {
   const player = gameStore.players.find(p => p.id === playerId);
   if (!player) return null;
 
+  // プレイヤーが自分自身で、かつXアイコンURLが設定されていればそれを使用
+  if (player.id === 'player1' && userStore.profile?.x_profile_image_url) {
+    const imageUrl = userStore.profile.x_profile_image_url;
+    // unavatar.ioのURLの場合はプロキシを経由させる
+    if (imageUrl.includes('unavatar.io')) {
+      return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}`;
+    }
+    return imageUrl;
+  }
   if (player.id === 'player1') return '/assets/images/info/hito_icon_1.png'; // あなた
   if (player.originalId === 'kuro') return '/assets/images/info/cat_icon_3.png'; // くろ
   if (player.originalId === 'tama') return '/assets/images/info/cat_icon_2.png'; // たま

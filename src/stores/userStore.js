@@ -29,6 +29,12 @@ export const useUserStore = defineStore('user', () => {
 
         if (data) {
           profile.value = data;
+          // Xアカウントが登録されていれば、そのアイコンURLを取得
+          if (profile.value.x_account) {
+            profile.value.x_profile_image_url = `https://unavatar.io/twitter/${profile.value.x_account.substring(1)}`;
+          } else {
+            profile.value.x_profile_image_url = null;
+          }
           // 初回取得時にlocalStorageからデータ移行を試みる
           await migrateDataFromLocalStorage(data);
 

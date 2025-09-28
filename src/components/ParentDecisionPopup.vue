@@ -22,6 +22,7 @@
 import { defineProps, defineEmits, computed, onMounted, watch, ref, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useZoomLock } from '@/composables/useZoomLock';
+import { useUserStore } from '@/stores/userStore'; // userStoreをインポート
 
 const { t } = useI18n(); // i18nの翻訳関数を取得
 
@@ -54,6 +55,8 @@ const emit = defineEmits(['close']);
 const countdown = ref(3); // ポップアップが自動で閉じるまでのカウントダウンの初期値
 let timer = null; // setTimeoutのタイマーID
 let interval = null; // setIntervalのタイマーID
+
+const userStore = useUserStore(); // userStoreのインスタンスを取得
 
 /**
  * `show` プロパティの変更を監視し、ポップアップが表示されたときにタイマーを開始します。
@@ -128,6 +131,10 @@ const formattedTimestamp = computed(() => {
  */
 function getPlayerIcon(player) {
   if (!player) return null;
+  // プレイヤーが自分自身で、かつXアイコンURLが設定されていればそれを使用
+  if (player.id === 'player1' && userStore.profile?.x_profile_image_url) {
+    return userStore.profile.x_profile_image_url;
+  }
   if (player.id === 'player1') return '/assets/images/info/hito_icon_1.png'; // あなた
   if (player.originalId === 'kuro') return '/assets/images/info/cat_icon_3.png'; // くろ
   if (player.originalId === 'tama') return '/assets/images/info/cat_icon_2.png'; // たま

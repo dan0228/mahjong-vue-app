@@ -117,9 +117,9 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits, onMounted, onBeforeUnmount } from 'vue';
-import { useI18n } from 'vue-i18n';
 import { useGameStore } from '@/stores/gameStore';
+import { useI18n } from 'vue-i18n';  
+import { useUserStore } from '@/stores/userStore'; // userStoreをインポート
 import { getTileImageUrl, tileToString } from '@/utils/tileUtils';
 import { computed } from 'vue';
 
@@ -174,6 +174,7 @@ const translatedScoreName = computed(() => {
 const emit = defineEmits(['close', 'proceed']);
 
 const gameStore = useGameStore();
+const userStore = useUserStore(); // userStoreのインスタンスを取得
 
 /**
  * プレイヤーIDに基づいて翻訳されたプレイヤー名を返します。
@@ -278,7 +279,11 @@ const winnerIconSrc = computed(() => {
   const player = gameStore.players.find(p => p.id === targetPlayerId);
   if (!player) return null;
 
-  // player1 (あなた) の場合は hito_icon_1.png を表示
+  // player1 (あなた) の場合はXアイコンURLがあればそれを使用
+  if (player.id === 'player1' && userStore.profile?.x_profile_image_url) {
+    return userStore.profile.x_profile_image_url;
+  }
+  // それ以外は既存のロジック
   if (player.id === 'player1') return '/assets/images/info/hito_icon_1.png'; // あなた
   if (player.originalId === 'kuro') return '/assets/images/info/cat_icon_3.png'; // くろ
   if (player.originalId === 'tama') return '/assets/images/info/cat_icon_2.png'; // たま

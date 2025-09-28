@@ -248,9 +248,20 @@ onMounted(async () => {
     // エラーが起きてもポップアップは表示する（フォールバック）
     showAddToHomeScreenPopup.value = true;
   } finally {
+    // ゲームが進行中だった場合、連勝数をリセット
+    if (userStore.isGameInProgress) {
+      console.log("ゲームが不正に終了したため、連勝数をリセットします。");
+      await userStore.resetWinStreak();
+      userStore.setGameInProgress(false); // フラグもリセット
+    }
+
     // すべての初期化処理が終わったので、ローディング画面を非表示にする
+    // プログレスバーを100%にしてから少し待つとUXが良い
     loadingProgress.value = 100;
     isLoading.value = false;
+    setTimeout(() => {
+      isLoading.value = false;
+    }, 300);
   }
 });
 

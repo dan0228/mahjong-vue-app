@@ -222,6 +222,25 @@ export const useUserStore = defineStore('user', () => {
     newlyAchievedYaku.value = {};
   }
 
+  /**
+   * 現在の連勝数を0にリセットし、Supabaseに保存します。
+   */
+  async function resetWinStreak() {
+    if (!profile.value) return;
+    if (profile.value.current_win_streak > 0) {
+      await updateUserProfile({ current_win_streak: 0 }, { showLoading: false }); // スピナーなしで更新
+    }
+  }
+
+  /**
+   * ゲームが進行中であるかどうかのフラグを設定し、Supabaseに保存します。
+   * @param {boolean} status - ゲームが進行中であればtrue、そうでなければfalse。
+   */
+  async function setGameInProgress(status) {
+    if (!profile.value) return;
+    await updateUserProfile({ is_game_in_progress: status }, { showLoading: false }); // スピナーなしで更新
+  }
+
   return {
     profile,
     loading,
@@ -234,5 +253,7 @@ export const useUserStore = defineStore('user', () => {
     updateCatCoins,
     saveAchievedYaku,
     resetTemporaryData,
+    resetWinStreak,
+    setGameInProgress,
   };
 });

@@ -295,6 +295,9 @@ export const useGameStore = defineStore('game', {
         score: 50000, // 初期点数
         originalId: p.originalId, // アイコン表示用に元のIDを渡す
       }));
+
+      // ゲーム開始フラグを立てる
+      userStore.setGameInProgress(true);
     },
     /**
      * 現在のターンプレイヤーが山から牌を1枚ツモるアクション。
@@ -1745,6 +1748,9 @@ export const useGameStore = defineStore('game', {
       await userStore.recordGameResult(myPlayerRank, options);
     }
 
+    // ゲーム終了フラグをリセット
+    userStore.setGameInProgress(false);
+
     this.showFinalResultPopup = true; // 最終結果ポップアップを表示
   },
 
@@ -1766,9 +1772,20 @@ export const useGameStore = defineStore('game', {
      * 最終結果ポップアップを閉じ、ゲーム状態を完全にリセットします。
      */
     returnToTitle() {
+      const userStore = useUserStore(); // userStoreを取得
       this.showFinalResultPopup = false;
       this.resetGameForNewSession(); // ゲーム状態を完全にリセット
       // ここでVue Routerなどを使ってタイトル画面へ遷移する処理を呼び出す (UI側で実装)
+    },
+
+    /**
+     * ゲームを中断し、連勝数をリセットしてタイトル画面に戻る処理を行います。
+     */
+    resetGameAndStreak() {
+      const userStore = useUserStore();
+      this.showFinalResultPopup = false; // 念のため
+      this.resetGameForNewSession(); // ゲーム状態を完全にリセット
+      userStore.resetWinStreak(); // 連勝数をリセット
     },
     /**
      * 新しいゲームセッションのためにストアの状態を完全にリセットします。
@@ -1779,6 +1796,13 @@ export const useGameStore = defineStore('game', {
     resetGameForNewSession(options = { keepStreak: false }) {
       const userStore = useUserStore(); // userStoreを取得
       userStore.resetTemporaryData(); // ★一時的な役達成データをリセット
+      // ゲーム終了フラグをリセット
+      userStore.setGameInProgress(false);
+
+      // 連勝数を維持しない場合、userStoreの連勝数をリセット
+      if (!options.keepStreak) {
+        userStore.resetWinStreak(); // ここでuserStoreの連勝数をリセット
+      }
 
       const currentStreakFromUserStore = userStore.profile?.current_win_streak || 0;
       const wins = options.keepStreak ? currentStreakFromUserStore : 0;

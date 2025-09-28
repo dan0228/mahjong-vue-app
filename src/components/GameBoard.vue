@@ -468,7 +468,7 @@
   function handleBackToTitleFromFinalResult() {
     isFadingToFinalResult.value = false; // フェードをリセット
     router.push('/');
-    gameStore.returnToTitle();
+    gameStore.resetGameForNewSession({ keepStreak: true }); // 連勝数を維持してリセット
   }
 
   /**

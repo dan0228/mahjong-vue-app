@@ -217,6 +217,7 @@ function getPlayerIcon(player) {
   height: 60px;
   margin: 0 30px;
   flex-shrink: 0;
+  border-radius: 6px; /* 角を少し丸める */
 }
 .score {
   font-weight: bold;

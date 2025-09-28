@@ -504,6 +504,7 @@ function getMeldTileClass(meld, tileIndex) {
   width: 55px;
   height: 55px;
   margin-bottom: 15px;
+  border-radius: 6px; /* 角を少し丸める */
 }
 
 .popup-content button {

@@ -31,6 +31,7 @@
 
       <!-- 画面の一番下に表示 -->
       <div class="player-area-container bottom-player-container" v-if="playerAtBottom">
+        <img :src="playerIcon(playerAtBottom)" alt="Player Icon" class="cat-icon cat-icon-bottom" />
         <!-- フリテン表示 -->
         <img v-if="isMyPlayerInFuriTen" :src="t('gameBoard.furitenImg')" :alt="t('gameBoard.furiten')" class="furiten-indicator bottom-furiten" />
         <img v-if="gameStore.isTenpaiDisplay[playerAtBottom.id]" :src="t('gameBoard.tenpaiImg')" :alt="t('gameBoard.tenpai')" class="tenpai-indicator bottom-tenpai" />
@@ -140,6 +141,7 @@
   import PlayerHand from './PlayerHand.vue';
   import { useGameStore } from '@/stores/gameStore';
   import { useAudioStore } from '@/stores/audioStore';
+  import { useUserStore } from '@/stores/userStore';
   import CenterTableInfo from './CenterTableInfo.vue';
   import DiscardPile from './DiscardPile.vue';
   import PlayerArea from './PlayerArea.vue';
@@ -162,6 +164,7 @@
   const { t } = useI18n();
   const gameStore = useGameStore();
   const audioStore = useAudioStore();
+  const userStore = useUserStore();
   const router = useRouter();
   const showRulesPopup = ref(false); // ルールポップアップの表示状態
   const showYakuListPopup = ref(false); // 役一覧ポップアップの表示状態
@@ -175,6 +178,15 @@
    */
   const playerIcon = (player) => {
     if (!player) return '';
+    // プレイヤーが自分自身で、かつXアイコンURLが設定されていればそれを使用
+    if (player.id === 'player1' && userStore.profile?.x_profile_image_url) {
+      const imageUrl = userStore.profile.x_profile_image_url;
+      // unavatar.ioのURLの場合はプロキシを経由させる
+      if (imageUrl.includes('unavatar.io')) {
+        return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}`;
+      }
+      return imageUrl;
+    }
     if (player.id === 'player1') return '/assets/images/info/hito_icon_1.png'; // あなた
     if (player.originalId === 'kuro') return '/assets/images/info/cat_icon_3.png'; // くろ
     if (player.originalId === 'tama') return '/assets/images/info/cat_icon_2.png'; // たま
@@ -1032,6 +1044,13 @@ input:checked + .slider:before {
 .cat-icon-right-flipped {
   transform: translate(-50%, -50%) scaleX(-1);
 }
+.cat-icon-bottom {
+  top: -120px;
+  right: -65px;
+  transform: translate(-50%, -50%);
+  scale: 0.9; /* 自分のアイコンは少し小さく */
+  border-radius: 10px; /* 角を少し丸める */
+}   
 
 .player-area-container {
     /* 各プレイヤーエリアコンテナのスタイル (必要に応じて) */

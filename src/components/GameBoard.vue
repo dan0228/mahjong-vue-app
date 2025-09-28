@@ -178,9 +178,8 @@
    */
   const playerIcon = (player) => {
     if (!player) return '';
-    // プレイヤーが自分自身で、かつXアイコンURLが設定されていればそれを使用
-    if (player.id === 'player1' && userStore.profile?.x_profile_image_url) {
-      return userStore.profile.x_profile_image_url;
+    if (player.id === 'player1' && userStore.profile?.avatar_url) {
+      return userStore.profile.avatar_url;
     }
     if (player.id === 'player1') return '/assets/images/info/hito_icon_1.png'; // あなた
     if (player.originalId === 'kuro') return '/assets/images/info/cat_icon_3.png'; // くろ
@@ -1044,7 +1043,9 @@ input:checked + .slider:before {
   right: -65px;
   transform: translate(-50%, -50%);
   scale: 0.9; /* 自分のアイコンは少し小さく */
-  border-radius: 10px; /* 角を少し丸める */
+  background-color: white; /* 白背景 */
+  border: 1px solid #ccc; /* 1pxの縁 */
+  border-radius: 6px; /* 角を丸く */ 
 }   
 
 .player-area-container {

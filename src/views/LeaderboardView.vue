@@ -127,7 +127,7 @@ async function fetchLeaderboard() {
   try {
     const { data, error: supabaseError } = await supabase
       .from('users')
-      .select('id, username, max_win_streak, x_account')
+      .select('id, username, max_win_streak, avatar_url') // x_accountの代わりにavatar_urlを取得
       .not('max_win_streak', 'is', null) // max_win_streakがnullでないユーザーのみ
       .order('max_win_streak', { ascending: false }) // 最大連勝数で降順ソート
       .limit(30); // 上位30件
@@ -136,11 +136,11 @@ async function fetchLeaderboard() {
 
     leaderboard.value = data.map(player => ({
       id: player.id,
-      name: player.username, // Supabaseのusernameをnameとして使用
-      username: player.x_account ? player.x_account.substring(1) : '-', // @を除いたXアカウント名
+      name: player.username,
+      username: '-', // Xアカウント名は表示しない
       streak: player.max_win_streak,
-      url: player.x_account ? `https://x.com/${player.x_account.substring(1)}` : '#',
-      profile_image_url: player.x_account ? `https://images.weserv.nl/?url=https://unavatar.io/twitter/${player.x_account.substring(1)}` : '/assets/images/info/hito_icon_1.png',
+      url: '#', // Xアカウントへのリンクは不要に
+      profile_image_url: player.avatar_url || '/assets/images/info/hito_icon_1.png', // avatar_urlを使用
     }));
 
   } catch (e) {
@@ -471,7 +471,9 @@ h1 {
 .user-avatar {
   width: 40px;
   height: 40px;
-  border-radius: 50%;
+  background-color: white; /* 白背景 */
+  border: 1px solid #ccc; /* 1pxの縁 */
+  border-radius: 50%; /* 角を丸く */
 }
 
 .user-name-cell {

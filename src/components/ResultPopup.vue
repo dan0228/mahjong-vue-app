@@ -279,9 +279,9 @@ const winnerIconSrc = computed(() => {
   const player = gameStore.players.find(p => p.id === targetPlayerId);
   if (!player) return null;
 
-  // player1 (あなた) の場合はXアイコンURLがあればそれを使用
-  if (player.id === 'player1' && userStore.profile?.x_profile_image_url) {
-    return userStore.profile.x_profile_image_url;
+  // player1 (あなた) の場合はアバターURLがあればそれを使用
+  if (player.id === 'player1' && userStore.profile?.avatar_url) {
+    return userStore.profile.avatar_url;
   }
   // それ以外は既存のロジック
   if (player.id === 'player1') return '/assets/images/info/hito_icon_1.png'; // あなた
@@ -504,7 +504,9 @@ function getMeldTileClass(meld, tileIndex) {
   width: 55px;
   height: 55px;
   margin-bottom: 15px;
-  border-radius: 6px; /* 角を少し丸める */
+  background-color: white; /* 白背景 */
+  border: 1px solid #ccc; /* 1pxの縁 */
+  border-radius: 6px; /* 角を丸く */
 }
 
 .popup-content button {

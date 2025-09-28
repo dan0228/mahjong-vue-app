@@ -492,9 +492,8 @@
     "description": "👇Please register a name to be used in the game.👇",
     "usernameLabel": "Username (Required)",
     "usernamePlaceholder": "Max 3 full-width or 6 half-width chars",
-    "xAccountLabel": "X Account (Optional)",
-    "xAccountDescription": "Uses your X icon as your avatar.",
-    "xAccountPlaceholder": "{'@'}username",
+    "avatarLabel": "Avatar (Optional)",
+    "uploadButton": "Select Image",
     "registerButton": "Register",
     "errors": {
       "usernameRequired": "Username is required.",

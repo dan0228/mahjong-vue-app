@@ -131,9 +131,9 @@ const formattedTimestamp = computed(() => {
  */
 function getPlayerIcon(player) {
   if (!player) return null;
-  // プレイヤーが自分自身で、かつXアイコンURLが設定されていればそれを使用
-  if (player.id === 'player1' && userStore.profile?.x_profile_image_url) {
-    return userStore.profile.x_profile_image_url;
+  // プレイヤーが自分自身で、かつアバターURLが設定されていればそれを使用
+  if (player.id === 'player1' && userStore.profile?.avatar_url) {
+    return userStore.profile.avatar_url;
   }
   if (player.id === 'player1') return '/assets/images/info/hito_icon_1.png'; // あなた
   if (player.originalId === 'kuro') return '/assets/images/info/cat_icon_3.png'; // くろ
@@ -218,6 +218,9 @@ function getPlayerIcon(player) {
   margin: 0 30px;
   flex-shrink: 0;
   border-radius: 6px; /* 角を少し丸める */
+  background-color: white; /* 白背景 */
+  border: 1px solid #ccc; /* 1pxの縁 */
+  border-radius: 6px; /* 角を丸く */
 }
 .score {
   font-weight: bold;

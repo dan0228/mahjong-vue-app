@@ -492,9 +492,8 @@
     "description": "👇ゲーム内で使用する名前を登録してください👇",
     "usernameLabel": "ユーザー名 (必須)",
     "usernamePlaceholder": "全角3文字、半角6文字以内",
-    "xAccountLabel": "Xアカウント (任意)",
-    "xAccountDescription": "Xのアイコンをアバターに使用します",
-    "xAccountPlaceholder": "{'@'}ユーザー名",
+    "avatarLabel": "アバター (任意)",
+    "uploadButton": "画像を選択",
     "registerButton": "登録",
     "errors": {
       "usernameRequired": "ユーザー名は必須です。",
@@ -505,7 +504,7 @@
   },
   "settingsPopup": {
     "title": "設定",
-    "description": "プロフィール情報を編集します。",
+    "description": "プロフィール情報を編集します",
     "saveButton": "保存"
   }
 }

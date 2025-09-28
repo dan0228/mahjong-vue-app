@@ -29,13 +29,8 @@ export const useUserStore = defineStore('user', () => {
 
         if (data) {
           profile.value = data;
-          // Xアカウントが登録されていれば、そのアイコンURLを取得
-          if (profile.value.x_account) {
-            const unavatarUrl = `https://unavatar.io/twitter/${profile.value.x_account.substring(1)}`;
-            profile.value.x_profile_image_url = `https://images.weserv.nl/?url=${encodeURIComponent(unavatarUrl)}`;
-          } else {
-            profile.value.x_profile_image_url = null;
-          }
+          // Xアカウント関連のロジックは削除
+
           // 初回取得時にlocalStorageからデータ移行を試みる
           await migrateDataFromLocalStorage(data);
 
@@ -78,6 +73,58 @@ export const useUserStore = defineStore('user', () => {
       console.error('プロフィール更新エラー:', error.message);
     } finally {
       if (options.showLoading) loading.value = false;
+    }
+  }
+
+  /**
+   * アバター画像をアップロードし、ユーザーのプロフィールを更新します。
+   * @param {File} file - アップロードする画像ファイル。
+   */
+  async function uploadAvatar(file) {
+    if (!file) {
+      console.error('アップロードするファイルがありません。');
+      return;
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      console.error('ユーザーが見つかりません。');
+      return;
+    }
+
+    try {
+      loading.value = true;
+      const fileExt = file.name.split('.').pop();
+      const filePath = `public/${user.id}/avatar.${fileExt}`;
+
+      // Supabase Storageにファイルをアップロード
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true, // 存在する場合は上書き
+        });
+
+      if (uploadError) throw uploadError;
+
+      // アップロードしたファイルの公開URLを取得
+      const { data: urlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+      
+      if (!urlData) {
+        throw new Error('URLの取得に失敗しました。');
+      }
+      
+      const publicUrl = urlData.publicUrl;
+
+      // usersテーブルのavatar_urlを更新
+      await updateUserProfile({ avatar_url: publicUrl }, { showLoading: false });
+
+    } catch (error) {
+      console.error('アバターのアップロードに失敗しました:', error.message);
+    } finally {
+      loading.value = false;
     }
   }
 
@@ -264,6 +311,7 @@ export const useUserStore = defineStore('user', () => {
     loading,
     fetchUserProfile,
     updateUserProfile,
+    uploadAvatar, // ★追加
     recordGameResult,
     updateWinStreaks,
     updateYakuAchievement,

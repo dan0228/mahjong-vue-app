@@ -49,22 +49,22 @@ const WIND_ORDER = [PLAYER_WINDS.EAST, PLAYER_WINDS.SOUTH, PLAYER_WINDS.WEST, PL
 export function getAllTiles() {
   const tiles = [];
 
-  // 萬子(m), 筒子(p), 索子(s) の1から9までを各4枚生成
-  [SUITS.MANZU, SUITS.PINZU, SUITS.SOZU].forEach(suit => {
-    for (let rank = 1; rank <= 9; rank++) {
-      for (let i = 0; i < 4; i++) {
-        tiles.push({
-          suit,
-          rank,
-          id: `${suit}${rank}_${i}`, // 例: m1_0, m1_1, m1_2, m1_3
-        });
-      }
-    }
-  });
+  // // 萬子(m), 筒子(p), 索子(s) の1から9までを各4枚生成
+  // [SUITS.MANZU, SUITS.PINZU, SUITS.SOZU].forEach(suit => {
+  //   for (let rank = 1; rank <= 9; rank++) {
+  //     for (let i = 0; i < 4; i++) {
+  //       tiles.push({
+  //         suit,
+  //         rank,
+  //         id: `${suit}${rank}_${i}`, // 例: m1_0, m1_1, m1_2, m1_3
+  //       });
+  //     }
+  //   }
+  // });
 
   // 字牌 (東南西北白發中) を各4枚生成
   Object.values(JIHAI_TYPES).forEach(rank => {
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 5; i++) {
       tiles.push({
         suit: SUITS.JIHAI,
         rank,

@@ -493,7 +493,7 @@
     "usernameLabel": "Username (Required)",
     "usernamePlaceholder": "Max 3 full-width or 6 half-width chars",
     "xAccountLabel": "X Account (Optional)",
-    "xAccountDescription": "Used to display your X account on the leaderboard.",
+    "xAccountDescription": "Uses your X icon as your avatar.",
     "xAccountPlaceholder": "{'@'}username",
     "registerButton": "Register",
     "errors": {

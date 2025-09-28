@@ -493,7 +493,7 @@
     "usernameLabel": "ユーザー名 (必須)",
     "usernamePlaceholder": "全角3文字、半角6文字以内",
     "xAccountLabel": "Xアカウント (任意)",
-    "xAccountDescription": "ランキングにXアカウントを表示するために使用します",
+    "xAccountDescription": "Xのアイコンをアバターに使用します",
     "xAccountPlaceholder": "{'@'}ユーザー名",
     "registerButton": "登録",
     "errors": {

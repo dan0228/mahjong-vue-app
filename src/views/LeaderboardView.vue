@@ -2,7 +2,7 @@
   <div class="leaderboard-view-container" :style="{ height: viewportHeight }">
     <div class="leaderboard-screen" :style="scalerStyle">
       <div class="max-consecutive-wins">
-        {{ $t('titleView.maxWinStreak') }} <span class="max-wins-number">{{ gameStore.maxConsecutiveWins }}</span>
+        {{ $t('titleView.maxWinStreak') }} <span class="max-wins-number">{{ userStore.profile?.max_win_streak || 0 }}</span>
       </div>
       <div class="top-controls">
         <div class="audio-toggles">
@@ -29,10 +29,9 @@
       <div v-if="!isLoading" class="ranking-table-container">
         <table class="ranking-table">
           <colgroup>
-            <col style="width: 12%;" />
-            <col style="width: 20%;" />
-            <col style="width: 38%;" />
             <col style="width: 15%;" />
+            <col style="width: 25%;" />
+            <col style="width: 45%;" />
             <col style="width: 15%;" />
           </colgroup>
           <thead>
@@ -40,34 +39,30 @@
               <th>{{ $t('leaderboardView.tableHeaderNo') }}</th>
               <th colspan="2">{{ $t('leaderboardView.tableHeaderUserName') }}</th>
               <th>{{ $t('leaderboardView.tableHeaderWinStreak') }}</th>
-              <th>{{ $t('leaderboardView.tableHeaderPost') }}</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="player in displayLeaderboard" :key="player.id">
+            <tr v-for="player in displayLeaderboard" :key="player.id" :class="{ 'is-first-place': player.isFirstPlace, 'is-second-place': player.isSecondPlace, 'is-third-place': player.isThirdPlace }">
               <td>{{ player.rank }}</td>
               <td class="user-avatar-cell">
-                <img v-if="player.profile_image_url" :src="player.profile_image_url" alt="avatar" class="user-avatar" />
-                <span v-else>-</span>
+                <a v-if="player.url !== '#'" :href="player.url" target="_blank" rel="noopener noreferrer" class="avatar-link-wrapper">
+                  <img v-if="player.profile_image_url" :src="player.profile_image_url" alt="avatar" class="user-avatar" />
+                  <span v-else>-</span>
+                </a>
+                <template v-else>
+                  <img v-if="player.profile_image_url" :src="player.profile_image_url" alt="avatar" class="user-avatar" />
+                  <span v-else>-</span>
+                </template>
               </td>
               <td class="user-name-cell">
                 <div class="user-name">{{ player.name }}</div>
                 <div class="user-username">{{ player.username !== '-' ? '@' + player.username : '-' }}</div>
               </td>
               <td class="streak-cell">{{ player.streak }}</td>
-              <td>
-                <a v-if="player.url !== '#'" :href="player.url" target="_blank" rel="noopener noreferrer">{{ $t('leaderboardView.viewPost') }}</a>
-                <span v-else>-</span>
-              </td>
             </tr>
           </tbody>
         </table>
-        <p class="update-notice" v-html="$t('leaderboardView.updateNotice')"></p>
-        <div class="info-section">
-          <h4>{{ $t('leaderboardView.aggregationMethodTitle') }}</h4>
-          <p class="description" v-html="$t('leaderboardView.description')"></p>
-          <p class="post-prompt" v-html="$t('leaderboardView.postPrompt')"></p>
-        </div>
+        
       </div>
     </div>
   </div>
@@ -85,16 +80,17 @@ import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useViewportHeight } from '@/composables/useViewportHeight';
 import { useAudioStore } from '@/stores/audioStore';
-import { useGameStore } from '@/stores/gameStore';
+import { supabase } from '@/supabaseClient'; // Supabaseクライアントをインポート
+import { useUserStore } from '@/stores/userStore'; // userStoreをインポート
 
 // --- リアクティブな状態とストア ---
 const router = useRouter();
 const { t } = useI18n();
 const { viewportHeight } = useViewportHeight();
 const audioStore = useAudioStore();
-const gameStore = useGameStore();
+const userStore = useUserStore(); // userStoreを使用
 
-const leaderboard = ref([]); // APIから取得した生のランキングデータ
+const leaderboard = ref([]); // Supabaseから取得したランキングデータ
 const isLoading = ref(true); // ローディング状態フラグ
 const error = ref(null); // エラーメッセージ（デバッグ用）
 
@@ -119,73 +115,92 @@ const updateScaleFactor = () => {
   scaleFactor.value = Math.min(scaleX, scaleY);
 };
 
-/**
- * 表示用のランキングデータを生成します。
- * 常に5行表示を保証し、データが5件未満の場合はプレースホルダーで埋めます。
- */
-const displayLeaderboard = computed(() => {
-  const data = leaderboard.value.slice(0, 5);
-  while (data.length < 5) {
-    data.push({
-      rank: data.length + 1,
-      id: `placeholder-${data.length}`,
-      name: '-',
-      username: '-',
-      streak: '-',
-      url: '#',
-      profile_image_url: ''
-    });
-  }
-  return data;
-});
-
-// 開発環境用のモックデータ
-const mockData = [
-  { rank: 1, id: 'user1', name: 'ねこマスター', username: 'cat_master', streak: 50, url: '#', profile_image_url: '/assets/images/info/cat_icon_1.png' },
-  { rank: 2, id: 'user2', name: 'とら', username: 'tora_chan', streak: 45, url: '#', profile_image_url: '/assets/images/info/cat_icon_2.png' },
-  { rank: 3, id: 'user3', name: 'たま', username: 'tama_nyan', streak: 42, url: '#', profile_image_url: '/assets/images/info/cat_icon_3.png' }
-];
+// 開発環境用のモックデータは削除
 
 /**
- * ランキングデータをAPIから非同期で取得します。
- * 開発環境ではモックデータを使用します。
+ * ランキングデータをSupabaseから非同期で取得します。
  */
 async function fetchLeaderboard() {
   isLoading.value = true;
   error.value = null;
 
-  if (import.meta.env.DEV) {
-    console.log('ローカル開発モードで実行中。ランキングにモックデータを使用します。');
-    setTimeout(() => {
-      leaderboard.value = mockData;
-      isLoading.value = false;
-    }, 1000);
-  } else {
-    try {
-      const response = await fetch('/api/ranking');
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || t('leaderboardView.fetchError'));
-      }
-      leaderboard.value = await response.json();
-    } catch (e) {
-      console.error(e);
-      // エラーが発生した場合、ランキングを空にしてプレースホルダー表示にフォールバック
-      leaderboard.value = [];
-      error.value = e.message; // エラー情報を保持（デバッグ用）
-    } finally {
-      isLoading.value = false;
-    }
+  try {
+    const { data, error: supabaseError } = await supabase
+      .from('users')
+      .select('id, username, max_win_streak, x_account')
+      .not('max_win_streak', 'is', null) // max_win_streakがnullでないユーザーのみ
+      .order('max_win_streak', { ascending: false }) // 最大連勝数で降順ソート
+      .limit(30); // 上位30件
+
+    if (supabaseError) throw supabaseError;
+
+    leaderboard.value = data.map(player => ({
+      id: player.id,
+      name: player.username, // Supabaseのusernameをnameとして使用
+      username: player.x_account ? player.x_account.substring(1) : '-', // @を除いたXアカウント名
+      streak: player.max_win_streak,
+      url: player.x_account ? `https://x.com/${player.x_account.substring(1)}` : '#',
+      profile_image_url: player.x_account ? `https://unavatar.io/twitter/${player.x_account.substring(1)}` : '/assets/images/info/hito_icon_1.png',
+    }));
+
+  } catch (e) {
+    console.error('ランキングの取得エラー:', e.message);
+    leaderboard.value = [];
+    error.value = e.message;
+  } finally {
+    isLoading.value = false;
   }
 }
+
+/**
+ * 表示用のランキングデータを生成します。
+ * 常に5行表示を保証し、データが5件未満の場合はプレースホルダーで埋めます。
+ */
+const displayLeaderboard = computed(() => {
+  const rankedData = [];
+  let currentRank = 1;
+  let previousStreak = -1; // 連勝数は0以上なので、初期値は-1
+  let sameRankCount = 0;
+
+  leaderboard.value.forEach((player) => {
+    if (player.streak !== previousStreak) {
+      currentRank += sameRankCount;
+      sameRankCount = 0;
+    }
+    rankedData.push({
+      ...player,
+      rank: currentRank,
+      isTopRank: currentRank <= 3, // 1位から3位にフラグ
+      isFirstPlace: currentRank === 1,
+      isSecondPlace: currentRank === 2,
+      isThirdPlace: currentRank === 3,
+    });
+    previousStreak = player.streak;
+    sameRankCount++;
+  });
+
+  // プレースホルダーを追加
+  while (rankedData.length < 30) {
+    rankedData.push({
+      rank: rankedData.length + 1, // プレースホルダーのランクは連番
+      id: `placeholder-${rankedData.length}`,
+      name: '-',
+      username: '-',
+      streak: '-',
+      url: '#',
+      profile_image_url: null // プレースホルダーのアバターはnull
+    });
+  }
+  return rankedData;
+});
 
 // --- ライフサイクルフック ---
 onMounted(() => {
   updateScaleFactor();
   window.addEventListener('resize', updateScaleFactor);
   fetchLeaderboard();
-  gameStore.loadCatCoins(); // 猫コインの枚数をストアから読み込む
-  audioStore.setBgm('GB-JP-A02-2(Menu-Loop105).mp3');
+  audioStore.setBgm('GB-JP-A02-2(Menu-Loop105).mp3');   
+  // userStoreから猫コインの枚数を読み込む (userStoreは自動でprofileをfetchするため、ここでは不要)
 });
 
 onBeforeUnmount(() => {
@@ -381,6 +396,7 @@ h1 {
   flex-grow: 1; /* コンテナがスペースを埋めるようにする */
   overflow-y: auto; /* テーブルをスクロール可能にする */
   margin-bottom: 20px; /* 下部に余白を追加 */
+  max-height: 450px; /* ランキングテーブルの最大高さを設定 */
 }
 
 .ranking-table {
@@ -400,7 +416,7 @@ h1 {
   padding: 2px;
   text-align: center;
   vertical-align: middle;
-  font-size: 0.68em;
+  font-size: 0.63em;
   word-break: break-word;
   color: #5c4b4b; /* ソフトなダークブラウンのテキスト */
 }
@@ -413,15 +429,42 @@ h1 {
   border-bottom: none; /* 最終行のセルの下ボーダーを削除 */
 }
 
+.ranking-table td:first-child {
+  font-size: 0.8em; /* No.の文字サイズを大きく */
+  font-weight: bold;
+}
+
 .ranking-table th {
-  background-color: #e1c9c1; /* くすんだピンクのヘッダー */
+  background-color: #ffbda7; /* くすんだピンクのヘッダー */
   font-weight: bold;
   position: sticky;
   top: 0;
 }
 
 .ranking-table tbody tr:nth-child(even) {
-  background-color: #f9f5f2; /* 明るいウォームグレーの交互色 */
+  background-color: rgba(255, 255, 255, 0.5); /* 半透明の白に変更 */
+}
+
+.ranking-table tbody tr.is-first-place {
+  background-color: #fffde7; /* 1位: 薄い黄色 */
+  font-weight: bold;
+  color: #d4af37; /* ゴールド */
+  border: 2px solid #d4af37;
+  font-size: 1.4em; /* 1位の行全体を大きく */
+}
+.ranking-table tbody tr.is-second-place {
+  background-color: #f0f0f0; /* 2位: 薄いグレー */
+  font-weight: bold;
+  color: #a8a8a8; /* シルバー */
+  border: 2px solid #a8a8a8;
+  font-size: 1.3em; /* 2位の行全体を少し大きく */
+}
+.ranking-table tbody tr.is-third-place {
+  background-color: #f0e0d0; /* 3位: 薄いブロンズ色 */
+  font-weight: bold;
+  color: #cd7f32; /* ブロンズ */
+  border: 2px solid #cd7f32;
+  font-size: 1.2em; /* 3位の行全体を少し大きく */
 }
 
 .user-avatar-cell {
@@ -440,15 +483,16 @@ h1 {
 }
 .user-name {
   font-weight: bold;
+  font-size: 1.2em; /* ユーザー名を調整 */
 }
 .user-username {
-  font-size: 0.9em;
+  font-size: 0.8em; /* ユーザー名を調整 */
   color: #555;
 }
 
 .streak-cell {
   font-weight: bold;
-  font-size: 1.1em;
+  font-size: 1.1em; /* 連勝数を調整 */
   text-align: center;
 }
 
@@ -460,6 +504,19 @@ h1 {
 
 .ranking-table a:hover {
   text-decoration: underline;
+}
+
+.ranking-table tbody tr {
+  height: 46px; /* 行の高さを固定 */
+}
+.avatar-link-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  text-decoration: none; /* リンクの下線を削除 */
+  color: inherit; /* リンクの色を親から継承 */
 }
 
 .update-notice {

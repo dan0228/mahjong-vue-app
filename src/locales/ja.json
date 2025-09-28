@@ -171,10 +171,6 @@
   },
   "leaderboardView": {
     "title": "週間ランキング",
-    "description": "過去7日間(最新100件)のXの #よんじゃん連勝数 タグ付きポストの「集計用：〇連勝」の数値を取得",
-    "updateNotice": "※3時間ごとに更新",
-    "aggregationMethodTitle": "集計方法",
-    "postPrompt": "最終結果画面からポストしてランキングに<br>参加してね！",
     "tableHeaderNo": "No.",
     "tableHeaderUserName": "ユーザ名",
     "tableHeaderWinStreak": "連勝数",

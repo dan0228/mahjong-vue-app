@@ -10,6 +10,9 @@
           <div v-if="username.length > 0 && !isUsernameLengthValid" class="error-message">
             {{ $t('usernameRegistration.errors.usernameTooLong') }}
           </div>
+          <div v-if="isUsernameProfane" class="error-message">
+            {{ $t('usernameRegistration.errors.usernameProfane') }}
+          </div>
         </div>
         <div class="form-group">
           <label for="x-account">{{ $t('usernameRegistration.xAccountLabel') }}</label>
@@ -34,6 +37,7 @@
 import { ref, computed, watch, defineProps, defineEmits } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useUserStore } from '@/stores/userStore';
+import { containsProfanity } from '@/utils/validationUtils'; // NGワードチェック関数をインポート
 
 const props = defineProps({
   show: Boolean,
@@ -69,10 +73,11 @@ const getCharacterWidth = (str) => {
 
 const isUsernameNotEmpty = computed(() => username.value.trim().length > 0);
 const isUsernameLengthValid = computed(() => getCharacterWidth(username.value) <= 6);
+const isUsernameProfane = computed(() => containsProfanity(username.value)); // NGワードチェック
 const isXAccountFormatValid = computed(() => xAccount.value.length === 0 || /^@[a-zA-Z0-9_]{1,15}$/.test(xAccount.value));
 
 const isFormValid = computed(() => {
-  return isUsernameNotEmpty.value && isUsernameLengthValid.value && isXAccountFormatValid.value;
+  return isUsernameNotEmpty.value && isUsernameLengthValid.value && !isUsernameProfane.value && isXAccountFormatValid.value;
 });
 
 const saveProfile = async () => {
@@ -83,6 +88,15 @@ const saveProfile = async () => {
       username: username.value,
       x_account: xAccount.value || null,
     });
+    // ★★★ プロフィール更新後に最新の情報を再取得 ★★★
+    await userStore.fetchUserProfile();
+
+    // アイコン画像を先読みしてキャッシュさせる
+    if (userStore.profile?.x_profile_image_url) {
+      const img = new Image();
+      img.src = userStore.profile.x_profile_image_url;
+    }
+
     emit('close');
   } catch (error) {
     console.error('プロフィールの更新中にエラーが発生しました:', error);

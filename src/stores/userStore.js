@@ -31,7 +31,8 @@ export const useUserStore = defineStore('user', () => {
           profile.value = data;
           // Xアカウントが登録されていれば、そのアイコンURLを取得
           if (profile.value.x_account) {
-            profile.value.x_profile_image_url = `https://unavatar.io/twitter/${profile.value.x_account.substring(1)}`;
+            const unavatarUrl = `https://unavatar.io/twitter/${profile.value.x_account.substring(1)}`;
+            profile.value.x_profile_image_url = `https://images.weserv.nl/?url=${encodeURIComponent(unavatarUrl)}`;
           } else {
             profile.value.x_profile_image_url = null;
           }

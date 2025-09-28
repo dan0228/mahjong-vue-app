@@ -499,7 +499,8 @@
     "errors": {
       "usernameRequired": "ユーザー名は必須です。",
       "usernameTooLong": "ユーザー名は全角3文字、半角6文字以内で入力してください",
-      "xAccountInvalid": "Xアカウントは{'@'}で始まる正しい形式で入力してください"
+      "xAccountInvalid": "Xアカウントは{'@'}で始まる正しい形式で入力してください",
+      "usernameProfane": "不適切な単語が含まれています"
     }
   },
   "settingsPopup": {

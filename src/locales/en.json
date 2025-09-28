@@ -499,7 +499,8 @@
     "errors": {
       "usernameRequired": "Username is required.",
       "usernameTooLong": "Username must be within 3 full-width or 6 half-width characters.",
-      "xAccountInvalid": "Please enter a valid X account format starting with {'@'}."
+      "xAccountInvalid": "Please enter a valid X account format starting with {'@'}.",
+      "usernameProfane": "This username contains inappropriate words."
     }
   },
   "settingsPopup": {

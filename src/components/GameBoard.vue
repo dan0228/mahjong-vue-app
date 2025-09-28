@@ -180,12 +180,7 @@
     if (!player) return '';
     // プレイヤーが自分自身で、かつXアイコンURLが設定されていればそれを使用
     if (player.id === 'player1' && userStore.profile?.x_profile_image_url) {
-      const imageUrl = userStore.profile.x_profile_image_url;
-      // unavatar.ioのURLの場合はプロキシを経由させる
-      if (imageUrl.includes('unavatar.io')) {
-        return `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}`;
-      }
-      return imageUrl;
+      return userStore.profile.x_profile_image_url;
     }
     if (player.id === 'player1') return '/assets/images/info/hito_icon_1.png'; // あなた
     if (player.originalId === 'kuro') return '/assets/images/info/cat_icon_3.png'; // くろ

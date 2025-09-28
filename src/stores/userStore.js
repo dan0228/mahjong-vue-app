@@ -31,6 +31,12 @@ export const useUserStore = defineStore('user', () => {
           profile.value = data;
           // 初回取得時にlocalStorageからデータ移行を試みる
           await migrateDataFromLocalStorage(data);
+
+          // アプリ再起動時にゲームが進行中だった場合、連勝数をリセットし、ゲーム進行中フラグを解除
+          if (profile.value.is_game_in_progress) {
+            await resetWinStreak(); // 連勝数をリセット
+            await setGameInProgress(false); // ゲーム進行中フラグを解除
+          }
         }
       } else {
         // ユーザーがいない場合はプロフィールをnullに設定
@@ -139,9 +145,14 @@ export const useUserStore = defineStore('user', () => {
    * @param {Object} options - { showLoading: boolean } ローディング表示を制御するオプション
    */
   async function updateWinStreaks({ current, max }, options = { showLoading: true }) {
-    if (!profile.value) return;
-    await updateUserProfile({ current_win_streak: current, max_win_streak: max }, options);
-  }
+  if (!profile.value) return { current: 0, max: 0 }; // profileがない場合はデフォルト値を返す
+  await updateUserProfile({ current_win_streak: current, max_win_streak: max }, options);
+  // 更新後のprofile.valueから最新の連勝数を返す
+  return {
+    current: profile.value.current_win_streak || 0,
+    max: profile.value.max_win_streak || 0,
+  };
+}
 
   /**
    * 役の達成状況を一時的に記録します。

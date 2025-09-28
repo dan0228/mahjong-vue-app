@@ -731,6 +731,12 @@ export const useGameStore = defineStore('game', {
           this.shouldAdvanceRound = true; // 局を進める
         }
 
+        // ここに、流局でゲームが終了する追加条件をチェックする
+        // 東4局で親がノーテンかつトップの場合
+        if (isEast4 && !isDealerTenpai && isDealerTop) {
+          this.shouldEndGameAfterRound = true; // ゲーム終了フラグ
+        }
+
         // 箱下（持ち点0未満）による終局条件のチェック
         if (this.shouldEndGameAfterRound && !(isEast4 && isDealerTenpai && isDealerTop)) {
           const playerBelowZero = this.players.find(p => (p.score + (pointChanges[p.id] || 0)) < 0);
@@ -1653,7 +1659,8 @@ export const useGameStore = defineStore('game', {
           }
       }
 
-      this.resultMessage = `${baseMessage}\n${roundEndMessage}`;
+      this.resultMessage = `${baseMessage}
+${roundEndMessage}`;
 
       // --- ポップアップ表示 ---
       setTimeout(() => {
@@ -1680,29 +1687,39 @@ export const useGameStore = defineStore('game', {
 
     // 全操作モードでない場合のみ連勝数を更新
     if (this.gameMode !== 'allManual' && userStore.profile) {
-      let currentConsecutiveWins = userStore.profile.current_win_streak || 0;
-      let maxConsecutiveWins = userStore.profile.max_win_streak || 0;
+      // userStoreから取得した連勝数を一時変数に格納
+      let initialCurrentWinStreak = userStore.profile?.current_win_streak || 0;
+      let maxConsecutiveWins = userStore.profile?.max_win_streak || 0; // maxConsecutiveWins もここで定義
 
+      let newConsecutiveWins = initialCurrentWinStreak; // ゲーム開始前の連勝数をベースにする
       if (myPlayerRank === 1) {
-        currentConsecutiveWins++; // 1位なら連勝数をインクリメント
+        newConsecutiveWins++; // 1位なら連勝数をインクリメント
         this.previousConsecutiveWins = 0; // 連勝が継続しているのでリセット
       } else {
         // 1位でなく、かつ現在の連勝数が1以上の場合、その数を記録
-        if (currentConsecutiveWins > 0) {
-          this.previousConsecutiveWins = currentConsecutiveWins;
+        if (initialCurrentWinStreak > 0) {
+          this.previousConsecutiveWins = initialCurrentWinStreak;
         } else {
           this.previousConsecutiveWins = 0;
         }
-        currentConsecutiveWins = 0; // 1位でなければ連勝数をリセット
+        newConsecutiveWins = 0; // 1位でなければ連勝数をリセット
       }
       // 最大連勝数を更新
-      if (currentConsecutiveWins > maxConsecutiveWins) {
-        maxConsecutiveWins = currentConsecutiveWins;
+      if (newConsecutiveWins > maxConsecutiveWins) {
+        maxConsecutiveWins = newConsecutiveWins;
       }
 
-      // userStore経由で連勝数を更新
-      await userStore.updateWinStreaks({ current: currentConsecutiveWins, max: maxConsecutiveWins }, options);
-      this.finalResultDetails.consecutiveWins = currentConsecutiveWins; // finalResultDetailsも更新
+      // userStore経由で連勝数を更新し、更新後の連勝数を取得
+      // ここで newConsecutiveWins を current として渡す
+      const updatedStreaks = await userStore.updateWinStreaks({ current: newConsecutiveWins, max: maxConsecutiveWins }, options);
+
+      // 最終結果画面で表示する連勝数を設定
+      if (myPlayerRank === 1) {
+        // 最終結果画面には、計算した newConsecutiveWins を直接表示する
+        this.finalResultDetails.consecutiveWins = newConsecutiveWins;
+      } else {
+        this.finalResultDetails.consecutiveWins = this.previousConsecutiveWins; // 1位以外なら途切れる前の連勝数を表示
+      }
     } else if (userStore.profile) {
       // 全操作モードの場合でも、finalResultDetails.consecutiveWinsはuserStoreから取得
       this.finalResultDetails.consecutiveWins = userStore.profile.current_win_streak || 0;

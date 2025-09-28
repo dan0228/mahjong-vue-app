@@ -163,7 +163,7 @@ onBeforeUnmount(() => {
  */
 function startGame(mode) {
   gameStore.setGameMode(mode);
-  gameStore.resetGameForNewSession();
+  gameStore.resetGameForNewSession({ keepStreak: true }); // 連勝数を維持したままゲーム状態をリセット
   gameStore.initializeGame(); // ゲームを初期化し、親や風を決定
   gameStore.showDealerDeterminationPopup = true; // 親決めポップアップを表示
   router.push('/game');

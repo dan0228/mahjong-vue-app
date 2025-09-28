@@ -1,5 +1,6 @@
 <template>
   <div class="leaderboard-view-container" :style="{ height: viewportHeight }">
+    <LoadingIndicator v-if="isLoading" />
     <div class="leaderboard-screen" :style="scalerStyle">
       <div class="max-consecutive-wins">
         {{ $t('titleView.maxWinStreak') }} <span class="max-wins-number">{{ userStore.profile?.max_win_streak || 0 }}</span>
@@ -23,8 +24,6 @@
       </div>
 
       <h1><span v-html="$t('leaderboardView.title')"></span></h1>
-
-      <div v-if="isLoading" class="loading-message">{{ $t('leaderboardView.loading') }}</div>
 
       <div v-if="!isLoading" class="ranking-table-container">
         <table class="ranking-table">
@@ -82,6 +81,7 @@ import { useViewportHeight } from '@/composables/useViewportHeight';
 import { useAudioStore } from '@/stores/audioStore';
 import { supabase } from '@/supabaseClient'; // Supabaseクライアントをインポート
 import { useUserStore } from '@/stores/userStore'; // userStoreをインポート
+import LoadingIndicator from '@/components/LoadingIndicator.vue';
 
 // --- リアクティブな状態とストア ---
 const router = useRouter();
@@ -140,7 +140,7 @@ async function fetchLeaderboard() {
       username: player.x_account ? player.x_account.substring(1) : '-', // @を除いたXアカウント名
       streak: player.max_win_streak,
       url: player.x_account ? `https://x.com/${player.x_account.substring(1)}` : '#',
-      profile_image_url: player.x_account ? `https://unavatar.io/twitter/${player.x_account.substring(1)}` : '/assets/images/info/hito_icon_1.png',
+      profile_image_url: player.x_account ? `https://images.weserv.nl/?url=https://unavatar.io/twitter/${player.x_account.substring(1)}` : '/assets/images/info/hito_icon_1.png',
     }));
 
   } catch (e) {
@@ -379,13 +379,9 @@ h1 {
   max-width: 280px;
 }
 
-.loading-message,
 .error-message {
   margin: 20px;
   font-size: 1.2em;
-}
-
-.error-message {
   color: #d32f2f;
 }
 
@@ -446,21 +442,21 @@ h1 {
 }
 
 .ranking-table tbody tr.is-first-place {
-  background-color: #fffde7; /* 1位: 薄い黄色 */
+  background-color: #fff8a9; /* 1位: 薄い黄色 */
   font-weight: bold;
   color: #d4af37; /* ゴールド */
   border: 2px solid #d4af37;
   font-size: 1.4em; /* 1位の行全体を大きく */
 }
 .ranking-table tbody tr.is-second-place {
-  background-color: #f0f0f0; /* 2位: 薄いグレー */
+  background-color: #e2ffff; /* 2位: 薄いグレー */
   font-weight: bold;
   color: #a8a8a8; /* シルバー */
   border: 2px solid #a8a8a8;
   font-size: 1.3em; /* 2位の行全体を少し大きく */
 }
 .ranking-table tbody tr.is-third-place {
-  background-color: #f0e0d0; /* 3位: 薄いブロンズ色 */
+  background-color: #ffdbb7; /* 3位: 薄いブロンズ色 */
   font-weight: bold;
   color: #cd7f32; /* ブロンズ */
   border: 2px solid #cd7f32;

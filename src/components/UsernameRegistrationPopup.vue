@@ -31,6 +31,7 @@
 import { ref, computed, defineProps, defineEmits } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { supabase } from '@/supabaseClient'; // Supabaseクライアントをインポート
+import { useUserStore } from '@/stores/userStore'; // userStoreをインポート
 
 const props = defineProps({
   show: Boolean,
@@ -38,6 +39,7 @@ const props = defineProps({
 
 const emit = defineEmits(['close']);
 const { t } = useI18n();
+const userStore = useUserStore(); // userStoreのインスタンスを取得
 
 const username = ref('');
 const xAccount = ref('');
@@ -103,6 +105,9 @@ const register = async () => {
         // TODO: ユーザーにエラーを通知
         return;
       }
+
+      // ★★★ 登録後にプロフィール情報を再取得してストアを更新 ★★★
+      await userStore.fetchUserProfile();
 
       // 3. 従来のlocalStorageにも保存（既存のロジックのため）
       localStorage.setItem('mahjongUsername', username.value);

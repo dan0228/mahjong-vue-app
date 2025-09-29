@@ -1710,9 +1710,8 @@ ${roundEndMessage}`;
         maxConsecutiveWins = newConsecutiveWins;
       }
 
-      // userStore経由で連勝数を更新し、更新後の連勝数を取得
-      // ここで newConsecutiveWins を current として渡す
-      const updatedStreaks = await userStore.updateWinStreaks({ current: newConsecutiveWins, max: maxConsecutiveWins }, options);
+      // userStore経由での連勝数更新を無効化
+      // const updatedStreaks = await userStore.updateWinStreaks({ current: newConsecutiveWins, max: maxConsecutiveWins }, options);
 
       // 最終結果画面で表示する連勝数を設定
       if (myPlayerRank === 1) {
@@ -1758,7 +1757,7 @@ ${roundEndMessage}`;
         }
       }
       this.lastCoinGain = gain; // 直近のコイン獲得数を記録
-      await userStore.updateCatCoins(gain, options); // userStore経由で猫コインを更新
+      // await userStore.updateCatCoins(gain, options); // Supabaseで自動集計するため削除
 
       // users.recent_games の更新処理を削除
 

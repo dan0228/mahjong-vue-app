@@ -461,7 +461,10 @@
   /**
    * 最終結果ポップアップから新しいゲームを開始する処理。
    */
-  function handleStartNewGameFromFinalResult() {
+  async function handleStartNewGameFromFinalResult() {
+    // 最新のユーザー情報を取得して、次のゲーム開始前にUIへ反映させる
+    await userStore.fetchUserProfile();
+
     isFadingToFinalResult.value = false; // フェードをリセット
     gameStore.resetGameForNewSession({ keepStreak: true }); // 連勝数を維持
     gameStore.initializeGame();

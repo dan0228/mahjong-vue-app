@@ -199,21 +199,6 @@ export const useUserStore = defineStore('user', () => {
   
 
   /**
-   * 連勝数を更新します。
-   * @param {Object} streaks - { current: number, max: number }
-   * @param {Object} options - { showLoading: boolean } ローディング表示を制御するオプション
-   */
-  async function updateWinStreaks({ current, max }, options = { showLoading: true }) {
-  if (!profile.value) return { current: 0, max: 0 }; // profileがない場合はデフォルト値を返す
-  await updateUserProfile({ current_win_streak: current, max_win_streak: max }, options);
-  // 更新後のprofile.valueから最新の連勝数を返す
-  return {
-    current: profile.value.current_win_streak || 0,
-    max: profile.value.max_win_streak || 0,
-  };
-}
-
-  /**
    * 役の達成状況を一時的に記録します。
    * @param {string} yakuKey - 達成した役のキー
    */
@@ -237,21 +222,6 @@ export const useUserStore = defineStore('user', () => {
       revealed[sayingId] = true;
       await updateUserProfile({ revealed_sayings: revealed }, options);
     }
-  }
-
-  /**
-   * 猫コインを更新します。
-   * @param {number} amount - 更新する猫コインの量（加算または減算）
-   * @param {Object} options - { showLoading: boolean } ローディング表示を制御するオプション
-   */
-  async function updateCatCoins(amount, options = { showLoading: true }) {
-    if (!profile.value) return;
-
-    let newCatCoins = (profile.value.cat_coins || 0) + amount;
-    newCatCoins = Math.max(0, newCatCoins); // 0未満にならないように
-    newCatCoins = Math.min(999999, newCatCoins); // 999999を超えないように制限を追加
-
-    await updateUserProfile({ cat_coins: newCatCoins }, options);
   }
 
   /**
@@ -325,10 +295,8 @@ export const useUserStore = defineStore('user', () => {
     fetchUserProfile,
     updateUserProfile,
     uploadAvatar, // ★追加
-    updateWinStreaks,
     updateYakuAchievement,
     updateRevealedSaying,
-    updateCatCoins,
     saveAchievedYaku,
     resetTemporaryData,
     resetWinStreak,

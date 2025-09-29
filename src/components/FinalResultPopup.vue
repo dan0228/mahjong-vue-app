@@ -22,7 +22,7 @@
             </span>
           </div>
           <div class="coin-total-display">
-            <span class="positive-gain total-cat-coins-value">{{ t('finalResultPopup.totalCatCoins') }} {{ currentAnimatedCatCoins }}</span>
+            <span class="positive-gain total-cat-coins-value">{{ t('finalResultPopup.totalCatCoins') }} {{ displayCatCoins }}</span>
           </div>
         </div>
         <div class="actions">
@@ -90,15 +90,23 @@ const props = defineProps({
 // アニメーション用の猫コインの現在値
 const currentAnimatedCatCoins = ref(0);
 
+// 表示用の猫コイン（0〜999,999の範囲に制限）
+const displayCatCoins = computed(() => {
+  return Math.max(0, Math.min(currentAnimatedCatCoins.value, 999999));
+});
+
 // ポップアップが表示されたときにアニメーションを開始
 watch(() => props.show, (newValue) => {
   if (newValue && userStore.profile) {
-    // 増減前の猫コインの値を計算
-    const initialCatCoins = userStore.profile.cat_coins - gameStore.lastCoinGain;
-    currentAnimatedCatCoins.value = initialCatCoins;
+    // アニメーションの開始値（現在の猫コイン）と終了値（増減後）を計算
+    const initialCoins = userStore.profile.cat_coins;
+    const finalCoins = initialCoins + gameStore.lastCoinGain;
+
+    // アニメーションの開始値を設定
+    currentAnimatedCatCoins.value = initialCoins;
 
     // アニメーション開始
-    animateCatCoins(initialCatCoins, userStore.profile.cat_coins);
+    animateCatCoins(initialCoins, finalCoins);
   }
 }, { immediate: true }); // 初期表示時にも実行
 

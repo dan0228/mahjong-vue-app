@@ -143,6 +143,9 @@ const updateScaleFactor = () => {
 
 // --- ライフサイクルフック ---
 onMounted(() => {
+  // 最新のユーザー情報を取得
+  userStore.fetchUserProfile();
+
   // 初期スケールを設定
   updateScaleFactor();
   // ウィンドウリサイズ時にスケールを再計算

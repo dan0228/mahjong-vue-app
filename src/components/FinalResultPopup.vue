@@ -461,7 +461,7 @@ async function postToX() {
 .score {
   font-weight: bold; 
   color: #007bff; 
-  width: 90px; 
+  width: 95px; 
   text-align: right;
   flex-shrink: 0;
 }

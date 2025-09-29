@@ -22,7 +22,7 @@
             </span>
           </div>
           <div class="coin-total-display">
-            <span class="positive-gain total-cat-coins-value">{{ t('finalResultPopup.totalCatCoins') }} {{ userStore.profile.cat_coins }}</span>
+            <span class="positive-gain total-cat-coins-value">{{ t('finalResultPopup.totalCatCoins') }} {{ currentAnimatedCatCoins }}</span>
           </div>
         </div>
         <div class="actions">
@@ -41,7 +41,7 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits, computed, ref } from 'vue';
+import { defineProps, defineEmits, computed, ref, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useGameStore } from '@/stores/gameStore';
 import { useUserStore } from '@/stores/userStore'; // userStoreをインポート
@@ -84,6 +84,41 @@ const props = defineProps({
     default: () => ({ rankedPlayers: [], consecutiveWins: 0 }),
   },
 });
+
+// アニメーション用の猫コインの現在値
+const currentAnimatedCatCoins = ref(0);
+
+// ポップアップが表示されたときにアニメーションを開始
+watch(() => props.show, (newValue) => {
+  if (newValue && userStore.profile) {
+    // 増減前の猫コインの値を計算
+    const initialCatCoins = userStore.profile.cat_coins - gameStore.lastCoinGain;
+    currentAnimatedCatCoins.value = initialCatCoins;
+
+    // アニメーション開始
+    animateCatCoins(initialCatCoins, userStore.profile.cat_coins);
+  }
+}, { immediate: true }); // 初期表示時にも実行
+
+function animateCatCoins(startValue, endValue) {
+  const duration = 1000; // 1秒
+  const startTime = performance.now();
+
+  const step = (currentTime) => {
+    const elapsedTime = currentTime - startTime;
+    const progress = Math.min(elapsedTime / duration, 1); // 0から1の範囲に正規化
+
+    currentAnimatedCatCoins.value = Math.floor(startValue + (endValue - startValue) * progress);
+
+    if (progress < 1) {
+      requestAnimationFrame(step);
+    } else {
+      currentAnimatedCatCoins.value = endValue; // 最終値を保証
+    }
+  };
+
+  requestAnimationFrame(step);
+}
 
 /**
  * プレイヤーオブジェクトから翻訳された名前を取得します。

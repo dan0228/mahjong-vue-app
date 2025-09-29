@@ -5,6 +5,10 @@
       <div class="max-consecutive-wins">
         {{ $t('titleView.maxWinStreak') }} <span class="max-wins-number">{{ userStore.profile?.max_win_streak || 0 }}</span>
       </div>
+      <div class="cat-coins-display">
+        <img src="/assets/images/info/cat_coin.png" alt="Cat Coin" class="cat-coin-icon-small" />
+        <span class="cat-coins-number">{{ userStore.profile?.cat_coins || 0 }}</span>
+      </div>
       <div class="top-controls">
         <div class="audio-toggles">
           <label class="toggle-switch">
@@ -25,58 +29,77 @@
 
       <h1><span v-html="$t('leaderboardView.title')"></span></h1>
 
-      <!-- タブ切り替えUI -->
-      <div class="tab-buttons">
-        <button :class="{ active: activeTab === 'overall' }" @click="activeTab = 'overall'">{{ $t('leaderboardView.tabOverall') }}</button>
-        <button :class="{ active: activeTab === 'monthly' }" @click="activeTab = 'monthly'">{{ $t('leaderboardView.tabMonthly') }}</button>
-      </div>
-
       <!-- ランキング種類切り替えUI -->
       <div class="ranking-type-buttons">
+        <button :class="{ active: activeRankingType === 'catCoins' }" @click="activeRankingType = 'catCoins'">{{ $t('leaderboardView.typeCatCoins') }}</button>
         <button :class="{ active: activeRankingType === 'winStreak' }" @click="activeRankingType = 'winStreak'">{{ $t('leaderboardView.typeWinStreak') }}</button>
-        <button :class="{ active: activeRankingType === 'avgRank' }" @click="activeRankingType = 'avgRank'">{{ $t('leaderboardView.typeAvgRank') }}</button>
       </div>
 
       <div v-if="!isLoading" class="ranking-table-container">
         <table class="ranking-table">
           <colgroup>
             <col style="width: 15%;" />
-            <col style="width: 25%;" />
-            <col style="width: 45%;;" />
-            <col style="width: 15%;" />
+            <col style="width: 70%;" />
+            <col style="width: 15%;" v-if="activeRankingType === 'winStreak'" />
           </colgroup>
           <thead>
-            <tr>
+            <tr v-if="activeRankingType === 'winStreak'">
               <th>{{ $t('leaderboardView.tableHeaderNo') }}</th>
-              <th colspan="2">{{ $t('leaderboardView.tableHeaderUserName') }}</th>
-              <th v-if="activeRankingType === 'winStreak'">{{ $t('leaderboardView.tableHeaderWinStreak') }}</th>
-              <th v-else>{{ $t('leaderboardView.tableHeaderAvgRank') }}</th> <!-- 新しいキーを追加 -->
+              <th>{{ $t('leaderboardView.tableHeaderUserName') }}</th>
+              <th>{{ $t('leaderboardView.tableHeaderWinStreak') }}</th>
+            </tr>
+            <tr v-else>
+              <th>{{ $t('leaderboardView.tableHeaderNo') }}</th>
+              <th>{{ $t('leaderboardView.tableHeaderUserNameCatCoins') }}</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="player in displayLeaderboard" :key="player.id" :class="{ 'is-first-place': player.isFirstPlace, 'is-second-place': player.isSecondPlace, 'is-third-place': player.isThirdPlace }">
               <td>{{ player.rank }}</td>
-              <td class="user-avatar-cell">
-                <a v-if="player.url !== '#'" :href="player.url" target="_blank" rel="noopener noreferrer" class="avatar-link-wrapper">
-                  <img v-if="player.profile_image_url" :src="player.profile_image_url" alt="avatar" class="user-avatar" />
-                  <span v-else>-</span>
-                </a>
-                <template v-else>
-                  <img v-if="player.profile_image_url" :src="player.profile_image_url" alt="avatar" class="user-avatar" />
-                  <span v-else>-</span>
-                </template>
-              </td>
-              <td class="user-name-cell">
-                <div class="user-name">{{ player.name }}</div>
-              </td>
-              <td class="value-cell">
-                <template v-if="activeRankingType === 'winStreak'">{{ player.streak }}</template>
-                <template v-else>{{ player.avgRank }}</template>
-              </td>
+              <template v-if="activeRankingType === 'winStreak'">
+                <td class="user-info-cell">
+                  <div class="user-avatar-wrapper">
+                    <a v-if="player.url !== '#'" :href="player.url" target="_blank" rel="noopener noreferrer" class="avatar-link-wrapper">
+                      <img v-if="player.profile_image_url" :src="player.profile_image_url" alt="avatar" class="user-avatar" />
+                      <span v-else>-</span>
+                    </a>
+                    <template v-else>
+                      <img v-if="player.profile_image_url" :src="player.profile_image_url" alt="avatar" class="user-avatar" />
+                      <span v-else>-</span>
+                    </template>
+                  </div>
+                  <div class="user-details">
+                    <div class="user-name">{{ player.name }}</div>
+                  </div>
+                </td>
+                <td class="value-cell">
+                  {{ player.streak }}
+                </td>
+              </template>
+              <template v-else>
+                <td class="user-info-cell">
+                  <div class="user-avatar-wrapper">
+                    <a v-if="player.url !== '#'" :href="player.url" target="_blank" rel="noopener noreferrer" class="avatar-link-wrapper">
+                      <img v-if="player.profile_image_url" :src="player.profile_image_url" alt="avatar" class="user-avatar" />
+                      <span v-else>-</span>
+                    </a>
+                    <template v-else>
+                      <img v-if="player.profile_image_url" :src="player.profile_image_url" alt="avatar" class="user-avatar" />
+                      <span v-else>-</span>
+                    </template>
+                  </div>
+                  <div class="user-details">
+                    <div class="user-name">{{ player.name }}</div>
+                    <div class="user-cat-coins">
+                      <img src="/assets/images/info/cat_coin.png" alt="Cat Coin" class="cat-coin-icon" />
+                      {{ player.catCoins }}
+                    </div>
+                  </div>
+                </td>
+              </template>
             </tr>
           </tbody>
         </table>
-        
       </div>
     </div>
   </div>
@@ -105,16 +128,13 @@ const { viewportHeight } = useViewportHeight();
 const audioStore = useAudioStore();
 const userStore = useUserStore(); // userStoreを使用
 
-const leaderboard = ref([]); // 総合・最大連勝数ランキングデータ
-const monthlyLeaderboard = ref([]); // 月間・最大連勝数ランキングデータ (仮)
-const avgRankLeaderboard = ref([]); // 総合・平均順位ランキングデータ (仮)
-const monthlyAvgRankLeaderboard = ref([]); // 月間・平均順位ランキングデータ (仮)
+const leaderboard = ref([]); // 最大連勝数ランキングデータ
+const catCoinsLeaderboard = ref([]); // 猫コインランキングデータ
 
 const isLoading = ref(true);
 const error = ref(null);
 
-const activeTab = ref('overall'); // 'overall' (総合) または 'monthly' (月間)
-const activeRankingType = ref('winStreak'); // 'winStreak' (最大連勝数) または 'avgRank' (平均順位)
+const activeRankingType = ref('catCoins'); // 'catCoins' または 'winStreak'
 
 // --- 画面のスケーリング処理 ---
 const DESIGN_WIDTH = 360; // デザイン基準の幅
@@ -140,14 +160,14 @@ const updateScaleFactor = () => {
 /**
  * ランキングデータをSupabaseから非同期で取得します。
  */
-async function fetchLeaderboardData(tab, type) {
+async function fetchLeaderboardData(type) {
   isLoading.value = true;
   error.value = null;
 
   try {
     let data = [];
-    if (tab === 'overall' && type === 'winStreak') {
-      // 既存の最大連勝数取得ロジック
+    if (type === 'winStreak') {
+      // 最大連勝数取得ロジック
       const { data: fetchedData, error: supabaseError } = await supabase
         .from('users')
         .select('id, username, max_win_streak, avatar_url')
@@ -156,18 +176,27 @@ async function fetchLeaderboardData(tab, type) {
         .limit(30);
       if (supabaseError) throw supabaseError;
       data = fetchedData;
+    } else if (type === 'catCoins') { // 猫コインランキングの取得ロジックを追加
+      const { data: fetchedData, error: supabaseError } = await supabase
+        .from('users')
+        .select('id, username, cat_coins, avatar_url')
+        .not('cat_coins', 'is', null)
+        .order('cat_coins', { ascending: false })
+        .limit(30);
+      if (supabaseError) throw supabaseError;
+      data = fetchedData;
     } else {
-      // 仮のデータ（後で実装）
-      console.log(`Fetching mock data for tab: ${tab}, type: ${type}`);
+      // 仮のデータ（モックデータ）
+      console.log(`Fetching mock data for type: ${type}`);
       data = Array.from({ length: 5 }, (_, i) => ({
-        id: `mock-${tab}-${type}-${i}`,
+        id: `mock-${type}-${i}`,
         username: `MockUser${i + 1}`,
         max_win_streak: Math.floor(Math.random() * 100),
+        cat_coins: Math.floor(Math.random() * 10000),
         avatar_url: '/assets/images/info/hito_icon_1.png',
-        avg_rank: (Math.random() * 4 + 1).toFixed(2),
       }));
-      if (type === 'avgRank') {
-        data.sort((a, b) => parseFloat(a.avg_rank) - parseFloat(b.avg_rank));
+      if (type === 'catCoins') {
+        data.sort((a, b) => b.cat_coins - a.cat_coins);
       } else {
         data.sort((a, b) => b.max_win_streak - a.max_win_streak);
       }
@@ -179,58 +208,42 @@ async function fetchLeaderboardData(tab, type) {
       name: player.username,
       username: '-',
       streak: player.max_win_streak,
-      avgRank: player.avg_rank,
+      catCoins: player.cat_coins, // 猫コインを追加
       url: '#',
       profile_image_url: player.avatar_url || '/assets/images/info/hito_icon_1.png',
     }));
 
     // 適切なrefにデータを格納
-    if (tab === 'overall') {
-      if (type === 'winStreak') leaderboard.value = processedData;
-      else avgRankLeaderboard.value = processedData;
-    } else { // monthly
-      if (type === 'winStreak') monthlyLeaderboard.value = processedData;
-      else monthlyAvgRankLeaderboard.value = processedData;
-    }
+    if (type === 'winStreak') leaderboard.value = processedData;
+    else catCoinsLeaderboard.value = processedData; // catCoinsLeaderboard を使用
 
   } catch (e) {
     console.error('ランキングの取得エラー:', e.message);
     error.value = e.message;
     // エラー時は該当するrefを空にする
-    if (tab === 'overall') {
-      if (type === 'winStreak') leaderboard.value = [];
-      else avgRankLeaderboard.value = [];
-    } else {
-      if (type === 'winStreak') monthlyLeaderboard.value = [];
-      else monthlyAvgRankLeaderboard.value = [];
-    }
+    if (type === 'winStreak') leaderboard.value = [];
+    else catCoinsLeaderboard.value = [];
   } finally {
     isLoading.value = false;
   }
 }
-
 /**
  * 表示用のランキングデータを生成します。
  * 常に5行表示を保証し、データが5件未満の場合はプレースホルダーで埋めます。
  */
 const displayLeaderboard = computed(() => {
-  let currentData = [];
-  if (activeTab.value === 'overall') {
-    currentData = activeRankingType.value === 'winStreak' ? leaderboard.value : avgRankLeaderboard.value;
-  } else { // monthly
-    currentData = activeRankingType.value === 'winStreak' ? monthlyLeaderboard.value : monthlyAvgRankLeaderboard.value;
-  }
+  let currentData = activeRankingType.value === 'winStreak' ? leaderboard.value : catCoinsLeaderboard.value;
 
   const rankedData = [];
   let currentRank = 1;
-  let previousValue = -1; // 連勝数または平均順位
+  let previousValue = -1; // 連勝数または猫コイン
   let sameRankCount = 0;
 
   currentData.forEach((player) => {
-    const value = activeRankingType.value === 'winStreak' ? player.streak : parseFloat(player.avgRank);
+    const value = activeRankingType.value === 'winStreak' ? player.streak : player.catCoins;
 
-    // 平均順位は昇順、連勝数は降順でランク付け
-    const isSameRank = activeRankingType.value === 'winStreak' ? (value === previousValue) : (value === previousValue);
+    // 降順でランク付け
+    const isSameRank = (value === previousValue); // 常に降順なのでシンプルに
 
     if (!isSameRank || previousValue === -1) { // 初回または値が異なる場合
       currentRank += sameRankCount;
@@ -248,19 +261,6 @@ const displayLeaderboard = computed(() => {
     sameRankCount++;
   });
 
-  // プレースホルダーを追加
-  while (rankedData.length < 30) {
-    rankedData.push({
-      rank: rankedData.length + 1,
-      id: `placeholder-${rankedData.length}`,
-      name: '-',
-      username: '-',
-      streak: '-',
-      avgRank: '-',
-      url: '#',
-      profile_image_url: null
-    });
-  }
   return rankedData;
 });
 
@@ -269,7 +269,7 @@ onMounted(() => {
   updateScaleFactor();
   window.addEventListener('resize', updateScaleFactor);
   // 初期ロード時に総合・最大連勝数を取得
-  fetchLeaderboardData('overall', 'winStreak');
+  fetchLeaderboardData('catCoins');
   audioStore.setBgm('GB-JP-A02-2(Menu-Loop105).mp3');
 });
 
@@ -286,8 +286,8 @@ function goBack() {
 }
 
 // タブやランキングタイプが変更されたらデータを再取得
-watch([activeTab, activeRankingType], ([newTab, newType]) => {
-  fetchLeaderboardData(newTab, newType);
+watch(activeRankingType, (newType) => { // activeTab を削除
+  fetchLeaderboardData(newType);
 });
 </script>
 
@@ -322,15 +322,41 @@ watch([activeTab, activeRankingType], ([newTab, newType]) => {
 
 .max-consecutive-wins {
   position: absolute;
-  top: 12px;
-  left: 20px; /* 左端からの位置を調整 */
-  font-size: 0.7em;
+  top: 4px;
+  left: 15px; /* 左端からの位置を調整 */
+  font-size: 0.6em;
   color: #333;
   z-index: 10;
   background-color: rgba(255, 255, 255, 0.6); /* 背景色 */
   padding: 3px 14px; /* パディング */
   border-radius: 8px; /* 角丸 */
   white-space: nowrap; /* テキストが改行されないように */
+}
+
+.cat-coins-display {
+  position: absolute;
+  top: 28px; /* 最大連勝数の下に配置 */
+  left: 15px; /* 左端からの位置を調整 */
+  display: flex;
+  align-items: center;
+  font-size: 0.6em;
+  color: #333;
+  z-index: 10;
+  background-color: rgba(255, 255, 255, 0.6); /* 背景色 */
+  padding: 3px 14px; /* パディング */
+  border-radius: 8px; /* 角丸 */
+  white-space: nowrap; /* テキストが改行されないように */
+}
+
+.cat-coin-icon-small {
+  width: 16px;
+  height: 16px;
+  margin-right: 5px;
+}
+
+.cat-coins-number {
+  font-weight: bold;
+  color: #cc6633; /* #C63 */
 }
 
 .max-wins-number {
@@ -450,8 +476,8 @@ h1 {
   margin-bottom: 10px;
   margin-left: 3%;
   text-align: center;
-  width: 95%;
-  max-width: 280px;
+  width: 100%;
+  max-width: 285px;
 }
 
 .error-message {
@@ -462,12 +488,12 @@ h1 {
 
 .ranking-table-container {
   width: 100%;
-  max-width: 260px;
+  max-width: 285px;
   overflow-x: auto;
   flex-grow: 1; /* コンテナがスペースを埋めるようにする */
   overflow-y: auto; /* テーブルをスクロール可能にする */
   margin-bottom: 20px; /* 下部に余白を追加 */
-  max-height: 410px; /* ランキングテーブルの最大高さを設定 */
+  max-height: 450px; /* ランキングテーブルの最大高さを設定 */
 }
 
 .ranking-table {
@@ -501,7 +527,7 @@ h1 {
 }
 
 .ranking-table td:first-child {
-  font-size: 0.8em; /* No.の文字サイズを大きく */
+  font-size: 1.0em; /* No.の文字サイズを大きく */
   font-weight: bold;
 }
 
@@ -538,11 +564,6 @@ h1 {
   font-size: 1.4em; /* 3位の行全体を少し大きく */
 }
 
-.user-avatar-cell {
-  width: 50px;
-  padding-right: 0;
-}
-
 .user-avatar {
   width: 40px;
   height: 40px;
@@ -551,21 +572,57 @@ h1 {
   border-radius: 50%; /* 角を丸く */
 }
 
-.user-name-cell {
-  line-height: 1.2;
+
+
+.user-info-cell {
+  display: flex;
+  align-items: center;
+  gap: 0px; /* アバターと詳細情報の間のスペース */
+  text-align: left; /* 左寄せ */
+  padding-left: 5px; /* 左パディング */
 }
+
+.user-avatar-wrapper {
+  flex-shrink: 0; /* 縮小しない */
+  margin-left: 7px; /* アイコンを右にずらす */
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* 中央寄せ */
+  justify-content: center;
+  flex-grow: 1; /* 残りのスペースを埋める */
+}
+
 .user-name {
   font-weight: bold;
-  font-size: 1.2em; /* ユーザー名を調整 */
+  font-size: 1.6em; /* ユーザー名を調整 */
 }
 .user-username {
   font-size: 0.8em; /* ユーザー名を調整 */
   color: #555;
 }
 
+.user-cat-coins {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6em;
+  color: #cc6633;
+  font-weight: bold;
+  margin-top: -8px;
+  margin-right: 10px;
+}
+
+.cat-coin-icon {
+  width: 24px;
+  height:24px;
+}
+
 .value-cell {
   font-weight: bold;
-  font-size: 1.1em; /* 連勝数を調整 */
+  font-size: 1.1em !important; /* 連勝数を調整 */
   text-align: center;
 }
 
@@ -574,7 +631,7 @@ h1 {
   justify-content: center;
   margin-bottom: 10px;
   width: 100%;
-  max-width: 260px;
+  max-width: 285px;
 }
 
 .tab-buttons button, .ranking-type-buttons button {
@@ -651,7 +708,7 @@ h1 {
   margin-left: 0%;
   text-align: center;
   width: 100%;
-  max-width: 280px;
+  max-width: 285px;
 }
 
 .info-section {
@@ -660,7 +717,7 @@ h1 {
   background-color: rgba(255, 255, 255, 0.7);
   border-radius: 8px;
   width: 100%;
-  max-width: 280px;
+  max-width: 285px;
 }
 
 .info-section h4 {

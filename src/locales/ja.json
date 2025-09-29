@@ -173,7 +173,9 @@
     "title": "",
     "tableHeaderNo": "No.",
     "tableHeaderUserName": "ユーザ名",
+    "tableHeaderUserNameCatCoins": "ユーザ名/猫コイン",
     "tableHeaderWinStreak": "連勝数",
+    "tableHeaderCatCoins": "猫コイン",
     "tableHeaderAvgRank": "順位",
     "tableHeaderPost": "ポスト",
     "loading": "ランキングを読み込み中...",
@@ -181,8 +183,8 @@
     "fetchError": "ランキングの取得に失敗しました。",
     "tabOverall": "総合",
     "tabMonthly": "月間",
-    "typeWinStreak": "最大連勝数",
-    "typeAvgRank": "直近5戦平均順位"
+    "typeWinStreak": "🔥最大連勝数🔥",
+    "typeCatCoins": "　🪙猫コイン🪙　"
   },
   "yaku": {
     "riichi": { "name": "立直" },

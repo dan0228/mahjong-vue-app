@@ -173,7 +173,9 @@
     "title": "",
     "tableHeaderNo": "No.",
     "tableHeaderUserName": "User Name",
+    "tableHeaderUserNameCatCoins": "User Name/Cat Coins",
     "tableHeaderWinStreak": "Win Streak",
+    "tableHeaderCatCoins": "Cat Coins",
     "tableHeaderAvgRank": "Avg Rank (Last 5)",
     "tableHeaderPost": "Post",
     "loading": "Loading rankings...",
@@ -181,8 +183,8 @@
     "fetchError": "Failed to fetch leaderboard.",
     "tabOverall": "Overall",
     "tabMonthly": "Monthly",
-    "typeWinStreak": "Max Win Streak",
-    "typeAvgRank": "Avg Rank (Last 5)"
+    "typeWinStreak": "🔥Max Win Streak🔥",
+    "typeCatCoins": "　🪙Cat Coins🪙"
   },
   "yaku": {
     "riichi": { "name": "Riichi" },

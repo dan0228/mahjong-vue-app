@@ -11,7 +11,7 @@
             <span class="score">{{ t('finalResultPopup.score', { score: player.score }) }}</span>
           </div>
         </div>
-        <p class="consecutive-wins" v-if="gameStore.gameMode !== 'allManual' && winsToDisplay > 0">
+        <p class="consecutive-wins" v-if="gameStore.gameMode !== 'allManual' && winsToDisplay > 0 && myPlayerRank === 1">
           {{ winsMessage }}
         </p>
         <div class="coin-gain" v-if="gameStore.lastCoinGain !== 0">
@@ -64,6 +64,11 @@ useZoomLock();
 
 // ポップアップのコンテンツ部分への参照
 const popupContentRef = ref(null);
+
+const myPlayerRank = computed(() => {
+  const myResult = props.finalResultDetails.rankedPlayers.find(p => p.id === 'player1');
+  return myResult ? myResult.rank : null;
+});
 
 const props = defineProps({
   /**

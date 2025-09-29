@@ -1714,12 +1714,8 @@ ${roundEndMessage}`;
       // const updatedStreaks = await userStore.updateWinStreaks({ current: newConsecutiveWins, max: maxConsecutiveWins }, options);
 
       // 最終結果画面で表示する連勝数を設定
-      if (myPlayerRank === 1) {
-        // 最終結果画面には、計算した newConsecutiveWins を直接表示する
-        this.finalResultDetails.consecutiveWins = newConsecutiveWins;
-      } else {
-        this.finalResultDetails.consecutiveWins = this.previousConsecutiveWins; // 1位以外なら途切れる前の連勝数を表示
-      }
+      // newConsecutiveWins はゲーム後の「現在の」連勝数を示す
+      this.finalResultDetails.consecutiveWins = newConsecutiveWins;
     } else if (userStore.profile) {
       // 全操作モードの場合でも、finalResultDetails.consecutiveWinsはuserStoreから取得
       this.finalResultDetails.consecutiveWins = userStore.profile.current_win_streak || 0;

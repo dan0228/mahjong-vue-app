@@ -13,9 +13,9 @@ export const useUserStore = defineStore('user', () => {
   /**
    * Supabaseから現在のユーザーのプロフィール情報を取得します。
    */
-  async function fetchUserProfile() {
+  async function fetchUserProfile(options = { showLoading: true }) {
     try {
-      loading.value = true;
+      if (options.showLoading) loading.value = true;
       const { data: { user } } = await supabase.auth.getUser();
 
       if (user) {
@@ -59,7 +59,7 @@ export const useUserStore = defineStore('user', () => {
     } catch (error) {
       console.error('プロフィールの取得エラー:', error.message);
     } finally {
-      loading.value = false;
+      if (options.showLoading) loading.value = false;
     }
   }
 
@@ -225,6 +225,21 @@ export const useUserStore = defineStore('user', () => {
   }
 
   /**
+   * 猫コインを更新します。
+   * @param {number} amount - 更新する猫コインの量（加算または減算）
+   * @param {Object} options - { showLoading: boolean } ローディング表示を制御するオプション
+   */
+  async function updateCatCoins(amount, options = { showLoading: true }) {
+    if (!profile.value) return;
+
+    let newCatCoins = (profile.value.cat_coins || 0) + amount;
+    newCatCoins = Math.max(0, newCatCoins); // 0未満にならないように
+    newCatCoins = Math.min(999999, newCatCoins); // 999999を超えないように制限を追加
+
+    await updateUserProfile({ cat_coins: newCatCoins }, options);
+  }
+
+  /**
    * ゲーム中に達成した役をまとめてSupabaseに保存します。
    * @param {Object} options - { showLoading: boolean } ローディング表示を制御するオプション
    */
@@ -297,6 +312,7 @@ export const useUserStore = defineStore('user', () => {
     uploadAvatar, // ★追加
     updateYakuAchievement,
     updateRevealedSaying,
+    updateCatCoins,
     saveAchievedYaku,
     resetTemporaryData,
     resetWinStreak,

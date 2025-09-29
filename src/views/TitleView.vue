@@ -144,7 +144,7 @@ const updateScaleFactor = () => {
 // --- ライフサイクルフック ---
 onMounted(() => {
   // 最新のユーザー情報を取得
-  userStore.fetchUserProfile();
+  userStore.fetchUserProfile({ showLoading: false }); // タイトルに戻ってきた際はスピナー不要
 
   // 初期スケールを設定
   updateScaleFactor();

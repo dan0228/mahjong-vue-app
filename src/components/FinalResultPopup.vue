@@ -15,10 +15,15 @@
           {{ winsMessage }}
         </p>
         <div class="coin-gain" v-if="gameStore.lastCoinGain !== 0">
-          <img src="/assets/images/info/cat_coin.png" alt="Cat Coin" class="cat-coin-icon" crossorigin="anonymous">
-          <span :class="{ 'positive-gain': gameStore.lastCoinGain > 0, 'negative-gain': gameStore.lastCoinGain < 0 }">
-            {{ gameStore.lastCoinGain > 0 ? '+' : '' }}{{ gameStore.lastCoinGain }}
-          </span>
+          <div class="coin-change-display">
+            <img src="/assets/images/info/cat_coin.png" alt="Cat Coin" class="cat-coin-icon" crossorigin="anonymous">
+            <span :class="{ 'positive-gain': gameStore.lastCoinGain > 0, 'negative-gain': gameStore.lastCoinGain < 0 }">
+              {{ gameStore.lastCoinGain > 0 ? '+' : '' }}{{ gameStore.lastCoinGain }}
+            </span>
+          </div>
+          <div class="coin-total-display">
+            <span class="positive-gain total-cat-coins-value">{{ t('finalResultPopup.totalCatCoins') }} {{ userStore.profile.cat_coins }}</span>
+          </div>
         </div>
         <div class="actions">
           <button @click="startNewGame" class="action-button">
@@ -29,7 +34,6 @@
           </button>
         </div>
         <!-- X共有ボタンは削除 -->
-        <div class="share-caption">{{ t('finalResultPopup.shareCaption') }}</div>
         <div class="timestamp">{{ formattedTimestamp }}</div>
       </div>
     </div>
@@ -440,8 +444,29 @@ async function postToX() {
   font-weight: bold;
   margin-bottom: 0px;
   display: flex;
+  flex-direction: column; /* 縦並びにする */
+  align-items: center; /* 中央揃え */
+  justify-content: center;
+}
+
+.coin-change-display {
+  display: flex;
   align-items: center;
   justify-content: center;
+  margin-bottom: 5px; /* 増減値と合計値の間に少しスペース */
+}
+
+.coin-total-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.total-cat-coins-value {
+  font-size: 1.2em; /* 増減値と同じくらいか少し大きく */
+  color: #f59e0b; /* positive-gainと同じ色 */
+  margin-bottom: 20px;
+  margin-top: -20px;
 }
 
 .positive-gain {

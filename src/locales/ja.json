@@ -488,7 +488,7 @@
     "winStreak": "{count}連勝中！",
     "newGame": "新しいゲームを開始",
     "backToTitle": "タイトルに戻る",
-    "shareCaption": "スクショも一緒に投稿してランキングに参加📸",
+    "totalCatCoins": "Total",
     "tweetText": "集計用：{count}連勝\n#よんじゃん #よんじゃん連勝数\n👇以下リンクからすぐにプレイ可能👇",
     "clipboardCopySuccess": "投稿用メッセージをクリップボードにコピー！貼り付けして簡単投稿！",
     "clipboardCopyError": "キャプションのコピーに失敗しました。",

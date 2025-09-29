@@ -33,6 +33,11 @@
           </div>
         </div>
 
+        <div class="avatar-notes">
+          <p>{{ $t('avatarSection.xAccountNote') }}</p>
+          <p>{{ $t('avatarSection.rightsNote') }}</p>
+        </div>
+
         <button type="submit" class="register-button" :disabled="!isFormValid || isLoadingRegister">
           <span v-if="!isLoadingRegister">{{ $t('usernameRegistration.registerButton') }}</span>
           <LoadingIndicator v-else />
@@ -290,4 +295,16 @@ p { font-size: 0.9em; color: #666; margin-bottom: 20px; }
   text-align: center;
 }
 .x-avatar-button:hover { background-color: #333333; }
+
+.avatar-notes {
+  font-size: 0.7em;
+  color: #666;
+  margin-top: 15px;
+  text-align: left;
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+}
+.avatar-notes p {
+  margin-bottom: 5px;
+}
 </style>

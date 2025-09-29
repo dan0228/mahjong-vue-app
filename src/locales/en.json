@@ -511,11 +511,13 @@
       "fetchFailed": "Failed to fetch X avatar. Please check username or try again later.",
       "invalidContent": "Failed to fetch X avatar. No valid avatar found for the provided X account name or service has temporary issues.",
       "networkError": "Network error occurred while fetching X avatar. Please check internet connection or try again later."
-    }
+    },
+    "rightsNote": "* The avatar you register must be an image you own the rights to.",
+    "xAccountNote": "* You can easily register your icon by entering your X account."
   },
   "settingsPopup": {
-    "title": "Settings",
-    "description": "Edit your profile information.",
+    "title": "⚙️Settings⚙️",
+    "description": "👇Edit your profile information.👇",
     "saveButton": "Save",
     "cancelButton": "Cancel"
   }

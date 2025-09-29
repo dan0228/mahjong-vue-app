@@ -412,7 +412,7 @@ h1 {
   padding: 2px;
   text-align: center;
   vertical-align: middle;
-  font-size: 0.63em;
+  font-size: 0.68em;
   word-break: break-word;
   color: #5c4b4b; /* ソフトなダークブラウンのテキスト */
 }
@@ -446,21 +446,21 @@ h1 {
   font-weight: bold;
   color: #d4af37; /* ゴールド */
   border: 2px solid #d4af37;
-  font-size: 1.4em; /* 1位の行全体を大きく */
+  font-size: 1.8em; /* 1位の行全体を大きく */
 }
 .ranking-table tbody tr.is-second-place {
   background-color: #e2ffff; /* 2位: 薄いグレー */
   font-weight: bold;
   color: #a8a8a8; /* シルバー */
   border: 2px solid #a8a8a8;
-  font-size: 1.3em; /* 2位の行全体を少し大きく */
+  font-size: 1.6em; /* 2位の行全体を少し大きく */
 }
 .ranking-table tbody tr.is-third-place {
   background-color: #ffdbb7; /* 3位: 薄いブロンズ色 */
   font-weight: bold;
   color: #cd7f32; /* ブロンズ */
   border: 2px solid #cd7f32;
-  font-size: 1.2em; /* 3位の行全体を少し大きく */
+  font-size: 1.4em; /* 3位の行全体を少し大きく */
 }
 
 .user-avatar-cell {

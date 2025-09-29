@@ -33,6 +33,11 @@
           </div>
         </div>
 
+        <div class="avatar-notes">
+          <p>{{ $t('avatarSection.xAccountNote') }}</p>
+          <p>{{ $t('avatarSection.rightsNote') }}</p>
+        </div>
+
         <div class="button-group">
           <button type="button" @click="closePopup" class="cancel-button">{{ $t('settingsPopup.cancelButton') }}</button>
           <button type="submit" class="save-button" :disabled="!isFormValid">
@@ -245,6 +250,18 @@ p { font-size: 0.9em; color: #666; margin-bottom: 20px; }
   text-align: center;
 }
 .x-avatar-button:hover { background-color: #333333; }
+
+.avatar-notes {
+  font-size: 0.7em;
+  color: #666;
+  margin-top: 15px;
+  text-align: left;
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+}
+.avatar-notes p {
+  margin-bottom: 5px;
+}
 
 /* Button Group */
 .button-group { display: flex; justify-content: space-between; margin-top: 20px; }

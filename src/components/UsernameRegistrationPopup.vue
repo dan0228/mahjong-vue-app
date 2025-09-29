@@ -58,14 +58,17 @@ const userStore = useUserStore();
 
 const username = ref('');
 const selectedFile = ref(null);
-const previewUrl = computed(() => {
-  if (selectedFile.value) {
-    return URL.createObjectURL(selectedFile.value);
+const previewUrl = ref(null);
+
+// ポップアップ表示時に現在のプロフィール情報をフォームに設定
+watch(() => props.show, (newValue) => {
+  if (newValue && userStore.profile) {
+    username.value = userStore.profile.username || '';
+    previewUrl.value = userStore.profile.avatar_url || null; // 既存のアバターURLをプレビューに設定
+    selectedFile.value = null; // ファイル選択状態をリセット
+    xHandleInput.value = ''; // Xアカウント入力欄をリセット
+    xHandleError.value = ''; // エラーメッセージをリセット
   }
-  if (userStore.profile?.avatar_url) {
-    return userStore.profile.avatar_url;
-  }
-  return '/assets/images/info/hito_icon_1.png';
 });
 const fileInput = ref(null);
 const xHandleInput = ref(''); // Xアカウント入力用のrefを追加
@@ -94,6 +97,7 @@ const onFileChange = async (e) => {
     // imageUtilsのcompressImageを使用
     const compressedBlob = await compressImage(file, 200, 200); // アバターサイズに合わせて200x200を指定
     selectedFile.value = new File([compressedBlob], file.name, { type: file.type });
+    previewUrl.value = URL.createObjectURL(selectedFile.value);
   } catch (error) {
     console.error('画像の圧縮に失敗しました:', error);
     // 圧縮に失敗した場合は元のファイルを使用
@@ -146,6 +150,7 @@ const onXAvatarClick = async () => {
     const blob = await response.blob();
 
     selectedFile.value = new File([blob], `x_avatar_${cleanHandle}.png`, { type: blob.type });
+    previewUrl.value = URL.createObjectURL(selectedFile.value);
     xAvatarFetchError.value = false; // 成功時はエラー状態をリセット
 
   } catch (error) {
@@ -195,6 +200,9 @@ const register = async () => {
         .insert({ id: user.id, username: username.value });
       if (insertError) throw insertError;
 
+      // ここで userStore.profile を初期化するために fetchUserProfile を呼び出す
+      await userStore.fetchUserProfile(); // ★追加
+
       // 2. アバターが選択されていればアップロード
       if (selectedFile.value) {
         await userStore.uploadAvatar(selectedFile.value);
@@ -207,6 +215,9 @@ const register = async () => {
       localStorage.setItem('mahjongUsername', username.value);
 
       // 5. ポップアップを閉じる
+      selectedFile.value = null; // 選択されたファイルをクリア
+      xHandleInput.value = ''; // Xハンドル入力をクリア
+      previewUrl.value = userStore.profile.avatar_url; // 最新のアバターURLをプレビューに設定
       emit('close');
     }
   } catch (error) {

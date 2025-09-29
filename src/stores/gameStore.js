@@ -2312,8 +2312,8 @@ ${roundEndMessage}`;
         if (this.activeActionPlayerId === aiPlayerId) {
           const eligibility = this.playerActionEligibility[aiPlayerId];
 
-          // 1. ロン可能かチェック (90%実施)
-          if (eligibility?.canRon && Math.random() < 0.9) {
+          // 1. ロン可能かチェック (85%実施)
+          if (eligibility?.canRon && Math.random() < 0.85) {
             this.playerDeclaresCall(aiPlayerId, 'ron', null);
             return;
           }

@@ -493,7 +493,6 @@
     "usernameLabel": "Username (Required)",
     "usernamePlaceholder": "Max 3 full-width or 6 half-width chars",
     "avatarLabel": "Avatar (Optional)",
-    "uploadButton": "Select Image",
     "registerButton": "Register",
     "errors": {
       "usernameRequired": "Username is required.",
@@ -502,9 +501,22 @@
       "usernameProfane": "This username contains inappropriate words."
     }
   },
+  "avatarSection": {
+    "uploadImageButton": "Upload Image",
+    "getXIconButton": "Get Icon from X",
+    "xAccountPlaceholder": "{'@'}X Account Name",
+    "xAccountValidation": {
+      "empty": "Please enter X account name.",
+      "invalidChars": "X account name can only contain alphanumeric characters and underscores.",
+      "fetchFailed": "Failed to fetch X avatar. Please check username or try again later.",
+      "invalidContent": "Failed to fetch X avatar. No valid avatar found for the provided X account name or service has temporary issues.",
+      "networkError": "Network error occurred while fetching X avatar. Please check internet connection or try again later."
+    }
+  },
   "settingsPopup": {
     "title": "Settings",
     "description": "Edit your profile information.",
-    "saveButton": "Save"
+    "saveButton": "Save",
+    "cancelButton": "Cancel"
   }
 }

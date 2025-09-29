@@ -170,14 +170,19 @@
     "facedownTile": "裏向きの牌"
   },
   "leaderboardView": {
-    "title": "週間ランキング",
+    "title": "",
     "tableHeaderNo": "No.",
     "tableHeaderUserName": "ユーザ名",
     "tableHeaderWinStreak": "連勝数",
+    "tableHeaderAvgRank": "順位",
     "tableHeaderPost": "ポスト",
     "loading": "ランキングを読み込み中...",
     "viewPost": "URL",
-    "fetchError": "ランキングの取得に失敗しました。"
+    "fetchError": "ランキングの取得に失敗しました。",
+    "tabOverall": "総合",
+    "tabMonthly": "月間",
+    "typeWinStreak": "最大連勝数",
+    "typeAvgRank": "直近5戦平均順位"
   },
   "yaku": {
     "riichi": { "name": "立直" },
@@ -215,16 +220,18 @@
     "iiankanTanki": { "name": "一暗槓単騎" }
   },
   "shrineView": {
-    "catCoins": "🪙猫コイン:",
+    "catCoins": "🪙猫コイン",
     "bgm": "BGM",
     "sfx": "効果音",
     "backToTitle": "トップに戻る",
     "omikujiButton": {
-      "line1": "おみくじ",
-      "line2": "１回100🪙猫コイン"
+      "line1": "🔔おみくじ🔔",
+      "line2": "１回100🪙猫コイン",
+      "freeDrawText": "無料回数残り: {count}回/日"
     },
     "sayingNo": "No.{n}",
     "unknownSaying": "？？？",
+    "freeOmikujiCount": "無料回数残り: {count}回",
     "fortunes": {
       "greatBlessing": "大吉😸",
       "blessing": "吉🐈",

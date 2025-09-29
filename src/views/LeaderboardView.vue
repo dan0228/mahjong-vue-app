@@ -25,19 +25,32 @@
 
       <h1><span v-html="$t('leaderboardView.title')"></span></h1>
 
+      <!-- タブ切り替えUI -->
+      <div class="tab-buttons">
+        <button :class="{ active: activeTab === 'overall' }" @click="activeTab = 'overall'">{{ $t('leaderboardView.tabOverall') }}</button>
+        <button :class="{ active: activeTab === 'monthly' }" @click="activeTab = 'monthly'">{{ $t('leaderboardView.tabMonthly') }}</button>
+      </div>
+
+      <!-- ランキング種類切り替えUI -->
+      <div class="ranking-type-buttons">
+        <button :class="{ active: activeRankingType === 'winStreak' }" @click="activeRankingType = 'winStreak'">{{ $t('leaderboardView.typeWinStreak') }}</button>
+        <button :class="{ active: activeRankingType === 'avgRank' }" @click="activeRankingType = 'avgRank'">{{ $t('leaderboardView.typeAvgRank') }}</button>
+      </div>
+
       <div v-if="!isLoading" class="ranking-table-container">
         <table class="ranking-table">
           <colgroup>
             <col style="width: 15%;" />
             <col style="width: 25%;" />
-            <col style="width: 45%;" />
+            <col style="width: 45%;;" />
             <col style="width: 15%;" />
           </colgroup>
           <thead>
             <tr>
               <th>{{ $t('leaderboardView.tableHeaderNo') }}</th>
               <th colspan="2">{{ $t('leaderboardView.tableHeaderUserName') }}</th>
-              <th>{{ $t('leaderboardView.tableHeaderWinStreak') }}</th>
+              <th v-if="activeRankingType === 'winStreak'">{{ $t('leaderboardView.tableHeaderWinStreak') }}</th>
+              <th v-else>{{ $t('leaderboardView.tableHeaderAvgRank') }}</th> <!-- 新しいキーを追加 -->
             </tr>
           </thead>
           <tbody>
@@ -55,9 +68,11 @@
               </td>
               <td class="user-name-cell">
                 <div class="user-name">{{ player.name }}</div>
-                <div class="user-username">{{ player.username !== '-' ? '@' + player.username : '-' }}</div>
               </td>
-              <td class="streak-cell">{{ player.streak }}</td>
+              <td class="value-cell">
+                <template v-if="activeRankingType === 'winStreak'">{{ player.streak }}</template>
+                <template v-else>{{ player.avgRank }}</template>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -74,7 +89,7 @@
  * 常に5行表示を維持し、データがない場合や取得に失敗した場合はプレースホルダーを表示します。
  * 開発環境ではモックデータを使用します。
  */
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useViewportHeight } from '@/composables/useViewportHeight';
@@ -90,9 +105,16 @@ const { viewportHeight } = useViewportHeight();
 const audioStore = useAudioStore();
 const userStore = useUserStore(); // userStoreを使用
 
-const leaderboard = ref([]); // Supabaseから取得したランキングデータ
-const isLoading = ref(true); // ローディング状態フラグ
-const error = ref(null); // エラーメッセージ（デバッグ用）
+const leaderboard = ref([]); // 総合・最大連勝数ランキングデータ
+const monthlyLeaderboard = ref([]); // 月間・最大連勝数ランキングデータ (仮)
+const avgRankLeaderboard = ref([]); // 総合・平均順位ランキングデータ (仮)
+const monthlyAvgRankLeaderboard = ref([]); // 月間・平均順位ランキングデータ (仮)
+
+const isLoading = ref(true);
+const error = ref(null);
+
+const activeTab = ref('overall'); // 'overall' (総合) または 'monthly' (月間)
+const activeRankingType = ref('winStreak'); // 'winStreak' (最大連勝数) または 'avgRank' (平均順位)
 
 // --- 画面のスケーリング処理 ---
 const DESIGN_WIDTH = 360; // デザイン基準の幅
@@ -115,38 +137,73 @@ const updateScaleFactor = () => {
   scaleFactor.value = Math.min(scaleX, scaleY);
 };
 
-// 開発環境用のモックデータは削除
-
 /**
  * ランキングデータをSupabaseから非同期で取得します。
  */
-async function fetchLeaderboard() {
+async function fetchLeaderboardData(tab, type) {
   isLoading.value = true;
   error.value = null;
 
   try {
-    const { data, error: supabaseError } = await supabase
-      .from('users')
-      .select('id, username, max_win_streak, avatar_url') // x_accountの代わりにavatar_urlを取得
-      .not('max_win_streak', 'is', null) // max_win_streakがnullでないユーザーのみ
-      .order('max_win_streak', { ascending: false }) // 最大連勝数で降順ソート
-      .limit(30); // 上位30件
+    let data = [];
+    if (tab === 'overall' && type === 'winStreak') {
+      // 既存の最大連勝数取得ロジック
+      const { data: fetchedData, error: supabaseError } = await supabase
+        .from('users')
+        .select('id, username, max_win_streak, avatar_url')
+        .not('max_win_streak', 'is', null)
+        .order('max_win_streak', { ascending: false })
+        .limit(30);
+      if (supabaseError) throw supabaseError;
+      data = fetchedData;
+    } else {
+      // 仮のデータ（後で実装）
+      console.log(`Fetching mock data for tab: ${tab}, type: ${type}`);
+      data = Array.from({ length: 5 }, (_, i) => ({
+        id: `mock-${tab}-${type}-${i}`,
+        username: `MockUser${i + 1}`,
+        max_win_streak: Math.floor(Math.random() * 100),
+        avatar_url: '/assets/images/info/hito_icon_1.png',
+        avg_rank: (Math.random() * 4 + 1).toFixed(2),
+      }));
+      if (type === 'avgRank') {
+        data.sort((a, b) => parseFloat(a.avg_rank) - parseFloat(b.avg_rank));
+      } else {
+        data.sort((a, b) => b.max_win_streak - a.max_win_streak);
+      }
+    }
 
-    if (supabaseError) throw supabaseError;
-
-    leaderboard.value = data.map(player => ({
+    // データを整形
+    const processedData = data.map(player => ({
       id: player.id,
       name: player.username,
-      username: '-', // Xアカウント名は表示しない
+      username: '-',
       streak: player.max_win_streak,
-      url: '#', // Xアカウントへのリンクは不要に
-      profile_image_url: player.avatar_url || '/assets/images/info/hito_icon_1.png', // avatar_urlを使用
+      avgRank: player.avg_rank,
+      url: '#',
+      profile_image_url: player.avatar_url || '/assets/images/info/hito_icon_1.png',
     }));
+
+    // 適切なrefにデータを格納
+    if (tab === 'overall') {
+      if (type === 'winStreak') leaderboard.value = processedData;
+      else avgRankLeaderboard.value = processedData;
+    } else { // monthly
+      if (type === 'winStreak') monthlyLeaderboard.value = processedData;
+      else monthlyAvgRankLeaderboard.value = processedData;
+    }
 
   } catch (e) {
     console.error('ランキングの取得エラー:', e.message);
-    leaderboard.value = [];
     error.value = e.message;
+    // エラー時は該当するrefを空にする
+    if (tab === 'overall') {
+      if (type === 'winStreak') leaderboard.value = [];
+      else avgRankLeaderboard.value = [];
+    } else {
+      if (type === 'winStreak') monthlyLeaderboard.value = [];
+      else monthlyAvgRankLeaderboard.value = [];
+    }
   } finally {
     isLoading.value = false;
   }
@@ -157,38 +214,51 @@ async function fetchLeaderboard() {
  * 常に5行表示を保証し、データが5件未満の場合はプレースホルダーで埋めます。
  */
 const displayLeaderboard = computed(() => {
+  let currentData = [];
+  if (activeTab.value === 'overall') {
+    currentData = activeRankingType.value === 'winStreak' ? leaderboard.value : avgRankLeaderboard.value;
+  } else { // monthly
+    currentData = activeRankingType.value === 'winStreak' ? monthlyLeaderboard.value : monthlyAvgRankLeaderboard.value;
+  }
+
   const rankedData = [];
   let currentRank = 1;
-  let previousStreak = -1; // 連勝数は0以上なので、初期値は-1
+  let previousValue = -1; // 連勝数または平均順位
   let sameRankCount = 0;
 
-  leaderboard.value.forEach((player) => {
-    if (player.streak !== previousStreak) {
+  currentData.forEach((player) => {
+    const value = activeRankingType.value === 'winStreak' ? player.streak : parseFloat(player.avgRank);
+
+    // 平均順位は昇順、連勝数は降順でランク付け
+    const isSameRank = activeRankingType.value === 'winStreak' ? (value === previousValue) : (value === previousValue);
+
+    if (!isSameRank || previousValue === -1) { // 初回または値が異なる場合
       currentRank += sameRankCount;
       sameRankCount = 0;
     }
     rankedData.push({
       ...player,
       rank: currentRank,
-      isTopRank: currentRank <= 3, // 1位から3位にフラグ
+      isTopRank: currentRank <= 3,
       isFirstPlace: currentRank === 1,
       isSecondPlace: currentRank === 2,
       isThirdPlace: currentRank === 3,
     });
-    previousStreak = player.streak;
+    previousValue = value;
     sameRankCount++;
   });
 
   // プレースホルダーを追加
   while (rankedData.length < 30) {
     rankedData.push({
-      rank: rankedData.length + 1, // プレースホルダーのランクは連番
+      rank: rankedData.length + 1,
       id: `placeholder-${rankedData.length}`,
       name: '-',
       username: '-',
       streak: '-',
+      avgRank: '-',
       url: '#',
-      profile_image_url: null // プレースホルダーのアバターはnull
+      profile_image_url: null
     });
   }
   return rankedData;
@@ -198,14 +268,14 @@ const displayLeaderboard = computed(() => {
 onMounted(() => {
   updateScaleFactor();
   window.addEventListener('resize', updateScaleFactor);
-  fetchLeaderboard();
-  audioStore.setBgm('GB-JP-A02-2(Menu-Loop105).mp3');   
-  // userStoreから猫コインの枚数を読み込む (userStoreは自動でprofileをfetchするため、ここでは不要)
+  // 初期ロード時に総合・最大連勝数を取得
+  fetchLeaderboardData('overall', 'winStreak');
+  audioStore.setBgm('GB-JP-A02-2(Menu-Loop105).mp3');
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', updateScaleFactor);
-  audioStore.setBgm(null); // 画面を離れる際にBGMを停止
+  audioStore.setBgm(null);
 });
 
 /**
@@ -214,6 +284,11 @@ onBeforeUnmount(() => {
 function goBack() {
   router.push('/');
 }
+
+// タブやランキングタイプが変更されたらデータを再取得
+watch([activeTab, activeRankingType], ([newTab, newType]) => {
+  fetchLeaderboardData(newTab, newType);
+});
 </script>
 
 <style scoped>
@@ -392,7 +467,7 @@ h1 {
   flex-grow: 1; /* コンテナがスペースを埋めるようにする */
   overflow-y: auto; /* テーブルをスクロール可能にする */
   margin-bottom: 20px; /* 下部に余白を追加 */
-  max-height: 450px; /* ランキングテーブルの最大高さを設定 */
+  max-height: 410px; /* ランキングテーブルの最大高さを設定 */
 }
 
 .ranking-table {
@@ -488,10 +563,55 @@ h1 {
   color: #555;
 }
 
-.streak-cell {
+.value-cell {
   font-weight: bold;
   font-size: 1.1em; /* 連勝数を調整 */
   text-align: center;
+}
+
+.tab-buttons, .ranking-type-buttons {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+  width: 100%;
+  max-width: 260px;
+}
+
+.tab-buttons button, .ranking-type-buttons button {
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 0.8em;
+  color: #333;
+  flex-grow: 1;
+  border-radius: 0;
+}
+
+.tab-buttons button:first-child {
+  border-top-left-radius: 5px;
+  border-bottom-left-radius: 5px;
+}
+
+.tab-buttons button:last-child {
+  border-top-right-radius: 5px;
+  border-bottom-right-radius: 5px;
+}
+
+.ranking-type-buttons button:first-child {
+  border-top-left-radius: 5px;
+  border-bottom-left-radius: 5px;
+}
+
+.ranking-type-buttons button:last-child {
+  border-top-right-radius: 5px;
+  border-bottom-right-radius: 5px;
+}
+
+.tab-buttons button.active, .ranking-type-buttons button.active {
+  background-color: #ffbda7; /* アクティブなタブ/ボタンの色 */
+  color: #5c4b4b;
+  font-weight: bold;
 }
 
 .ranking-table a {

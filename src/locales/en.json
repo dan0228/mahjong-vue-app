@@ -170,14 +170,19 @@
     "facedownTile": "Facedown tile"
   },
   "leaderboardView": {
-    "title": "Weekly Leaderboard",
+    "title": "",
     "tableHeaderNo": "No.",
     "tableHeaderUserName": "User Name",
     "tableHeaderWinStreak": "Win Streak",
+    "tableHeaderAvgRank": "Avg Rank (Last 5)",
     "tableHeaderPost": "Post",
     "loading": "Loading rankings...",
     "viewPost": "URL",
-    "fetchError": "Failed to fetch leaderboard."
+    "fetchError": "Failed to fetch leaderboard.",
+    "tabOverall": "Overall",
+    "tabMonthly": "Monthly",
+    "typeWinStreak": "Max Win Streak",
+    "typeAvgRank": "Avg Rank (Last 5)"
   },
   "yaku": {
     "riichi": { "name": "Riichi" },
@@ -215,16 +220,18 @@
     "iiankanTanki": { "name": "One Concealed Quads, Single Wait" }
   },
   "shrineView": {
-    "catCoins": "🪙Cat Coins:",
+    "catCoins": "🪙Cat Coins",
     "bgm": "BGM",
     "sfx": "SFX",
     "backToTitle": "Back to Title",
     "omikujiButton": {
-      "line1": "Fortune Slip",
-      "line2": "100 🪙/draw"
+      "line1": "🔔Fortune Slip🔔",
+      "line2": "100 🪙/draw",
+      "freeDrawText": "Free draws remaining: {count}/day"
     },
     "sayingNo": "No.{n}",
     "unknownSaying": "???",
+    "freeOmikujiCount": "Free draws remaining: {count}",
     "fortunes": {
       "greatBlessing": "Excellent Luck 😸",
       "blessing": "Good Luck 🐈",

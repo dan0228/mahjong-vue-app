@@ -202,7 +202,7 @@ const register = async () => {
       // 1. ユーザー情報を挿入
       const { error: insertError } = await supabase
         .from('users')
-        .insert({ id: user.id, username: username.value });
+        .insert({ id: user.id, username: username.value, cat_coins: 2000 }); // cat_coinsの初期値を追加
       if (insertError) throw insertError;
 
       // ここで userStore.profile を初期化するために fetchUserProfile を呼び出す

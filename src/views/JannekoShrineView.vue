@@ -23,7 +23,15 @@
       </div>
 
       <button @click="drawOmikuji" class="omikuji-button">
-        {{ $t('shrineView.omikujiButton.line1') }}<br /><span class="coin-text">{{ $t('shrineView.omikujiButton.line2') }}</span>
+        {{ $t('shrineView.omikujiButton.line1') }}<br />
+        <span class="coin-text">
+          <template v-if="userStore.profile?.daily_free_omikuji_count > 0">
+            {{ $t('shrineView.omikujiButton.freeDrawText', { count: userStore.profile.daily_free_omikuji_count }) }}
+          </template>
+          <template v-else>
+            {{ $t('shrineView.omikujiButton.line2') }}
+          </template>
+        </span>
       </button>
       <div class="sayings-container">
         <table class="sayings-table">
@@ -110,15 +118,30 @@ const fortunes = computed(() => tm('shrineView.fortunes'));
  * コインを消費し、運勢と名言をランダムに決定してポップアップで表示します。
  */
 const drawOmikuji = async () => {
-  // コインが足りない場合
-  const cost = 100;
-  if (!userStore.profile || userStore.profile.cat_coins < cost) {
-    randomFortune.value = '';
-    randomSaying.value = t('shrineView.errors.notEnoughCoins');
-    randomSayingId.value = null;
-    isNewSaying.value = false;
-    showPopup.value = true;
-    return;
+  // userStore.profile がまだ読み込まれていない場合は待つ
+  if (!userStore.profile) {
+    await userStore.fetchUserProfile();
+    if (!userStore.profile) { // 再度チェック
+      console.error('ユーザープロファイルが読み込めませんでした。');
+      return;
+    }
+  }
+
+  let isFreeDraw = false;
+  let cost = 100; // デフォルトのコインコスト
+
+  if (userStore.profile.daily_free_omikuji_count > 0) {
+    isFreeDraw = true;
+  } else {
+    // 無料回数がなく、コインも足りない場合
+    if (userStore.profile.cat_coins < cost) {
+      randomFortune.value = '';
+      randomSaying.value = t('shrineView.errors.notEnoughCoins');
+      randomSayingId.value = null;
+      isNewSaying.value = false;
+      showPopup.value = true;
+      return;
+    }
   }
 
   // BGMを一時停止し、効果音を再生
@@ -130,14 +153,23 @@ const drawOmikuji = async () => {
   isFading.value = true;
 
   try {
-    // コイン消費処理をバックグラウンドで開始（スピナーは表示しない）
-    const coinPromise = userStore.updateCatCoins(-cost, { showLoading: false });
+    let updatePromise;
+    if (isFreeDraw) {
+      // 無料回数を消費
+      updatePromise = userStore.updateOmikujiDrawInfo({
+        daily_free_omikuji_count: userStore.profile.daily_free_omikuji_count - 1,
+        last_omikuji_draw_date: new Date().toISOString().slice(0, 10) // 日付を更新
+      }, { showLoading: false });
+    } else {
+      // コインを消費
+      updatePromise = userStore.updateCatCoins(-cost, { showLoading: false });
+    }
 
     // 1.5秒待つ（フェードアウトの時間）
     await new Promise(resolve => setTimeout(resolve, 1500));
 
-    // 1.5秒待った後、コイン消費処理が完了していることを確認
-    await coinPromise;
+    // 更新処理が完了していることを確認
+    await updatePromise;
 
     // 結果を計算
     const fortuneValues = Object.values(fortunes.value);
@@ -332,8 +364,8 @@ onBeforeUnmount(() => {
 .cat-coins {
   position: absolute;
   top: 14px;
-  left: 15px;
-  font-size: 0.8em;
+  left: 5px;
+  font-size: 0.7em; /* ここを修正 */
   color: #333;
   z-index: 10;
   background-color: rgba(255, 255, 255, 0.6);

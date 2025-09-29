@@ -34,6 +34,18 @@ export const useUserStore = defineStore('user', () => {
           // 初回取得時にlocalStorageからデータ移行を試みる
           await migrateDataFromLocalStorage(data);
 
+          // 毎日無料おみくじ回数をリセットするロジック
+          const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD形式
+          if (profile.value.last_omikuji_draw_date !== today) {
+            profile.value.daily_free_omikuji_count = 3; // 3回にリセット
+            profile.value.last_omikuji_draw_date = today; // 日付を更新
+            // Supabaseにも更新をかける (showLoading: false でスピナーなし)
+            await updateUserProfile({
+              daily_free_omikuji_count: 3,
+              last_omikuji_draw_date: today
+            }, { showLoading: false });
+          }
+
           // アプリ再起動時にゲームが進行中だった場合、連勝数をリセットし、ゲーム進行中フラグを解除
           if (profile.value.is_game_in_progress) {
             await resetWinStreak(); // 連勝数をリセット
@@ -242,7 +254,10 @@ export const useUserStore = defineStore('user', () => {
   async function updateCatCoins(amount, options = { showLoading: true }) {
     if (!profile.value) return;
 
-    const newCatCoins = Math.max(0, (profile.value.cat_coins || 0) + amount); // 0未満にならないように
+    let newCatCoins = (profile.value.cat_coins || 0) + amount;
+    newCatCoins = Math.max(0, newCatCoins); // 0未満にならないように
+    newCatCoins = Math.min(999999, newCatCoins); // 999999を超えないように制限を追加
+
     await updateUserProfile({ cat_coins: newCatCoins }, options);
   }
 
@@ -306,6 +321,11 @@ export const useUserStore = defineStore('user', () => {
     await updateUserProfile({ is_game_in_progress: status }, { showLoading: false }); // スピナーなしで更新
   }
 
+  async function updateOmikujiDrawInfo(updates, options = { showLoading: true }) {
+    if (!profile.value) return;
+    await updateUserProfile(updates, options);
+  }
+
   return {
     profile,
     loading,
@@ -321,5 +341,6 @@ export const useUserStore = defineStore('user', () => {
     resetTemporaryData,
     resetWinStreak,
     setGameInProgress,
+    updateOmikujiDrawInfo,
   };
 });

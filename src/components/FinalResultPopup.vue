@@ -85,6 +85,8 @@ const props = defineProps({
   },
 });
 
+
+
 // アニメーション用の猫コインの現在値
 const currentAnimatedCatCoins = ref(0);
 
@@ -234,6 +236,7 @@ async function postToX() {
   let newStyleElement = null;
   
   // --- クリーンアップ用変数の準備 ---
+
   const nodeToCapture = popupContentRef.value;
   let tempNode = null;
   const originalChildren = [];

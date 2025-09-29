@@ -4,6 +4,7 @@ import { useUserStore } from './userStore'; // ★追加
 // src/stores/gameStore.js
 import { defineStore } from 'pinia';
 import * as mahjongLogic from '@/services/mahjongLogic';
+import { supabase } from '@/supabaseClient'; // supabaseをインポート
 
 // AIプレイヤーの候補リスト
 const allAiPlayers = [
@@ -1739,7 +1740,7 @@ ${roundEndMessage}`;
       await userStore.saveAchievedYaku(options);
     }
 
-    // 猫コインを更新
+    // 猫コインを更新 & ゲーム結果を記録
     const player1 = this.players.find(p => p.id === 'player1');
     if (player1 && userStore.profile) {
       let gain = 0; // 獲得コイン数
@@ -1758,11 +1759,23 @@ ${roundEndMessage}`;
       }
       this.lastCoinGain = gain; // 直近のコイン獲得数を記録
       await userStore.updateCatCoins(gain, options); // userStore経由で猫コインを更新
-    }
 
-    // ゲーム結果を記録 (平均順位計算用)
-    if (myPlayerRank && userStore.profile) {
-      await userStore.recordGameResult(myPlayerRank, options);
+      // users.recent_games の更新処理を削除
+
+      // matchesテーブルにも記録
+      const matchData = {
+        user_id: userStore.profile.id,
+        rank: myPlayerRank,
+        is_win: myPlayerRank === 1,
+        coin_change: gain,
+      };
+      try {
+        const { error } = await supabase.from('matches').insert([matchData]);
+        if (error) throw error;
+        console.log('対局結果をmatchesテーブルに保存しました。');
+      } catch (error) {
+        console.error('matchesテーブルへの対局結果の保存中にエラーが発生しました:', error.message);
+      }
     }
 
     // ゲーム終了フラグをリセット

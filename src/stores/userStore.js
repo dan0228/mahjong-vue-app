@@ -196,21 +196,7 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
-  /**
-   * ゲーム終了時の結果を記録します。
-   * @param {number} rank - ゲームの最終順位
-   * @param {Object} options - { showLoading: boolean } ローディング表示を制御するオプション
-   */
-  async function recordGameResult(rank, options = { showLoading: true }) {
-    if (!profile.value) return;
-
-    const recentGames = profile.value.recent_games || [];
-    recentGames.push(rank);
-    if (recentGames.length > 10) {
-      recentGames.shift(); // 古いものから削除して10件に保つ
-    }
-    await updateUserProfile({ recent_games: recentGames }, options);
-  }
+  
 
   /**
    * 連勝数を更新します。
@@ -339,7 +325,6 @@ export const useUserStore = defineStore('user', () => {
     fetchUserProfile,
     updateUserProfile,
     uploadAvatar, // ★追加
-    recordGameResult,
     updateWinStreaks,
     updateYakuAchievement,
     updateRevealedSaying,

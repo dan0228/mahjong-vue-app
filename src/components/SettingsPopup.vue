@@ -45,6 +45,14 @@
           </button>
         </div>
       </form>
+
+      <!-- アカウント削除リンク -->
+      <div class="delete-account-link-container">
+        <button @click="handleDeleteAccount" class="delete-button">
+          {{ $t('settingsPopup.deleteAccountSection.button') }}
+        </button>
+      </div>
+
     </div>
   </div>
 </template>
@@ -200,6 +208,12 @@ const saveProfile = async () => {
 const closePopup = () => {
   emit('close');
 };
+
+const handleDeleteAccount = () => {
+  if (window.confirm(t('settingsPopup.deleteAccountSection.confirm'))) {
+    userStore.deleteUserData();
+  }
+};
 </script>
 
 <style scoped>
@@ -271,4 +285,22 @@ p { font-size: 0.9em; color: #666; margin-bottom: 20px; }
 .save-button:disabled { background-color: #ccc; cursor: not-allowed; }
 .cancel-button { background-color: #f44336; color: white; }
 .cancel-button:hover { background-color: #da190b; }
+
+/* アカウント削除リンク */
+.delete-account-link-container {
+  text-align: right;
+  margin-top: 15px;
+}
+.delete-button {
+  background: none;
+  border: none;
+  color: #e53935;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.9em;
+  padding: 0;
+}
+.delete-button:hover {
+  color: #c62828;
+}
 </style>

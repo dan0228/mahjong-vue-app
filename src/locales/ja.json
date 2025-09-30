@@ -528,7 +528,11 @@
     "title": "⚙️設定⚙️",
     "description": "👇プロフィール情報を編集します👇",
     "saveButton": "保存",
-    "cancelButton": "キャンセル"
+    "cancelButton": "キャンセル",
+    "deleteAccountSection": {
+      "button": "登録情報削除",
+      "confirm": "本当にアカウントを削除しますか？対戦履歴や実績など、すべてのデータが完全に削除されます。この操作は元に戻せません。"
+    }
   }
 }
 

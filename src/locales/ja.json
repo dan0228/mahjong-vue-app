@@ -497,7 +497,7 @@
     "pastePromptPC": "クリップボードにスクショをコピー済み！貼り付けてください！"
   },
   "usernameRegistration": {
-    "title": "ユーザー登録🐈‍⬛",
+    "title": "プレイヤー情報入力🐈‍⬛",
     "description": "👇ゲーム内で使用する名前を登録してください👇",
     "usernameLabel": "ユーザー名 (必須)",
     "usernamePlaceholder": "全角3文字、半角6文字以内",

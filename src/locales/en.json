@@ -497,7 +497,7 @@
     "pastePromptPC": "Screenshot copied to clipboard! Please paste it!"
   },
   "usernameRegistration": {
-    "title": "User Registration🐈‍⬛",
+    "title": "Player Information🐈‍⬛",
     "description": "👇Please register a name to be used in the game.👇",
     "usernameLabel": "Username (Required)",
     "usernamePlaceholder": "Max 3 full-width or 6 half-width chars",

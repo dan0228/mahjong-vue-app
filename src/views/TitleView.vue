@@ -82,7 +82,7 @@
       <div class="x-account">
         <a href="https://x.com/danAllGreen" target="_blank" rel="noopener noreferrer">{{ $t('titleView.officialX') }}</a>
       </div>
-      <div class="version-info">v1.5.0 | 2025.09.29</div>
+      <div class="version-info">v1.5.1 | 2025.10.30</div>
     </div>
   </div>
 </template>

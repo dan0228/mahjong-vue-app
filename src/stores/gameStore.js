@@ -1740,16 +1740,16 @@ ${roundEndMessage}`;
     if (player1 && userStore.profile) {
       let gain = 0; // 獲得コイン数
       if (myPlayerRank === 1) {
-        gain = Math.floor(player1.score / 500) + 200; // 1位はスコアに応じたコイン + 200コインボーナス
+        gain = Math.floor(player1.score / 300) + 300; // 1位はスコアに応じたコイン + 300コインボーナス
       } else if (myPlayerRank === 2) {
-        gain = Math.floor(player1.score / 500); // 2位はスコアに応じたコイン
+        gain = Math.floor(player1.score / 300) + 100; // 2位はスコアに応じたコイン + 100コインボーナス
       } else if (myPlayerRank === 3) {
-        gain = -Math.floor(player1.score / 400); // 3位はスコアに応じたマイナス
+        gain = -Math.floor((50000 - player1.score) / 200); // 3位はスコアに応じたマイナス
       } else if (myPlayerRank === 4) {
         if (player1.score < 0) {
-          gain = -300; // 4位で持ち点マイナスなら固定で-300
+          gain = -400; // 4位で持ち点マイナスなら固定で-400
         } else {
-          gain = -Math.floor(player1.score / 300) - 100; // 4位で持ち点プラスでもマイナスボーナス
+          gain = -Math.floor((50000 - player1.score) / 200) - 100; // 4位で持ち点プラスでもマイナスボーナス
         }
       }
       this.lastCoinGain = gain; // 直近のコイン獲得数を記録

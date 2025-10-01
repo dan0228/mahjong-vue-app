@@ -62,8 +62,8 @@
         </div>
 
         <div class="button-group">
-          <button type="button" @click="closePopup" class="cancel-button" :disabled="isEditingEmail" :class="{'disabled-button-style': isEditingEmail}">{{ $t('settingsPopup.cancelButton') }}</button>
-          <button type="submit" class="save-button" :disabled="!isFormValid || isEditingEmail">
+          <button type="button" @click="closePopup" class="cancel-button" :disabled="isEditingEmail && !emailUpdateMessage" :class="{'disabled-button-style': isEditingEmail && !emailUpdateMessage}">{{ $t('settingsPopup.cancelButton') }}</button>
+          <button type="submit" class="save-button" :disabled="!isFormValid || (isEditingEmail && !emailUpdateMessage)">
             {{ $t('settingsPopup.saveButton') }}
           </button>
         </div>

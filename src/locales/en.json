@@ -576,6 +576,7 @@
     "emailLinkInvalidOrExpired": "Email link is invalid or has expired. Please request a new one.",
     "userNotFound": "User not found. Please check the email address.",
     "invalidLoginCredentials": "Invalid login credentials. Please check your email and OTP.",
+    "emailNotRegistered": "This email address is not registered.",
     "unknown": "An unexpected error occurred. Please try again."
   }
 }

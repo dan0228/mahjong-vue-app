@@ -75,9 +75,22 @@ export const useUserStore = defineStore('user', () => {
             }, { showLoading: false });
           }
 
-          // アプリ再起動時にゲームが進行中だった場合、連勝数をリセットし、ゲーム進行中フラグを解除
+          // アプリ再起動時にゲームが進行中だった場合、連勝数をリセットし、猫コインを減らす
           if (profile.value.is_game_in_progress) {
-            await resetWinStreak(); // 連勝数をリセット
+            // public.matchesテーブルにペナルティレコードを挿入
+            const { error: insertError } = await supabase
+              .from('matches')
+              .insert({
+                user_id: user.id,
+                rank: 4, // 最下位として扱う
+                is_win: false,
+                coin_change: -390, // ペナルティとして-390コイン
+                is_interrupted: 1 // 中断レコードとしてマーク
+              });
+            if (insertError) {
+              console.error('ペナルティレコードの挿入エラー:', insertError);
+            }
+            // is_game_in_progress フラグは update_user_metrics 関数によって FALSE に設定されるため、ここでは不要
             await setGameInProgress(false); // ゲーム進行中フラグを解除
           }
         }
@@ -310,16 +323,6 @@ export const useUserStore = defineStore('user', () => {
   }
 
   /**
-   * 現在の連勝数を0にリセットし、Supabaseに保存します。
-   */
-  async function resetWinStreak() {
-    if (!profile.value) return;
-    if (profile.value.current_win_streak > 0) {
-      await updateUserProfile({ current_win_streak: 0 }, { showLoading: false }); // スピナーなしで更新
-    }
-  }
-
-  /**
    * ゲームが進行中であるかどうかのフラグを設定し、Supabaseに保存します。
    * @param {boolean} status - ゲームが進行中であればtrue、そうでなければfalse。
    */
@@ -491,7 +494,6 @@ export const useUserStore = defineStore('user', () => {
     updateCatCoins,
     saveAchievedYaku,
     resetTemporaryData,
-    resetWinStreak,
     setGameInProgress,
     updateOmikujiDrawInfo,
     deleteUserData,

@@ -501,6 +501,7 @@
     "description": "👇Please register a name to be used in the game.",
     "usernameLabel": "Username (Required)",
     "usernamePlaceholder": "Max 3 full-width or 6 half-width chars",
+    "optional": "Optional",
     "avatarLabel": "Avatar (Optional)",
     "registerButton": "Register",
     "errors": {
@@ -509,7 +510,6 @@
       "xAccountInvalid": "Please enter a valid X account format starting with {'@'}.",
       "usernameProfane": "This username contains inappropriate words."
     },
-    "optional": "Optional",
     "emailOptionalNote": "*Required when logging in from a new device.",
     "loginHere": "Login here"
   },
@@ -577,6 +577,7 @@
     "userNotFound": "User not found. Please check the email address.",
     "invalidLoginCredentials": "Invalid login credentials. Please check your email and OTP.",
     "emailNotRegistered": "This email address is not registered.",
+    "emailAlreadyRegistered": "This email address is already registered.",
     "unknown": "An unexpected error occurred. Please try again."
   }
 }

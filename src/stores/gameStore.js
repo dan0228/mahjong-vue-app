@@ -1821,12 +1821,10 @@ ${roundEndMessage}`;
     resetGameForNewSession(options = { keepStreak: false }) {
       const userStore = useUserStore(); // userStoreを取得
       userStore.resetTemporaryData(); // ★一時的な役達成データをリセット
-      // ゲーム終了フラグをリセット
-      userStore.setGameInProgress(false);
 
       // 連勝数を維持しない場合、userStoreの連勝数をリセット
       if (!options.keepStreak) {
-        userStore.resetWinStreak(); // ここでuserStoreの連勝数をリセット
+        // userStore.resetWinStreak(); // ここでuserStoreの連勝数をリセット
       }
 
       const currentStreakFromUserStore = userStore.profile?.current_win_streak || 0;

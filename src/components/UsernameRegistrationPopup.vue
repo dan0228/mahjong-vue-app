@@ -35,9 +35,16 @@
             </div>
           </div>
 
+          <div class="form-group">
+            <label for="email-register">{{ $t('login.emailLabel') }} ({{ $t('usernameRegistration.optional') }})</label>
+            <input type="email" id="email-register" v-model="registerEmail" :placeholder="$t('login.emailPlaceholder')" />
+            <div v-if="registerEmailError" class="error-message">{{ registerEmailError }}</div>
+          </div>
+          
           <div class="avatar-notes">
             <p>{{ $t('avatarSection.xAccountNote') }}</p>
             <p>{{ $t('avatarSection.rightsNote') }}</p>
+            <p>{{ $t('usernameRegistration.emailOptionalNote') }}</p>
           </div>
 
           <button type="submit" class="register-button" :disabled="!isFormValid || isLoadingRegister">
@@ -95,6 +102,10 @@ const username = ref('');
 const selectedFile = ref(null);
 const previewUrl = ref(null);
 
+// --- 登録モードのメールアドレス関連 --- 
+const registerEmail = ref('');
+const registerEmailError = ref('');
+
 // --- ログイン関連の新しい状態 ---
 const isLoginMode = ref(false);
 const email = ref('');
@@ -115,6 +126,10 @@ watch(() => props.show, (newValue) => {
     isLoginMode.value = false; // デフォルトは登録モード
     resetLoginState(); // ログイン関連の状態もリセット
   }
+});
+
+watch(registerEmail, () => {
+  registerEmailError.value = '';
 });
 
 const fileInput = ref(null);
@@ -288,20 +303,35 @@ const register = async () => {
         .insert({ id: user.id, username: username.value, cat_coins: 2000 });
       if (insertError) throw insertError;
 
+      // 2. メールアドレスが入力されていれば更新
+      if (registerEmail.value) {
+        if (!registerEmail.value.includes('@')) {
+          registerEmailError.value = t('settingsPopup.emailSection.errors.invalidEmail');
+          isLoadingRegister.value = false;
+          return;
+        }
+        const emailUpdateResult = await userStore.updateUserEmail(registerEmail.value, t);
+        if (!emailUpdateResult.success) {
+          registerEmailError.value = emailUpdateResult.error || t('settingsPopup.emailSection.errors.updateFailed');
+          isLoadingRegister.value = false;
+          return;
+        }
+      }
+
       await userStore.fetchUserProfile();
 
-      // 2. アバターが選択されていればアップロード
+      // 3. アバターが選択されていればアップロード
       if (selectedFile.value) {
         await userStore.uploadAvatar(selectedFile.value);
       }
 
-      // 3. 最新のプロフィール情報を取得
+      // 4. 最新のプロフィール情報を取得
       await userStore.fetchUserProfile();
 
-      // 4. 従来のlocalStorageにも保存 (これはSupabase移行後は不要になる可能性が高いが、既存ロジックを維持)
+      // 5. 従来のlocalStorageにも保存 (これはSupabase移行後は不要になる可能性が高いが、既存ロジックを維持)
       localStorage.setItem('mahjongUsername', username.value);
 
-      // 5. ポップアップを閉じる
+      // 6. ポップアップを閉じる
       selectedFile.value = null;
       xHandleInput.value = '';
       previewUrl.value = userStore.profile.avatar_url;

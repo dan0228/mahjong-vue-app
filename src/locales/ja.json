@@ -501,6 +501,7 @@
     "description": "👇ゲームで使用する名前を登録してください👇",
     "usernameLabel": "ユーザー名 (必須)",
     "usernamePlaceholder": "全角3文字、半角6文字以内",
+    "optional": "任意",
     "avatarLabel": "アバター (任意)",
     "registerButton": "登録",
     "errors": {
@@ -509,6 +510,7 @@
       "xAccountInvalid": "Xアカウントは{'@'}で始まる正しい形式で入力してください",
       "usernameProfane": "不適切な単語が含まれています"
     },
+    "emailOptionalNote": "*メールアドレスは新しい端末などでログインするときに必要になります",
     "loginHere": "ログインはこちら"
   },
   "login": {

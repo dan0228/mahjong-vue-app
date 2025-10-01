@@ -1,48 +1,78 @@
 <template>
   <div v-if="show" class="popup-overlay">
     <div class="popup-content">
-      <h2>{{ $t('usernameRegistration.title') }}</h2>
-      <p>{{ $t('usernameRegistration.description') }}</p>
-      <form @submit.prevent="register">
-        <div class="form-group">
-          <label for="username">{{ $t('usernameRegistration.usernameLabel') }}</label>
-          <input type="text" id="username" v-model="username" :placeholder="$t('usernameRegistration.usernamePlaceholder')" />
-          <div v-if="username.length > 0 && !isUsernameLengthValid" class="error-message">
-            {{ $t('usernameRegistration.errors.usernameTooLong') }}
-          </div>
-          <div v-if="isUsernameProfane" class="error-message">
-            {{ $t('usernameRegistration.errors.usernameProfane') }}
-          </div>
-        </div>
-
-        <!-- アバターアップロード部分 -->
-        <div class="form-group avatar-group">
-          <label>{{ $t('usernameRegistration.avatarLabel') }}</label>
-          <div class="avatar-upload-container">
-            <img :src="previewUrl || '/assets/images/info/hito_icon_1.png'" alt="Avatar Preview" class="avatar-preview" />
-            <div class="x-input-and-buttons">
-              <div class="button-stack">
-                <input type="file" id="avatar-upload" @change="onFileChange" accept="image/png, image/jpeg" style="display: none;" ref="fileInput" />
-                <label for="avatar-upload" class="upload-button">{{ $t('avatarSection.uploadImageButton') }}</label>
-                <button type="button" class="x-avatar-button" @click="onXAvatarClick" :disabled="isLoadingXAvatar">{{ $t('avatarSection.getXIconButton') }}</button>
-                <LoadingIndicator v-if="isLoadingXAvatar" /> <!-- 追加 -->
-              </div>
-              <input type="text" id="x-handle-input" v-model="xHandleInput" :placeholder="$t('avatarSection.xAccountPlaceholder')" class="x-handle-input" />
-              <div v-if="xHandleError" class="error-message">{{ xHandleError }}</div>
+      <!-- 登録モード -->
+      <div v-if="!isLoginMode">
+        <h2>{{ $t('usernameRegistration.title') }}</h2>
+        <p>{{ $t('usernameRegistration.description') }}</p>
+        <form @submit.prevent="register">
+          <div class="form-group">
+            <label for="username">{{ $t('usernameRegistration.usernameLabel') }}</label>
+            <input type="text" id="username" v-model="username" :placeholder="$t('usernameRegistration.usernamePlaceholder')" />
+            <div v-if="username.length > 0 && !isUsernameLengthValid" class="error-message">
+              {{ $t('usernameRegistration.errors.usernameTooLong') }}
+            </div>
+            <div v-if="isUsernameProfane" class="error-message">
+              {{ $t('usernameRegistration.errors.usernameProfane') }}
             </div>
           </div>
-        </div>
 
-        <div class="avatar-notes">
-          <p>{{ $t('avatarSection.xAccountNote') }}</p>
-          <p>{{ $t('avatarSection.rightsNote') }}</p>
-        </div>
+          <!-- アバターアップロード部分 -->
+          <div class="form-group avatar-group">
+            <label>{{ $t('usernameRegistration.avatarLabel') }}</label>
+            <div class="avatar-upload-container">
+              <img :src="previewUrl || '/assets/images/info/hito_icon_1.png'" alt="Avatar Preview" class="avatar-preview" />
+              <div class="x-input-and-buttons">
+                <div class="button-stack">
+                  <input type="file" id="avatar-upload" @change="onFileChange" accept="image/png, image/jpeg" style="display: none;" ref="fileInput" />
+                  <label for="avatar-upload" class="upload-button">{{ $t('avatarSection.uploadImageButton') }}</label>
+                  <button type="button" class="x-avatar-button" @click="onXAvatarClick" :disabled="isLoadingXAvatar">{{ $t('avatarSection.getXIconButton') }}</button>
+                  <LoadingIndicator v-if="isLoadingXAvatar" />
+                </div>
+                <input type="text" id="x-handle-input" v-model="xHandleInput" :placeholder="$t('avatarSection.xAccountPlaceholder')" class="x-handle-input" />
+                <div v-if="xHandleError" class="error-message">{{ xHandleError }}</div>
+              </div>
+            </div>
+          </div>
 
-        <button type="submit" class="register-button" :disabled="!isFormValid || isLoadingRegister">
-          <span v-if="!isLoadingRegister">{{ $t('usernameRegistration.registerButton') }}</span>
-          <LoadingIndicator v-else />
-        </button>
-      </form>
+          <div class="avatar-notes">
+            <p>{{ $t('avatarSection.xAccountNote') }}</p>
+            <p>{{ $t('avatarSection.rightsNote') }}</p>
+          </div>
+
+          <button type="submit" class="register-button" :disabled="!isFormValid || isLoadingRegister">
+            <span v-if="!isLoadingRegister">{{ $t('usernameRegistration.registerButton') }}</span>
+            <LoadingIndicator v-else />
+          </button>
+        </form>
+        <button type="button" class="toggle-mode-button" @click="toggleLoginMode">{{ $t('usernameRegistration.loginHere') }}</button>
+      </div>
+
+      <!-- ログインモード -->
+      <div v-else>
+        <h2>{{ $t('login.title') }}</h2>
+        <p>{{ $t('login.description') }}</p>
+        <form @submit.prevent="userStore.otpSent ? loginWithOtp() : sendOtp()">
+          <div class="form-group">
+            <label for="email">{{ $t('login.emailLabel') }}</label>
+            <input type="email" id="email" v-model="email" :placeholder="$t('login.emailPlaceholder')" :disabled="userStore.otpSent" />
+          </div>
+
+          <div v-if="userStore.otpSent" class="form-group">
+            <label for="otp">{{ $t('login.otpLabel') }}</label>
+            <input type="text" id="otp" v-model="otp" :placeholder="$t('login.otpPlaceholder')" />
+          </div>
+
+          <div v-if="loginError" class="error-message">{{ loginError }}</div>
+
+          <button type="submit" class="login-button" :disabled="userStore.loading || isSendingOtp || isVerifyingOtp">
+            <span v-if="!userStore.otpSent && !isSendingOtp">{{ $t('login.sendOtpButton') }}</span>
+            <span v-else-if="userStore.otpSent && !isVerifyingOtp">{{ $t('login.loginButton') }}</span>
+            <LoadingIndicator v-else />
+          </button>
+        </form>
+        <button type="button" class="toggle-mode-button" @click="toggleLoginMode">{{ $t('login.registerHere') }}</button>
+      </div>
     </div>
   </div>
 </template>
@@ -54,58 +84,111 @@ import { supabase } from '@/supabaseClient';
 import { useUserStore } from '@/stores/userStore';
 import { containsProfanity } from '@/utils/validationUtils';
 import { compressImage } from '@/utils/imageUtils';
-import LoadingIndicator from '@/components/LoadingIndicator.vue'; // 追加
+import LoadingIndicator from '@/components/LoadingIndicator.vue';
 
 const props = defineProps({ show: Boolean });
 const emit = defineEmits(['close']);
-const { t } = useI18n(); // useI18nをインポート
+const { t } = useI18n();
 const userStore = useUserStore();
 
 const username = ref('');
 const selectedFile = ref(null);
 const previewUrl = ref(null);
 
+// --- ログイン関連の新しい状態 ---
+const isLoginMode = ref(false);
+const email = ref('');
+const otp = ref('');
+const loginError = ref('');
+const isSendingOtp = ref(false);
+const isVerifyingOtp = ref(false);
+
 // ポップアップ表示時に現在のプロフィール情報をフォームに設定
 watch(() => props.show, (newValue) => {
-  if (newValue && userStore.profile) {
-    username.value = userStore.profile.username || '';
-    previewUrl.value = userStore.profile.avatar_url || null; // 既存のアバターURLをプレビューに設定
-    selectedFile.value = null; // ファイル選択状態をリセット
-    xHandleInput.value = ''; // Xアカウント入力欄をリセット
-    xHandleError.value = ''; // エラーメッセージをリセット
+  if (newValue) {
+    // ポップアップが開くたびに状態をリセット
+    username.value = userStore.profile?.username || '';
+    previewUrl.value = userStore.profile?.avatar_url || null;
+    selectedFile.value = null;
+    xHandleInput.value = '';
+    xHandleError.value = '';
+    isLoginMode.value = false; // デフォルトは登録モード
+    resetLoginState(); // ログイン関連の状態もリセット
   }
 });
-const fileInput = ref(null);
-const xHandleInput = ref(''); // Xアカウント入力用のrefを追加
-const xHandleError = ref(''); // Xアカウントのエラーメッセージ用
-const isLoadingXAvatar = ref(false); // 追加
-const xAvatarFetchError = ref(false); // 追加
-const isLoadingRegister = ref(false); // 追加
 
-// xHandleInputが変更されたらエラーメッセージをクリア
+const fileInput = ref(null);
+const xHandleInput = ref('');
+const xHandleError = ref('');
+const isLoadingXAvatar = ref(false);
+const xAvatarFetchError = ref(false);
+const isLoadingRegister = ref(false);
+
 watch(xHandleInput, () => {
   xHandleError.value = '';
 });
 
+// --- ログイン関連の新しいメソッド ---
+const resetLoginState = () => {
+  email.value = '';
+  otp.value = '';
+  loginError.value = '';
+  userStore.otpSent = false; // userStoreのotpSentもリセット
+  userStore.loginEmail = ''; // userStoreのloginEmailもリセット
+};
+
+const toggleLoginMode = () => {
+  isLoginMode.value = !isLoginMode.value;
+  resetLoginState(); // モード切り替え時にログイン状態をリセット
+};
+
+const sendOtp = async () => {
+  loginError.value = '';
+  if (!email.value) {
+    loginError.value = t('login.errors.emailRequired');
+    return;
+  }
+  isSendingOtp.value = true;
+  const result = await userStore.signInWithEmailOtp(email.value);
+  if (!result.success) {
+    loginError.value = result.error || t('login.errors.sendOtpFailed');
+  }
+  isSendingOtp.value = false;
+};
+
+const loginWithOtp = async () => {
+  loginError.value = '';
+  if (!email.value || !otp.value) {
+    loginError.value = t('login.errors.emailOtpRequired');
+    return;
+  }
+  isVerifyingOtp.value = true;
+  const result = await userStore.verifyEmailOtp(email.value, otp.value);
+  if (result.success) {
+    emit('close'); // ログイン成功でポップアップを閉じる
+  } else {
+    loginError.value = result.error || t('login.errors.verifyOtpFailed');
+  }
+  isVerifyingOtp.value = false;
+};
+
 // --- ファイル選択ハンドラ ---
 const onFileChange = async (e) => {
-  xHandleError.value = ''; // ファイル選択時はXアカウントのエラーをクリア
+  xHandleError.value = '';
   const file = e.target.files[0];
   if (!file) return;
 
   if (!['image/jpeg', 'image/png'].includes(file.type)) {
-    alert(t('usernameRegistration.errors.imageFormat')); // i18nを使用
+    alert(t('usernameRegistration.errors.imageFormat'));
     return;
   }
 
   try {
-    // imageUtilsのcompressImageを使用
-    const compressedBlob = await compressImage(file, 200, 200); // アバターサイズに合わせて200x200を指定
-    selectedFile.value = new File([compressedBlob], file.name, { type: file.type });
+    const compressedBlob = await compressImage(file, 200, 200);
+    selectedFile.value = new File([compressedBlob], file.name, { type: blob.type });
     previewUrl.value = URL.createObjectURL(selectedFile.value);
   } catch (error) {
     console.error('画像の圧縮に失敗しました:', error);
-    // 圧縮に失敗した場合は元のファイルを使用
     selectedFile.value = file;
     previewUrl.value = URL.createObjectURL(file);
   }
@@ -113,12 +196,12 @@ const onFileChange = async (e) => {
 
 // --- Xアバター取得ハンドラ ---
 const onXAvatarClick = async () => {
-  isLoadingXAvatar.value = true; // 追加
-  xHandleError.value = ''; // 処理開始時にエラーメッセージをクリア
+  isLoadingXAvatar.value = true;
+  xHandleError.value = '';
   const xHandle = xHandleInput.value;
   if (!xHandle) {
-    xHandleError.value = t('avatarSection.xAccountValidation.empty'); // i18nを使用
-    isLoadingXAvatar.value = false; // 追加
+    xHandleError.value = t('avatarSection.xAccountValidation.empty');
+    isLoadingXAvatar.value = false;
     return;
   }
 
@@ -126,8 +209,8 @@ const onXAvatarClick = async () => {
 
   const alphanumericRegex = /^[a-zA-Z0-9_]+$/;
   if (!alphanumericRegex.test(cleanHandle)) {
-    xHandleError.value = t('avatarSection.xAccountValidation.invalidChars'); // i18nを使用
-    isLoadingXAvatar.value = false; // 追加
+    xHandleError.value = t('avatarSection.xAccountValidation.invalidChars');
+    isLoadingXAvatar.value = false;
     return;
   }
 
@@ -139,16 +222,16 @@ const onXAvatarClick = async () => {
 
     if (!response.ok) {
       console.error(`Failed to fetch X avatar from unavatar.io: ${response.status} ${response.statusText}`);
-      xHandleError.value = t('avatarSection.xAccountValidation.fetchFailed'); // i18nを使用
-      isLoadingXAvatar.value = false; // 追加
+      xHandleError.value = t('avatarSection.xAccountValidation.fetchFailed');
+      isLoadingXAvatar.value = false;
       return;
     }
 
     const contentType = response.headers.get('Content-Type');
     if (!contentType || !contentType.startsWith('image/')) {
       console.error('Received non-image content from unavatar.io:', contentType);
-      xHandleError.value = t('avatarSection.xAccountValidation.invalidContent'); // i18nを使用
-      isLoadingXAvatar.value = false; // 追加
+      xHandleError.value = t('avatarSection.xAccountValidation.invalidContent');
+      isLoadingXAvatar.value = false;
       return;
     }
 
@@ -156,13 +239,13 @@ const onXAvatarClick = async () => {
 
     selectedFile.value = new File([blob], `x_avatar_${cleanHandle}.png`, { type: blob.type });
     previewUrl.value = URL.createObjectURL(selectedFile.value);
-    xAvatarFetchError.value = false; // 成功時はエラー状態をリセット
+    xAvatarFetchError.value = false;
 
   } catch (error) {
     console.error('Xアバターの取得中にエラーが発生しました:', error);
-    xHandleError.value = t('avatarSection.xAccountValidation.networkError'); // i18nを使用
-  } finally { // 追加
-    isLoadingXAvatar.value = false; // 追加
+    xHandleError.value = t('avatarSection.xAccountValidation.networkError');
+  } finally {
+    isLoadingXAvatar.value = false;
   }
 };
 
@@ -192,7 +275,7 @@ const isFormValid = computed(() => {
 const register = async () => {
   if (!isFormValid.value) return;
 
-  isLoadingRegister.value = true; // 追加
+  isLoadingRegister.value = true;
 
   try {
     const { data: { user }, error: authError } = await supabase.auth.signInAnonymously();
@@ -202,11 +285,10 @@ const register = async () => {
       // 1. ユーザー情報を挿入
       const { error: insertError } = await supabase
         .from('users')
-        .insert({ id: user.id, username: username.value, cat_coins: 2000 }); // cat_coinsの初期値を追加
+        .insert({ id: user.id, username: username.value, cat_coins: 2000 });
       if (insertError) throw insertError;
 
-      // ここで userStore.profile を初期化するために fetchUserProfile を呼び出す
-      await userStore.fetchUserProfile(); // ★追加
+      await userStore.fetchUserProfile();
 
       // 2. アバターが選択されていればアップロード
       if (selectedFile.value) {
@@ -216,20 +298,20 @@ const register = async () => {
       // 3. 最新のプロフィール情報を取得
       await userStore.fetchUserProfile();
 
-      // 4. 従来のlocalStorageにも保存
+      // 4. 従来のlocalStorageにも保存 (これはSupabase移行後は不要になる可能性が高いが、既存ロジックを維持)
       localStorage.setItem('mahjongUsername', username.value);
 
       // 5. ポップアップを閉じる
-      selectedFile.value = null; // 選択されたファイルをクリア
-      xHandleInput.value = ''; // Xハンドル入力をクリア
-      previewUrl.value = userStore.profile.avatar_url; // 最新のアバターURLをプレビューに設定
+      selectedFile.value = null;
+      xHandleInput.value = '';
+      previewUrl.value = userStore.profile.avatar_url;
       emit('close');
     }
   } catch (error) {
     console.error('登録処理中にエラーが発生しました:', error);
     alert('登録に失敗しました。もう一度お試しください。');
-  } finally { // 追加
-    isLoadingRegister.value = false; // 追加
+  } finally {
+    isLoadingRegister.value = false;
   }
 };
 </script>
@@ -250,12 +332,12 @@ p { font-size: 0.9em; color: #666; margin-bottom: 20px; }
 .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9em; }
 .form-group input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
 .error-message { color: #e53935; font-size: 0.8em; margin-top: 5px; }
-.register-button { 
+.register-button, .login-button { 
   background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px;
   cursor: pointer; font-size: 1em; width: 100%; margin-top: 10px; 
 }
-.register-button:hover { background-color: #45a049; }
-.register-button:disabled { background-color: #ccc; cursor: not-allowed; }
+.register-button:hover, .login-button:hover { background-color: #45a049; }
+.register-button:disabled, .login-button:disabled { background-color: #ccc; cursor: not-allowed; }
 
 /* Avatar Styles */
 
@@ -306,5 +388,18 @@ p { font-size: 0.9em; color: #666; margin-bottom: 20px; }
 }
 .avatar-notes p {
   margin-bottom: 5px;
+}
+
+.toggle-mode-button {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  font-size: 0.9em;
+  margin-top: 15px;
+  text-decoration: underline;
+}
+.toggle-mode-button:hover {
+  color: #0056b3;
 }
 </style>

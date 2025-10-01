@@ -498,7 +498,7 @@
   },
   "usernameRegistration": {
     "title": "プレイヤー情報入力🐈‍⬛",
-    "description": "👇ゲーム内で使用する名前を登録してください👇",
+    "description": "👇ゲームで使用する名前を登録してください👇",
     "usernameLabel": "ユーザー名 (必須)",
     "usernamePlaceholder": "全角3文字、半角6文字以内",
     "avatarLabel": "アバター (任意)",
@@ -508,6 +508,24 @@
       "usernameTooLong": "ユーザー名は全角3文字、半角6文字以内で入力してください",
       "xAccountInvalid": "Xアカウントは{'@'}で始まる正しい形式で入力してください",
       "usernameProfane": "不適切な単語が含まれています"
+    },
+    "loginHere": "ログインはこちら"
+  },
+  "login": {
+    "title": "ログイン",
+    "description": "メールアドレスを入力し、ワンタイムパスワード（OTP）でログインします。",
+    "emailLabel": "メールアドレス",
+    "emailPlaceholder": "メールアドレスを入力してください",
+    "sendOtpButton": "OTPを送信",
+    "otpLabel": "ワンタイムパスワード (OTP)",
+    "otpPlaceholder": "6桁のOTPを入力してください",
+    "loginButton": "ログイン",
+    "registerHere": "新規登録はこちら",
+    "errors": {
+      "emailRequired": "メールアドレスは必須です。",
+      "emailOtpRequired": "メールアドレスとOTPは必須です。",
+      "sendOtpFailed": "OTPの送信に失敗しました。メールアドレスを確認するか、再度お試しください。",
+      "verifyOtpFailed": "OTPの検証に失敗しました。OTPを確認するか、再度お試しください。"
     }
   },
   "avatarSection": {
@@ -532,7 +550,31 @@
     "deleteAccountSection": {
       "button": "登録情報削除",
       "confirm": "本当にアカウントを削除しますか？対戦履歴や実績など、すべてのデータが完全に削除されます。この操作は元に戻せません。"
+    },
+    "emailSection": {
+      "label": "メールアドレス（任意、ログイン用）",
+      "currentEmail": "現在のメールアドレス",
+      "notSet": "未設定",
+      "editEmailButton": "メールアドレスを編集",
+      "newEmailLabel": "新しいメールアドレス",
+      "newEmailPlaceholder": "新しいメールアドレスを入力してください",
+      "sendUpdateRequestButton": "更新",
+      "updateRequestSent": "確認メールを送信しました！メール内のリンクをクリックしたら更新完了です！",
+      "errors": {
+        "invalidEmail": "有効なメールアドレスを入力してください。",
+        "updateFailed": "メールアドレスの更新に失敗しました。再度お試しください。"
+      }
     }
+  },
+  "supabaseErrors": {
+    "userAlreadyRegistered": "このメールアドレスは既に登録されています。",
+    "invalidOtp": "OTPが無効または期限切れです。再度お試しください。",
+    "emailRateLimit": "リクエストが多すぎます。しばらく待ってから再度お試しください。",
+    "emailNotConfirmed": "メールアドレスが確認されていません。受信トレイで確認リンクを確認してください。",
+    "emailLinkInvalidOrExpired": "メールリンクが無効または期限切れです。新しいものをリクエストしてください。",
+    "userNotFound": "ユーザーが見つかりません。メールアドレスを確認してください。",
+    "invalidLoginCredentials": "ログイン情報が無効です。メールアドレスとOTPを確認してください。",
+    "unknown": "予期せぬエラーが発生しました。再度お試しください。"
   }
 }
 

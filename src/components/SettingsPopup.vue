@@ -2,7 +2,6 @@
   <div v-if="show" class="popup-overlay">
     <div class="popup-content">
       <h2>{{ $t('settingsPopup.title') }}</h2>
-      <p>{{ $t('settingsPopup.description') }}</p>
       <form @submit.prevent="saveProfile">
         <div class="form-group">
           <label for="username-settings">{{ $t('usernameRegistration.usernameLabel') }}</label>
@@ -25,7 +24,7 @@
                 <input type="file" id="avatar-upload-settings" @change="onFileChange" accept="image/png, image/jpeg" style="display: none;" ref="fileInput" />
                 <label for="avatar-upload-settings" class="upload-button">{{ $t('avatarSection.uploadImageButton') }}</label>
                 <button type="button" class="x-avatar-button" @click="onXAvatarClick" :disabled="isLoadingXAvatar">{{ $t('avatarSection.getXIconButton') }}</button>
-                <LoadingIndicator v-if="isLoadingXAvatar" /> <!-- 追加 -->
+                <LoadingIndicator v-if="isLoadingXAvatar" />
               </div>
               <input type="text" id="x-handle-input-settings" v-model="xHandleInput" :placeholder="$t('avatarSection.xAccountPlaceholder')" class="x-handle-input" />
               <div v-if="xHandleError" class="error-message">{{ xHandleError }}</div>
@@ -38,13 +37,39 @@
           <p>{{ $t('avatarSection.rightsNote') }}</p>
         </div>
 
+        <!-- メールアドレス編集セクション -->
+        <div class="email-edit-section">
+          <label for="email-settings" class="email-label-small">{{ $t('settingsPopup.emailSection.label') }}</label>
+          <div v-if="!isEditingEmail">
+            <p class="email-text-small">{{ userStore.profile?.email || $t('settingsPopup.emailSection.notSet') }}</p>
+            <button type="button" @click="startEditEmail" class="edit-email-button">{{ $t('settingsPopup.emailSection.editEmailButton') }}</button>
+          </div>
+          <form v-else @submit.prevent="requestEmailUpdate">
+            <div class="form-group">
+              <label for="email-settings" class="email-label-small">{{ $t('settingsPopup.emailSection.newEmailLabel') }}</label>
+              <input type="email" id="email-settings" v-model="emailInput" :placeholder="$t('settingsPopup.emailSection.newEmailPlaceholder')" />
+            </div>
+            <div v-if="emailError" class="error-message">{{ emailError }}</div>
+            <div v-if="emailUpdateMessage" class="success-message">{{ emailUpdateMessage }}</div>
+            <div class="button-group" v-if="!emailUpdateMessage">
+              <button type="button" @click="cancelEditEmail" class="cancel-button">{{ $t('settingsPopup.cancelButton') }}</button>
+              <button type="submit" class="save-button" :disabled="isUpdatingEmail">
+                <span v-if="!isUpdatingEmail">{{ $t('settingsPopup.emailSection.sendUpdateRequestButton') }}</span>
+                <LoadingIndicator v-else />
+              </button>
+            </div>
+          </form>
+        </div>
+
         <div class="button-group">
-          <button type="button" @click="closePopup" class="cancel-button">{{ $t('settingsPopup.cancelButton') }}</button>
-          <button type="submit" class="save-button" :disabled="!isFormValid">
+          <button type="button" @click="closePopup" class="cancel-button" :disabled="isEditingEmail" :class="{'disabled-button-style': isEditingEmail}">{{ $t('settingsPopup.cancelButton') }}</button>
+          <button type="submit" class="save-button" :disabled="!isFormValid || isEditingEmail">
             {{ $t('settingsPopup.saveButton') }}
           </button>
         </div>
       </form>
+
+      
 
       <!-- アカウント削除リンク -->
       <div class="delete-account-link-container">
@@ -63,7 +88,7 @@ import { useI18n } from 'vue-i18n';
 import { useUserStore } from '@/stores/userStore';
 import { containsProfanity } from '@/utils/validationUtils';
 import { compressImage } from '@/utils/imageUtils';
-import LoadingIndicator from '@/components/LoadingIndicator.vue'; // 追加
+import LoadingIndicator from '@/components/LoadingIndicator.vue';
 
 const props = defineProps({ show: Boolean });
 const emit = defineEmits(['close']);
@@ -73,11 +98,17 @@ const userStore = useUserStore();
 const username = ref('');
 const selectedFile = ref(null);
 const previewUrl = ref(null);
-const xHandleInput = ref(''); // Xアカウント入力用のrefを追加
-const xHandleError = ref(''); // Xアカウントのエラーメッセージ用
-const isLoadingXAvatar = ref(false); // 追加
+const xHandleInput = ref('');
+const xHandleError = ref('');
+const isLoadingXAvatar = ref(false);
 
-// xHandleInputが変更されたらエラーメッセージをクリア
+// --- メールアドレス編集関連の新しい状態 ---
+const emailInput = ref('');
+const emailError = ref('');
+const isEditingEmail = ref(false);
+const isUpdatingEmail = ref(false);
+const emailUpdateMessage = ref('');
+
 watch(xHandleInput, () => {
   xHandleError.value = '';
 });
@@ -86,26 +117,63 @@ watch(xHandleInput, () => {
 watch(() => props.show, (newValue) => {
   if (newValue && userStore.profile) {
     username.value = userStore.profile.username || '';
-    previewUrl.value = userStore.profile.avatar_url || null; // 既存のアバターURLをプレビューに設定
-    selectedFile.value = null; // ファイル選択状態をリセット
-    xHandleInput.value = ''; // Xアカウント入力欄をリセット
-    xHandleError.value = ''; // エラーメッセージをリセット
+    previewUrl.value = userStore.profile.avatar_url || null;
+    selectedFile.value = null;
+    xHandleInput.value = '';
+    xHandleError.value = '';
+    // メールアドレス関連の状態を初期化
+    emailInput.value = userStore.profile.email || '';
+    isEditingEmail.value = false;
+    emailError.value = '';
+    emailUpdateMessage.value = '';
   }
 });
 
+// --- メールアドレス編集関連の新しいメソッド ---
+const startEditEmail = () => {
+  isEditingEmail.value = true;
+  emailError.value = '';
+  emailUpdateMessage.value = '';
+};
+
+const cancelEditEmail = () => {
+  isEditingEmail.value = false;
+  emailInput.value = userStore.profile?.email || ''; // 元のメールアドレスに戻す
+  emailError.value = '';
+  emailUpdateMessage.value = '';
+};
+
+const requestEmailUpdate = async () => {
+  emailError.value = '';
+  emailUpdateMessage.value = '';
+  if (!emailInput.value || !emailInput.value.includes('@')) {
+    emailError.value = t('settingsPopup.emailSection.errors.invalidEmail');
+    return;
+  }
+
+  isUpdatingEmail.value = true;
+  const result = await userStore.updateUserEmail(emailInput.value);
+  if (result.success) {
+    emailUpdateMessage.value = t('settingsPopup.emailSection.updateRequestSent');
+    // ユーザーは確認メールのリンクをクリックする必要があるため、フォームは開いたままにする
+  } else {
+    emailError.value = result.error || t('settingsPopup.emailSection.errors.updateFailed');
+  }
+  isUpdatingEmail.value = false;
+};
+
 // --- ファイル選択ハンドラ ---
 const onFileChange = async (e) => {
-  xHandleError.value = ''; // ファイル選択時はXアカウントのエラーをクリア
+  xHandleError.value = '';
   const file = e.target.files[0];
   if (!file) return;
   if (!['image/jpeg', 'image/png'].includes(file.type)) {
-    alert(t('usernameRegistration.errors.imageFormat')); // i18nを使用
+    alert(t('usernameRegistration.errors.imageFormat'));
     return;
   }
   try {
-    // imageUtilsのcompressImageを使用
-    const compressedBlob = await compressImage(file, 200, 200); // アバターサイズに合わせて200x200を指定
-    selectedFile.value = new File([compressedBlob], file.name, { type: file.type });
+    const compressedBlob = await compressImage(file, 200, 200);
+    selectedFile.value = new File([compressedBlob], file.name, { type: blob.type });
     previewUrl.value = URL.createObjectURL(selectedFile.value);
   } catch (error) {
     console.error('画像の圧縮に失敗しました:', error);
@@ -116,12 +184,12 @@ const onFileChange = async (e) => {
 
 // --- Xアバター取得ハンドラ ---
 const onXAvatarClick = async () => {
-  isLoadingXAvatar.value = true; // 追加
-  xHandleError.value = ''; // 処理開始時にエラーメッセージをクリア
+  isLoadingXAvatar.value = true;
+  xHandleError.value = '';
   const xHandle = xHandleInput.value;
   if (!xHandle) {
-    xHandleError.value = t('avatarSection.xAccountValidation.empty'); // i18nを使用
-    isLoadingXAvatar.value = false; // 追加
+    xHandleError.value = t('avatarSection.xAccountValidation.empty');
+    isLoadingXAvatar.value = false;
     return;
   }
 
@@ -129,8 +197,8 @@ const onXAvatarClick = async () => {
 
   const alphanumericRegex = /^[a-zA-Z0-9_]+$/;
   if (!alphanumericRegex.test(cleanHandle)) {
-    xHandleError.value = t('avatarSection.xAccountValidation.invalidChars'); // i18nを使用
-    isLoadingXAvatar.value = false; // 追加
+    xHandleError.value = t('avatarSection.xAccountValidation.invalidChars');
+    isLoadingXAvatar.value = false;
     return;
   }
 
@@ -142,8 +210,8 @@ const onXAvatarClick = async () => {
 
     if (!response.ok) {
       console.error(`Failed to fetch X avatar from unavatar.io: ${response.status} ${response.statusText}`);
-      xHandleError.value = t('avatarSection.xAccountValidation.fetchFailed'); // i18nを使用
-      isLoadingXAvatar.value = false; // 追加
+      xHandleError.value = t('avatarSection.xAccountValidation.fetchFailed');
+      isLoadingXAvatar.value = false;
       return;
     }
 
@@ -162,9 +230,9 @@ const onXAvatarClick = async () => {
 
   } catch (error) {
     console.error('Xアバターの取得中にエラーが発生しました:', error);
-    xHandleError.value = t('avatarSection.xAccountValidation.networkError'); // i18nを使用
-  } finally { // 追加
-    isLoadingXAvatar.value = false; // 追加
+    xHandleError.value = t('avatarSection.xAccountValidation.networkError');
+  } finally {
+    isLoadingXAvatar.value = false;
   }
 };
 
@@ -302,5 +370,63 @@ p { font-size: 0.9em; color: #666; margin-bottom: 20px; }
 }
 .delete-button:hover {
   color: #c62828;
+}
+
+.email-edit-section {
+  margin-top: 0px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+  text-align: left;
+}
+
+.email-edit-section h3 {
+  font-size: 1.2em;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.email-edit-section p {
+  font-size: 0.9em;
+  color: #555;
+  margin-bottom: 10px;
+}
+
+.edit-email-button {
+  background-color: #007bff;
+  color: white;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9em;
+  margin-top: 5px;
+}
+
+.edit-email-button:hover {
+  background-color: #0056b3;
+}
+
+.success-message {
+  color: #4CAF50;
+  font-size: 0.8em;
+  margin-top: 5px;
+}
+
+.email-label-small {
+  font-size: 0.9em; /* 必要に応じて調整 */
+  font-weight: normal;
+  font-weight: bold;
+}
+
+.email-text-small {
+  font-size: 0.8em; /* 必要に応じて調整 */
+  color: #555;
+  margin-bottom: 5px;
+}
+
+.disabled-button-style {
+  opacity: 0.6;
+  cursor: not-allowed;
+  /* You can add more styles like background-color, border-color etc. */
 }
 </style>

@@ -508,6 +508,24 @@
       "usernameTooLong": "Username must be within 3 full-width or 6 half-width characters.",
       "xAccountInvalid": "Please enter a valid X account format starting with {'@'}.",
       "usernameProfane": "This username contains inappropriate words."
+    },
+    "loginHere": "Login here"
+  },
+  "login": {
+    "title": "Login",
+    "description": "Enter your email address to receive a one-time password (OTP) for login.",
+    "emailLabel": "Email Address",
+    "emailPlaceholder": "Enter your email address",
+    "sendOtpButton": "Send OTP",
+    "otpLabel": "One-Time Password (OTP)",
+    "otpPlaceholder": "Enter the 6-digit OTP",
+    "loginButton": "Login",
+    "registerHere": "Register here",
+    "errors": {
+      "emailRequired": "Email address is required.",
+      "emailOtpRequired": "Email address and OTP are required.",
+      "sendOtpFailed": "Failed to send OTP. Please check your email address or try again.",
+      "verifyOtpFailed": "Failed to verify OTP. Please check the OTP or try again."
     }
   },
   "avatarSection": {
@@ -532,6 +550,30 @@
     "deleteAccountSection": {
       "button": "Delete Registration Info",
       "confirm": "Are you sure you want to delete your account? This will permanently delete all your data, including match history and achievements. This action cannot be undone."
+    },
+    "emailSection": {
+      "label": "Email Address (Optional, for Login)",
+      "currentEmail": "Current Email",
+      "notSet": "Not Set",
+      "editEmailButton": "Edit Email Address",
+      "newEmailLabel": "New Email Address",
+      "newEmailPlaceholder": "Enter your new email address",
+      "sendUpdateRequestButton": "Send Update Request",
+      "updateRequestSent": "A confirmation email has been sent to your new address. Please click the link in the email to complete the update.",
+      "errors": {
+        "invalidEmail": "Please enter a valid email address.",
+        "updateFailed": "Failed to update email address. Please try again."
+      }
     }
+  },
+  "supabaseErrors": {
+    "userAlreadyRegistered": "This email address is already registered.",
+    "invalidOtp": "Invalid or expired OTP. Please try again.",
+    "emailRateLimit": "Too many requests. Please wait a moment and try again.",
+    "emailNotConfirmed": "Email not confirmed. Please check your inbox for a confirmation link.",
+    "emailLinkInvalidOrExpired": "Email link is invalid or has expired. Please request a new one.",
+    "userNotFound": "User not found. Please check the email address.",
+    "invalidLoginCredentials": "Invalid login credentials. Please check your email and OTP.",
+    "unknown": "An unexpected error occurred. Please try again."
   }
 }

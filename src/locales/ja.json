@@ -574,6 +574,7 @@
     "emailLinkInvalidOrExpired": "メールリンクが無効または期限切れです。新しいものをリクエストしてください。",
     "userNotFound": "ユーザーが見つかりません。メールアドレスを確認してください。",
     "invalidLoginCredentials": "ログイン情報が無効です。メールアドレスとOTPを確認してください。",
+    "emailNotRegistered": "登録されていないメールアドレスです。",
     "unknown": "予期せぬエラーが発生しました。再度お試しください。"
   }
 }

@@ -1,11 +1,9 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { supabase } from '@/supabaseClient';
-import { useI18n } from 'vue-i18n'; // i18nをインポート
 
 // Supabaseのエラーメッセージをi18nキーにマッピングするヘルパー関数
-function mapSupabaseErrorMessage(errorMessage) {
-  const { t } = useI18n(); // ここでt関数を取得
+function mapSupabaseErrorMessage(errorMessage, t) {
   if (!errorMessage) return t('supabaseErrors.unknown');
 
   if (errorMessage.includes('User already registered')) {
@@ -18,6 +16,8 @@ function mapSupabaseErrorMessage(errorMessage) {
     return t('supabaseErrors.emailNotConfirmed');
   } else if (errorMessage.includes('Email link is invalid or has expired')) {
     return t('supabaseErrors.emailLinkInvalidOrExpired');
+  } else if (errorMessage.includes('Email not registered')) {
+    return t('supabaseErrors.emailNotRegistered');
   } else if (errorMessage.includes('User not found')) {
     return t('supabaseErrors.userNotFound');
   } else if (errorMessage.includes('Invalid login credentials')) {
@@ -379,9 +379,22 @@ export const useUserStore = defineStore('user', () => {
    * メールアドレスにOTPを送信してログインプロセスを開始します。
    * @param {string} email - OTPを送信するメールアドレス。
    */
-  async function signInWithEmailOtp(email) {
+  async function signInWithEmailOtp(email, t) {
     loading.value = true;
     try {
+      // 1. メールアドレスがpublic.usersテーブルに存在するかチェック (RPCを使用)
+      const { data: emailExists, error: rpcError } = await supabase.rpc('check_email_exists', { email_address: email });
+
+      if (rpcError) {
+        console.error('RPCエラー (check_email_exists):', rpcError);
+        throw rpcError;
+      }
+
+      if (!emailExists) {
+        return { success: false, error: mapSupabaseErrorMessage('Email not registered', t) };
+      }
+
+      // 2. 存在すればOTPを送信
       const { error } = await supabase.auth.signInWithOtp({ email });
       if (error) throw error;
       otpSent.value = true;
@@ -391,7 +404,7 @@ export const useUserStore = defineStore('user', () => {
     } catch (error) {
       console.error('OTP送信エラー:', error.message);
       // エラーメッセージをi18nキーにマッピング
-      return { success: false, error: mapSupabaseErrorMessage(error.message) };
+      return { success: false, error: mapSupabaseErrorMessage(error.message, t) };
     } finally {
       loading.value = false;
     }
@@ -402,7 +415,7 @@ export const useUserStore = defineStore('user', () => {
    * @param {string} email - OTPを送信したメールアドレス。
    * @param {string} token - ユーザーが入力したOTP。
    */
-  async function verifyEmailOtp(email, token) {
+  async function verifyEmailOtp(email, token, t) {
     loading.value = true;
     try {
       const { data, error } = await supabase.auth.verifyOtp({ email, token, type: 'email' });
@@ -417,7 +430,7 @@ export const useUserStore = defineStore('user', () => {
     } catch (error) {
       console.error('OTP検証エラー:', error.message);
       // エラーメッセージをi18nキーにマッピング
-      return { success: false, error: mapSupabaseErrorMessage(error.message) };
+      return { success: false, error: mapSupabaseErrorMessage(error.message, t) };
     } finally {
       loading.value = false;
     }
@@ -427,7 +440,7 @@ export const useUserStore = defineStore('user', () => {
    * ユーザーのメールアドレスを更新します。
    * @param {string} newEmail - 新しいメールアドレス。
    */
-  async function updateUserEmail(newEmail) {
+  async function updateUserEmail(newEmail, t) {
     loading.value = true;
     try {
       const { data, error } = await supabase.auth.updateUser({ email: newEmail });
@@ -441,7 +454,7 @@ export const useUserStore = defineStore('user', () => {
     } catch (error) {
       console.error('メールアドレス更新エラー:', error.message);
       // エラーメッセージをi18nキーにマッピング
-      return { success: false, error: mapSupabaseErrorMessage(error.message) };
+      return { success: false, error: mapSupabaseErrorMessage(error.message, t) };
     } finally {
       loading.value = false;
     }

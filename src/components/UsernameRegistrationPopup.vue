@@ -149,7 +149,7 @@ const sendOtp = async () => {
     return;
   }
   isSendingOtp.value = true;
-  const result = await userStore.signInWithEmailOtp(email.value);
+  const result = await userStore.signInWithEmailOtp(email.value, t);
   if (!result.success) {
     loginError.value = result.error || t('login.errors.sendOtpFailed');
   }
@@ -163,7 +163,7 @@ const loginWithOtp = async () => {
     return;
   }
   isVerifyingOtp.value = true;
-  const result = await userStore.verifyEmailOtp(email.value, otp.value);
+  const result = await userStore.verifyEmailOtp(email.value, otp.value, t);
   if (result.success) {
     emit('close'); // ログイン成功でポップアップを閉じる
   } else {

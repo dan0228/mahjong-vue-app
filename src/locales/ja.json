@@ -579,6 +579,12 @@
     "emailNotRegistered": "登録されていないメールアドレスです。",
     "emailAlreadyRegistered": "このメールアドレスは既に登録されています。",
     "unknown": "予期せぬエラーが発生しました。再度お試しください。"
+  },
+  "penaltyPopup": {
+    "title": "ゲーム途中終了\nペナルティ発生！",
+    "message2": "連勝数 → 0",
+    "message3": "猫コインが-390されました。",
+    "closeButton": "閉じる"
   }
 }
 

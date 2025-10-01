@@ -34,6 +34,9 @@
     :show="showHowToAddPopup"
     @close="handleCloseHowToAddPopup"
   />
+
+  <!-- ペナルティポップアップ -->
+  <PenaltyPopup />
 </template>
 
 <script setup>
@@ -48,6 +51,7 @@ import UsernameRegistrationPopup from '@/components/UsernameRegistrationPopup.vu
 import AddToHomeScreenPopup from '@/components/AddToHomeScreenPopup.vue';
 import HowToAddPopup from '@/components/HowToAddPopup.vue';
 import LoadingIndicator from '@/components/LoadingIndicator.vue';
+import PenaltyPopup from '@/components/PenaltyPopup.vue'; // ★追加
 
 // --- リアクティブな状態 ---
 const isLoading = ref(true); // ローディング画面の表示状態フラグ
@@ -248,13 +252,6 @@ onMounted(async () => {
     // エラーが起きてもポップアップは表示する（フォールバック）
     showAddToHomeScreenPopup.value = true;
   } finally {
-    // ゲームが進行中だった場合、連勝数をリセット
-    if (userStore.isGameInProgress) {
-      console.log("ゲームが不正に終了したため、連勝数をリセットします。");
-      await userStore.resetWinStreak();
-      userStore.setGameInProgress(false); // フラグもリセット
-    }
-
     // すべての初期化処理が終わったので、ローディング画面を非表示にする
     // プログレスバーを100%にしてから少し待つとUXが良い
     loadingProgress.value = 100;
@@ -369,7 +366,7 @@ body {
 /* --- ルートトランジション --- */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.2s ease;
+  transition: opacity 0.2s ease; /* フェードアウト時間を長く */
 }
 
 .fade-enter-from,

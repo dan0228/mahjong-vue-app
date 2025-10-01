@@ -579,5 +579,11 @@
     "emailNotRegistered": "This email address is not registered.",
     "emailAlreadyRegistered": "This email address is already registered.",
     "unknown": "An unexpected error occurred. Please try again."
+  },
+  "penaltyPopup": {
+    "title": "Game Aborted\nPenalty!",
+    "message2": "Win Streak → 0",
+    "message3": "You lost 390 Cat Coins.",
+    "closeButton": "Close"
   }
 }

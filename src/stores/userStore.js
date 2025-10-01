@@ -36,6 +36,17 @@ export const useUserStore = defineStore('user', () => {
   const profile = ref(null); // ユーザープロフィール情報を保持
   const loading = ref(false); // データ読み込み中のフラグ
   const newlyAchievedYaku = ref({}); // 今回のゲームで新たに達成した役を一時的に保持
+  const showPenaltyPopup = ref(false); // ペナルティポップアップの表示状態
+
+  // --- Actions ---
+
+  /**
+   * ペナルティポップアップの表示状態を設定します。
+   * @param {boolean} status - 表示する場合はtrue、非表示にする場合はfalse。
+   */
+  function setShowPenaltyPopup(status) {
+    showPenaltyPopup.value = status;
+  }
 
   // --- Actions ---
 
@@ -92,6 +103,7 @@ export const useUserStore = defineStore('user', () => {
             }
             // is_game_in_progress フラグは update_user_metrics 関数によって FALSE に設定されるため、ここでは不要
             await setGameInProgress(false); // ゲーム進行中フラグを解除
+            showPenaltyPopup.value = true; // ペナルティポップアップを表示
           }
         }
       } else {
@@ -478,6 +490,14 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
+  /**
+   * ユーザーの連勝数をリセットします。
+   */
+  async function resetWinStreak() {
+    if (!profile.value) return;
+    await updateUserProfile({ current_win_streak: 0 }, { showLoading: false });
+  }
+
   return {
     profile,
     loading,
@@ -497,5 +517,8 @@ export const useUserStore = defineStore('user', () => {
     setGameInProgress,
     updateOmikujiDrawInfo,
     deleteUserData,
+    showPenaltyPopup,
+    setShowPenaltyPopup,
+    resetWinStreak, // 連勝数リセットアクションを公開
   };
 });

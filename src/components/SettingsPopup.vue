@@ -152,7 +152,7 @@ const requestEmailUpdate = async () => {
   }
 
   isUpdatingEmail.value = true;
-  const result = await userStore.updateUserEmail(emailInput.value);
+  const result = await userStore.updateUserEmail(emailInput.value, t);
   if (result.success) {
     emailUpdateMessage.value = t('settingsPopup.emailSection.updateRequestSent');
     // ユーザーは確認メールのリンクをクリックする必要があるため、フォームは開いたままにする

@@ -16,6 +16,8 @@ function mapSupabaseErrorMessage(errorMessage, t) {
     return t('supabaseErrors.emailNotConfirmed');
   } else if (errorMessage.includes('Email link is invalid or has expired')) {
     return t('supabaseErrors.emailLinkInvalidOrExpired');
+  } else if (errorMessage.includes('Email already registered')) {
+    return t('supabaseErrors.emailAlreadyRegistered');
   } else if (errorMessage.includes('Email not registered')) {
     return t('supabaseErrors.emailNotRegistered');
   } else if (errorMessage.includes('User not found')) {
@@ -443,6 +445,19 @@ export const useUserStore = defineStore('user', () => {
   async function updateUserEmail(newEmail, t) {
     loading.value = true;
     try {
+      // 1. 新しいメールアドレスが既に登録されていないかチェック
+      const { data: emailExists, error: rpcError } = await supabase.rpc('check_email_exists', { email_address: newEmail });
+
+      if (rpcError) {
+        console.error('RPCエラー (check_email_exists):', rpcError);
+        throw rpcError;
+      }
+
+      // 既に登録されているメールアドレスで、かつそれが現在のユーザーのメールアドレスではない場合
+      if (emailExists && newEmail !== profile.value?.email) {
+        return { success: false, error: mapSupabaseErrorMessage('Email already registered', t) };
+      }
+
       const { data, error } = await supabase.auth.updateUser({ email: newEmail });
       if (error) throw error;
       console.log('メールアドレス更新リクエスト成功:', data);

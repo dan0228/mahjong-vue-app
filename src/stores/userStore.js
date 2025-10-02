@@ -74,17 +74,7 @@ export const useUserStore = defineStore('user', () => {
           // 初回取得時にlocalStorageからデータ移行を試みる
           await migrateDataFromLocalStorage(data);
 
-          // 毎日無料おみくじ回数をリセットするロジック
-          const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD形式
-          if (profile.value.last_omikuji_draw_date !== today) {
-            profile.value.daily_free_omikuji_count = 3; // 3回にリセット
-            profile.value.last_omikuji_draw_date = today; // 日付を更新
-            // Supabaseにも更新をかける (showLoading: false でスピナーなし)
-            await updateUserProfile({
-              daily_free_omikuji_count: 3,
-              last_omikuji_draw_date: today
-            }, { showLoading: false });
-          }
+          
 
           // アプリ再起動時にゲームが進行中だった場合、連勝数をリセットし、猫コインを減らす
           if (profile.value.is_game_in_progress) {
@@ -343,6 +333,19 @@ export const useUserStore = defineStore('user', () => {
     await updateUserProfile({ is_game_in_progress: status }, { showLoading: false }); // スピナーなしで更新
   }
 
+  async function checkAndResetOmikujiCount() {
+    if (!profile.value) return;
+
+    const today = new Date().toISOString().slice(0, 10);
+    // last_omikuji_draw_date が今日の日付と異なる場合のみ更新
+    if (profile.value.last_omikuji_draw_date !== today) {
+      await updateUserProfile({
+        daily_free_omikuji_count: 3,
+        last_omikuji_draw_date: today
+      }, { showLoading: false });
+    }
+  }
+
   async function updateOmikujiDrawInfo(updates, options = { showLoading: true }) {
     if (!profile.value) return;
     await updateUserProfile(updates, options);
@@ -515,6 +518,7 @@ export const useUserStore = defineStore('user', () => {
     saveAchievedYaku,
     resetTemporaryData,
     setGameInProgress,
+    checkAndResetOmikujiCount, // 追加
     updateOmikujiDrawInfo,
     deleteUserData,
     showPenaltyPopup,

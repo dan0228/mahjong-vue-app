@@ -252,6 +252,9 @@ onMounted(async () => { // ★ async に変更
     await userStore.fetchUserProfile();
   }
 
+  // おみくじの無料回数をチェックしてリセット
+  await userStore.checkAndResetOmikujiCount();
+
   audioStore.setBgm('GB-JP-A02-2(Menu-Loop105).mp3');
 });
 

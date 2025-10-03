@@ -71,11 +71,6 @@ export const useUserStore = defineStore('user', () => {
           profile.value = { ...data, email: user.email }; // user.emailをprofileにマージ
           // Xアカウント関連のロジックは削除
 
-          // 初回取得時にlocalStorageからデータ移行を試みる
-          await migrateDataFromLocalStorage(data);
-
-          
-
           // アプリ再起動時にゲームが進行中だった場合、連勝数をリセットし、猫コインを減らす
           if (profile.value.is_game_in_progress) {
             // public.matchesテーブルにペナルティレコードを挿入
@@ -188,55 +183,6 @@ export const useUserStore = defineStore('user', () => {
       console.error('アバターのアップロードに失敗しました:', error.message);
     } finally {
       loading.value = false;
-    }
-  }
-
-  /**
-   * localStorageに古いデータが存在する場合、Supabaseに移行します。
-   * @param {Object} supabaseProfile - Supabaseから取得した現在のプロフィール
-   */
-  async function migrateDataFromLocalStorage(supabaseProfile) {
-    const updates = {};
-    let needsUpdate = false;
-
-    // 最大連勝数の移行
-    const localMaxWins = parseInt(localStorage.getItem('mahjongMaxConsecutiveWins') || '0');
-    if (localMaxWins > (supabaseProfile.max_win_streak || 0)) {
-      updates.max_win_streak = localMaxWins;
-      needsUpdate = true;
-    }
-
-    // 役達成状況の移行
-    const localYaku = JSON.parse(localStorage.getItem('mahjongYakuAchieved') || '{}');
-    // Supabaseのデータが空、またはlocalStorageのデータの方が新しい場合
-    if (Object.keys(localYaku).length > Object.keys(supabaseProfile.yaku_achievements || {}).length) {
-      updates.yaku_achievements = localYaku;
-      needsUpdate = true;
-    }
-
-    // おみくじ解放状況の移行
-    const localSayings = JSON.parse(localStorage.getItem('mahjongRevealedSayings') || '{}');
-    // Supabaseのデータが空、またはlocalStorageのデータの方が新しい場合
-    if (Object.keys(localSayings).length > Object.keys(supabaseProfile.revealed_sayings || {}).length) {
-      updates.revealed_sayings = localSayings;
-      needsUpdate = true;
-    }
-
-    // 猫コインの移行
-    const localCatCoins = parseInt(localStorage.getItem('mahjongCatCoins') || '0');
-    if (localCatCoins > (supabaseProfile.cat_coins || 0)) {
-      updates.cat_coins = localCatCoins;
-      needsUpdate = true;
-    }
-
-    if (needsUpdate) {
-      console.log('ローカルストレージからデータを移行します...', updates);
-      await updateUserProfile(updates);
-      // 移行後、localStorageのデータをクリアすることも検討
-      localStorage.removeItem('mahjongMaxConsecutiveWins');
-      localStorage.removeItem('mahjongYakuAchieved');
-      localStorage.removeItem('mahjongRevealedSayings');
-      localStorage.removeItem('mahjongCatCoins');
     }
   }
 

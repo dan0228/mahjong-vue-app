@@ -568,6 +568,14 @@
       }
     }
   },
+  "gameModeSelection": {
+    "title": "Select Game Rule",
+    "description": "Which rule do you want to play with?",
+    "classic": "Classic",
+    "classicDescription": "Standard rules where you compete for score in one half-game.",
+    "stock": "Stock",
+    "stockDescription": "Details to be announced later! Stay tuned!"
+  },
   "supabaseErrors": {
     "userAlreadyRegistered": "This email address is already registered.",
     "invalidOtp": "Invalid or expired OTP. Please try again.",

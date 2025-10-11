@@ -117,6 +117,7 @@ export const useGameStore = defineStore('game', {
     // 必ずしも state に持つ必要はないが、デバッグやUI表示用に持つことも可能。
     // ここでは handleAgari で直接判定する方針とする。
     gameMode: 'allManual', // 'allManual', 'vsCPU', 'online'
+    ruleMode: 'classic', // 'classic', 'stock'
     shouldAdvanceRound: false, // 次の局に進むかどうかのフラグ
     nextDealerIndex: null,     // 次の局の親のインデックス
     shouldEndGameAfterRound: false, // この局の後にゲームを終了するか
@@ -829,6 +830,14 @@ export const useGameStore = defineStore('game', {
      */
     setGameMode(mode) {
       this.gameMode = mode; // 'allManual', 'vsCPU', 'online'
+    },
+
+    /**
+     * 対戦ルールを設定します。
+     * @param {string} mode - 設定するルールモード ('classic', 'stock')。
+     */
+    setRuleMode(mode) {
+      this.ruleMode = mode;
     },
     /**
      * リーチアニメーションの状態を設定し、一定時間後に打牌選択フェーズへ移行します。
@@ -1860,6 +1869,7 @@ ${roundEndMessage}`;
       this.dealerIndex = null; // 親インデックスもリセット
       this.currentTurnPlayerId = null; // または初期プレイヤーに設定
       this.gamePhase = GAME_PHASES.WAITING_TO_START; // 初期フェーズに戻す
+      this.ruleMode = 'classic'; // ルールモードをリセット
       this.showResultPopup = false; // ポップアップ関連もリセット
       this.resultMessage = '';
       this.showFinalResultPopup = false; // 最終リザルトポップアップもリセット

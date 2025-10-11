@@ -568,6 +568,14 @@
       }
     }
   },
+  "gameModeSelection": {
+    "title": "対戦ルール選択",
+    "description": "どちらのルールで遊びますか？",
+    "classic": "クラシック",
+    "classicDescription": "半荘一回でスコアを競う通常のルールです。",
+    "stock": "ストック",
+    "stockDescription": "詳細は後日公開！お楽しみに！"
+  },
   "supabaseErrors": {
     "userAlreadyRegistered": "このメールアドレスは既に登録されています。",
     "invalidOtp": "OTPが無効または期限切れです。再度お試しください。",

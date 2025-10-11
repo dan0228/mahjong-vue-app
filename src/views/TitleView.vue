@@ -54,7 +54,7 @@
       <nav class="menu">
         <ul>
           <li>
-            <button @click="startGame('vsCPU')">{{ $t('titleView.menu.catAiMatch') }}</button>
+            <button @click="showGameModeSelectionPopup = true">{{ $t('titleView.menu.catAiMatch') }}</button>
           </li>
           <li>
             <button @click="goToShrine">{{ $t('titleView.menu.shrine') }}</button>
@@ -78,6 +78,7 @@
       <YakuListPopup v-if="showYakuListPopup" @close="showYakuListPopup = false" />
       <HowToPlayPopup v-if="showHowToPlayPopup" @close="showHowToPlayPopup = false" />
       <SettingsPopup :show="showSettingsPopup" @close="showSettingsPopup = false" />
+      <GameModeSelectionPopup v-if="showGameModeSelectionPopup" @close="showGameModeSelectionPopup = false" @mode-selected="onModeSelected" />
       <div class="credit">BGM by OtoLogic(CC BY 4.0)</div>
       <div class="x-account">
         <a href="https://x.com/danAllGreen" target="_blank" rel="noopener noreferrer">{{ $t('titleView.officialX') }}</a>
@@ -104,6 +105,7 @@ import RulePopup from '@/components/RulePopup.vue';
 import YakuListPopup from '@/components/YakuListPopup.vue';
 import HowToPlayPopup from '@/components/HowToPlayPopup.vue';
 import SettingsPopup from '@/components/SettingsPopup.vue'; // ★追加
+import GameModeSelectionPopup from '@/components/GameModeSelectionPopup.vue'; // ★追加
 import { useViewportHeight } from '@/composables/useViewportHeight';
 
 // --- リアクティブな状態とストア ---
@@ -118,6 +120,7 @@ const showRulesPopup = ref(false);
 const showYakuListPopup = ref(false);
 const showHowToPlayPopup = ref(false);
 const showSettingsPopup = ref(false); // ★追加：設定ポップアップの表示状態
+const showGameModeSelectionPopup = ref(false); // ★追加：ゲームモード選択ポップアップの表示状態
 
 // --- 画面のスケーリング処理 ---
 const DESIGN_WIDTH = 360; // デザイン基準の幅
@@ -185,6 +188,16 @@ function goToShrine() {
 function goToLeaderboard() {
   router.push('/leaderboard');
 }
+
+/**
+ * ゲームモードが選択されたときに呼び出されます。
+ * @param {string} mode - 選択されたゲームモード ('classic'または'stock')
+ */
+const onModeSelected = (mode) => {
+  gameStore.setRuleMode(mode); // 選択されたルールモードをストアに設定
+  showGameModeSelectionPopup.value = false; // ポップアップを閉じる
+  startGame('vsCPU'); // 既存のstartGame関数を呼び出し、CPU対戦を開始
+};
 </script>
 
 <style scoped>

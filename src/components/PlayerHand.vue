@@ -21,12 +21,19 @@
                     <img :src="getTileImageUrl(isMyHand ? drawnTileDisplay : null)" :alt="isMyHand ? tileToString(drawnTileDisplay) : '裏向きの牌'" />
         </div>
       </div>
+      <!-- ストック牌の表示エリア -->
+      <div v-if="stockedTileDisplay" class="stocked-tile-area player-hand">
+        <div class="tile">
+          <img :src="getTileImageUrl(isMyHand ? stockedTileDisplay : null)" :alt="isMyHand ? tileToString(stockedTileDisplay) : '裏向きの牌'" />
+        </div>
+      </div>
     </div>
 </template>
 
 <script setup>
   import { defineProps, defineEmits, computed } from 'vue';
   import { useGameStore } from '@/stores/gameStore'; // gameStore をインポート
+  import { GAME_PHASES } from '@/stores/gameStore'; // GAME_PHASES をインポート
   import { getTileImageUrl, tileToString } from '@/utils/tileUtils'; // 共通ユーティリティをインポート
 
   /**
@@ -46,6 +53,10 @@
       type: Object,
       default: null
     },
+    stockedTileDisplay: {
+      type: Object,
+      default: null
+    },
     // 打牌可能な状態か (自分のターンで、ツモ後など)
     canDiscard: {
       type: Boolean,
@@ -57,7 +68,7 @@
     }
   });
 
-  const emit = defineEmits(['tile-selected']); // 'tile-selected'イベントを定義
+  const emit = defineEmits(['tile-selected', 'tile-to-stock-selected']); // 'tile-selected'イベントを定義
   const gameStore = useGameStore(); // gameStore を使用
 
   /**
@@ -76,6 +87,11 @@
    * @returns {boolean} 牌が選択可能であればtrue。
    */
   function canSelectTile(tile, isFromDrawnTile) {
+    // ストックする牌の選択フェーズの場合、手牌とツモ牌の全てが選択可能
+    if (gameStore.gamePhase === GAME_PHASES.AWAITING_STOCK_TILE_SELECTION) {
+      return props.isMyHand && !!tile; // 自分の手牌で、かつ牌が存在すれば選択可能
+    }
+
     // 自分の手牌でなく、打牌可能状態でもなく、牌がなければ選択不可
     if (!props.isMyHand || !props.canDiscard || !tile) return false;
 
@@ -106,7 +122,11 @@
    */
   function selectTile(tile, isFromDrawnTile) {
     if (canSelectTile(tile, isFromDrawnTile)) { // canSelectTile で選択可否を判定
-      emit('tile-selected', { tile, isFromDrawnTile });
+      if (gameStore.gamePhase === GAME_PHASES.AWAITING_STOCK_TILE_SELECTION) {
+        emit('tile-to-stock-selected', { tile, isFromDrawnTile });
+      } else {
+        emit('tile-selected', { tile, isFromDrawnTile });
+      }
     }
   }
 
@@ -219,6 +239,32 @@
     bottom: 100%; /* 手牌エリアの上に配置 */
     left: 0;
     margin-bottom: 7px; /* 手牌エリアとの間に下マージンを設定 (column-reverseのため) */
+  }
+
+  /* ストック牌エリアのスタイル */
+  .stocked-tile-area {
+    display: flex;
+    position: absolute;
+  }
+  .position-bottom .stocked-tile-area {
+    right: 100%; /* 手牌エリアの左側に配置 */
+    top: 0;
+    margin-right: 10px; /* 手牌との間に左マージンを設定 */
+  }
+  .position-top .stocked-tile-area {
+    left: 100%; /* 手牌エリアの右側に配置 */
+    top: 0;
+    margin-left: 7px; /* 手牌との間に右マージンを設定 */
+  }
+  .position-left .stocked-tile-area {
+    bottom: 100%; /* 手牌エリアの上に配置 */
+    left: 0;
+    margin-bottom: 7px; /* 手牌エリアとの間に下マージンを設定 */
+  }
+  .position-right .stocked-tile-area {
+    top: 100%; /* 手牌エリアの下に配置 */
+    left: 0;
+    margin-top: 7px; /* 手牌エリアとの間に上マージンを設定 */
   }
 
   .tile {

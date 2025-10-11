@@ -418,7 +418,9 @@
     "kanButtonImg": "/assets/images/button/kan_button_en.png",
     "ronButtonImg": "/assets/images/button/ron_button_en.png",
     "ponButtonImg": "/assets/images/button/pon_button_en.png",
-    "skipButtonImg": "/assets/images/button/skip_button_en.png"
+    "skipButtonImg": "/assets/images/button/skip_button_en.png",
+    "stock": "Stock",
+    "stockButtonImg": "/assets/images/button/stock_button_en.png"
   },
   "centerTableInfo": {
     "infoBottomImg": "/assets/images/info/info_bottom_en.png",
@@ -593,5 +595,11 @@
     "message2": "Win Streak → 0",
     "message3": "You lost 390 Cat Coins.",
     "closeButton": "Close"
+  },
+  "stockDecisionPopup": {
+    "title": "Decision",
+    "description": "What do you want to do?",
+    "drawFromWall": "Draw from Wall",
+    "useStockedTile": "Use Stocked Tile"
   }
 }

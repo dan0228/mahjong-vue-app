@@ -418,7 +418,9 @@
     "kanButtonImg": "/assets/images/button/kan_button.png",
     "ronButtonImg": "/assets/images/button/ron_button.png",
     "ponButtonImg": "/assets/images/button/pon_button.png",
-    "skipButtonImg": "/assets/images/button/skip_button.png"
+    "skipButtonImg": "/assets/images/button/skip_button.png",
+    "stock": "ストック",
+    "stockButtonImg": "/assets/images/button/stock_button.png"
   },
   "centerTableInfo": {
     "infoBottomImg": "/assets/images/info/info_bottom.png",
@@ -593,6 +595,12 @@
     "message2": "連勝数 → 0",
     "message3": "猫コインが-390されました。",
     "closeButton": "閉じる"
+  },
+  "stockDecisionPopup": {
+    "title": "選択",
+    "description": "どうしますか？",
+    "drawFromWall": "山からツモる",
+    "useStockedTile": "ストック牌を使う"
   }
 }
 

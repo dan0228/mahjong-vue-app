@@ -5,9 +5,11 @@
         :player="player"
         :is-my-hand="isMyHand"
         :drawn-tile-display="drawnTileDisplay"
+        :stocked-tile-display="player.stockedTile"
         :can-discard="canDiscard"
         :position="position"
         @tile-selected="onTileSelected"
+        @tile-to-stock-selected="onTileToStockSelected"
       />
     </div>
     <div v-if="player.melds && player.melds.length > 0" class="melds-area">
@@ -33,6 +35,8 @@
         <img v-if="canDeclareRiichi && !player.isRiichi && !player.isDoubleRiichi" :src="t('playerArea.riichiButtonImg')" :alt="t('playerArea.riichi')" class="action-image-button" @click="emitAction('riichi')" />
         <img v-if="canDeclareAnkan" :src="t('playerArea.kanButtonImg')" :alt="t('playerArea.ankan')" class="action-image-button" @click="emitAction('ankan')" />
         <img v-if="canDeclareKakan && !player.isRiichi && !player.isDoubleRiichi" :src="t('playerArea.kanButtonImg')" :alt="t('playerArea.kakan')" class="action-image-button" @click="emitAction('kakan')" />
+        <!-- ストックアクション -->
+        <img v-if="canStockAction" :src="t('playerArea.stockButtonImg')" :alt="t('playerArea.stock')" class="action-image-button" @click="emitAction('stock')" />
         <!-- 他家の打牌/加槓に対するアクション -->
         <img v-if="canDeclareRon" :src="t('playerArea.ronButtonImg')" :alt="t('playerArea.ron')" class="action-image-button" @click="emitAction('ron')" />
         <img v-if="canDeclarePon && !player.isRiichi && !player.isDoubleRiichi" :src="t('playerArea.ponButtonImg')" :alt="t('playerArea.pon')" class="action-image-button" @click="emitAction('pon')" />
@@ -85,6 +89,14 @@ const isCurrentTurn = computed(() => gameStore.currentTurnPlayerId === props.pla
  */
 function onTileSelected(payload) {
   emit('tile-selected', payload);
+}
+
+/**
+ * PlayerHandコンポーネントからストックする牌選択イベントを受け取り、gameStoreのアクションを呼び出します。
+ * @param {Object} payload - 選択された牌の情報を含むペイロード。
+ */
+function onTileToStockSelected(payload) {
+  gameStore.executeStock(props.player.id, payload.tile.id, payload.isFromDrawnTile);
 }
 
 const playerEligibility = computed(() => gameStore.playerActionEligibility[props.player.id] || {}); // プレイヤーのアクション資格
@@ -149,6 +161,25 @@ const canDeclareMinkan = computed(() => !actionInProgress.value && gameStore.act
 const showSkipButton = computed(() => !actionInProgress.value && gameStore.activeActionPlayerId === props.player.id);
 
 /**
+ * ストックアクションが可能かどうかを判定します。
+ */
+const canStockAction = computed(() => {
+  const player = props.player;
+  return (
+    gameStore.ruleMode === 'stock' && // ストックルールが有効
+    props.isMyHand && // 自分の手番
+    isCurrentTurn.value && // 自分のターンであること
+    gameStore.gamePhase === GAME_PHASES.AWAITING_DISCARD && // 打牌待ちフェーズ
+    !player.stockedTile && // ストック牌をまだ持っていない
+    !player.isUsingStockedTile && // ストック牌使用直後ではない
+    player.melds.length === 0 && // 鳴いていない
+    !player.isRiichi && // リーチ中でない
+    !player.isDoubleRiichi && // ダブルリーチ中でない
+    !actionInProgress.value // 他のアクションが進行中でない
+  );
+});
+
+/**
  * プレイヤーがアクションを宣言した時にイベントを発行します。
  * @param {string} actionType - 宣言されたアクションのタイプ（例: 'tsumoAgari', 'riichi', 'pon'）。
  */
@@ -180,6 +211,11 @@ function emitAction(actionType) {
         } else {
             // 選択肢が複数ある場合はUIでの選択が必要
         }
+    } else if (actionType === 'stock') {
+        // ストックアクションの場合、牌の選択はPlayerHandで行うため、ここではフェーズ変更のみ
+        gameStore.gamePhase = GAME_PHASES.AWAITING_STOCK_TILE_SELECTION;
+        actionInProgress.value = false; // 牌選択フェーズに移行するので、ボタンは再度有効にする
+        return; // emitActionは行わない
     }
     emit('action-declared', { playerId: props.player.id, actionType, tile: tileData });
 }

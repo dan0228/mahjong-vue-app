@@ -297,7 +297,10 @@ export function checkCanMinkan(hand, discardedTile) {
  * @param {Object} drawnTile - ツモってきた牌。
  * @returns {Array<Object>} 暗槓可能な牌の配列。なければ空配列。
  */
-export function checkCanAnkan(hand, drawnTile) {
+export function checkCanAnkan(hand, drawnTile, gameContext = {}) {
+  if (gameContext.isUsingStockedTile) {
+    return [];
+  }
   const ankanableTiles = [];
   const fullHand = drawnTile ? [...hand, drawnTile] : [...hand];
   const counts = {};
@@ -324,7 +327,10 @@ export function checkCanAnkan(hand, drawnTile) {
  * @param {Object|null} drawnTile - ツモってきた牌。
  * @returns {Array<Object>} 加槓可能な牌の配列。なければ空配列。
  */
-export function checkCanKakan(hand, melds, drawnTile) {
+export function checkCanKakan(hand, melds, drawnTile, gameContext = {}) {
+    if (gameContext.isUsingStockedTile) {
+        return [];
+    }
     const kakanableTiles = [];
     if (!melds || melds.length === 0) {
         return kakanableTiles;
@@ -1625,6 +1631,11 @@ export function checkYonhaiWin(currentHandWithWinTile, winTile, isTsumo, gameCon
   const melds = gameContext.melds || [];
   const isParent = gameContext.isParent || false;
   let basicWinInfo = { isWin: false, mentsuType: null, jantou: null, mentsu: null };
+
+  // ストック牌使用時のツモ和了制限
+  if (gameContext.isUsingStockedTile && isTsumo) {
+    return { isWin: false, yaku: [], score: 0, fans: 0, isYakuman: false, yakumanPower: 0 };
+  }
 
   // --- 鳴き（ポン、カン）がある場合の和了形判定 ---
   if (melds.length > 0) {

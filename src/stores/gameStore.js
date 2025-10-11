@@ -23,7 +23,9 @@ export const GAME_PHASES = {
   RIICHI_ANIMATION: 'riichiAnimation', // リーチアニメーション中
   AWAITING_RIICHI_DISCARD: 'awaitingRiichiDiscard', // リーチ宣言後の打牌選択待ち
   ROUND_END: 'roundEnd', // 局終了 (結果表示待ち)
-  GAME_OVER: 'gameOver' // ゲーム終了
+  GAME_OVER: 'gameOver', // ゲーム終了
+  AWAITING_STOCK_DECISION: 'awaitingStockDecision', // ストック牌使用の選択待ち
+  AWAITING_STOCK_TILE_SELECTION: 'awaitingStockTileSelection' // ストックする牌の選択待ち
   // 必要に応じて他のフェーズを追加
 };
 
@@ -49,7 +51,7 @@ function getRankedPlayers(players) {
 export const useGameStore = defineStore('game', {
   state: () => ({
     players: [
-      { id: 'player1', name: localStorage.getItem('mahjongUsername') || 'あなた', hand: [], discards: [], melds: [], isDealer: false, score: 50000, seatWind: null },
+      { id: 'player1', name: localStorage.getItem('mahjongUsername') || 'あなた', hand: [], discards: [], melds: [], isDealer: false, score: 50000, seatWind: null, stockedTile: null, isUsingStockedTile: false },
     ],
     wall: [], // 山牌
     deadWall: [], // 王牌 (嶺上牌、ドラ表示牌など)
@@ -182,7 +184,9 @@ export const useGameStore = defineStore('game', {
           melds: [],
           isDealer: false,
           score: 50000,
-          seatWind: null
+          seatWind: null,
+          stockedTile: null, // ストック牌を追加
+          isUsingStockedTile: false // ストック牌使用中フラグを追加
         }));
 
         // 人間プレイヤーの情報をuserStoreから更新
@@ -311,6 +315,17 @@ export const useGameStore = defineStore('game', {
       if (this.wall.length > 0 &&
           this.currentTurnPlayerId &&
           this.gamePhase === GAME_PHASES.PLAYER_TURN) {
+
+        // --- ストックルール適用時 --- //
+        if (this.ruleMode === 'stock') {
+          const currentPlayer = this.players.find(p => p.id === this.currentTurnPlayerId);
+          if (currentPlayer && currentPlayer.stockedTile) {
+            // ストック牌がある場合、ツモるかストック牌を使うか選択を促す
+            this.gamePhase = GAME_PHASES.AWAITING_STOCK_DECISION;
+            return; // ここで処理を中断し、プレイヤーの選択を待つ
+          }
+        }
+
         const wallSizeBeforeDraw = this.wall.length;
         // 現在のプレイヤーのターン数をインクリメント
         if (this.playerTurnCount[this.currentTurnPlayerId] !== undefined && !this.rinshanKaihouChance) {
@@ -406,9 +421,9 @@ export const useGameStore = defineStore('game', {
 
             // 海底牌では暗槓・加槓はできない
             if (this.wall.length > 0) {
-              const ankanOptions = mahjongLogic.checkCanAnkan(currentPlayer.hand, this.drawnTile);
+              const ankanOptions = mahjongLogic.checkCanAnkan(currentPlayer.hand, this.drawnTile, this.createGameContextForPlayer(currentPlayer, false));
               this.canDeclareAnkan[currentPlayer.id] = ankanOptions.length > 0 ? ankanOptions : null;
-              const kakanOptions = mahjongLogic.checkCanKakan(currentPlayer.hand, currentPlayer.melds, this.drawnTile);
+              const kakanOptions = mahjongLogic.checkCanKakan(currentPlayer.hand, currentPlayer.melds, this.drawnTile, this.createGameContextForPlayer(currentPlayer, false));
               this.canDeclareKakan[currentPlayer.id] = kakanOptions.length > 0 ? kakanOptions : null;
             }
             this.updateFuriTenState(currentPlayer.id);
@@ -447,17 +462,203 @@ export const useGameStore = defineStore('game', {
         }
       }
     },
+
+    /**
+     * ストック牌を使用するアクション。
+     * @param {string} playerId - ストック牌を使用するプレイヤーのID。
+     */
+    useStockedTile(playerId) {
+      const currentPlayer = this.players.find(p => p.id === playerId);
+      if (!currentPlayer || !currentPlayer.stockedTile || this.gamePhase !== GAME_PHASES.AWAITING_STOCK_DECISION) {
+        console.warn("Cannot use stocked tile now. Conditions not met.");
+        return;
+      }
+
+      this.drawnTile = currentPlayer.stockedTile; // ストック牌をツモ牌として扱う
+      currentPlayer.stockedTile = null; // ストックを空にする
+      currentPlayer.isUsingStockedTile = true; // ストック牌使用フラグを立てる
+
+      // ターン数をインクリメント
+      if (this.playerTurnCount[playerId] !== undefined && !this.rinshanKaihouChance) {
+        this.playerTurnCount[playerId]++;
+      }
+
+      this.gamePhase = GAME_PHASES.AWAITING_DISCARD; // 打牌待ちフェーズへ移行
+      this.lastActionPlayerId = playerId; // アクションを行ったプレイヤーを更新
+
+      // ツモったので、他家のロン宣言は不可にする
+      this.players.forEach(p => this.canDeclareRon[p.id] = false);
+      this.players.forEach(p => this.canDeclarePon[p.id] = null);
+      this.players.forEach(p => this.canDeclareMinkan[p.id] = null);
+      if (this.isChankanChance && this.lastActionPlayerId === playerId) {
+          this.isChankanChance = false;
+      }
+
+      // 自分のツモ番が来たので、同巡内フリテンは解除
+      this.isDoujunFuriTen[playerId] = false;
+
+      // ストック牌使用時はツモ和了とカンは不可
+      this.playerActionEligibility[playerId] = { canTsumoAgari: false, canAnkan: null, canKakan: null };
+
+      // AIプレイヤーの場合、自動で打牌
+      if (this.gameMode === 'vsCPU' && playerId !== 'player1') {
+        setTimeout(() => {
+          if (this.currentTurnPlayerId === playerId && this.drawnTile) {
+            this.discardTile(playerId, this.drawnTile.id, true);
+          }
+        }, 500); // 少し待ってから打牌
+      }
+    },
+
+    /**
+     * 山から牌をツモるアクション（ストック牌がある場合の選択肢）。
+     * @param {string} playerId - 牌をツモるプレイヤーのID。
+     */
+    drawFromWall(playerId) {
+      const currentPlayer = this.players.find(p => p.id === playerId);
+      if (!currentPlayer || this.gamePhase !== GAME_PHASES.AWAITING_STOCK_DECISION) {
+        console.warn("Cannot draw from wall now. Conditions not met.");
+        return;
+      }
+
+      currentPlayer.isUsingStockedTile = false; // ストック牌使用フラグをリセット
+
+      // 既存のdrawTileロジックのコア部分を再利用
+      const wallSizeBeforeDraw = this.wall.length;
+      if (this.playerTurnCount[playerId] !== undefined && !this.rinshanKaihouChance) {
+        this.playerTurnCount[playerId]++;
+      }
+      const tile = this.wall.shift(); // 山の先頭からツモる
+      this.drawnTile = tile; // ツモった牌をセット
+      this.gamePhase = GAME_PHASES.AWAITING_DISCARD; // プレイヤーの打牌待ち
+      this.lastActionPlayerId = playerId; // ツモもアクションとみなす
+
+      // ツモったので、他家のロン宣言は不可にする
+      this.players.forEach(p => this.canDeclareRon[p.id] = false);
+      this.players.forEach(p => this.canDeclarePon[p.id] = null);
+      this.players.forEach(p => this.canDeclareMinkan[p.id] = null);
+      if (this.isChankanChance && this.lastActionPlayerId === playerId) {
+          this.isChankanChance = false;
+      }
+
+      // 自分のツモ番が来たので、同巡内フリテンは解除
+      this.isDoujunFuriTen[playerId] = false;
+
+      // ツモ和了可能か（軽量チェック）
+      this.playerActionEligibility[playerId] = { 
+        canTsumoAgari: mahjongLogic.canWinBasicShape(currentPlayer.hand, this.drawnTile, currentPlayer.melds)
+      };
+
+      // --- リーチ後の処理 ---
+      if (currentPlayer.isRiichi || currentPlayer.isDoubleRiichi) {
+        // リーチ中はツモ和了と暗槓のみ可能
+        const ankanOptions = mahjongLogic.checkCanAnkan(currentPlayer.hand, this.drawnTile);
+        this.playerActionEligibility[playerId].canAnkan = ankanOptions.length > 0 ? ankanOptions : null;
+        // リーチ中は再リーチ、ポン、明槓、加槓は不可
+        this.playerActionEligibility[playerId].canRiichi = false;
+        this.playerActionEligibility[playerId].canPon = null;
+        this.playerActionEligibility[playerId].canMinkan = null;
+        this.playerActionEligibility[playerId].canKakan = null;
+
+        // ツモ和了可能か詳細チェック
+        const gameContextForTsumo = this.createGameContextForPlayer(currentPlayer, true);
+        const tsumoWinResult = mahjongLogic.checkYonhaiWin([...currentPlayer.hand, this.drawnTile], this.drawnTile, true, gameContextForTsumo);
+        this.playerActionEligibility[playerId].canTsumoAgari = tsumoWinResult.isWin;
+
+        // ツモ和了可能な場合
+        // AIプレイヤーの場合、自動でツモ和了またはツモ切り
+        if (this.gameMode === 'vsCPU' && playerId !== 'player1') {
+            if (this.playerActionEligibility[playerId].canTsumoAgari) {
+                this.handleAgari(playerId, this.drawnTile, true); // ツモ和了
+            } else {
+                // ツモ和了できない場合は、自動でツモ切り
+                setTimeout(() => {
+                    if (this.currentTurnPlayerId === playerId && this.drawnTile) {
+                        this.discardTile(playerId, this.drawnTile.id, true);
+                    }
+                }, 500); // 少し待ってから打牌
+            }
+        } else { // 人間プレイヤーの場合 (player1)
+            // UIにツモボタンを表示するため、ここでは何もしない
+            // ツモ和了できない場合は、自動でツモ切り
+            if (!this.playerActionEligibility[playerId].canTsumoAgari) {
+                setTimeout(() => {
+                    if (this.currentTurnPlayerId === playerId && this.drawnTile) {
+                        this.discardTile(playerId, this.drawnTile.id, true);
+                    }
+                }, 500); // 少し待ってから打牌
+            }
+        }
+      } else { // --- リーチ中でない場合（通常のツモ処理） ---
+        // 通常のツモ処理
+        let canRiichi = false;
+        // リーチは、残り山牌が4枚以上あり、持ち点が1000点以上の場合のみ可能
+        if (this.wall.length > 3 && currentPlayer.melds.every(m => m.type === 'ankan') && currentPlayer.score >= 1000) {
+          const potentialHandAfterDraw = [...currentPlayer.hand, this.drawnTile];
+          for (const tileToDiscard of potentialHandAfterDraw) {
+            const tempHand = [];
+            let discarded = false;
+            for (const tile of potentialHandAfterDraw) {
+              if (tile.id === tileToDiscard.id && !discarded) {
+                discarded = true;
+              } else {
+                tempHand.push(tile);
+              }
+            }
+            const tenpaiResult = mahjongLogic.checkYonhaiTenpai(tempHand, this.createGameContextForPlayer(currentPlayer, false));
+            if (tenpaiResult.isTenpai && tenpaiResult.waits.length > 0) {
+              canRiichi = true;
+              break;
+            }
+          }
+        }
+        this.playerActionEligibility[playerId].canRiichi = canRiichi;
+
+        // 海底牌では暗槓・加槓はできない
+        if (this.wall.length > 0) {
+          const ankanOptions = mahjongLogic.checkCanAnkan(currentPlayer.hand, this.drawnTile, this.createGameContextForPlayer(currentPlayer, false));
+          this.canDeclareAnkan[playerId] = ankanOptions.length > 0 ? ankanOptions : null;
+          const kakanOptions = mahjongLogic.checkCanKakan(currentPlayer.hand, currentPlayer.melds, this.drawnTile, this.createGameContextForPlayer(currentPlayer, false));
+          this.canDeclareKakan[playerId] = kakanOptions.length > 0 ? kakanOptions : null;
+        }
+        this.updateFuriTenState(playerId);
+
+        // AI対戦モードで、かつ現在のプレイヤーがAIの場合、自動でアクションを決定
+        if (this.gameMode === 'vsCPU' && playerId !== 'player1') {
+          let actionTaken = false;
+
+          // 1. リーチ可能なら8%の確率でリーチを試みる
+          if (this.playerActionEligibility[playerId].canRiichi && Math.random() < 0.08) {
+            this.declareRiichi(playerId);
+            actionTaken = true;
+          }
+
+          if (!actionTaken) {
+            // リーチを試みなかった、またはリーチできなかった場合、他のアクションをチェック
+            if (this.canDeclareAnkan[playerId] && Math.random() < 1.0) { // 2. 暗槓可能なら100%暗槓
+              this.declareAnkan(playerId, this.canDeclareAnkan[playerId][0]);
+            } else if (this.canDeclareKakan[playerId] && Math.random() < 1.0) { // 3. 加槓可能なら100%加槓
+              this.declareKakan(playerId, this.canDeclareKakan[playerId][0]);
+            } else {
+              // どれもできない場合は打牌
+              this.handleAiDiscard();
+            }
+          }
+        }
+      }
+    },
     /**
      * プレイヤーが牌を捨てるアクション。
      * リーチ後の打牌、通常打牌、各種状態更新、他家のアクションチェックを行います。
      * @param {string} playerId - 牌を捨てるプレイヤーのID。
      * @param {string} tileIdToDiscard - 捨てられる牌のID。
      * @param {boolean} isFromDrawnTile - ツモった牌を捨てる場合はtrue、手牌から捨てる場合はfalse。
+     * @param {boolean} isStocking - ストックアクションの場合はtrue。
      */
-    discardTile(playerId, tileIdToDiscard, isFromDrawnTile) {
+    discardTile(playerId, tileIdToDiscard, isFromDrawnTile, isStocking = false) {
       const audioStore = useAudioStore();
       // 効果音が有効なら打牌音を再生
-      if (audioStore.isSeEnabled) {
+      if (audioStore.isSeEnabled && !isStocking) {
         const audio = new Audio('/assets/sounds/打牌.mp3');
         audio.volume = audioStore.volume;
         audio.play();
@@ -467,7 +668,8 @@ export const useGameStore = defineStore('game', {
       setTimeout(() => {
         const player = this.players.find(p => p.id === playerId);
         // プレイヤーが存在しない、または現在のゲームフェーズで打牌が許可されていない場合は処理を中断
-        if (!player || (this.gamePhase !== GAME_PHASES.AWAITING_DISCARD && this.gamePhase !== GAME_PHASES.AWAITING_RIICHI_DISCARD)) {
+        // ストックアクションの場合はフェーズチェックをバイパス
+        if (!player || (!isStocking && this.gamePhase !== GAME_PHASES.AWAITING_DISCARD && this.gamePhase !== GAME_PHASES.AWAITING_RIICHI_DISCARD)) {
           console.warn('gameStore: Cannot discard tile now. Conditions not met.', { playerId: player?.id, phase: this.gamePhase, isFromDrawnTile, drawnTile: this.drawnTile });
           return;
         }
@@ -536,7 +738,16 @@ export const useGameStore = defineStore('game', {
 
         // 実際に捨て牌をプレイヤーの捨て牌リストに追加
         if (discardedTileActual) {
-          player.discards = [...player.discards, discardedTileActual];
+          if (isStocking) {
+            player.stockedTile = discardedTileActual; // ストック牌として保管
+            // ストックアクションなので、捨て牌リストには追加しない
+            // 他家のアクションチェックも不要
+            this.gamePhase = GAME_PHASES.PLAYER_TURN; // 次のプレイヤーのターンへ
+            this.moveToNextPlayer();
+            return; // 早期終了
+          } else {
+            player.discards = [...player.discards, discardedTileActual];
+          }
         } else {
           console.error("Discard failed: discardedTileActual is undefined. Cannot update discards.");
           return; // 捨て牌が確定しなかったので処理を中断
@@ -558,6 +769,9 @@ export const useGameStore = defineStore('game', {
 
         // 手牌が変わったのでフリテン状態を更新
         this.updateFuriTenState(player.id);
+
+        // ストック牌使用フラグをリリセット
+        player.isUsingStockedTile = false;
 
         this.turnCount++; // 総ターン数をインクリメント
         this.lastActionPlayerId = player.id; // 最後にアクションを行ったプレイヤーを更新
@@ -612,6 +826,38 @@ export const useGameStore = defineStore('game', {
         }
       }, 100);
     },
+
+    /**
+     * プレイヤーが牌をストックするアクション。
+     * @param {string} playerId - 牌をストックするプレイヤーのID。
+     * @param {string} tileIdToStock - ストックする牌のID。
+     * @param {boolean} isFromDrawnTile - ツモった牌をストックする場合はtrue、手牌からストックする場合はfalse。
+     */
+    executeStock(playerId, tileIdToStock, isFromDrawnTile) {
+      const player = this.players.find(p => p.id === playerId);
+      if (!player) {
+        console.error("Stock failed: Player not found.");
+        return;
+      }
+
+      // ストックアクションの制限チェック
+      if (player.stockedTile) {
+        console.warn("Stock failed: Player already has a stocked tile.");
+        return;
+      }
+      if (player.melds.length > 0) {
+        console.warn("Stock failed: Player has melds.");
+        return;
+      }
+      if (player.isRiichi || player.isDoubleRiichi) {
+        console.warn("Stock failed: Player is in Riichi.");
+        return;
+      }
+
+      // discardTileをisStocking=trueで呼び出す
+      this.discardTile(playerId, tileIdToStock, isFromDrawnTile, true);
+    },
+
     /**
      * 現在のターンプレイヤーから次のプレイヤーへターンを移行します。
      * 各種アクションフラグをリセットし、次のプレイヤーのツモ処理を呼び出します。
@@ -1857,6 +2103,8 @@ ${roundEndMessage}`;
         player.isRiichi = false;
         player.isDoubleRiichi = false;
         player.isDeclaringRiichi = false;
+        player.stockedTile = null; // ストック牌をリセット
+        player.isUsingStockedTile = false; // ストック牌使用中フラグをリセット
         this.isIppatsuChance[player.id] = false;
       });
 
@@ -1869,7 +2117,6 @@ ${roundEndMessage}`;
       this.dealerIndex = null; // 親インデックスもリセット
       this.currentTurnPlayerId = null; // または初期プレイヤーに設定
       this.gamePhase = GAME_PHASES.WAITING_TO_START; // 初期フェーズに戻す
-      this.ruleMode = 'classic'; // ルールモードをリセット
       this.showResultPopup = false; // ポップアップ関連もリセット
       this.resultMessage = '';
       this.showFinalResultPopup = false; // 最終リザルトポップアップもリセット
@@ -1973,7 +2220,8 @@ ${roundEndMessage}`;
           melds: player.melds, // プレイヤーの副露情報
           isParent: player.isDealer, // 親かどうかのフラグ
           remainingTilesCount: this.wall.length, // 残り山牌の数
-          currentPlayerTurnCount: this.playerTurnCount[player.id] || 0 // 現在のプレイヤーのツモ回数を追加
+          currentPlayerTurnCount: this.playerTurnCount[player.id] || 0, // 現在のプレイヤーのツモ回数を追加
+          isUsingStockedTile: player.isUsingStockedTile // ストック牌使用中フラグを追加
       };
     },
     /**

@@ -10,7 +10,7 @@
           :class="getTileClasses(tile, false)"
           @click="selectTile(tile, false)"
         >
-          <img :src="getTileImageUrl(isMyHand ? tile : null)" :alt="isMyHand ? tileToString(tile) : '裏向きの牌'" />
+          <img :src="getTileImageUrl(isMyHand || tile.isPublic ? tile : null)" :alt="isMyHand ? tileToString(tile) : '裏向きの牌'" />
         </div>
       </div>
       <div v-if="drawnTileDisplay" class="drawn-tile-area player-hand">
@@ -18,13 +18,13 @@
           :class="getTileClasses(drawnTileDisplay, true)"
           @click="selectTile(drawnTileDisplay, true)"
         >
-                    <img :src="getTileImageUrl(isMyHand ? drawnTileDisplay : null)" :alt="isMyHand ? tileToString(drawnTileDisplay) : '裏向きの牌'" />
+                    <img :src="getTileImageUrl(isMyHand || drawnTileDisplay.isPublic ? drawnTileDisplay : null)" :alt="isMyHand ? tileToString(drawnTileDisplay) : '裏向きの牌'" />
         </div>
       </div>
       <!-- ストック牌の表示エリア -->
       <div v-if="stockedTileDisplay" class="stocked-tile-area player-hand">
         <div class="tile">
-          <img :src="getTileImageUrl(isMyHand ? stockedTileDisplay : null)" :alt="isMyHand ? tileToString(stockedTileDisplay) : '裏向きの牌'" />
+          <img :src="getTileImageUrl(stockedTileDisplay)" :alt="tileToString(stockedTileDisplay)" />
         </div>
       </div>
     </div>

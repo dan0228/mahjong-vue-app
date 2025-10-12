@@ -1882,3 +1882,40 @@ export function checkYonhaiTenpai(hand4tiles, gameContext = {}) {
   // 待ち牌があればテンパイ、なければノーテン
   return { isTenpai: uniqueWaits.length > 0, waits: uniqueWaits };
 }
+
+/**
+ * 四牌麻雀の向聴数（シャンテン数）を計算します。
+ * @param {Array<Object>} hand - 手牌の配列。
+ * @param {Array<Object>} melds - 副露の配列。
+ * @returns {number} 向聴数。
+ */
+export function findShanten(hand, melds) {
+  // 四牌麻雀では、手牌4枚 + 鳴き1つ（3枚） = 7枚、または手牌4枚 = 4枚
+  // 最終形は1面子1雀頭なので、5枚で和了形。
+  // 鳴きがある場合、手牌は2枚で雀頭を待つ形。
+  // 鳴きがない場合、手牌は4枚で、ツモ牌を加えて5枚で和了形。
+
+  const numMelds = melds.length; // 鳴きの数
+  const currentHandSize = hand.length; // 現在の手牌の枚数
+
+  // 鳴きがある場合 (1面子確定)
+  if (numMelds > 0) {
+    // 残りの手牌2枚で雀頭を形成していれば和了形 (シャンテン数 -1)
+    if (currentHandSize === 2 && getTileKey(hand[0]) === getTileKey(hand[1])) {
+      return -1; // 和了
+    }
+    // 残りの手牌2枚で雀頭を形成していなければ1シャンテン (雀頭待ち)
+    return 0; // テンパイ
+  }
+  // 鳴きがない場合 (門前)
+  else {
+    // 手牌4枚で、ツモ牌を加えて5枚で和了形になるか
+    // テンパイしていれば0シャンテン
+    const tenpaiResult = checkYonhaiTenpai(hand);
+    if (tenpaiResult.isTenpai) {
+      return 0; // テンパイ
+    }
+    // テンパイしていなければ1シャンテン (1枚足りない)
+    return 1; // 1シャンテン
+  }
+}

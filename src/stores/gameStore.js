@@ -48,6 +48,80 @@ function getRankedPlayers(players) {
     }
     return rankedPlayers;
 }
+
+/**
+ * AIプレイヤーが牌を捨てる、またはストックするアクションを決定します。
+ * @param {Object} store - gameStoreのインスタンス。
+ * @param {string} playerId - AIプレイヤーのID。
+ */
+function handleAiDiscardLogic(store, playerId) {
+  console.log("--- Entering handleAiDiscardLogic ---");
+  const currentPlayer = store.players.find(p => p.id === playerId);
+  if (!currentPlayer || currentPlayer.id === 'player1') return; // 人間プレイヤーまたはプレイヤーが見つからない場合は何もしない
+
+  console.log("handleAiDiscardLogic called for AI player:", currentPlayer.name);
+  console.log("  ruleMode:", store.ruleMode);
+  console.log("  stockedTile:", currentPlayer.stockedTile);
+  console.log("  melds.length:", currentPlayer.melds.length);
+  console.log("  isRiichi:", currentPlayer.isRiichi);
+  console.log("  isDoubleRiichi:", currentPlayer.isDoubleRiichi);
+  console.log("  store.drawnTile:", store.drawnTile);
+  console.log("  currentPlayer.isUsingStockedTile:", currentPlayer.isUsingStockedTile);
+
+  const fullHand = [...currentPlayer.hand, store.drawnTile];
+  console.log("  fullHand:", fullHand);
+
+  // AIがストック牌を使用した直後であれば、その牌を捨てることはできない。
+  // 捨てる候補からツモ牌（使用されたストック牌）を除外する。
+  const potentialDiscardsForShanten = currentPlayer.isUsingStockedTile
+    ? fullHand.filter(t => t.id !== store.drawnTile?.id)
+    : fullHand;
+  console.log("  potentialDiscardsForShanten:", potentialDiscardsForShanten);
+
+  let tileToDiscard = null;
+  let isFromDrawnTile = false;
+
+  // 牌効率を考慮して最もシャテン数を減らす牌、または安全な牌を選択
+  // ここでは簡略化のため、最もシャテン数を減らす牌を選択する
+  let bestShanten = Infinity;
+  let bestTileToDiscard = null;
+
+  for (const tile of potentialDiscardsForShanten) {
+    const tempHand = potentialDiscardsForShanten.filter(t => t.id !== tile.id);
+    const shanten = mahjongLogic.findShanten(tempHand, currentPlayer.melds);
+    if (shanten < bestShanten) {
+      bestShanten = shanten;
+      bestTileToDiscard = tile;
+    }
+  }
+  console.log("  bestTileToDiscard:", bestTileToDiscard);
+
+  if (bestTileToDiscard) {
+    // ストック牌使用直後の場合は、bestTileToDiscardがstore.drawnTileであってもisFromDrawnTileはfalseとする
+    // なぜなら、このdrawnTileは手牌に加わったものであり、ツモ牌として扱われるべきではないから
+    isFromDrawnTile = (bestTileToDiscard.id === store.drawnTile?.id && !currentPlayer.isUsingStockedTile);
+    tileToDiscard = bestTileToDiscard;
+  } else {
+    // 最適な牌が見つからない場合（エラーケースなど）、ツモ牌を捨てる
+    tileToDiscard = store.drawnTile; // ツモ牌を捨てる
+    isFromDrawnTile = true;
+  }
+
+  // --- ストックルール適用時のAIのストック決定 --- //
+  if (store.ruleMode === 'stock' && !currentPlayer.stockedTile && currentPlayer.melds.length === 0 && !currentPlayer.isRiichi && !currentPlayer.isDoubleRiichi) {
+    const randomValue = Math.random();
+    console.log("  Stock decision random value:", randomValue);
+    if (randomValue < 0.5) { // 50%の確率でストックする
+      console.log("  AI decided to STOCK!");
+      store.executeStock(currentPlayer.id, tileToDiscard.id, isFromDrawnTile);
+      return; // ストックしたので打牌はしない
+    }
+  }
+
+  // ストックしない場合は打牌
+  store.discardTile(currentPlayer.id, tileToDiscard.id, isFromDrawnTile);
+}
+
 export const useGameStore = defineStore('game', {
   state: () => ({
     players: [
@@ -322,6 +396,17 @@ export const useGameStore = defineStore('game', {
           if (currentPlayer && currentPlayer.stockedTile) {
             // ストック牌がある場合、ツモるかストック牌を使うか選択を促す
             this.gamePhase = GAME_PHASES.AWAITING_STOCK_DECISION;
+
+            // AIプレイヤーの場合、自動で選択
+            if (currentPlayer.id !== 'player1') {
+              setTimeout(() => {
+                if (Math.random() < 0.5) { // 50%の確率でストック牌を使う
+                  this.useStockedTile(currentPlayer.id);
+                } else { // 50%の確率で山からツモる
+                  this.drawFromWall(currentPlayer.id);
+                }
+              }, 1000); // 少し待ってから決定
+            }
             return; // ここで処理を中断し、プレイヤーの選択を待つ
           }
         }
@@ -430,25 +515,11 @@ export const useGameStore = defineStore('game', {
 
             // AI対戦モードで、かつ現在のプレイヤーがAIの場合、自動でアクションを決定
             if (this.gameMode === 'vsCPU' && currentPlayer.id !== 'player1') {
-              let actionTaken = false;
-
-              // 1. リーチ可能なら8%の確率でリーチを試みる
-              if (this.playerActionEligibility[currentPlayer.id].canRiichi && Math.random() < 0.08) {
-                this.declareRiichi(currentPlayer.id);
-                actionTaken = true;
-              }
-
-              if (!actionTaken) {
-                // リーチを試みなかった、またはリーチできなかった場合、他のアクションをチェック
-                if (this.canDeclareAnkan[currentPlayer.id] && Math.random() < 1.0) { // 2. 暗槓可能なら100%暗槓
-                  this.declareAnkan(currentPlayer.id, this.canDeclareAnkan[currentPlayer.id][0]);
-                } else if (this.canDeclareKakan[currentPlayer.id] && Math.random() < 1.0) { // 3. 加槓可能なら100%加槓
-                  this.declareKakan(currentPlayer.id, this.canDeclareKakan[currentPlayer.id][0]);
-                } else {
-                  // どれもできない場合は打牌
-                  this.handleAiDiscard();
-                }
-              }
+              console.log("AI decision block entered in drawTile for player:", currentPlayer.name);
+              // AIの行動決定ロジックをhandleAiDiscardに集約
+              setTimeout(() => {
+                handleAiDiscardLogic(this, currentPlayer.id); // 新しいヘルパー関数を呼び出す
+              }, 500); // 少し遅延させて実行
             }
           }
         }
@@ -504,7 +575,7 @@ export const useGameStore = defineStore('game', {
       if (this.gameMode === 'vsCPU' && playerId !== 'player1') {
         setTimeout(() => {
           if (this.currentTurnPlayerId === playerId && this.drawnTile) {
-            this.discardTile(playerId, this.drawnTile.id, true);
+            handleAiDiscardLogic(this, playerId); // handleAiDiscardLogicを呼び出す
           }
         }, 500); // 少し待ってから打牌
       }
@@ -739,7 +810,7 @@ export const useGameStore = defineStore('game', {
         // 実際に捨て牌をプレイヤーの捨て牌リストに追加
         if (discardedTileActual) {
           if (isStocking) {
-            player.stockedTile = discardedTileActual; // ストック牌として保管
+            player.stockedTile = { ...discardedTileActual, isPublic: true }; // ストック牌として保管し、公開フラグを立てる
             // ストックアクションなので、捨て牌リストには追加しない
             // 他家のアクションチェックも不要
             this.gamePhase = GAME_PHASES.PLAYER_TURN; // 次のプレイヤーのターンへ
@@ -771,7 +842,7 @@ export const useGameStore = defineStore('game', {
         this.updateFuriTenState(player.id);
 
         // ストック牌使用フラグをリリセット
-        player.isUsingStockedTile = false;
+        // player.isUsingStockedTile = false; // moveToNextPlayerでリセットするため削除
 
         this.turnCount++; // 総ターン数をインクリメント
         this.lastActionPlayerId = player.id; // 最後にアクションを行ったプレイヤーを更新
@@ -884,6 +955,7 @@ export const useGameStore = defineStore('game', {
         this.canDeclareMinkan[p.id] = null;
         this.canDeclareAnkan[p.id] = null; // 暗槓可能フラグもリセット
         this.canDeclareKakan[p.id] = null; // 加槓可能フラグもリセット
+        p.isUsingStockedTile = false; // ストック牌使用中フラグをリセット
       });
       
       this.drawTile(); // 次のプレイヤーのツモ処理を呼び出す
@@ -1441,7 +1513,7 @@ export const useGameStore = defineStore('game', {
       if (this.gameMode === 'vsCPU' && playerId !== 'player1') {
         setTimeout(() => {
           if (this.currentTurnPlayerId === playerId && this.gamePhase === GAME_PHASES.AWAITING_DISCARD) {
-            this.handleAiDiscard();
+            handleAiDiscardLogic(this, playerId); // 新しいヘルパー関数を呼び出す
           }
         }, 1550); // アニメーション時間待つ
       }

@@ -394,16 +394,19 @@ export const useGameStore = defineStore('game', {
         if (this.ruleMode === 'stock') {
           const currentPlayer = this.players.find(p => p.id === this.currentTurnPlayerId);
           if (currentPlayer && currentPlayer.stockedTile) {
+            // リーチ中のプレイヤーはストック牌を使用できないため、自動的に山からツモる
+            if (currentPlayer.isRiichi || currentPlayer.isDoubleRiichi) {
+              this.drawFromWall(currentPlayer.id); // リーチ中は常に山からツモる
+              return; // 処理を中断
+            }
+
             // ストック牌がある場合、ツモるかストック牌を使うか選択を促す
             this.gamePhase = GAME_PHASES.AWAITING_STOCK_DECISION;
 
             // AIプレイヤーの場合、自動で選択
             if (currentPlayer.id !== 'player1') {
               setTimeout(() => {
-                // リーチ中のAIはストック牌を使用できない
-                if (currentPlayer.isRiichi || currentPlayer.isDoubleRiichi) {
-                  this.drawFromWall(currentPlayer.id); // リーチ中は常に山からツモる
-                } else if (Math.random() < 0.5) { // 50%の確率でストック牌を使う
+                if (Math.random() < 0.5) { // 50%の確率でストック牌を使う
                   this.useStockedTile(currentPlayer.id);
                 } else { // 50%の確率で山からツモる
                   this.drawFromWall(currentPlayer.id);
@@ -590,7 +593,7 @@ export const useGameStore = defineStore('game', {
      */
     drawFromWall(playerId) {
       const currentPlayer = this.players.find(p => p.id === playerId);
-      if (!currentPlayer || this.gamePhase !== GAME_PHASES.AWAITING_STOCK_DECISION) {
+      if (!currentPlayer || (this.gamePhase !== GAME_PHASES.AWAITING_STOCK_DECISION && this.gamePhase !== GAME_PHASES.PLAYER_TURN)) {
         console.warn("Cannot draw from wall now. Conditions not met.");
         return;
       }

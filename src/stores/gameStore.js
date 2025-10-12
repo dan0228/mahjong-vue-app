@@ -400,7 +400,10 @@ export const useGameStore = defineStore('game', {
             // AIプレイヤーの場合、自動で選択
             if (currentPlayer.id !== 'player1') {
               setTimeout(() => {
-                if (Math.random() < 0.5) { // 50%の確率でストック牌を使う
+                // リーチ中のAIはストック牌を使用できない
+                if (currentPlayer.isRiichi || currentPlayer.isDoubleRiichi) {
+                  this.drawFromWall(currentPlayer.id); // リーチ中は常に山からツモる
+                } else if (Math.random() < 0.5) { // 50%の確率でストック牌を使う
                   this.useStockedTile(currentPlayer.id);
                 } else { // 50%の確率で山からツモる
                   this.drawFromWall(currentPlayer.id);

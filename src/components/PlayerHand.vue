@@ -22,7 +22,7 @@
         </div>
       </div>
       <!-- ストック牌の表示エリア -->
-      <div v-if="stockedTileDisplay" class="stocked-tile-area player-hand">
+      <div v-if="stockedTileDisplay" :class="['stocked-tile-area', 'player-hand', { 'selected-stocked-tile': isStockedTileSelected }]" @click="toggleStockedTileSelection">
         <div class="tile">
           <img :src="getTileImageUrl(stockedTileDisplay)" :alt="tileToString(stockedTileDisplay)" />
         </div>
@@ -57,6 +57,10 @@
       type: Object,
       default: null
     },
+    isStockedTileSelected: {
+      type: Boolean,
+      default: false
+    },
     // 打牌可能な状態か (自分のターンで、ツモ後など)
     canDiscard: {
       type: Boolean,
@@ -68,8 +72,18 @@
     }
   });
 
-  const emit = defineEmits(['tile-selected', 'tile-to-stock-selected']); // 'tile-selected'イベントを定義
+  const emit = defineEmits(['tile-selected', 'tile-to-stock-selected', 'toggle-stocked-tile-selection']); // 'tile-selected'イベントを定義
   const gameStore = useGameStore(); // gameStore を使用
+
+  /**
+   * ストック牌の選択状態を切り替えるイベントを発行します。
+   */
+  function toggleStockedTileSelection() {
+    // 自分のターンで、かつストックルールが有効で、ストック牌があり、ゲームフェーズがツモ待ちの場合のみ選択可能
+    if (props.isMyHand && gameStore.currentTurnPlayerId === props.player.id && gameStore.ruleMode === 'stock' && props.player.stockedTile && (gameStore.gamePhase === GAME_PHASES.PLAYER_TURN || gameStore.gamePhase === GAME_PHASES.AWAITING_STOCK_SELECTION_TIMER)) {
+      emit('toggle-stocked-tile-selection', props.player.id);
+    }
+  }
 
   /**
    * プレイヤーの手牌を取得する算出プロパティ。
@@ -245,6 +259,8 @@
   .stocked-tile-area {
     display: flex;
     position: absolute;
+    cursor: pointer; /* クリック可能であることを示す */
+    z-index: 100; /* 他の要素より手前に表示 */
   }
   .position-bottom .stocked-tile-area {
     right: 100%; /* 手牌エリアの左側に配置 */
@@ -351,5 +367,11 @@
   .tile.disabled {
     opacity: 0.6;
     cursor: not-allowed;
+  }
+
+  .selected-stocked-tile {
+    border: 2px solid gold; /* 選択されたストック牌に金色の枠線 */
+    box-shadow: 0 0 10px gold; /* 金色の光 */
+    border-radius: 5px;
   }
 </style>

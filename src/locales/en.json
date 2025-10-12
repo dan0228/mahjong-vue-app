@@ -601,5 +601,8 @@
     "description": "What do you want to do?",
     "drawFromWall": "Draw from Wall",
     "useStockedTile": "Use Stocked Tile"
+  },
+  "stockCountdown": {
+    "message": "Select a stocked tile"
   }
 }

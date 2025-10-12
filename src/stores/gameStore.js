@@ -24,8 +24,8 @@ export const GAME_PHASES = {
   AWAITING_RIICHI_DISCARD: 'awaitingRiichiDiscard', // リーチ宣言後の打牌選択待ち
   ROUND_END: 'roundEnd', // 局終了 (結果表示待ち)
   GAME_OVER: 'gameOver', // ゲーム終了
-  AWAITING_STOCK_DECISION: 'awaitingStockDecision', // ストック牌使用の選択待ち
-  AWAITING_STOCK_TILE_SELECTION: 'awaitingStockTileSelection' // ストックする牌の選択待ち
+  AWAITING_STOCK_TILE_SELECTION: 'awaitingStockTileSelection', // ストックする牌の選択待ち
+  AWAITING_STOCK_SELECTION_TIMER: 'awaitingStockSelectionTimer' // ストック牌選択のカウントダウン待ち
   // 必要に応じて他のフェーズを追加
 };
 
@@ -110,7 +110,7 @@ function handleAiDiscardLogic(store, playerId) {
 export const useGameStore = defineStore('game', {
   state: () => ({
     players: [
-      { id: 'player1', name: localStorage.getItem('mahjongUsername') || 'あなた', hand: [], discards: [], melds: [], isDealer: false, score: 50000, seatWind: null, stockedTile: null, isUsingStockedTile: false },
+      { id: 'player1', name: localStorage.getItem('mahjongUsername') || 'あなた', hand: [], discards: [], melds: [], isDealer: false, score: 50000, seatWind: null, stockedTile: null, isUsingStockedTile: false, isStockedTileSelected: false },
     ],
     wall: [], // 山牌
     deadWall: [], // 王牌 (嶺上牌、ドラ表示牌など)
@@ -197,6 +197,8 @@ export const useGameStore = defineStore('game', {
     isRiichiBgmActive: false, // リーチBGMがアクティブかどうか
     previousBgm: null, // リーチ前のBGMを保持
     highlightedDiscardTileId: null, // ロンされた際にハイライトする捨て牌のID
+    stockSelectionCountdown: 3, // ストック牌選択のカウントダウン
+    stockSelectionTimerId: null, // カウントダウンタイマーのID
   }),
   actions: {
     /**
@@ -245,7 +247,8 @@ export const useGameStore = defineStore('game', {
           score: 50000,
           seatWind: null,
           stockedTile: null, // ストック牌を追加
-          isUsingStockedTile: false // ストック牌使用中フラグを追加
+          isUsingStockedTile: false, // ストック牌使用中フラグを追加
+          isStockedTileSelected: false // ストック牌選択状態フラグを追加
         }));
 
         // 人間プレイヤーの情報をuserStoreから更新
@@ -385,20 +388,19 @@ export const useGameStore = defineStore('game', {
               return; // 処理を中断
             }
 
-            // ストック牌がある場合、ツモるかストック牌を使うか選択を促す
-            this.gamePhase = GAME_PHASES.AWAITING_STOCK_DECISION;
-
-            // AIプレイヤーの場合、自動で選択
-            if (currentPlayer.id !== 'player1') {
-              setTimeout(() => {
-                if (Math.random() < 0.5) { // 50%の確率でストック牌を使う
-                  this.useStockedTile(currentPlayer.id);
-                } else { // 50%の確率で山からツモる
-                  this.drawFromWall(currentPlayer.id);
-                }
-              }, 200); // 少し待ってから決定
+            // ストック牌が選択されている場合、ストック牌を使用する
+            if (currentPlayer.isStockedTileSelected) {
+              this.useStockedTile(currentPlayer.id);
+              return; // 処理を中断
             }
-            return; // ここで処理を中断し、プレイヤーの選択を待つ
+            // ストック牌があるが選択されていない場合、自動的に山からツモる
+            // AIプレイヤーの場合、自動で山からツモる
+            if (currentPlayer.id !== 'player1') {
+              this.drawFromWall(currentPlayer.id);
+              return; // 処理を中断
+            }
+            // 人間プレイヤーの場合、ストック牌が選択されていないので、通常のツモ処理に進む
+            // (つまり、この後の通常のツモ処理で山からツモる)
           }
         }
 
@@ -530,7 +532,7 @@ export const useGameStore = defineStore('game', {
      */
     useStockedTile(playerId) {
       const currentPlayer = this.players.find(p => p.id === playerId);
-      if (!currentPlayer || !currentPlayer.stockedTile || this.gamePhase !== GAME_PHASES.AWAITING_STOCK_DECISION) {
+      if (!currentPlayer || !currentPlayer.stockedTile) {
         console.warn("Cannot use stocked tile now. Conditions not met.");
         return;
       }
@@ -538,6 +540,7 @@ export const useGameStore = defineStore('game', {
       this.drawnTile = currentPlayer.stockedTile; // ストック牌をツモ牌として扱う
       currentPlayer.stockedTile = null; // ストックを空にする
       currentPlayer.isUsingStockedTile = true; // ストック牌使用フラグを立てる
+      currentPlayer.isStockedTileSelected = false; // ストック牌選択状態フラグをリセット
 
       // ターン数をインクリメント
       if (this.playerTurnCount[playerId] !== undefined && !this.rinshanKaihouChance) {
@@ -577,7 +580,7 @@ export const useGameStore = defineStore('game', {
      */
     drawFromWall(playerId) {
       const currentPlayer = this.players.find(p => p.id === playerId);
-      if (!currentPlayer || (this.gamePhase !== GAME_PHASES.AWAITING_STOCK_DECISION && this.gamePhase !== GAME_PHASES.PLAYER_TURN)) {
+      if (!currentPlayer || (this.gamePhase !== GAME_PHASES.PLAYER_TURN && this.gamePhase !== GAME_PHASES.AWAITING_STOCK_SELECTION_TIMER)) {
         console.warn("Cannot draw from wall now. Conditions not met.");
         return;
       }
@@ -938,17 +941,23 @@ export const useGameStore = defineStore('game', {
 
       this.gamePhase = GAME_PHASES.PLAYER_TURN; // ゲームフェーズを次のプレイヤーのツモ待ちに設定
 
-      // ターンが移ったので、各種宣言可能フラグをリセット
-      this.players.forEach(p => {
-        this.canDeclareRon[p.id] = false;
-        this.canDeclarePon[p.id] = null;
-        this.canDeclareMinkan[p.id] = null;
-        this.canDeclareAnkan[p.id] = null; // 暗槓可能フラグもリセット
-        this.canDeclareKakan[p.id] = null; // 加槓可能フラグもリセット
-        p.isUsingStockedTile = false; // ストック牌使用中フラグをリセット
-      });
-      
-      this.drawTile(); // 次のプレイヤーのツモ処理を呼び出す
+      // --- ストックルール適用時 --- //
+      const nextPlayer = this.players.find(p => p.id === this.currentTurnPlayerId);
+      if (nextPlayer) { // nextPlayer が存在することを確認
+        nextPlayer.isUsingStockedTile = false; // ストック牌使用フラグをリセット
+      }
+      if (this.ruleMode === 'stock' && nextPlayer && nextPlayer.id === 'player1') {
+        // 人間プレイヤーでストック牌がある場合、カウントダウンを開始
+        if (nextPlayer.stockedTile) {
+          this.startStockSelectionCountdown(nextPlayer.id);
+        } else {
+          // ストック牌がない場合は通常のツモ処理
+          this.drawTile();
+        }
+      } else {
+        // それ以外の場合（AIプレイヤー、またはストックルールでない場合）、通常のツモ処理を呼び出す
+        this.drawTile();
+      }
       this.waitingForPlayerResponses = []; // ターンが移るので応答待ちはクリア
       this.activeActionPlayerId = null; // アクティブな応答者もクリア
     },
@@ -1148,6 +1157,64 @@ export const useGameStore = defineStore('game', {
      */
     setRuleMode(mode) {
       this.ruleMode = mode;
+    },
+
+    /**
+     * ストック牌の選択状態を切り替えます。
+     * @param {string} playerId - プレイヤーのID。
+     */
+    toggleStockedTileSelection(playerId) {
+      const player = this.players.find(p => p.id === playerId);
+      if (player && player.stockedTile) {
+        player.isStockedTileSelected = !player.isStockedTileSelected;
+        // カウントダウン中に選択された場合、即座に処理を続行
+        if (this.gamePhase === GAME_PHASES.AWAITING_STOCK_SELECTION_TIMER && player.isStockedTileSelected) {
+          this.stopStockSelectionCountdown();
+          this.useStockedTile(playerId);
+        }
+      }
+    },
+
+    /**
+     * ストック牌選択のカウントダウンを開始します。
+     * @param {string} playerId - 現在のプレイヤーのID。
+     */
+    startStockSelectionCountdown(playerId) {
+      const player = this.players.find(p => p.id === playerId);
+      if (!player || player.id !== 'player1') return; // 人間プレイヤーのみ対象
+
+      this.gamePhase = GAME_PHASES.AWAITING_STOCK_SELECTION_TIMER;
+      this.stockSelectionCountdown = 1; // カウントダウンを初期化
+
+      // 既にタイマーが動いている場合はクリア
+      if (this.stockSelectionTimerId) {
+        clearInterval(this.stockSelectionTimerId);
+      }
+
+      this.stockSelectionTimerId = setInterval(() => {
+        this.stockSelectionCountdown--;
+        if (this.stockSelectionCountdown <= 0) {
+          this.stopStockSelectionCountdown();
+          // カウントダウン終了時、ストック牌が選択されていなければ山からツモる
+          if (!player.isStockedTileSelected) {
+            this.drawFromWall(playerId); // 自動的に山からツモる
+          } else {
+            // 選択されている場合はuseStockedTileがtoggleStockedTileSelectionから呼ばれているはず
+          }
+        }
+      }, 1000);
+    },
+
+    /**
+     * ストック牌選択のカウントダウンを停止します。
+     */
+    stopStockSelectionCountdown() {
+      if (this.stockSelectionTimerId) {
+        clearInterval(this.stockSelectionTimerId);
+        this.stockSelectionTimerId = null;
+      }
+      this.stockSelectionCountdown = 3; // カウントダウンをリセット
+      // フェーズは次のアクションで上書きされるか、手動で戻す
     },
     /**
      * リーチアニメーションの状態を設定し、一定時間後に打牌選択フェーズへ移行します。
@@ -2169,6 +2236,7 @@ ${roundEndMessage}`;
         player.isDeclaringRiichi = false;
         player.stockedTile = null; // ストック牌をリセット
         player.isUsingStockedTile = false; // ストック牌使用中フラグをリセット
+        player.isStockedTileSelected = false; // ストック牌選択状態フラグをリセット
         this.isIppatsuChance[player.id] = false;
       });
 

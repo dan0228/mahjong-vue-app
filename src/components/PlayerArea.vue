@@ -10,6 +10,7 @@
         :position="position"
         @tile-selected="onTileSelected"
         @tile-to-stock-selected="onTileToStockSelected"
+        @toggle-stocked-tile-selection="onToggleStockedTileSelection"
       />
     </div>
     <div v-if="player.melds && player.melds.length > 0" class="melds-area">
@@ -97,6 +98,14 @@ function onTileSelected(payload) {
  */
 function onTileToStockSelected(payload) {
   gameStore.executeStock(props.player.id, payload.tile.id, payload.isFromDrawnTile);
+}
+
+/**
+ * PlayerHandコンポーネントからストック牌の選択状態切り替えイベントを受け取り、gameStoreのアクションを呼び出します。
+ * @param {string} playerId - プレイヤーのID。
+ */
+function onToggleStockedTileSelection(playerId) {
+  gameStore.toggleStockedTileSelection(playerId);
 }
 
 const playerEligibility = computed(() => gameStore.playerActionEligibility[props.player.id] || {}); // プレイヤーのアクション資格

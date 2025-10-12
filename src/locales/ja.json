@@ -601,6 +601,9 @@
     "description": "どうしますか？",
     "drawFromWall": "山からツモる",
     "useStockedTile": "ストック牌を使う"
+  },
+  "stockCountdown": {
+    "message": "ストック牌を選択してください"
   }
 }
 

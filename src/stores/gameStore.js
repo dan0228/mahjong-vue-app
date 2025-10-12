@@ -55,28 +55,16 @@ function getRankedPlayers(players) {
  * @param {string} playerId - AIプレイヤーのID。
  */
 function handleAiDiscardLogic(store, playerId) {
-  console.log("--- Entering handleAiDiscardLogic ---");
   const currentPlayer = store.players.find(p => p.id === playerId);
   if (!currentPlayer || currentPlayer.id === 'player1') return; // 人間プレイヤーまたはプレイヤーが見つからない場合は何もしない
 
-  console.log("handleAiDiscardLogic called for AI player:", currentPlayer.name);
-  console.log("  ruleMode:", store.ruleMode);
-  console.log("  stockedTile:", currentPlayer.stockedTile);
-  console.log("  melds.length:", currentPlayer.melds.length);
-  console.log("  isRiichi:", currentPlayer.isRiichi);
-  console.log("  isDoubleRiichi:", currentPlayer.isDoubleRiichi);
-  console.log("  store.drawnTile:", store.drawnTile);
-  console.log("  currentPlayer.isUsingStockedTile:", currentPlayer.isUsingStockedTile);
-
   const fullHand = [...currentPlayer.hand, store.drawnTile];
-  console.log("  fullHand:", fullHand);
 
   // AIがストック牌を使用した直後であれば、その牌を捨てることはできない。
   // 捨てる候補からツモ牌（使用されたストック牌）を除外する。
   const potentialDiscardsForShanten = currentPlayer.isUsingStockedTile
     ? fullHand.filter(t => t.id !== store.drawnTile?.id)
     : fullHand;
-  console.log("  potentialDiscardsForShanten:", potentialDiscardsForShanten);
 
   let tileToDiscard = null;
   let isFromDrawnTile = false;
@@ -94,7 +82,6 @@ function handleAiDiscardLogic(store, playerId) {
       bestTileToDiscard = tile;
     }
   }
-  console.log("  bestTileToDiscard:", bestTileToDiscard);
 
   if (bestTileToDiscard) {
     // ストック牌使用直後の場合は、bestTileToDiscardがstore.drawnTileであってもisFromDrawnTileはfalseとする
@@ -110,9 +97,7 @@ function handleAiDiscardLogic(store, playerId) {
   // --- ストックルール適用時のAIのストック決定 --- //
   if (store.ruleMode === 'stock' && !currentPlayer.stockedTile && !currentPlayer.isUsingStockedTile && currentPlayer.melds.length === 0 && !currentPlayer.isRiichi && !currentPlayer.isDoubleRiichi) {
     const randomValue = Math.random();
-    console.log("  Stock decision random value:", randomValue);
     if (randomValue < 0.5) { // 50%の確率でストックする
-      console.log("  AI decided to STOCK!");
       store.executeStock(currentPlayer.id, tileToDiscard.id, isFromDrawnTile);
       return; // ストックしたので打牌はしない
     }
@@ -521,7 +506,6 @@ export const useGameStore = defineStore('game', {
 
             // AI対戦モードで、かつ現在のプレイヤーがAIの場合、自動でアクションを決定
             if (this.gameMode === 'vsCPU' && currentPlayer.id !== 'player1') {
-              console.log("AI decision block entered in drawTile for player:", currentPlayer.name);
               // AIの行動決定ロジックをhandleAiDiscardに集約
               setTimeout(() => {
                 handleAiDiscardLogic(this, currentPlayer.id); // 新しいヘルパー関数を呼び出す

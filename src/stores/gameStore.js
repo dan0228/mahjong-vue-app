@@ -1116,6 +1116,8 @@ export const useGameStore = defineStore('game', {
       // isIppatsuChance は initializeGame でリセットされる
       this.players.forEach(p => {
         this.canDeclarePon[p.id] = null; this.canDeclareMinkan[p.id] = null;
+        p.stockedTile = null; // ストック牌をリセット
+        p.isUsingStockedTile = false; // ストック牌使用中フラグをリセット
       });
       // turnCount, playerTurnCount も initializeGame でリセットされる
       if (this.shouldAdvanceRound) {

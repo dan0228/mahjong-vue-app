@@ -108,7 +108,7 @@ function handleAiDiscardLogic(store, playerId) {
   }
 
   // --- ストックルール適用時のAIのストック決定 --- //
-  if (store.ruleMode === 'stock' && !currentPlayer.stockedTile && currentPlayer.melds.length === 0 && !currentPlayer.isRiichi && !currentPlayer.isDoubleRiichi) {
+  if (store.ruleMode === 'stock' && !currentPlayer.stockedTile && !currentPlayer.isUsingStockedTile && currentPlayer.melds.length === 0 && !currentPlayer.isRiichi && !currentPlayer.isDoubleRiichi) {
     const randomValue = Math.random();
     console.log("  Stock decision random value:", randomValue);
     if (randomValue < 0.5) { // 50%の確率でストックする

@@ -396,7 +396,7 @@ export const useGameStore = defineStore('game', {
                 } else { // 50%の確率で山からツモる
                   this.drawFromWall(currentPlayer.id);
                 }
-              }, 1000); // 少し待ってから決定
+              }, 200); // 少し待ってから決定
             }
             return; // ここで処理を中断し、プレイヤーの選択を待つ
           }
@@ -719,7 +719,7 @@ export const useGameStore = defineStore('game', {
     discardTile(playerId, tileIdToDiscard, isFromDrawnTile, isStocking = false) {
       const audioStore = useAudioStore();
       // 効果音が有効なら打牌音を再生
-      if (audioStore.isSeEnabled && !isStocking) {
+      if (audioStore.isSeEnabled) {
         const audio = new Audio('/assets/sounds/打牌.mp3');
         audio.volume = audioStore.volume;
         audio.play();

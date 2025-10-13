@@ -22,7 +22,7 @@
         </div>
       </div>
       <!-- ストック牌の表示エリア -->
-      <div v-if="stockedTileDisplay" :class="['stocked-tile-area', 'player-hand', { 'selected-stocked-tile': isStockedTileSelected }]" @click="toggleStockedTileSelection">
+      <div v-if="stockedTileDisplay" :class="['stocked-tile-area', 'player-hand', { 'selected-stocked-tile': isStockedTileSelected, 'selectable': isStockTileSelectable }]" @click="toggleStockedTileSelection">
         <div class="tile">
           <img :src="getTileImageUrl(stockedTileDisplay)" :alt="tileToString(stockedTileDisplay)" />
         </div>
@@ -91,6 +91,15 @@
    */
   const playerDisplayHand = computed(() => {
     return props.player?.hand || [];
+  });
+
+  /**
+   * ストック牌が選択可能かどうかを判定する算出プロパティ。
+   */
+  const isStockTileSelectable = computed(() => {
+    return props.isMyHand &&
+           gameStore.gamePhase === GAME_PHASES.AWAITING_STOCK_SELECTION_TIMER &&
+           !!props.stockedTileDisplay;
   });
 
   /**
@@ -213,6 +222,20 @@
     transform: translateY(5px); /* 画面から見て下に動く */
   }
   .player-hand-container.position-left .tile.my-tile.selectable:hover {
+    transform: translateX(5px); /* 画面から見て右に動く */
+  }
+
+  /* ストック牌のホバー時の動き */
+  .player-hand-container.position-bottom .stocked-tile-area.selectable:hover {
+    transform: translateY(-5px); /* 上に動く */
+  }
+  .player-hand-container.position-right .stocked-tile-area.selectable:hover {
+    transform: translateX(-5px); /* 画面から見て左に動く */
+  }
+  .player-hand-container.position-top .stocked-tile-area.selectable:hover {
+    transform: translateY(5px); /* 画面から見て下に動く */
+  }
+  .player-hand-container.position-left .stocked-tile-area.selectable:hover {
     transform: translateX(5px); /* 画面から見て右に動く */
   }
 

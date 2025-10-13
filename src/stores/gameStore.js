@@ -197,7 +197,7 @@ export const useGameStore = defineStore('game', {
     isRiichiBgmActive: false, // リーチBGMがアクティブかどうか
     previousBgm: null, // リーチ前のBGMを保持
     highlightedDiscardTileId: null, // ロンされた際にハイライトする捨て牌のID
-    stockSelectionCountdown: 1.5, // ストック牌選択のカウントダウン
+    stockSelectionCountdown: 1.3, // ストック牌選択のカウントダウン
     stockSelectionTimerId: null, // カウントダウンタイマーのID
   }),
   actions: {
@@ -947,11 +947,11 @@ export const useGameStore = defineStore('game', {
         nextPlayer.isUsingStockedTile = false; // ストック牌使用フラグをリセット
       }
       if (this.ruleMode === 'stock' && nextPlayer && nextPlayer.id === 'player1') {
-        // 人間プレイヤーでストック牌がある場合、カウントダウンを開始
-        if (nextPlayer.stockedTile) {
+        // 人間プレイヤーでストック牌があり、かつリーチ中でない場合のみカウントダウンを開始
+        if (nextPlayer.stockedTile && !nextPlayer.isRiichi && !nextPlayer.isDoubleRiichi) {
           this.startStockSelectionCountdown(nextPlayer.id);
         } else {
-          // ストック牌がない場合は通常のツモ処理
+          // ストック牌がない場合、またはリーチ中の場合は通常のツモ処理
           this.drawTile();
         }
       } else {
@@ -1184,7 +1184,7 @@ export const useGameStore = defineStore('game', {
       if (!player || player.id !== 'player1') return; // 人間プレイヤーのみ対象
 
       this.gamePhase = GAME_PHASES.AWAITING_STOCK_SELECTION_TIMER;
-      this.stockSelectionCountdown = 1.5; // カウントダウンを初期化
+      this.stockSelectionCountdown = 1.3; // カウントダウンを初期化
 
       // 既にタイマーが動いている場合はクリア
       if (this.stockSelectionTimerId) {
@@ -1213,7 +1213,7 @@ export const useGameStore = defineStore('game', {
         clearInterval(this.stockSelectionTimerId);
         this.stockSelectionTimerId = null;
       }
-      this.stockSelectionCountdown = 1.5; // カウントダウンをリセット
+      this.stockSelectionCountdown = 1.3; // カウントダウンをリセット
       // フェーズは次のアクションで上書きされるか、手動で戻す
     },
     /**

@@ -18,13 +18,15 @@ const gameStore = useGameStore();
 const { t } = useI18n();
 
 const showCountdown = computed(() => {
+  const currentPlayer = gameStore.players.find(p => p.id === gameStore.currentTurnPlayerId);
   return gameStore.gamePhase === GAME_PHASES.AWAITING_STOCK_SELECTION_TIMER &&
-         gameStore.currentTurnPlayerId === 'player1'; // 人間プレイヤーのターンのみ表示
+         gameStore.currentTurnPlayerId === 'player1' && // 人間プレイヤーのターンのみ表示
+         currentPlayer && !currentPlayer.isRiichi && !currentPlayer.isDoubleRiichi; // リーチ中は表示しない
 });
 
 const countdownProgress = computed(() => {
-  // カウントダウンの初期値は1.5秒
-  const initialCountdown = 1.5;
+  // カウントダウンの初期値は1.3秒
+  const initialCountdown = 1.3;
   // 現在のカウントダウン値から進捗率を計算
   // 0秒に近づくほど100%に近づくようにする (ゲージが減っていく表示)
   return (gameStore.stockSelectionCountdown / initialCountdown) * 100;

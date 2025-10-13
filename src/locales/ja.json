@@ -603,7 +603,7 @@
     "useStockedTile": "ストック牌を使う"
   },
   "stockCountdown": {
-    "message": "ストック牌を選択してください"
+    "message": "タップして手牌へ"
   }
 }
 

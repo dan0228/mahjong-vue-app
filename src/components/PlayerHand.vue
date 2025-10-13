@@ -26,6 +26,7 @@
         <div class="tile">
           <img :src="getTileImageUrl(stockedTileDisplay)" :alt="tileToString(stockedTileDisplay)" />
         </div>
+        <StockSelectionCountdown :show-countdown="showStockCountdown" />
       </div>
     </div>
 </template>
@@ -35,6 +36,7 @@
   import { useGameStore } from '@/stores/gameStore'; // gameStore をインポート
   import { GAME_PHASES } from '@/stores/gameStore'; // GAME_PHASES をインポート
   import { getTileImageUrl, tileToString } from '@/utils/tileUtils'; // 共通ユーティリティをインポート
+  import StockSelectionCountdown from './StockSelectionCountdown.vue'; // StockSelectionCountdown をインポート
 
   /**
    * プレイヤーの手牌とツモ牌を表示するコンポーネント。
@@ -91,6 +93,16 @@
    */
   const playerDisplayHand = computed(() => {
     return props.player?.hand || [];
+  });
+
+  /**
+   * ストック牌選択のカウントダウンを表示するかどうかを判定する算出プロパティ。
+   */
+  const showStockCountdown = computed(() => {
+    const currentPlayer = gameStore.players.find(p => p.id === gameStore.currentTurnPlayerId);
+    return gameStore.gamePhase === GAME_PHASES.AWAITING_STOCK_SELECTION_TIMER &&
+           gameStore.currentTurnPlayerId === props.player.id && // 自分のターンのみ表示
+           currentPlayer && !currentPlayer.isRiichi && !currentPlayer.isDoubleRiichi; // リーチ中は表示しない
   });
 
   /**

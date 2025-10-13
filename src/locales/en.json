@@ -603,6 +603,6 @@
     "useStockedTile": "Use Stocked Tile"
   },
   "stockCountdown": {
-    "message": "Select a stocked tile"
+    "message": "Tap to take tile"
   }
 }

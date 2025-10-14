@@ -122,6 +122,9 @@
       <img v-if="animationDisplay && animationDisplay.type === 'pon'" :src="t('gameBoard.ponImg')" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`, 'pon-animation', 'pon-kan-size']" :alt="t('gameBoard.pon')" />
       <img v-if="animationDisplay && animationDisplay.type === 'kan'" :src="t('gameBoard.kanImg')" :class="['ron-indicator', `ron-indicator-${animationDisplay.position}`, 'pon-kan-size', 'kan-animation']" :alt="t('gameBoard.kan')" />
       
+      <!-- ストックアニメーション -->
+      <img v-if="stockAnimationDisplay" :src="t('gameBoard.stockImg')" :class="['stock-indicator', `stock-indicator-${stockAnimationDisplay.position}`]" :alt="t('gameBoard.stock')" />
+
       <!-- 各種ポップアップ -->
       <RulePopup v-if="showRulesPopup" @close="showRulesPopup = false" />
       <YakuListPopup v-if="showYakuListPopup" @close="showYakuListPopup = false" />
@@ -282,6 +285,22 @@
    */
   const isToraAtRight = computed(() => {
     return playerAtRight.value && playerAtRight.value.originalId === 'tora';
+  });
+
+  const stockAnimationDisplay = computed(() => {
+    const playerId = gameStore.stockAnimationPlayerId;
+    if (!playerId) {
+      return null;
+    }
+
+    const playerIndex = orderedPlayersForDisplay.value.findIndex(p => p.id === playerId);
+    let position = '';
+    if (playerIndex === 0) position = 'bottom';
+    else if (playerIndex === 1) position = 'right';
+    else if (playerIndex === 2) position = 'top';
+    else if (playerIndex === 3) position = 'left';
+
+    return { position };
   });
 
   /**
@@ -1164,5 +1183,43 @@ input:checked + .slider:before {
 .fade-overlay.is-fading {
   opacity: 1;
   visibility: visible;
+}
+
+.stock-indicator {
+  position: absolute;
+  width: 120px;
+  height: auto;
+  z-index: 50;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  animation: stock-pop-in 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.stock-indicator-bottom {
+  top: 80%;
+  left: 50%;
+}
+.stock-indicator-top {
+  top: 30%;
+  left: 50%;
+}
+.stock-indicator-left {
+  top: 50%;
+  left: 28%;
+}
+.stock-indicator-right {
+  top: 50%;
+  left: 72%;
+}
+
+@keyframes stock-pop-in {
+  from {
+    transform: translate(-50%, -50%) scale(0.5);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
 }
 </style>

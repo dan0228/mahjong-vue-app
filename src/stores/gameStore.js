@@ -196,6 +196,7 @@ export const useGameStore = defineStore('game', {
     highlightedDiscardTileId: null, // ロンされた際にハイライトする捨て牌のID
     stockSelectionCountdown: 1.3, // ストック牌選択のカウントダウン
     stockSelectionTimerId: null, // カウントダウンタイマーのID
+    stockAnimationPlayerId: null, // ストックアニメーション表示用フラグ
   }),
   actions: {
     /**
@@ -746,8 +747,8 @@ export const useGameStore = defineStore('game', {
      */
     discardTile(playerId, tileIdToDiscard, isFromDrawnTile, isStocking = false) {
       const audioStore = useAudioStore();
-      // 効果音が有効なら打牌音を再生
-      if (audioStore.isSeEnabled) {
+      // 効果音が有効なら打牌音を再生 (ストック時以外)
+      if (audioStore.isSeEnabled && !isStocking) {
         const audio = new Audio('/assets/sounds/打牌.mp3');
         audio.volume = audioStore.volume;
         audio.play();
@@ -923,6 +924,7 @@ export const useGameStore = defineStore('game', {
      * @param {boolean} isFromDrawnTile - ツモった牌をストックする場合はtrue、手牌からストックする場合はfalse。
      */
     executeStock(playerId, tileIdToStock, isFromDrawnTile) {
+      const audioStore = useAudioStore();
       const player = this.players.find(p => p.id === playerId);
       if (!player) {
         console.error("Stock failed: Player not found.");
@@ -942,6 +944,15 @@ export const useGameStore = defineStore('game', {
         console.warn("Stock failed: Player is in Riichi.");
         return;
       }
+
+      // ストックアニメーション表示用のプレイヤーIDをセット
+      this.stockAnimationPlayerId = playerId;
+      setTimeout(() => {
+        this.stockAnimationPlayerId = null;
+      }, 600);
+
+      // 効果音を鳴らす
+      audioStore.playSound('Percussive_Accent04-3(High).mp3');
 
       // discardTileをisStocking=trueで呼び出す
       this.discardTile(playerId, tileIdToStock, isFromDrawnTile, true);

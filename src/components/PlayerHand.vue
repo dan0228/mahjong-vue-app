@@ -297,7 +297,7 @@
   .stocked-tile-area {
     display: flex;
     position: absolute;
-    z-index: 100; /* 他の要素より手前に表示 */
+    z-index: 10; /* 他の要素より手前に表示 */
   }
   .stocked-tile-area.selectable {
     cursor: pointer; /* 選択可能な場合のみポインターを表示 */

@@ -18,7 +18,6 @@
           :style="{ strokeDasharray: circumference, strokeDashoffset: strokeDashoffset }"
         />
       </svg>
-      <div class="countdown-text">{{ gameStore.stockSelectionCountdown.toFixed(1) }}</div>
       <div v-if="!props.isAiPlayer" class="countdown-message">{{ $t('stockCountdown.message') }}</div>
     </div>
   </div>
@@ -56,30 +55,30 @@ const strokeDashoffset = computed(() => {
 
 const overlayStyle = computed(() => {
   if (props.position === 'top') {
-    // topプレイヤーの場合、ストック牌の左下（視覚的には右上）に配置
+    // topプレイヤーの場合
     return {
-      bottom: '18px', // 下端から少し上に
-      left: '-15px',   // 左端から少し左に
+      bottom: '20px', // 下端から少し上に
+      left: '-13px',   // 左端から少し左に
       transform: 'none',
     };
   } else if (props.position === 'right') {
-    // rightプレイヤーの場合、ストック牌の左上に配置
+    // rightプレイヤーの場合
     return {
-      top: '-15px',
-      left: '-10px',
+      top: '-14px',
+      left: '-8px',
       transform: 'none',
     };
   } else if (props.position === 'left') {
-    // leftプレイヤーの場合、ストック牌の右上に配置
+    // leftプレイヤーの場合
     return {
       top: '-12px',
-      right: '-5px',
+      right: '-7px',
       transform: 'none',
     };
   } else {
-    // bottomプレイヤーの場合、ストック牌の右上に配置 (デフォルト)
+    // bottomプレイヤーの場合
     return {
-      top: '-7px',
+      top: '-6px',
       right: '-15px',
       transform: 'none',
     };

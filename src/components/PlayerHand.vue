@@ -298,7 +298,7 @@
     z-index: 10; /* 他の要素より手前に表示 */
   }
   .position-bottom .stocked-tile-area {
-    left: 140%;
+    left: 130%;
     top: -95%;
     margin-left: -100px; /* ツモ牌の位置からさらに中央にずらす */
   }
@@ -313,7 +313,7 @@
     margin-top: 50px; /* ツモ牌の位置からさらに中央にずらす */
   }
   .position-right .stocked-tile-area {
-    top: 10%;
+    top: 5%;
     right: 95%;
     margin-top: -50px; /* ツモ牌の位置からさらに中央にずらす */
   }

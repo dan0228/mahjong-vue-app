@@ -63,7 +63,7 @@ const strokeDashoffset = computed(() => {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%); /* 中央寄せ */
-  z-index: 101; /* ストック牌より手前に表示 */
+  z-index: 1; /* ストック牌より手前に表示 */
   pointer-events: none; /* クリックイベントを透過させる */
 }
 

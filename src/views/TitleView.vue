@@ -196,7 +196,7 @@ function goToLeaderboard() {
 const onModeSelected = (mode) => {
   gameStore.setRuleMode(mode); // 選択されたルールモードをストアに設定
   showGameModeSelectionPopup.value = false; // ポップアップを閉じる
-  startGame('vsCPU'); // 既存のstartGame関数を呼び出し、CPU対戦を開始
+  startGame('allManual'); // 既存のstartGame関数を呼び出し、CPU対戦を開始
 };
 </script>
 

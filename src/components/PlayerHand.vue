@@ -295,27 +295,32 @@
     display: flex;
     position: absolute;
     cursor: pointer; /* クリック可能であることを示す */
-    z-index: 100; /* 他の要素より手前に表示 */
+    z-index: 10; /* 他の要素より手前に表示 */
   }
   .position-bottom .stocked-tile-area {
-    right: 100%; /* 手牌エリアの左側に配置 */
-    top: 0;
-    margin-right: 10px; /* 手牌との間に左マージンを設定 */
+    left: 140%;
+    top: -95%;
+    margin-left: -100px; /* ツモ牌の位置からさらに中央にずらす */
   }
   .position-top .stocked-tile-area {
-    left: 100%; /* 手牌エリアの右側に配置 */
-    top: 0;
-    margin-left: 7px; /* 手牌との間に右マージンを設定 */
+    left: -150%;
+    top: 60%;
+    margin-left: 100px; /* ツモ牌の位置からさらに中央にずらす */
   }
   .position-left .stocked-tile-area {
-    bottom: 100%; /* 手牌エリアの上に配置 */
-    left: 0;
-    margin-bottom: 7px; /* 手牌エリアとの間に下マージンを設定 */
+    top: 75%;
+    left: 90%;
+    margin-top: 50px; /* ツモ牌の位置からさらに中央にずらす */
   }
   .position-right .stocked-tile-area {
-    top: 100%; /* 手牌エリアの下に配置 */
-    left: 0;
-    margin-top: 7px; /* 手牌エリアとの間に上マージンを設定 */
+    top: 10%;
+    right: 95%;
+    margin-top: -50px; /* ツモ牌の位置からさらに中央にずらす */
+  }
+
+  /* ストック牌の画像サイズを少し小さく */
+  .stocked-tile-area .tile img {
+    scale: 0.9;
   }
 
   .tile {

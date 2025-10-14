@@ -1017,7 +1017,7 @@ input:checked + .slider:before {
 }
 
 .cat-icon-left {
-  top: -70px;
+  top: -75px;
   left: 40px;
   transform: translate(-50%, -50%);
 }
@@ -1033,7 +1033,7 @@ input:checked + .slider:before {
 }
 
 .cat-icon-right {
-  top: -70px;
+  top: -75px;
   right: -40px;
   transform: translate(-50%, -50%);
 }

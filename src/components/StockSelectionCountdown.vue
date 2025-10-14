@@ -93,7 +93,7 @@ const strokeDashoffset = computed(() => {
 
 .progress-ring-circle-bg {
   stroke: #555; /* 背景色 */
-  fill: transparent;
+  fill: transparent; 
 }
 
 .progress-ring-circle {

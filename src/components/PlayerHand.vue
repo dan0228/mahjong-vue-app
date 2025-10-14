@@ -7,7 +7,7 @@
         <div
           v-for="tile in playerDisplayHand"
           :key="tile.id"
-          :class="getTileClasses(tile, false)"
+          :class="[getTileClasses(tile, false), { 'is-in-hand': tile?.isStockedTile }]"
           @click="selectTile(tile, false)"
         >
           <img :src="getTileImageUrl(isMyHand || tile.isPublic ? tile : null)" :alt="isMyHand ? tileToString(tile) : '裏向きの牌'" />
@@ -22,8 +22,8 @@
         </div>
       </div>
       <!-- ストック牌の表示エリア -->
-      <div v-if="stockedTileDisplay" :class="['stocked-tile-area', 'player-hand', { 'selected-stocked-tile': isStockedTileSelected, 'selectable': isStockTileSelectable }]" @click="toggleStockedTileSelection">
-        <div class="tile">
+      <div v-if="stockedTileDisplay" :class="['stocked-tile-area', 'player-hand', { 'selected-stocked-tile': isStockedTileSelected, 'selectable': isStockTileSelectable }]">
+        <div :class="[getTileClasses(stockedTileDisplay, false), 'is-in-stock-area']" @click="toggleStockedTileSelection">
           <img :src="getTileImageUrl(stockedTileDisplay)" :alt="tileToString(stockedTileDisplay)" />
         </div>
         <StockSelectionCountdown :show-countdown="showStockCountdown" :is-ai-player="props.player.id !== 'player1'" />
@@ -182,6 +182,7 @@
         'my-tile': props.isMyHand,
         'drawn-tile': isDrawnTile,
         'selectable': isSelectable,
+        'is-stocked-tile': tile?.isStockedTile, // ストック牌の場合にクラスを追加
         // 自分の手番で、リーチ中で、かつ選択できない牌を無効化する
         'disabled': props.canDiscard && isRiichiPhase && !isSelectable,
       }
@@ -299,7 +300,7 @@
   }
   .position-bottom .stocked-tile-area {
     left: 130%;
-    top: -95%;
+    top: -100%;
     margin-left: -100px; /* ツモ牌の位置からさらに中央にずらす */
   }
   .position-top .stocked-tile-area {
@@ -410,8 +411,28 @@
   }
 
   .selected-stocked-tile {
-    border: 2px solid gold; /* 選択されたストック牌に金色の枠線 */
-    box-shadow: 0 0 10px gold; /* 金色の光 */
-    border-radius: 5px;
+    border: 0px solid gold;
+    box-shadow: 0 0 10px gold; /* 手牌にあるストック牌にのみ影を適用 */
+    border-radius: 20px;
+  }
+
+  .is-stocked-tile {
+    border: 0px solid gold;
+    box-shadow: 0 0 10px gold; /* 手牌にあるストック牌にのみ影を適用 */
+    border-radius: 20px;
+  }
+
+  .is-in-hand.is-stocked-tile {
+    border: 0px solid gold;
+    box-shadow: 0 0 10px gold; /* 手牌にあるストック牌にのみ影を適用 */
+    border-radius: 20px;
+  }
+
+  .is-in-stock-area.is-stocked-tile {
+    border: none;
+    box-shadow: inset 5px 5px 5px rgba(255, 215, 0, 0.4),
+                inset -5px -5px 5px rgba(255, 215, 0, 0.4);
+    border-radius: 20px;
+    box-sizing: border-box;
   }
 </style>

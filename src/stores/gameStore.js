@@ -828,7 +828,7 @@ export const useGameStore = defineStore('game', {
         // 実際に捨て牌をプレイヤーの捨て牌リストに追加
         if (discardedTileActual) {
           if (isStocking) {
-            player.stockedTile = { ...discardedTileActual, isPublic: true }; // ストック牌として保管し、公開フラグを立てる
+            player.stockedTile = { ...discardedTileActual, isPublic: true, isStockedTile: true }; // ストック牌として保管し、公開フラグとストック牌フラグを立てる
             // ストックアクションなので、捨て牌リストには追加しない
             // 他家のアクションチェックも不要
             this.gamePhase = GAME_PHASES.PLAYER_TURN; // 次のプレイヤーのターンへ

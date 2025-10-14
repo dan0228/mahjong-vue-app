@@ -1239,7 +1239,7 @@ export const useGameStore = defineStore('game', {
         this.stockSelectionTimerId = null;
       }
       this.stockSelectionCountdown = 1.3; // カウントダウンをリセット
-      // フェーズは次のアクションで上書きされるか、手動で戻す
+      this.gamePhase = GAME_PHASES.PLAYER_TURN; // フェーズをリセット
     },
     /**
      * リーチアニメーションの状態を設定し、一定時間後に打牌選択フェーズへ移行します。

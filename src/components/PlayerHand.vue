@@ -22,8 +22,8 @@
         </div>
       </div>
       <!-- ストック牌の表示エリア -->
-      <div v-if="stockedTileDisplay" :class="['stocked-tile-area', 'player-hand', { 'selected-stocked-tile': isStockedTileSelected, 'selectable': isStockTileSelectable }]">
-        <div :class="[getTileClasses(stockedTileDisplay, false), 'is-in-stock-area']" @click="toggleStockedTileSelection">
+      <div v-if="stockedTileDisplay" :class="['stocked-tile-area', 'player-hand', { 'selected-stocked-tile': isStockedTileSelected, 'selectable': isStockTileSelectable, 'disabled': !isStockTileSelectable, 'pointer-events-none': !isStockTileSelectable }]" @click="toggleStockedTileSelection">
+        <div :class="[getTileClasses(stockedTileDisplay, false), 'is-in-stock-area']">
           <img :src="getTileImageUrl(stockedTileDisplay)" :alt="tileToString(stockedTileDisplay)" />
         </div>
         <StockSelectionCountdown :show-countdown="showStockCountdown" :is-ai-player="props.player.id !== 'player1'" />
@@ -82,7 +82,7 @@
    */
   function toggleStockedTileSelection() {
     // 自分のターンで、かつストックルールが有効で、ストック牌があり、ゲームフェーズがツモ待ちの場合のみ選択可能
-    if (props.isMyHand && gameStore.currentTurnPlayerId === props.player.id && gameStore.ruleMode === 'stock' && props.player.stockedTile && (gameStore.gamePhase === GAME_PHASES.PLAYER_TURN || gameStore.gamePhase === GAME_PHASES.AWAITING_STOCK_SELECTION_TIMER)) {
+    if (props.isMyHand && gameStore.currentTurnPlayerId === props.player.id && gameStore.ruleMode === 'stock' && props.player.stockedTile && gameStore.gamePhase === GAME_PHASES.AWAITING_STOCK_SELECTION_TIMER) {
       emit('toggle-stocked-tile-selection', props.player.id);
     }
   }
@@ -110,6 +110,8 @@
    */
   const isStockTileSelectable = computed(() => {
     return props.isMyHand &&
+           gameStore.currentTurnPlayerId === props.player.id && // 自分のターンであること
+           gameStore.ruleMode === 'stock' && // ストックルールが有効
            gameStore.gamePhase === GAME_PHASES.AWAITING_STOCK_SELECTION_TIMER &&
            !!props.stockedTileDisplay;
   });
@@ -295,8 +297,10 @@
   .stocked-tile-area {
     display: flex;
     position: absolute;
-    cursor: pointer; /* クリック可能であることを示す */
-    z-index: 10; /* 他の要素より手前に表示 */
+    z-index: 100; /* 他の要素より手前に表示 */
+  }
+  .stocked-tile-area.selectable {
+    cursor: pointer; /* 選択可能な場合のみポインターを表示 */
   }
   .position-bottom .stocked-tile-area {
     left: 130%;
@@ -408,6 +412,14 @@
   .tile.disabled {
     opacity: 0.6;
     cursor: not-allowed;
+  }
+
+  .stocked-tile-area.disabled {
+    cursor: not-allowed;
+  }
+
+  .pointer-events-none {
+    pointer-events: none;
   }
 
   .selected-stocked-tile {

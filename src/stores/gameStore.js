@@ -60,11 +60,8 @@ function handleAiDiscardLogic(store, playerId) {
 
   const fullHand = [...currentPlayer.hand, store.drawnTile];
 
-  // AIがストック牌を使用した直後であれば、その牌を捨てることはできない。
-  // 捨てる候補からツモ牌（使用されたストック牌）を除外する。
-  const potentialDiscardsForShanten = currentPlayer.isUsingStockedTile
-    ? fullHand.filter(t => t.id !== store.drawnTile?.id)
-    : fullHand;
+  // ストック牌だった牌も通常のツモ牌と同様に捨て牌候補に含める
+  const potentialDiscardsForShanten = fullHand;
 
   let tileToDiscard = null;
   let isFromDrawnTile = false;
@@ -97,7 +94,7 @@ function handleAiDiscardLogic(store, playerId) {
   // --- ストックルール適用時のAIのストック決定 --- //
   if (store.ruleMode === 'stock' && !currentPlayer.stockedTile && !currentPlayer.isUsingStockedTile && currentPlayer.melds.length === 0 && !currentPlayer.isRiichi && !currentPlayer.isDoubleRiichi) {
     const randomValue = Math.random();
-    if (randomValue < 0.5) { // 50%の確率でストックする
+    if (randomValue < 0.3) { // 30%の確率でストックする
       store.executeStock(currentPlayer.id, tileToDiscard.id, isFromDrawnTile);
       return; // ストックしたので打牌はしない
     }

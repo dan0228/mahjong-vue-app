@@ -103,7 +103,7 @@ const overlayStyle = computed(() => {
   justify-content: center;
   align-items: center;
   color: white;
-  font-family: 'M PLUS Rounded 1c', sans-serif;
+  font-family: 'M PLUS 1', sans-serif;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
   position: relative; /* SVGとテキストの配置のため */
 }

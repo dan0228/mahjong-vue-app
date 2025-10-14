@@ -574,11 +574,10 @@
   },
   "gameModeSelection": {
     "title": "対戦ルール選択",
-    "description": "どちらのルールで遊びますか？",
     "classic": "クラシック",
-    "classicDescription": "半荘一回でスコアを競う通常のルールです。",
+    "classicDescription": "四牌で行う麻雀の通常のルール！",
     "stock": "ストック",
-    "stockDescription": "詳細は後日公開！お楽しみに！"
+    "stockDescription": "後日正式公開！現在お試し可能！"
   },
   "supabaseErrors": {
     "userAlreadyRegistered": "このメールアドレスは既に登録されています。",
@@ -597,12 +596,6 @@
     "message2": "連勝数 → 0",
     "message3": "猫コインが-390されました。",
     "closeButton": "閉じる"
-  },
-  "stockDecisionPopup": {
-    "title": "選択",
-    "description": "どうしますか？",
-    "drawFromWall": "山からツモる",
-    "useStockedTile": "ストック牌を使う"
   },
   "stockCountdown": {
     "message": "タップして手牌へ"

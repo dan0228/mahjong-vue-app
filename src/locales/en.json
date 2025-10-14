@@ -574,11 +574,10 @@
   },
   "gameModeSelection": {
     "title": "Select Game Rule",
-    "description": "Which rule do you want to play with?",
     "classic": "Classic",
-    "classicDescription": "Standard rules where you compete for score in one half-game.",
+    "classicDescription": "Standard Rules for 4-tiles Mahjong!",
     "stock": "Stock",
-    "stockDescription": "Details to be announced later! Stay tuned!"
+    "stockDescription": "Official Release Coming Soon! Available to try now!"
   },
   "supabaseErrors": {
     "userAlreadyRegistered": "This email address is already registered.",
@@ -597,12 +596,6 @@
     "message2": "Win Streak → 0",
     "message3": "You lost 390 Cat Coins.",
     "closeButton": "Close"
-  },
-  "stockDecisionPopup": {
-    "title": "Decision",
-    "description": "What do you want to do?",
-    "drawFromWall": "Draw from Wall",
-    "useStockedTile": "Use Stocked Tile"
   },
   "stockCountdown": {
     "message": "Tap to take tile"

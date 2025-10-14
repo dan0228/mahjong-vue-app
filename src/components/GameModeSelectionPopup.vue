@@ -6,7 +6,6 @@
         <button class="close-button" @click="$emit('close')">×</button>
       </div>
       <div class="popup-content">
-        <p class="description">{{ $t('gameModeSelection.description') }}</p>
         <div class="mode-selection-buttons">
           <button class="mode-button classic-button" @click="selectMode('classic')">
             <span class="button-text">{{ $t('gameModeSelection.classic') }}</span>

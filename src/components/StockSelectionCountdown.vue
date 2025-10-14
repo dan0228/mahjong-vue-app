@@ -1,5 +1,5 @@
 <template>
-  <div v-if="props.showCountdown" class="countdown-overlay">
+  <div v-if="props.showCountdown" class="countdown-overlay" :style="overlayStyle">
     <div :class="['countdown-container', { 'ai-player': props.isAiPlayer }]">
       <svg class="progress-ring" :width="size" :height="size">
         <circle
@@ -32,6 +32,7 @@ import { useI18n } from 'vue-i18n';
 const props = defineProps({
   showCountdown: { type: Boolean, default: false },
   isAiPlayer: { type: Boolean, default: false }, // AIプレイヤーかどうか
+  position: { type: String, default: 'bottom' }, // プレイヤーの位置
 });
 
 const gameStore = useGameStore();
@@ -52,20 +53,49 @@ const countdownProgress = computed(() => {
 const strokeDashoffset = computed(() => {
   return circumference.value - (countdownProgress.value / 100) * circumference.value;
 });
+
+const overlayStyle = computed(() => {
+  if (props.position === 'top') {
+    // topプレイヤーの場合、ストック牌の左下（視覚的には右上）に配置
+    return {
+      bottom: '18px', // 下端から少し上に
+      left: '-15px',   // 左端から少し左に
+      transform: 'none',
+    };
+  } else if (props.position === 'right') {
+    // rightプレイヤーの場合、ストック牌の左上に配置
+    return {
+      top: '-15px',
+      left: '-10px',
+      transform: 'none',
+    };
+  } else if (props.position === 'left') {
+    // leftプレイヤーの場合、ストック牌の右上に配置
+    return {
+      top: '-12px',
+      right: '-5px',
+      transform: 'none',
+    };
+  } else {
+    // bottomプレイヤーの場合、ストック牌の右上に配置 (デフォルト)
+    return {
+      top: '-7px',
+      right: '-15px',
+      transform: 'none',
+    };
+  }
+});
 </script>
 
 <style scoped>
 .countdown-overlay {
   position: absolute; /* 親要素に対して絶対配置 */
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%); /* 中央寄せ */
   z-index: 101; /* ストック牌より手前に表示 */
   pointer-events: none; /* クリックイベントを透過させる */
 }
 
 .countdown-container {
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(0, 0, 0, 0.4);
   border-radius: 50%; /* 円形にする */
   width: 80px;
   height: 80px;

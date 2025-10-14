@@ -83,7 +83,7 @@ function handleAiDiscardLogic(store, playerId) {
   if (bestTileToDiscard) {
     // ストック牌使用直後の場合は、bestTileToDiscardがstore.drawnTileであってもisFromDrawnTileはfalseとする
     // なぜなら、このdrawnTileは手牌に加わったものであり、ツモ牌として扱われるべきではないから
-    isFromDrawnTile = (bestTileToDiscard.id === store.drawnTile?.id && !currentPlayer.isUsingStockedTile);
+    isFromDrawnTile = (bestTileToDiscard.id === store.drawnTile?.id);
     tileToDiscard = bestTileToDiscard;
   } else {
     // 最適な牌が見つからない場合（エラーケースなど）、ツモ牌を捨てる

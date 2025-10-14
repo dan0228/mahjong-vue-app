@@ -26,7 +26,7 @@
         <div class="tile">
           <img :src="getTileImageUrl(stockedTileDisplay)" :alt="tileToString(stockedTileDisplay)" />
         </div>
-        <StockSelectionCountdown :show-countdown="showStockCountdown" />
+        <StockSelectionCountdown :show-countdown="showStockCountdown" :is-ai-player="props.player.id !== 'player1'" />
       </div>
     </div>
 </template>

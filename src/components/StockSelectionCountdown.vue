@@ -1,6 +1,6 @@
 <template>
-  <div v-if="showCountdown" class="countdown-overlay">
-    <div class="countdown-container">
+  <div v-if="props.showCountdown" class="countdown-overlay">
+    <div :class="['countdown-container', { 'ai-player': props.isAiPlayer }]">
       <svg class="progress-ring" :width="size" :height="size">
         <circle
           class="progress-ring-circle-bg"
@@ -19,7 +19,7 @@
         />
       </svg>
       <div class="countdown-text">{{ gameStore.stockSelectionCountdown.toFixed(1) }}</div>
-      <div class="countdown-message">{{ $t('stockCountdown.message') }}</div>
+      <div v-if="!props.isAiPlayer" class="countdown-message">{{ $t('stockCountdown.message') }}</div>
     </div>
   </div>
 </template>
@@ -31,29 +31,26 @@ import { useI18n } from 'vue-i18n';
 
 const props = defineProps({
   showCountdown: { type: Boolean, default: false },
+  isAiPlayer: { type: Boolean, default: false }, // AIプレイヤーかどうか
 });
 
 const gameStore = useGameStore();
 const { t } = useI18n();
 
 // 円ゲージのサイズ設定
-const size = 60; // SVG全体の幅と高さ
-const strokeWidth = 8; // 線の太さ
-const center = size / 2;
-const radius = size / 2 - strokeWidth / 2;
-const circumference = 2 * Math.PI * radius;
+const size = computed(() => props.isAiPlayer ? 50 : 80); // AIなら小さく、人間なら通常サイズ
+const strokeWidth = computed(() => props.isAiPlayer ? 5 : 8); // AIなら細く
+const center = computed(() => size.value / 2);
+const radius = computed(() => size.value / 2 - strokeWidth.value / 2);
+const circumference = computed(() => 2 * Math.PI * radius.value);
 
 const countdownProgress = computed(() => {
   const initialCountdown = 1.3; // カウントダウンの初期値
-  // 残り時間に基づいて0から100のパーセンテージを計算
-  // ゲージが減っていく表示なので、残り時間が少ないほどパーセンテージも小さくなる
   return Math.max(0, (gameStore.stockSelectionCountdown / initialCountdown) * 100);
 });
 
 const strokeDashoffset = computed(() => {
-  // 進捗率が0%のときに完全に表示され、100%のときに完全に非表示になるように調整
-  // ゲージが減っていく表示なので、100% - progress で計算
-  return circumference - (countdownProgress.value / 100) * circumference;
+  return circumference.value - (countdownProgress.value / 100) * circumference.value;
 });
 </script>
 
@@ -63,14 +60,14 @@ const strokeDashoffset = computed(() => {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%); /* 中央寄せ */
-  z-index: 1; /* ストック牌より手前に表示 */
+  z-index: 101; /* ストック牌より手前に表示 */
   pointer-events: none; /* クリックイベントを透過させる */
 }
 
 .countdown-container {
   background-color: rgba(0, 0, 0, 0.7);
   border-radius: 50%; /* 円形にする */
-  width: 80px; /* コンテナのサイズを小さく */
+  width: 80px;
   height: 80px;
   display: flex;
   flex-direction: column;
@@ -80,6 +77,11 @@ const strokeDashoffset = computed(() => {
   font-family: 'M PLUS Rounded 1c', sans-serif;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
   position: relative; /* SVGとテキストの配置のため */
+}
+
+.countdown-container.ai-player {
+  width: 50px; /* AIプレイヤー用の小さいサイズ */
+  height: 50px;
 }
 
 .progress-ring {
@@ -101,15 +103,19 @@ const strokeDashoffset = computed(() => {
 }
 
 .countdown-text {
-  font-size: 1.5em; /* 数値表示を小さく */
+  font-size: 1.5em;
   font-weight: bold;
   line-height: 1em;
   position: relative; /* SVGの上に表示 */
   z-index: 1;
 }
 
+.countdown-container.ai-player .countdown-text {
+  font-size: 1em; /* AIプレイヤー用の小さいフォントサイズ */
+}
+
 .countdown-message {
-  font-size: 0.5em; /* メッセージも小さく */
+  font-size: 0.5em;
   position: relative;
   z-index: 1;
 }

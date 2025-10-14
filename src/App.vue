@@ -166,6 +166,7 @@ onMounted(async () => {
     '/assets/images/status/ron.png',
     '/assets/images/status/tenpai.png',
     '/assets/images/status/tsumo.png',
+    '/assets/images/status/stock.png',
     '/assets/images/status/furiten_en.png',
     '/assets/images/status/kan_en.png',
     '/assets/images/status/pon_en.png',
@@ -173,6 +174,7 @@ onMounted(async () => {
     '/assets/images/status/ron_en.png',
     '/assets/images/status/tenpai_en.png',
     '/assets/images/status/tsumo_en.png',
+    '/assets/images/status/stock_en.png',
     '/assets/images/tenbo/tenbou100.png',
     '/assets/images/tenbo/tenbou1000.png',
     '/assets/images/tenbo/tenbou10000.png',
@@ -225,6 +227,7 @@ onMounted(async () => {
     '/assets/sounds/Multi_Accent01-3(Dry).mp3',
     '/assets/sounds/Single_Accent17-2(Dry).mp3',
     '/assets/sounds/Kagura_Suzu03-1.mp3',
+    '/assets/sounds/Percussive_Accent04-3(High).mp3',
   ];
 
   const totalAssets = imagePaths.length + audioPaths.length;

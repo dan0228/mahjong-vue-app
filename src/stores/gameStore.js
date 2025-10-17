@@ -465,8 +465,13 @@ export const useGameStore = defineStore('game', {
           // --- リーチ後の処理 ---
           if (currentPlayer.isRiichi || currentPlayer.isDoubleRiichi) {
             // リーチ中はツモ和了と暗槓のみ可能
-            const ankanOptions = mahjongLogic.checkCanAnkan(currentPlayer.hand, this.drawnTile);
-            this.playerActionEligibility[currentPlayer.id].canAnkan = ankanOptions.length > 0 ? ankanOptions : null;
+            // ただし、嶺上牌がない状態（海底）や、次のツモが保証されない状態ではカンはできない
+            if (this.wall.length > 3) {
+              const ankanOptions = mahjongLogic.checkCanAnkan(currentPlayer.hand, this.drawnTile);
+              this.playerActionEligibility[currentPlayer.id].canAnkan = ankanOptions.length > 0 ? ankanOptions : null;
+            } else {
+              this.playerActionEligibility[currentPlayer.id].canAnkan = null;
+            }
             // リーチ中は再リーチ、ポン、明槓、加槓は不可
             this.playerActionEligibility[currentPlayer.id].canRiichi = false;
             this.playerActionEligibility[currentPlayer.id].canPon = null;
@@ -708,8 +713,8 @@ export const useGameStore = defineStore('game', {
         }
         this.playerActionEligibility[playerId].canRiichi = canRiichi;
 
-        // 海底牌では暗槓・加槓はできない
-        if (this.wall.length > 0) {
+        // 自分の次のツモ番が保証されない状態（山が3枚以下）では鳴けないようにする
+        if (this.wall.length > 3) {
           const ankanOptions = mahjongLogic.checkCanAnkan(currentPlayer.hand, this.drawnTile, this.createGameContextForPlayer(currentPlayer, false));
           this.canDeclareAnkan[playerId] = ankanOptions.length > 0 ? ankanOptions : null;
           const kakanOptions = mahjongLogic.checkCanKakan(currentPlayer.hand, currentPlayer.melds, this.drawnTile, this.createGameContextForPlayer(currentPlayer, false));
@@ -893,11 +898,11 @@ export const useGameStore = defineStore('game', {
             } else {
               eligibility.canRon = mahjongLogic.canWinBasicShape(p.hand, this.lastDiscardedTile, p.melds);
             }
-            // 河底牌ではポン・明槓はできず、リーチ中のプレイヤーも同様にできない
-            if (this.wall.length > 0 && !p.isRiichi && !p.isDoubleRiichi) {
-              eligibility.canPon = mahjongLogic.checkCanPon(p.hand, this.lastDiscardedTile) ? this.lastDiscardedTile : null;
-              eligibility.canMinkan = mahjongLogic.checkCanMinkan(p.hand, this.lastDiscardedTile) ? this.lastDiscardedTile : null;
-            }
+            // 自分の次のツモ番が保証されない状態（山が3枚以下）では鳴けないようにする
+        if (this.wall.length > 3 && !p.isRiichi && !p.isDoubleRiichi) {
+          eligibility.canPon = mahjongLogic.checkCanPon(p.hand, this.lastDiscardedTile) ? this.lastDiscardedTile : null;
+          eligibility.canMinkan = mahjongLogic.checkCanMinkan(p.hand, this.lastDiscardedTile) ? this.lastDiscardedTile : null;
+        }
             this.playerActionEligibility[p.id] = eligibility; // プレイヤーのアクション資格を更新
 
             // ロン、ポン、明槓のいずれかが可能であれば、応答待ちリストに追加

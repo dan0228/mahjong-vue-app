@@ -21,13 +21,7 @@
                     <img :src="getTileImageUrl(isMyHand || drawnTileDisplay.isPublic ? drawnTileDisplay : null)" :alt="isMyHand ? tileToString(drawnTileDisplay) : '裏向きの牌'" />
         </div>
       </div>
-      <!-- ストック牌の表示エリア -->
-      <div v-if="stockedTileDisplay" :class="['stocked-tile-area', 'player-hand', { 'selected-stocked-tile': isStockedTileSelected, 'selectable': isStockTileSelectable, 'disabled': !isStockTileSelectable, 'pointer-events-none': !isStockTileSelectable }]" @click="toggleStockedTileSelection">
-        <div :class="[getTileClasses(stockedTileDisplay, false), 'is-in-stock-area']">
-          <img :src="getTileImageUrl(stockedTileDisplay)" :alt="tileToString(stockedTileDisplay)" />
-        </div>
-        <StockSelectionCountdown :show-countdown="showStockCountdown" :is-ai-player="props.player.id !== 'player1'" :position="props.position" />
-      </div>
+      <!-- ストック牌の表示エリアは PlayerArea.vue に移動しました -->
     </div>
 </template>
 
@@ -36,7 +30,6 @@
   import { useGameStore } from '@/stores/gameStore'; // gameStore をインポート
   import { GAME_PHASES } from '@/stores/gameStore'; // GAME_PHASES をインポート
   import { getTileImageUrl, tileToString } from '@/utils/tileUtils'; // 共通ユーティリティをインポート
-  import StockSelectionCountdown from './StockSelectionCountdown.vue'; // StockSelectionCountdown をインポート
 
   /**
    * プレイヤーの手牌とツモ牌を表示するコンポーネント。
@@ -55,14 +48,6 @@
       type: Object,
       default: null
     },
-    stockedTileDisplay: {
-      type: Object,
-      default: null
-    },
-    isStockedTileSelected: {
-      type: Boolean,
-      default: false
-    },
     // 打牌可能な状態か (自分のターンで、ツモ後など)
     canDiscard: {
       type: Boolean,
@@ -74,18 +59,8 @@
     }
   });
 
-  const emit = defineEmits(['tile-selected', 'tile-to-stock-selected', 'toggle-stocked-tile-selection']); // 'tile-selected'イベントを定義
+  const emit = defineEmits(['tile-selected', 'tile-to-stock-selected']); // 'tile-selected'イベントを定義
   const gameStore = useGameStore(); // gameStore を使用
-
-  /**
-   * ストック牌の選択状態を切り替えるイベントを発行します。
-   */
-  function toggleStockedTileSelection() {
-    // 自分のターンで、かつストックルールが有効で、ストック牌があり、ゲームフェーズがツモ待ちの場合のみ選択可能
-    if (props.isMyHand && gameStore.currentTurnPlayerId === props.player.id && gameStore.ruleMode === 'stock' && props.player.stockedTile && gameStore.gamePhase === GAME_PHASES.AWAITING_STOCK_SELECTION_TIMER) {
-      emit('toggle-stocked-tile-selection', props.player.id);
-    }
-  }
 
   /**
    * プレイヤーの手牌を取得する算出プロパティ。
@@ -93,27 +68,6 @@
    */
   const playerDisplayHand = computed(() => {
     return props.player?.hand || [];
-  });
-
-  /**
-   * ストック牌選択のカウントダウンを表示するかどうかを判定する算出プロパティ。
-   */
-  const showStockCountdown = computed(() => {
-    const currentPlayer = gameStore.players.find(p => p.id === gameStore.currentTurnPlayerId);
-    return gameStore.gamePhase === GAME_PHASES.AWAITING_STOCK_SELECTION_TIMER &&
-           gameStore.currentTurnPlayerId === props.player.id && // 自分のターンのみ表示
-           currentPlayer && !currentPlayer.isRiichi && !currentPlayer.isDoubleRiichi; // リーチ中は表示しない
-  });
-
-  /**
-   * ストック牌が選択可能かどうかを判定する算出プロパティ。
-   */
-  const isStockTileSelectable = computed(() => {
-    return props.isMyHand &&
-           gameStore.currentTurnPlayerId === props.player.id && // 自分のターンであること
-           gameStore.ruleMode === 'stock' && // ストックルールが有効
-           gameStore.gamePhase === GAME_PHASES.AWAITING_STOCK_SELECTION_TIMER &&
-           !!props.stockedTileDisplay;
   });
 
   /**
@@ -240,20 +194,6 @@
     transform: translateX(5px); /* 画面から見て右に動く */
   }
 
-  /* ストック牌のホバー時の動き */
-  .player-hand-container.position-bottom .stocked-tile-area.selectable:hover {
-    transform: translateY(-5px); /* 上に動く */
-  }
-  .player-hand-container.position-right .stocked-tile-area.selectable:hover {
-    transform: translateX(-5px); /* 画面から見て左に動く */
-  }
-  .player-hand-container.position-top .stocked-tile-area.selectable:hover {
-    transform: translateY(5px); /* 画面から見て下に動く */
-  }
-  .player-hand-container.position-left .stocked-tile-area.selectable:hover {
-    transform: translateX(5px); /* 画面から見て右に動く */
-  }
-
   .player-hand {
     display: flex;
     gap: 0px; /* 牌同士の間隔 */
@@ -291,41 +231,6 @@
     bottom: 100%; /* 手牌エリアの上に配置 */
     left: 0;
     margin-bottom: 7px; /* 手牌エリアとの間に下マージンを設定 (column-reverseのため) */
-  }
-
-  /* ストック牌エリアのスタイル */
-  .stocked-tile-area {
-    display: flex;
-    position: absolute;
-    z-index: 10; /* 他の要素より手前に表示 */
-  }
-  .stocked-tile-area.selectable {
-    cursor: pointer; /* 選択可能な場合のみポインターを表示 */
-  }
-  .position-bottom .stocked-tile-area {
-    left: 130%;
-    top: -100%;
-    margin-left: -100px; /* ツモ牌の位置からさらに中央にずらす */
-  }
-  .position-top .stocked-tile-area {
-    left: -150%;
-    top: 60%;
-    margin-left: 100px; /* ツモ牌の位置からさらに中央にずらす */
-  }
-  .position-left .stocked-tile-area {
-    top: 75%;
-    left: 90%;
-    margin-top: 50px; /* ツモ牌の位置からさらに中央にずらす */
-  }
-  .position-right .stocked-tile-area {
-    top: 5%;
-    right: 95%;
-    margin-top: -50px; /* ツモ牌の位置からさらに中央にずらす */
-  }
-
-  /* ストック牌の画像サイズを少し小さく */
-  .stocked-tile-area .tile img {
-    scale: 0.9;
   }
 
   .tile {
@@ -414,20 +319,6 @@
     cursor: not-allowed;
   }
 
-  .stocked-tile-area.disabled {
-    cursor: not-allowed;
-  }
-
-  .pointer-events-none {
-    pointer-events: none;
-  }
-
-  .selected-stocked-tile {
-    border: 0px solid gold;
-    box-shadow: 0 0 10px gold; /* 手牌にあるストック牌にのみ影を適用 */
-    border-radius: 20px;
-  }
-
   .is-stocked-tile {
     border: 0px solid gold;
     box-shadow: 0 0 10px gold; /* 手牌にあるストック牌にのみ影を適用 */
@@ -438,13 +329,5 @@
     border: 0px solid gold;
     box-shadow: 0 0 10px gold; /* 手牌にあるストック牌にのみ影を適用 */
     border-radius: 20px;
-  }
-
-  .is-in-stock-area.is-stocked-tile {
-    border: none;
-    box-shadow: inset 5px 5px 5px rgba(255, 215, 0, 0.4),
-                inset -5px -5px 5px rgba(255, 215, 0, 0.4);
-    border-radius: 20px;
-    box-sizing: border-box;
   }
 </style>

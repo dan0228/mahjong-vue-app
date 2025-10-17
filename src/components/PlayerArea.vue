@@ -5,12 +5,10 @@
         :player="player"
         :is-my-hand="isMyHand"
         :drawn-tile-display="drawnTileDisplay"
-        :stocked-tile-display="player.stockedTile"
         :can-discard="canDiscard"
         :position="position"
         @tile-selected="onTileSelected"
         @tile-to-stock-selected="onTileToStockSelected"
-        @toggle-stocked-tile-selection="onToggleStockedTileSelection"
       />
     </div>
     <div v-if="player.melds && player.melds.length > 0" class="melds-area">
@@ -28,6 +26,13 @@
                  class="meld-tile-image kakan-added-tile" />
           </span>
         </div>
+    </div>
+    <!-- ストック牌の表示エリア -->
+    <div v-if="player.stockedTile" :class="['stocked-tile-area', positionClass, { 'selected-stocked-tile': player.isStockedTileSelected, 'selectable': isStockTileSelectable, 'disabled': !isStockTileSelectable, 'pointer-events-none': !isStockTileSelectable }]" @click="onToggleStockedTileSelection(player.id)">
+      <div :class="['tile', {'is-stocked-tile': player.stockedTile?.isStockedTile}]">
+        <img :src="getTileImageUrl(player.stockedTile)" :alt="tileToString(player.stockedTile)" />
+      </div>
+      <StockSelectionCountdown :show-countdown="showStockCountdown" :is-ai-player="player.id !== 'player1'" :position="position" />
     </div>
     <!-- アクションボタンエリア -->
     <div v-if="isMyHand || gameStore.gameMode === 'allManual'" :class="['player-actions', `player-actions-${position}`]">
@@ -52,6 +57,7 @@
 import { defineProps, defineEmits, computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PlayerHand from './PlayerHand.vue';
+import StockSelectionCountdown from './StockSelectionCountdown.vue';
 import { useGameStore } from '@/stores/gameStore';
 import { GAME_PHASES } from '@/stores/gameStore';
 import { getTileImageUrl, tileToString } from '@/utils/tileUtils'; // 共通ユーティリティ
@@ -101,11 +107,13 @@ function onTileToStockSelected(payload) {
 }
 
 /**
- * PlayerHandコンポーネントからストック牌の選択状態切り替えイベントを受け取り、gameStoreのアクションを呼び出します。
+ * ストック牌のクリックイベントを処理し、gameStoreのアクションを呼び出します。
  * @param {string} playerId - プレイヤーのID。
  */
 function onToggleStockedTileSelection(playerId) {
-  gameStore.toggleStockedTileSelection(playerId);
+  if (isStockTileSelectable.value) {
+    gameStore.toggleStockedTileSelection(playerId);
+  }
 }
 
 const playerEligibility = computed(() => gameStore.playerActionEligibility[props.player.id] || {}); // プレイヤーのアクション資格
@@ -185,6 +193,21 @@ const canStockAction = computed(() => {
     !player.isDoubleRiichi && // ダブルリーチ中でない
     !actionInProgress.value // 他のアクションが進行中でない
   );
+});
+
+const showStockCountdown = computed(() => {
+  const currentPlayer = gameStore.players.find(p => p.id === gameStore.currentTurnPlayerId);
+  return gameStore.gamePhase === GAME_PHASES.AWAITING_STOCK_SELECTION_TIMER &&
+         gameStore.currentTurnPlayerId === props.player.id && // 自分のターンのみ表示
+         currentPlayer && !currentPlayer.isRiichi && !currentPlayer.isDoubleRiichi; // リーチ中は表示しない
+});
+
+const isStockTileSelectable = computed(() => {
+  return props.isMyHand &&
+         gameStore.currentTurnPlayerId === props.player.id && // 自分のターンであること
+         gameStore.ruleMode === 'stock' && // ストックルールが有効
+         gameStore.gamePhase === GAME_PHASES.AWAITING_STOCK_SELECTION_TIMER &&
+         !!props.player.stockedTile;
 });
 
 /**
@@ -622,5 +645,85 @@ function getMeldTileAlt(meld, tile, tileIndex) {
 .action-image-button:active {
   transform: translateY(-1px); /* クリック時に少し沈む */
   filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.2)); /* 影を少し弱める */
+}
+
+.stocked-tile-area {
+  display: flex;
+  position: absolute;
+  z-index: 10;
+  transition: transform 0.05s ease-out;
+  scale: 1;
+}
+.stocked-tile-area.selectable {
+  cursor: pointer;
+}
+.stocked-tile-area.selectable:hover {
+  transform: translateY(-5px);
+}
+.player-area-bottom.stocked-tile-area {
+  bottom: 75px;
+  left: 90%;
+  transform: translateX(-50%);
+}
+.player-area-top.stocked-tile-area {
+  top: 40px;
+  left: -20%;
+  transform: translateX(-50%);
+}
+.player-area-left.stocked-tile-area {
+  left: 20px;
+  top: 120%;
+  transform: translateX(50%);
+}
+.player-area-right.stocked-tile-area {
+  right: 20px;
+  top: -25%;
+  transform: translateY(-50%);
+}
+
+.stocked-tile-area .tile img {
+  scale: 0.9;
+}
+
+.stocked-tile-area.disabled {
+  cursor: not-allowed;
+}
+
+.pointer-events-none {
+  pointer-events: none;
+}
+
+.selected-stocked-tile {
+  border: 0px solid gold;
+  box-shadow: 0 0 10px gold;
+  border-radius: 20px;
+}
+
+.is-stocked-tile {
+  border: none;
+  box-shadow: inset 5px 5px 5px rgba(255, 215, 0, 0.4),
+              inset -5px -5px 5px rgba(255, 215, 0, 0.4);
+  border-radius: 20px;
+  box-sizing: border-box;
+}
+/* ストック牌の回転とサイズ調整 */
+.stocked-tile-area .tile img {
+  width: 47px; /* 自家(bottom)のデフォルトサイズ */
+  height: 62px;
+}
+.player-area-top.stocked-tile-area .tile img,
+.player-area-left.stocked-tile-area .tile img,
+.player-area-right.stocked-tile-area .tile img {
+  width: 24px; /* 他家のサイズ */
+  height: 32px;
+}
+.player-area-top.stocked-tile-area .tile img {
+  transform: rotate(180deg);
+}
+.player-area-left.stocked-tile-area .tile img {
+  transform: rotate(90deg);
+}
+.player-area-right.stocked-tile-area .tile img {
+  transform: rotate(-90deg);
 }
 </style>

@@ -532,13 +532,13 @@ export const useGameStore = defineStore('game', {
             }
             this.playerActionEligibility[currentPlayer.id].canRiichi = canRiichi;
 
-            // 海底牌では暗槓・加槓はできない
-            if (this.wall.length > 0) {
-              const ankanOptions = mahjongLogic.checkCanAnkan(currentPlayer.hand, this.drawnTile, this.createGameContextForPlayer(currentPlayer, false));
-              this.canDeclareAnkan[currentPlayer.id] = ankanOptions.length > 0 ? ankanOptions : null;
-              const kakanOptions = mahjongLogic.checkCanKakan(currentPlayer.hand, currentPlayer.melds, this.drawnTile, this.createGameContextForPlayer(currentPlayer, false));
-              this.canDeclareKakan[currentPlayer.id] = kakanOptions.length > 0 ? kakanOptions : null;
-            }
+            // 自分の次のツモ番が保証されない状態（山が3枚以下）では鳴けないようにする
+        if (this.wall.length > 3) {
+          const ankanOptions = mahjongLogic.checkCanAnkan(currentPlayer.hand, this.drawnTile, this.createGameContextForPlayer(currentPlayer, false));
+          this.canDeclareAnkan[playerId] = ankanOptions.length > 0 ? ankanOptions : null;
+          const kakanOptions = mahjongLogic.checkCanKakan(currentPlayer.hand, currentPlayer.melds, this.drawnTile, this.createGameContextForPlayer(currentPlayer, false));
+          this.canDeclareKakan[playerId] = kakanOptions.length > 0 ? kakanOptions : null;
+        }
             this.updateFuriTenState(currentPlayer.id);
 
             // AI対戦モードで、かつ現在のプレイヤーがAIの場合、自動でアクションを決定
@@ -651,8 +651,13 @@ export const useGameStore = defineStore('game', {
       // --- リーチ後の処理 ---
       if (currentPlayer.isRiichi || currentPlayer.isDoubleRiichi) {
         // リーチ中はツモ和了と暗槓のみ可能
-        const ankanOptions = mahjongLogic.checkCanAnkan(currentPlayer.hand, this.drawnTile);
-        this.playerActionEligibility[playerId].canAnkan = ankanOptions.length > 0 ? ankanOptions : null;
+        // ただし、嶺上牌がない状態（海底）や、次のツモが保証されない状態ではカンはできない
+        if (this.wall.length > 3) {
+            const ankanOptions = mahjongLogic.checkCanAnkan(currentPlayer.hand, this.drawnTile);
+            this.playerActionEligibility[playerId].canAnkan = ankanOptions.length > 0 ? ankanOptions : null;
+        } else {
+            this.playerActionEligibility[playerId].canAnkan = null;
+        }
         // リーチ中は再リーチ、ポン、明槓、加槓は不可
         this.playerActionEligibility[playerId].canRiichi = false;
         this.playerActionEligibility[playerId].canPon = null;

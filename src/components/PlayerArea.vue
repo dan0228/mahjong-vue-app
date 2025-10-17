@@ -181,7 +181,6 @@ const canStockAction = computed(() => {
     gameStore.gamePhase === GAME_PHASES.AWAITING_DISCARD && // 打牌待ちフェーズ
     !player.stockedTile && // ストック牌をまだ持っていない
     !player.isUsingStockedTile && // ストック牌使用直後ではない
-    player.melds.length === 0 && // 鳴いていない
     !player.isRiichi && // リーチ中でない
     !player.isDoubleRiichi && // ダブルリーチ中でない
     !actionInProgress.value // 他のアクションが進行中でない
@@ -469,7 +468,7 @@ function getMeldTileAlt(meld, tile, tileIndex) {
 }
 .player-area-right .melds-area {
   flex-direction: column-reverse; /* 下から上に面子を追加 */
-  top: -230px; /* 垂直方向の中央に配置 */
+  top: -240px; /* 垂直方向の中央に配置 */
   right: 20%; /* 手牌エリアの左側に配置 */
   margin-right: 5px; /* 手牌との間に少しスペースを空ける */
 }

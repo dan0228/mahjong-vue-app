@@ -58,7 +58,7 @@ function handleAiDiscardLogic(store, playerId) {
   const currentPlayer = store.players.find(p => p.id === playerId);
   if (!currentPlayer || currentPlayer.id === 'player1') return; // 人間プレイヤーまたはプレイヤーが見つからない場合は何もしない
 
-  const fullHand = [...currentPlayer.hand, store.drawnTile];
+  const fullHand = [...currentPlayer.hand, store.drawnTile].filter(Boolean); // drawnTileがnullの場合を除外
 
   // ストック牌だった牌も通常のツモ牌と同様に捨て牌候補に含める
   const potentialDiscardsForShanten = fullHand;
@@ -74,7 +74,9 @@ function handleAiDiscardLogic(store, playerId) {
   for (const tile of potentialDiscardsForShanten) {
     const tempHand = potentialDiscardsForShanten.filter(t => t.id !== tile.id);
     const shanten = mahjongLogic.findShanten(tempHand, currentPlayer.melds);
-    if (shanten < bestShanten) {
+    // シャンテン数が同じかそれより良い手になる場合、捨て牌候補を更新する
+    // これにより、鳴いた後などシャンテン数が変わらない場合でも bestTileToDiscard が null になるのを防ぐ
+    if (shanten <= bestShanten) {
       bestShanten = shanten;
       bestTileToDiscard = tile;
     }
@@ -92,7 +94,9 @@ function handleAiDiscardLogic(store, playerId) {
   }
 
   // --- ストックルール適用時のAIのストック決定 --- //
-  if (store.ruleMode === 'stock' && !currentPlayer.stockedTile && !currentPlayer.isUsingStockedTile && currentPlayer.melds.length === 0 && !currentPlayer.isRiichi && !currentPlayer.isDoubleRiichi) {
+  // 鳴き（ポン、カン）があってもストックできるように、melds.length のチェックを削除
+  // ただし、ストックはツモった後しかできないため、store.drawnTile が存在することを条件に加える
+  if (store.ruleMode === 'stock' && store.drawnTile && !currentPlayer.stockedTile && !currentPlayer.isUsingStockedTile && !currentPlayer.isRiichi && !currentPlayer.isDoubleRiichi) {
     const randomValue = Math.random();
     if (randomValue < 0.3) { // 30%の確率でストックする
       store.executeStock(currentPlayer.id, tileToDiscard.id, isFromDrawnTile);
@@ -936,10 +940,7 @@ export const useGameStore = defineStore('game', {
         console.warn("Stock failed: Player already has a stocked tile.");
         return;
       }
-      if (player.melds.length > 0) {
-        console.warn("Stock failed: Player has melds.");
-        return;
-      }
+      // 鳴きがあってもストックできるように仕様変更したため、このチェックは削除
       if (player.isRiichi || player.isDoubleRiichi) {
         console.warn("Stock failed: Player is in Riichi.");
         return;
@@ -2733,7 +2734,7 @@ ${roundEndMessage}`;
           const eligibility = this.playerActionEligibility[aiPlayerId];
 
           // 1. ロン可能かチェック (85%実施)
-          if (eligibility?.canRon && Math.random() < 0.85) {
+          if (eligibility?.canRon && Math.random() < 0) {
             this.playerDeclaresCall(aiPlayerId, 'ron', null);
             return;
           }
@@ -2745,7 +2746,7 @@ ${roundEndMessage}`;
           }
 
           // 3. ポン可能かチェック (20%実施)
-          if (eligibility?.canPon && Math.random() < 0.2) {
+          if (eligibility?.canPon && Math.random() < 1) {
             this.playerDeclaresCall(aiPlayerId, 'pon', eligibility.canPon);
             return;
           }

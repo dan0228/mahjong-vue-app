@@ -28,11 +28,11 @@
         </div>
     </div>
     <!-- ストック牌の表示エリア -->
-    <div v-if="gameStore.ruleMode === 'stock'" :class="['stocked-tile-area', positionClass]">
+    <div v-if="gameStore.ruleMode === 'stock'" 
+         :class="['stocked-tile-area', positionClass, { 'selected-stocked-tile': player.isStockedTileSelected, 'selectable': isStockTileSelectable, 'disabled': !isStockTileSelectable, 'pointer-events-none': !isStockTileSelectable }]"
+         @click="onToggleStockedTileSelection(player.id)">
       <img src="/assets/images/back/stock_frame.png" alt="Stock Frame" class="stock-frame-image" />
-      <div v-if="player.stockedTile" 
-           :class="['stocked-tile-content', { 'selected-stocked-tile': player.isStockedTileSelected, 'selectable': isStockTileSelectable, 'disabled': !isStockTileSelectable, 'pointer-events-none': !isStockTileSelectable }]" 
-           @click="onToggleStockedTileSelection(player.id)">
+      <div v-if="player.stockedTile" class="stocked-tile-content">
         <div :class="['tile', {'is-stocked-tile': player.stockedTile?.isStockedTile}]">
           <img :src="getTileImageUrl(player.stockedTile)" :alt="tileToString(player.stockedTile)" />
         </div>
@@ -691,7 +691,7 @@ function getMeldTileAlt(meld, tile, tileIndex) {
 }
 .player-area-right.stocked-tile-area {
   right: 40px;
-  top: -32%;
+  top: -25%;
   transform: translateY(-50%) rotate(-90deg);
 }
 

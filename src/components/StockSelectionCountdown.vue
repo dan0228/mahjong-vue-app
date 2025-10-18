@@ -61,9 +61,9 @@ const overlayStyle = computed(() => {
   if (props.position === 'top') {
     adjustmentTransform = 'translateY(-4px)';
   } else if (props.position === 'right') {
-    adjustmentTransform = 'translateX(-10px)';
+    adjustmentTransform = 'translateX(0px)';
   } else if (props.position === 'left') {
-    adjustmentTransform = 'translateX(-10px)';
+    adjustmentTransform = 'translateX(0px)';
   }
   // 'bottom' は中央揃えで問題ないため調整不要
 

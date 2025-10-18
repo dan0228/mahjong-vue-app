@@ -535,9 +535,9 @@ export const useGameStore = defineStore('game', {
             // 自分の次のツモ番が保証されない状態（山が3枚以下）では鳴けないようにする
         if (this.wall.length > 3) {
           const ankanOptions = mahjongLogic.checkCanAnkan(currentPlayer.hand, this.drawnTile, this.createGameContextForPlayer(currentPlayer, false));
-          this.canDeclareAnkan[playerId] = ankanOptions.length > 0 ? ankanOptions : null;
+          this.canDeclareAnkan[currentPlayer.id] = ankanOptions.length > 0 ? ankanOptions : null;
           const kakanOptions = mahjongLogic.checkCanKakan(currentPlayer.hand, currentPlayer.melds, this.drawnTile, this.createGameContextForPlayer(currentPlayer, false));
-          this.canDeclareKakan[playerId] = kakanOptions.length > 0 ? kakanOptions : null;
+          this.canDeclareKakan[currentPlayer.id] = kakanOptions.length > 0 ? kakanOptions : null;
         }
             this.updateFuriTenState(currentPlayer.id);
 

@@ -671,7 +671,7 @@ function getMeldTileAlt(meld, tile, tileIndex) {
   transform: translateX(-50%);
 }
 .player-area-left.stocked-tile-area {
-  left: 20px;
+  left: 30px;
   top: 120%;
   transform: translateX(50%);
 }

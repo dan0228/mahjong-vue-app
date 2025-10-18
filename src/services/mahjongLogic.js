@@ -53,7 +53,7 @@ export function getAllTiles() {
   // [SUITS.MANZU, SUITS.PINZU, SUITS.SOZU].forEach(suit => {
       [SUITS.MANZU].forEach(suit => {
     for (let rank = 1; rank <= 3; rank++) {
-      for (let i = 0; i < 12; i++) {
+      for (let i = 0; i < 13; i++) {
         tiles.push({
           suit,
           rank,

@@ -61,37 +61,123 @@ function handleAiDiscardLogic(store, playerId) {
   const fullHand = [...currentPlayer.hand, store.drawnTile].filter(Boolean); // drawnTileがnullの場合を除外
 
   // ストック牌だった牌も通常のツモ牌と同様に捨て牌候補に含める
-  const potentialDiscardsForShanten = fullHand;
+  
 
-  let tileToDiscard = null;
-  let isFromDrawnTile = false;
+  let tileToDiscard = store.drawnTile; // デフォルトはツモ牌を捨てる
+  let isFromDrawnTile = true;
 
-  // 牌効率を考慮して最もシャテン数を減らす牌、または安全な牌を選択
-  // ここでは簡略化のため、最もシャテン数を減らす牌を選択する
-  let bestShanten = Infinity;
-  let bestTileToDiscard = null;
+  let maxScore = -Infinity; // スコアが高いほど捨てたい牌（マイナス評価が少ないほど良い）
+  let currentBestTileToDiscard = null; // ループ内で最適な牌を保持するための変数
 
-  for (const tile of potentialDiscardsForShanten) {
-    const tempHand = potentialDiscardsForShanten.filter(t => t.id !== tile.id);
-    const shanten = mahjongLogic.findShanten(tempHand, currentPlayer.melds);
-    // シャンテン数が同じかそれより良い手になる場合、捨て牌候補を更新する
-    // これにより、鳴いた後などシャンテン数が変わらない場合でも bestTileToDiscard が null になるのを防ぐ
-    if (shanten <= bestShanten) {
-      bestShanten = shanten;
-      bestTileToDiscard = tile;
+  // 鳴いた牌の情報を取得 (直前の鳴きがあった場合)
+  const lastMeld = currentPlayer.melds.length > 0 ? currentPlayer.melds[currentPlayer.melds.length - 1] : null;
+
+  // 手牌の各牌について評価スコアを計算
+  for (const tile of fullHand) {
+    let score = 0; // この牌を捨てた場合の評価スコア
+    const tileKey = mahjongLogic.getTileKey(tile);
+    const tileCountInHand = fullHand.filter(t => mahjongLogic.getTileKey(t) === tileKey).length;
+
+    // 対子や刻子を崩すのはマイナス評価（残す優先度が高い）
+    if (tileCountInHand >= 2) {
+      score -= 100;
+    }
+    if (tileCountInHand >= 3) {
+      score -= 150;
+    }
+
+    // --- 鳴いた後の打牌選択ロジック ---
+    if (lastMeld && lastMeld.tiles.length > 0) {
+      const calledTile = lastMeld.tiles[0]; // 鳴いた牌の代表
+
+      // 鳴いた牌が字牌の場合
+      if (calledTile.suit === mahjongLogic.SUITS.JIHAI) {
+        // 捨てる牌が字牌の場合、残す優先度を上げる（捨てにくくする）
+        if (tile.suit === mahjongLogic.SUITS.JIHAI) {
+          score -= 200;
+        }
+      } else { // 鳴いた牌が数牌の場合
+        const isCalledTileTerminal = (calledTile.rank === 1 || calledTile.rank === 9);
+
+        // 鳴いた牌が1,9牌の場合、他の1,9牌を残す
+        if (isCalledTileTerminal) {
+          if (tile.suit !== mahjongLogic.SUITS.JIHAI && (tile.rank === 1 || tile.rank === 9)) {
+            score -= 200;
+          }
+        } else { // 鳴いた牌が中張牌の場合、同じ色の牌を残す
+          if (tile.suit === calledTile.suit) {
+            score -= 200;
+          }
+        }
+      }
+    }
+    // --- ここまで ---
+
+    if (tile.suit === mahjongLogic.SUITS.JIHAI) {
+      const isWindTile = tile.rank >= mahjongLogic.JIHAI_TYPES.TON && tile.rank <= mahjongLogic.JIHAI_TYPES.PEI;
+      const isSangenTile = tile.rank >= mahjongLogic.JIHAI_TYPES.HAKU && tile.rank <= mahjongLogic.JIHAI_TYPES.CHUN;
+
+      if (isWindTile) {
+        const otherWindTiles = fullHand.filter(t => t.suit === mahjongLogic.SUITS.JIHAI && t.rank >= mahjongLogic.JIHAI_TYPES.TON && t.rank <= mahjongLogic.JIHAI_TYPES.PEI && mahjongLogic.getTileKey(t) !== tileKey);
+        if (otherWindTiles.length === 0) {
+          score += 80;
+        } else {
+          score -= 20;
+        }
+      } else if (isSangenTile) {
+        const otherSangenTiles = fullHand.filter(t => t.suit === mahjongLogic.SUITS.JIHAI && t.rank >= mahjongLogic.JIHAI_TYPES.HAKU && t.rank <= mahjongLogic.JIHAI_TYPES.CHUN && mahjongLogic.getTileKey(t) !== tileKey);
+        if (otherSangenTiles.length === 0) {
+          score += 80;
+        } else {
+          score -= 20;
+        }
+      } else {
+        score += 100;
+      }
+    } else {
+      const suitTiles = fullHand.filter(t => t.suit === tile.suit);
+      const rank = tile.rank;
+
+      if (suitTiles.length <= 2) {
+        score += 80;
+      } else if (suitTiles.length <= 4) {
+        score += 40;
+      }
+
+      let connections = 0;
+      for (let i = -2; i <= 2; i++) {
+        if (i === 0) continue;
+        if (suitTiles.some(t => t.rank === rank + i)) {
+          connections++;
+        }
+      }
+      score -= (connections * 10);
+
+      if (rank === 1 && !suitTiles.some(t => t.rank === 2 || t.rank === 3)) {
+        score += 25;
+      }
+      if (rank === 9 && !suitTiles.some(t => t.rank === 7 || t.rank === 8)) {
+        score += 25;
+      }
+      if (rank > 1 && rank < 9 && connections === 0) {
+          score += 30;
+      }
+    }
+
+    if (score > maxScore) {
+      maxScore = score;
+      currentBestTileToDiscard = tile;
     }
   }
 
-  if (bestTileToDiscard) {
-    // ストック牌使用直後の場合は、bestTileToDiscardがstore.drawnTileであってもisFromDrawnTileはfalseとする
-    // なぜなら、このdrawnTileは手牌に加わったものであり、ツモ牌として扱われるべきではないから
-    isFromDrawnTile = (bestTileToDiscard.id === store.drawnTile?.id);
-    tileToDiscard = bestTileToDiscard;
-  } else {
-    // 最適な牌が見つからない場合（エラーケースなど）、ツモ牌を捨てる
-    tileToDiscard = store.drawnTile; // ツモ牌を捨てる
-    isFromDrawnTile = true;
+  // 最適な牌が見つからなかった場合（エラーケースなど）、ツモ牌を捨てる
+  if (!currentBestTileToDiscard) {
+    currentBestTileToDiscard = store.drawnTile;
   }
+
+  // 最終的に捨てる牌とそれがツモ牌かどうかを決定
+  tileToDiscard = currentBestTileToDiscard;
+  isFromDrawnTile = (currentBestTileToDiscard.id === store.drawnTile?.id);
 
   // --- ストックルール適用時のAIのストック決定 --- //
   // 鳴き（ポン、カン）があってもストックできるように、melds.length のチェックを削除

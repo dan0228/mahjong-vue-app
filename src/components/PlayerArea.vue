@@ -28,9 +28,14 @@
         </div>
     </div>
     <!-- ストック牌の表示エリア -->
-    <div v-if="player.stockedTile" :class="['stocked-tile-area', positionClass, { 'selected-stocked-tile': player.isStockedTileSelected, 'selectable': isStockTileSelectable, 'disabled': !isStockTileSelectable, 'pointer-events-none': !isStockTileSelectable }]" @click="onToggleStockedTileSelection(player.id)">
-      <div :class="['tile', {'is-stocked-tile': player.stockedTile?.isStockedTile}]">
-        <img :src="getTileImageUrl(player.stockedTile)" :alt="tileToString(player.stockedTile)" />
+    <div v-if="gameStore.ruleMode === 'stock'" :class="['stocked-tile-area', positionClass]">
+      <img src="/assets/images/back/stock_frame.png" alt="Stock Frame" class="stock-frame-image" />
+      <div v-if="player.stockedTile" 
+           :class="['stocked-tile-content', { 'selected-stocked-tile': player.isStockedTileSelected, 'selectable': isStockTileSelectable, 'disabled': !isStockTileSelectable, 'pointer-events-none': !isStockTileSelectable }]" 
+           @click="onToggleStockedTileSelection(player.id)">
+        <div :class="['tile', {'is-stocked-tile': player.stockedTile?.isStockedTile}]">
+          <img :src="getTileImageUrl(player.stockedTile)" :alt="tileToString(player.stockedTile)" />
+        </div>
       </div>
       <StockSelectionCountdown :show-countdown="showStockCountdown" :is-ai-player="player.id !== 'player1'" :position="position" />
     </div>
@@ -657,9 +662,6 @@ function getMeldTileAlt(meld, tile, tileIndex) {
 .stocked-tile-area.selectable {
   cursor: pointer;
 }
-.stocked-tile-area.selectable:hover {
-  /* Generic rule removed, replaced by specifics below */
-}
 .player-area-bottom.stocked-tile-area.selectable:hover {
   transform: translateX(-50%) translateY(-5px);
 }
@@ -726,5 +728,46 @@ function getMeldTileAlt(meld, tile, tileIndex) {
 .player-area-left.stocked-tile-area .tile img,
 .player-area-right.stocked-tile-area .tile img {
   transform: none;
+}
+
+.stock-frame-image {
+  opacity: 1;
+}
+
+.stocked-tile-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* フレーム画像のサイズと位置調整 */
+.player-area-bottom .stock-frame-image {
+  width: 60px;
+  height: 72px;
+  transform: translate(0px, -2px); /* ここで微調整 */
+}
+
+.player-area-top .stock-frame-image {
+  width: 31px;
+  height: 38px;
+  transform: translate(0px, -2px); /* ここで微調整 */
+}
+
+.player-area-left .stock-frame-image {
+  width: 31px;
+  height: 38px;
+  transform: translate(7px, -2px); /* ここで微調整 */
+}
+
+.player-area-right .stock-frame-image {
+  width: 31px;
+  height: 38px;
+  transform: translate(7px, -2px); /* ここで微調整 */
 }
 </style>

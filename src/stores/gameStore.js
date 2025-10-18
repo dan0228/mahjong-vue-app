@@ -1248,13 +1248,19 @@ export const useGameStore = defineStore('game', {
       this.stockSelectionTimerId = setInterval(() => {
         this.stockSelectionCountdown = parseFloat((this.stockSelectionCountdown - 0.01).toFixed(2));
         if (this.stockSelectionCountdown <= 0) {
-          this.stopStockSelectionCountdown();
-          // カウントダウン終了時、ストック牌が選択されていなければ山からツモる
-          if (!player.isStockedTileSelected) {
-            this.drawFromWall(playerId); // 自動的に山からツモる
-          } else {
-            // 選択されている場合はuseStockedTileがtoggleStockedTileSelectionから呼ばれているはず
-          }
+          // タイマーを停止するが、状態のリセットやアクションは遅延させる
+          clearInterval(this.stockSelectionTimerId);
+          this.stockSelectionTimerId = null;
+
+          // UIが満タンのゲージを描画する時間を確保するための短い遅延
+          setTimeout(() => {
+            const currentPlayer = this.players.find(p => p.id === playerId);
+            // タイムアウト後、まだプレイヤーが選択を行っておらず、フェーズも変わっていないことを確認
+            if (this.gamePhase === GAME_PHASES.AWAITING_STOCK_SELECTION_TIMER && currentPlayer && !currentPlayer.isStockedTileSelected) {
+              this.stopStockSelectionCountdown(); // 状態をリセット
+              this.drawFromWall(playerId);      // アクションを実行
+            }
+          }, 100); // 100msの遅延
         }
       }, 10); // 10ミリ秒ごとに更新
     },

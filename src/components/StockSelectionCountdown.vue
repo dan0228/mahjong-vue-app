@@ -119,7 +119,6 @@ const overlayStyle = computed(() => {
 .progress-ring-circle {
   stroke: #4caf50; /* プログレスバーの色（緑） */
   fill: transparent;
-  transition: stroke-dashoffset 0.1s linear; /* 滑らかなアニメーション */
 }
 
 .countdown-text {

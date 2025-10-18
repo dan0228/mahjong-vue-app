@@ -575,7 +575,7 @@
   "gameModeSelection": {
     "title": "対戦ルール選択",
     "classic": "クラシック",
-    "classicDescription": "四牌で行う麻雀の通常のルール！",
+    "classicDescription": "四牌で行う通常のルール！",
     "stock": "ストック",
     "stockDescription": "後日正式公開！現在お試し可能！"
   },

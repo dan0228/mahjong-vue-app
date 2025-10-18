@@ -503,12 +503,12 @@
   },
   "usernameRegistration": {
     "title": "Player Information🐈‍⬛",
-    "description": "👇Please register a name to be used in the game.",
+    "description": "👇Please enter a name to be used in the game.",
     "usernameLabel": "Username (Required)",
     "usernamePlaceholder": "Max 3 full-width or 6 half-width chars",
     "optional": "Optional",
     "avatarLabel": "Avatar (Optional)",
-    "registerButton": "Register",
+    "registerButton": "Start Game",
     "errors": {
       "usernameRequired": "Username is required.",
       "usernameTooLong": "Username must be within 3 full-width or 6 half-width characters.",

@@ -806,5 +806,7 @@ function getMeldTileAlt(meld, tile, tileIndex) {
   color: white;
   font-size: 9px;
   text-align: center;
+  padding-left: 5px;
+  padding-right: 5px;
 }
 </style>

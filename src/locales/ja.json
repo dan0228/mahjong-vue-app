@@ -423,7 +423,7 @@
     "skipButtonImg": "/assets/images/button/skip_button.png",
     "stock": "ストック",
     "stockButtonImg": "/assets/images/button/stock_button.png",
-    "drawFromWall": "すぐに　引く"
+    "drawFromWall": "すぐに引く"
   },
   "centerTableInfo": {
     "infoBottomImg": "/assets/images/info/info_bottom.png",
@@ -503,12 +503,12 @@
   },
   "usernameRegistration": {
     "title": "プレイヤー情報入力🐈‍⬛",
-    "description": "👇ゲームで使用する名前を登録してください👇",
+    "description": "👇ゲームで使用する名前を決めてください👇",
     "usernameLabel": "ユーザー名 (必須)",
     "usernamePlaceholder": "全角3文字、半角6文字以内",
     "optional": "任意",
     "avatarLabel": "アバター (任意)",
-    "registerButton": "登録",
+    "registerButton": "ゲームを始める",
     "errors": {
       "usernameRequired": "ユーザー名は必須です。",
       "usernameTooLong": "ユーザー名は全角3文字、半角6文字以内で入力してください",

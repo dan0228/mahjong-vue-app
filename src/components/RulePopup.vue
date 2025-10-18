@@ -3,15 +3,13 @@
     <div class="popup-overlay" @click.self="$emit('close')">
       <div class="popup-content">
         <h2>{{ $t('rulePopup.title') }}</h2>
-        <p>{{ $t('rulePopup.subtitle') }}</p>
-        <table class="rules-table">
-          <tbody>
-            <tr v-for="section in ruleSections" :key="section">
-              <td class="rule-category">{{ $t(`rulePopup.sections.${section}.title`) }}</td>
-              <td class="rule-description">{{ $t(`rulePopup.sections.${section}.description`) }}</td>
-            </tr>
-          </tbody>
-        </table>
+        <p class="subtitle">{{ $t('rulePopup.subtitle') }}</p>
+        <div class="popup-body">
+          <div v-for="section in ruleSections" :key="section" class="section">
+            <h3>{{ $t(`rulePopup.sections.${section}.title`) }}</h3>
+            <p>{{ $t(`rulePopup.sections.${section}.description`) }}</p>
+          </div>
+        </div>
         <div class="close-button-container">
           <button @click="$emit('close')" class="close-button">{{ $t('rulePopup.closeButton') }}</button>
         </div>
@@ -22,15 +20,12 @@
 
 <script setup>
 import { ref } from 'vue';
-import { useI18n } from 'vue-i18n';
 
 /**
  * コンポーネントが発行するイベントを定義。
  * @event close - ポップアップを閉じる際に発行されます。
  */
 defineEmits(['close']);
-
-const { t } = useI18n(); // i18nの翻訳関数を取得
 
 // 表示するルールセクションのキーリスト
 const ruleSections = ref([
@@ -47,13 +42,14 @@ const ruleSections = ref([
 </script>
 
 <style scoped>
+/* HowToPlayPopup.vue のスタイルをベースに適用 */
 .popup-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0,0,0,0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -61,70 +57,66 @@ const ruleSections = ref([
 }
 .popup-content {
   background-color: white;
-  padding: 5px;
+  padding: 20px;
   border-radius: 8px;
-  max-width: 100%;
-  max-height: 85vh; /* ポップアップの最大高さを画面の85%に制限 */
-  font-family: 'M PLUS 1', sans-serif; /* フォントをM PLUS 1に統一 */
-  font-size: small; /* フォントサイズを小さくして全体を縮小 */
-  overflow-y: auto; /* 内容が多い場合にスクロール可能にする */
-  transform: scale(0.85); /* ポップアップ全体を縮小して画面に収める */
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  touch-action: pan-y;
-}
-
-/* Transition styles */
-.popup-enter-active, .popup-leave-active {
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-.popup-enter-from, .popup-leave-to {
-  opacity: 0;
-  transform: scale(0.7);
+  max-width: 90%;
+  max-height: 80%;
+  overflow-y: auto;
+  text-align: center;
+  font-family: 'M PLUS 1', sans-serif;
 }
 .popup-content h2 {
   margin-top: 0;
-  margin-bottom: 15px;
-  color: #333;
+  margin-bottom: 5px;
 }
-.popup-content p {
-  margin-bottom: 15px;
-  color: #555;
-}
-.rules-table {
-  width: 100%;
-  border-collapse: collapse;
+.subtitle {
+  margin-top: 0;
   margin-bottom: 20px;
-  font-size: 0.95em; /* 少しフォントサイズを調整 */
+  color: #555;
+  font-size: 0.9em;
 }
-.rules-table td {
-  border: 1px solid #e0e0e0;
-  padding: 8px 10px;
+.popup-body {
+  margin-top: 20px;
+  margin-bottom: 20px;
   text-align: left;
-  line-height: 1.6; /* 行間を少し広げて読みやすく */
+  font-size: 14px;
+  line-height: 1.6;
 }
-.rule-category {
-  font-weight: bold;
-  background-color: #f8f9fa;
-  color: #333;
-  width: 100px; /* カテゴリ列の幅を固定 */
-  vertical-align: top; /* 内容が多い場合に上揃え */
+.section {
+  margin-bottom: 20px;
 }
-.rule-description {
-  color: #444;
+.section h3 {
+  font-size: 1.1em; /* 少し小さめに調整 */
+  text-align: left;
+  margin-bottom: 8px;
+  color: #586810;
+  border-bottom: 2px solid #d8c8a0;
+  padding-bottom: 5px;
+}
+.section p {
+  margin-left: 10px;
+  margin-right: 10px;
 }
 .close-button-container {
-  margin-top: 20px;
   text-align: center;
+  margin-top: 20px;
 }
 .close-button {
-  padding: 8px 25px;
+  padding: 10px 30px;
   background-color: #6c757d;
   color: white;
   border: none;
   border-radius: 5px;
   cursor: pointer;
   font-size: 1em;
+}
+
+/* トランジション用スタイル */
+.popup-enter-active, .popup-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.popup-enter-from, .popup-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
 }
 </style>

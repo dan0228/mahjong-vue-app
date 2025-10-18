@@ -145,7 +145,7 @@
       },
       "points": {
         "title": "持ち点",
-        "description": "箱下なし (0点未満になった時点で終局)。"
+        "description": "50000点。箱下なし (0点未満になった時点で終局)。"
       },
       "endCondition": {
         "title": "終局条件",

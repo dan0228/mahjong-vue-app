@@ -145,7 +145,7 @@
       },
       "points": {
         "title": "Points",
-        "description": "No points below zero (the game ends if a player's score drops below 0)."
+        "description": "50000 pts. No points below zero (the game ends if a player's score drops below 0)."
       },
       "endCondition": {
         "title": "End Condition",

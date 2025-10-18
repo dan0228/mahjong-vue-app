@@ -658,7 +658,19 @@ function getMeldTileAlt(meld, tile, tileIndex) {
   cursor: pointer;
 }
 .stocked-tile-area.selectable:hover {
-  transform: translateY(-5px);
+  /* Generic rule removed, replaced by specifics below */
+}
+.player-area-bottom.stocked-tile-area.selectable:hover {
+  transform: translateX(-50%) translateY(-5px);
+}
+.player-area-top.stocked-tile-area.selectable:hover {
+  transform: translateX(-50%) rotate(180deg) translateY(5px);
+}
+.player-area-left.stocked-tile-area.selectable:hover {
+  transform: translateX(50%) rotate(90deg) translateY(5px);
+}
+.player-area-right.stocked-tile-area.selectable:hover {
+  transform: translateY(-50%) rotate(-90deg) translateY(5px);
 }
 .player-area-bottom.stocked-tile-area {
   bottom: 75px;

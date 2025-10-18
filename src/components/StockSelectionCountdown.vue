@@ -25,7 +25,7 @@
 
 <script setup>
 import { computed, defineProps } from 'vue';
-import { useGameStore, GAME_PHASES } from '@/stores/gameStore';
+import { useGameStore } from '@/stores/gameStore';
 import { useI18n } from 'vue-i18n';
 
 const props = defineProps({
@@ -54,43 +54,34 @@ const strokeDashoffset = computed(() => {
 });
 
 const overlayStyle = computed(() => {
+  const baseTransform = 'translate(-50%, -50%)';
+  let adjustmentTransform = '';
+
+  // 各ポジションごとの微調整（ここを調整します）
   if (props.position === 'top') {
-    // topプレイヤーの場合
-    return {
-      bottom: '20px', // 下端から少し上に
-      left: '-13px',   // 左端から少し左に
-      transform: 'none',
-    };
+    adjustmentTransform = 'translateY(-4px)';
   } else if (props.position === 'right') {
-    // rightプレイヤーの場合
-    return {
-      top: '-14px',
-      left: '-8px',
-      transform: 'none',
-    };
+    adjustmentTransform = 'translateX(-10px)';
   } else if (props.position === 'left') {
-    // leftプレイヤーの場合
-    return {
-      top: '-12px',
-      right: '-7px',
-      transform: 'none',
-    };
-  } else {
-    // bottomプレイヤーの場合
-    return {
-      top: '-6px',
-      right: '-15px',
-      transform: 'none',
-    };
+    adjustmentTransform = 'translateX(-10px)';
   }
+  // 'bottom' は中央揃えで問題ないため調整不要
+
+  return {
+    transform: `${baseTransform} ${adjustmentTransform}`.trim()
+  };
 });
+
 </script>
 
 <style scoped>
 .countdown-overlay {
-  position: absolute; /* 親要素に対して絶対配置 */
-  z-index: 101; /* ストック牌より手前に表示 */
-  pointer-events: none; /* クリックイベントを透過させる */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  /* transformはoverlayStyleで動的に設定されます */
+  z-index: 101;
+  pointer-events: none;
 }
 
 .countdown-container {

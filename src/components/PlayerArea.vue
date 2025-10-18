@@ -668,17 +668,17 @@ function getMeldTileAlt(meld, tile, tileIndex) {
 .player-area-top.stocked-tile-area {
   top: 40px;
   left: -20%;
-  transform: translateX(-50%);
+  transform: translateX(-50%) rotate(180deg);
 }
 .player-area-left.stocked-tile-area {
   left: 30px;
   top: 120%;
-  transform: translateX(50%);
+  transform: translateX(50%) rotate(90deg);
 }
 .player-area-right.stocked-tile-area {
-  right: 20px;
-  top: -25%;
-  transform: translateY(-50%);
+  right: 40px;
+  top: -32%;
+  transform: translateY(-50%) rotate(-90deg);
 }
 
 .stocked-tile-area .tile img {
@@ -699,13 +699,6 @@ function getMeldTileAlt(meld, tile, tileIndex) {
   border-radius: 20px;
 }
 
-.is-stocked-tile {
-  border: none;
-  box-shadow: inset 5px 5px 5px rgba(255, 215, 0, 0.4),
-              inset -5px -5px 5px rgba(255, 215, 0, 0.4);
-  border-radius: 20px;
-  box-sizing: border-box;
-}
 /* ストック牌の回転とサイズ調整 */
 .stocked-tile-area .tile img {
   width: 47px; /* 自家(bottom)のデフォルトサイズ */
@@ -717,13 +710,9 @@ function getMeldTileAlt(meld, tile, tileIndex) {
   width: 24px; /* 他家のサイズ */
   height: 32px;
 }
-.player-area-top.stocked-tile-area .tile img {
-  transform: rotate(180deg);
-}
-.player-area-left.stocked-tile-area .tile img {
-  transform: rotate(90deg);
-}
+.player-area-top.stocked-tile-area .tile img,
+.player-area-left.stocked-tile-area .tile img,
 .player-area-right.stocked-tile-area .tile img {
-  transform: rotate(-90deg);
+  transform: none;
 }
 </style>

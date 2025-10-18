@@ -778,6 +778,9 @@ export const useGameStore = defineStore('game', {
           return;
         }
 
+        // ★ BUG FIX: これが最後の打牌/ストックになるかどうかのフラグ
+        const isFinalAction = this.wall.length === 0;
+
         let discardedTileActual; // 実際に捨てられる牌のオブジェクト
 
         // --- リーチ後の打牌処理 ---
@@ -843,74 +846,68 @@ export const useGameStore = defineStore('game', {
         // 実際に捨て牌をプレイヤーの捨て牌リストに追加
         if (discardedTileActual) {
           if (isStocking) {
-            player.stockedTile = { ...discardedTileActual, isPublic: true, isStockedTile: true }; // ストック牌として保管し、公開フラグとストック牌フラグを立てる
-            // ストックアクションなので、捨て牌リストには追加しない
-            // 他家のアクションチェックも不要
-            this.gamePhase = GAME_PHASES.PLAYER_TURN; // 次のプレイヤーのターンへ
+            player.stockedTile = { ...discardedTileActual, isPublic: true, isStockedTile: true };
+            // ★ BUG FIX: 山が0枚の時にストックしたら流局
+            if (isFinalAction) {
+              this.handleRyuukyoku();
+              return;
+            }
+            this.gamePhase = GAME_PHASES.PLAYER_TURN;
             this.moveToNextPlayer();
-            return; // 早期終了
+            return;
           } else {
             player.discards = [...player.discards, discardedTileActual];
           }
         } else {
           console.error("Discard failed: discardedTileActual is undefined. Cannot update discards.");
-          return; // 捨て牌が確定しなかったので処理を中断
+          return;
         }
-        this.lastDiscardedTile = discardedTileActual; // 直前に捨てられた牌を更新
+        this.lastDiscardedTile = discardedTileActual;
 
-        // --- カン成立後の打牌であれば、カンドラをめくる ---
-        // ※ このロジックは、どの種類のカン(明槓/暗槓/加槓)の後の打牌でも機能します。
-        //    現状、pendingKanDoraRevealフラグは declareMinkan でのみ true になります。
         if (this.pendingKanDoraReveal) {
           if (this.deadWall.length > 0) {
               const newDoraIndicator = mahjongLogic.revealDora(this.deadWall);
               if (newDoraIndicator && !this.doraIndicators.find(d => d.id === newDoraIndicator.id)) {
-                  this.doraIndicators.push(newDoraIndicator); // 新しいドラ表示牌を追加
+                  this.doraIndicators.push(newDoraIndicator);
               }
           }
-          this.pendingKanDoraReveal = false; // フラグをリセット
+          this.pendingKanDoraReveal = false;
         }
 
-        // 手牌が変わったのでフリテン状態を更新
         this.updateFuriTenState(player.id);
+        this.turnCount++;
+        this.lastActionPlayerId = player.id;
+        this.rinshanKaihouChance = false;
 
-        // ストック牌使用フラグをリリセット
-        // player.isUsingStockedTile = false; // moveToNextPlayerでリセットするため削除
-
-        this.turnCount++; // 総ターン数をインクリメント
-        this.lastActionPlayerId = player.id; // 最後にアクションを行ったプレイヤーを更新
-        this.rinshanKaihouChance = false; // 打牌したら嶺上開花の権利は消える
-
-        // 自分の打牌で自分の一発チャンスは消える。
-        // ただし、リーチ宣言時の打牌では消えない（ここから一発が始まるため）
         if (this.gamePhase !== GAME_PHASES.AWAITING_RIICHI_DISCARD) {
           this.isIppatsuChance[player.id] = false;
         }
-        this.isChankanChance = false; // 打牌されたら槍槓のチャンスはなくなる
+        this.isChankanChance = false;
 
         // --- 他のプレイヤーのアクション可能性をチェック ---
-        this.waitingForPlayerResponses = []; // 応答待ちリストを初期化
-        let canAnyoneAct = false; // 誰かアクション可能なプレイヤーがいるか
+        this.waitingForPlayerResponses = [];
+        let canAnyoneAct = false;
         this.players.forEach(p => {
-          if (p.id !== player.id) { // 捨てたプレイヤー以外をチェック
+          if (p.id !== player.id) {
             const eligibility = {};
-            // フリテンチェック
             const isPlayerInFuriTen = this.isFuriTen[p.id] || this.isDoujunFuriTen[p.id] || false;
 
-            // ロン可能か（軽量チェック）
             if (isPlayerInFuriTen) {
               eligibility.canRon = false;
             } else {
               eligibility.canRon = mahjongLogic.canWinBasicShape(p.hand, this.lastDiscardedTile, p.melds);
             }
-            // 自分の次のツモ番が保証されない状態（山が3枚以下）では鳴けないようにする
-        if (this.wall.length > 3 && !p.isRiichi && !p.isDoubleRiichi) {
-          eligibility.canPon = mahjongLogic.checkCanPon(p.hand, this.lastDiscardedTile) ? this.lastDiscardedTile : null;
-          eligibility.canMinkan = mahjongLogic.checkCanMinkan(p.hand, this.lastDiscardedTile) ? this.lastDiscardedTile : null;
-        }
-            this.playerActionEligibility[p.id] = eligibility; // プレイヤーのアクション資格を更新
 
-            // ロン、ポン、明槓のいずれかが可能であれば、応答待ちリストに追加
+            // ★ BUG FIX: 最後の捨て牌に対してはポン・カンはできない
+            if (!isFinalAction) {
+              if (this.wall.length > 3 && !p.isRiichi && !p.isDoubleRiichi) {
+                eligibility.canPon = mahjongLogic.checkCanPon(p.hand, this.lastDiscardedTile) ? this.lastDiscardedTile : null;
+                eligibility.canMinkan = mahjongLogic.checkCanMinkan(p.hand, this.lastDiscardedTile) ? this.lastDiscardedTile : null;
+              }
+            }
+
+            this.playerActionEligibility[p.id] = eligibility;
+
             if (eligibility.canRon || eligibility.canPon || eligibility.canMinkan) {
               canAnyoneAct = true;
               this.waitingForPlayerResponses.push(p.id);
@@ -918,15 +915,25 @@ export const useGameStore = defineStore('game', {
           }
         });
 
-        // 誰もアクションできず、かつリーチ宣言中でもない場合のみ、即座に次のターンへ
+        // ★ BUG FIX: 最後の捨て牌の後の処理
+        if (isFinalAction) {
+          if (canAnyoneAct) { // Houtei Ron is possible
+            this.gamePhase = GAME_PHASES.AWAITING_ACTION_RESPONSE;
+            this.setNextActiveResponder();
+          } else { // No Ron, game ends in a draw
+            this.handleRyuukyoku();
+          }
+          return;
+        }
+
+        // --- Normal flow ---
         if (!canAnyoneAct && !this.isDeclaringRiichi[player.id]) {
           this.gamePhase = GAME_PHASES.PLAYER_TURN;
           this.moveToNextPlayer();
         } else {
-          // 誰かがアクション可能、またはリーチ宣言中の場合は、応答待ちフェーズに入る
           this.gamePhase = GAME_PHASES.AWAITING_ACTION_RESPONSE;
-          this.playerResponses = {}; // 応答状態をリセット
-          this.setNextActiveResponder(); // 応答を待つ最初のプレイヤーを設定
+          this.playerResponses = {};
+          this.setNextActiveResponder();
         }
       }, 100);
     },

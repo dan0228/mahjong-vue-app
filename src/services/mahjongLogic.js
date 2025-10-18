@@ -52,8 +52,8 @@ export function getAllTiles() {
   // 萬子(m), 筒子(p), 索子(s) の1から9までを各4枚生成
   // [SUITS.MANZU, SUITS.PINZU, SUITS.SOZU].forEach(suit => {
       [SUITS.MANZU].forEach(suit => {
-    for (let rank = 1; rank <= 3; rank++) {
-      for (let i = 0; i < 13; i++) {
+    for (let rank = 1; rank <= 9; rank++) {
+      for (let i = 0; i < 4; i++) {
         tiles.push({
           suit,
           rank,

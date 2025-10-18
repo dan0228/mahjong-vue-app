@@ -594,9 +594,10 @@
   "gameModeSelection": {
     "title": "対戦ルール選択",
     "classic": "クラシック",
-    "classicDescription": "四牌で行う通常のルール！",
+    "classicDescription": "四牌で行う<br>基本のルール！<br>まずはここから！",
     "stock": "ストック",
-    "stockDescription": "後日正式公開！現在お試し可能！"
+    "stockDescription": "1枚だけ牌を<br>取り置き可能！<br>戦略性アップ！",
+    "recommended": "オススメ！"
   },
   "supabaseErrors": {
     "userAlreadyRegistered": "このメールアドレスは既に登録されています。",

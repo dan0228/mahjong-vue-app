@@ -2,19 +2,23 @@
   <div class="popup-overlay" @click.self="$emit('close')">
     <div class="popup-container">
       <div class="popup-header">
-        <h2 class="popup-title">{{ $t('gameModeSelection.title') }}</h2>
+        <h2 class="popup-title">{{ t('gameModeSelection.title') }}</h2>
         <button class="close-button" @click="$emit('close')">×</button>
       </div>
       <div class="popup-content">
-        <div class="mode-selection-buttons">
-          <button class="mode-button classic-button" @click="selectMode('classic')">
-            <span class="button-text">{{ $t('gameModeSelection.classic') }}</span>
-            <span class="button-description">{{ $t('gameModeSelection.classicDescription') }}</span>
-          </button>
-          <button class="mode-button stock-button" @click="selectMode('stock')">
-            <span class="button-text">{{ $t('gameModeSelection.stock') }}</span>
-            <span class="button-description">{{ $t('gameModeSelection.stockDescription') }}</span>
-          </button>
+        <div class="mode-selection-cards">
+          <!-- Classic Rule Card -->
+          <div class="rule-card classic" @click="selectMode('classic')">
+            <div class="rule-title">{{ t('gameModeSelection.classic') }}</div>
+            <div class="rule-description" v-html="t('gameModeSelection.classicDescription')"></div>
+          </div>
+
+          <!-- Stock Rule Card -->
+          <div class="rule-card stock" @click="selectMode('stock')">
+            <div class="badge">{{ t('gameModeSelection.recommended') }}</div>
+            <div class="rule-title">{{ t('gameModeSelection.stock') }}</div>
+            <div class="rule-description" v-html="t('gameModeSelection.stockDescription')"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -22,18 +26,12 @@
 </template>
 
 <script setup>
-/**
- * ゲームモード選択ポップアップコンポーネント。
- * 'classic' または 'stock' ルールを選択します。
- */
 import { defineEmits } from 'vue';
+import { useI18n } from 'vue-i18n';
 
+const { t } = useI18n();
 const emit = defineEmits(['close', 'mode-selected']);
 
-/**
- * 選択されたモードを親コンポーネントに通知します。
- * @param {string} mode - 'classic' または 'stock'
- */
 const selectMode = (mode) => {
   emit('mode-selected', mode);
 };
@@ -54,11 +52,11 @@ const selectMode = (mode) => {
 }
 
 .popup-container {
-  background: linear-gradient(180deg, #f3f0e9, #e4e0d7);
+  background: linear-gradient(180deg, #ffffff, #ffffff);
   border-radius: 15px;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
   width: 90%;
-  max-width: 340px;
+  max-width: 400px;
   border: 2px solid #7a6a53;
   position: relative;
   font-family: 'M PLUS Rounded 1c', sans-serif;
@@ -67,12 +65,12 @@ const selectMode = (mode) => {
 
 .popup-header {
   text-align: center;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
   position: relative;
 }
 
 .popup-title {
-  font-size: 1.5em;
+  font-size: 1.6em;
   color: #5c4b33;
   font-weight: 700;
   margin: 0;
@@ -81,7 +79,7 @@ const selectMode = (mode) => {
 .close-button {
   position: absolute;
   top: -15px;
-  right: -10px;
+  right: -15px;
   background: #7a6a53;
   color: white;
   border: 2px solid white;
@@ -94,55 +92,84 @@ const selectMode = (mode) => {
   box-shadow: 0 2px 5px rgba(0,0,0,0.3);
 }
 
-.popup-content .description {
-  font-size: 0.9em;
-  color: #6d5f4b;
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.mode-selection-buttons {
+.mode-selection-cards {
   display: flex;
-  flex-direction: column;
-  gap: 15px;
+  justify-content: center;
+  gap: 20px;
 }
 
-.mode-button {
-  padding: 10px;
-  border-radius: 10px;
-  border: 2px solid #a4957d;
-  background-color: #fff;
+.rule-card {
+  position: relative;
+  width: 150px;
+  height: 180px;
+  padding: 15px;
+  border-radius: 12px;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  text-align: center;
 }
 
-.mode-button:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+.rule-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
-.classic-button {
-  background: linear-gradient(180deg, #ffffff, #f8f8f0);
+/* --- Classic Card Style --- */
+.rule-card.classic {
+  background: linear-gradient(145deg, #fffbf0, #f8f2e0);
+  border: 2px solid #c8bda5;
 }
 
-.stock-button {
-  background: linear-gradient(180deg, #e8e8e8, #dcdcdc);
-}
-
-.button-text {
-  font-size: 1.3em;
-  font-weight: bold;
-  color: #586810;
-}
-
-.button-description {
-  font-size: 0.8em;
+.rule-card.classic .rule-title {
   color: #6d5f4b;
-  margin-top: 5px;
+}
+
+.rule-card.classic .rule-description {
+  color: #8c7d6b;
+}
+
+/* --- Stock Card Style --- */
+.rule-card.stock {
+  background: linear-gradient(145deg, #eef7ff, #dbeffa);
+  border: 2px solid #b0cde0;
+}
+
+.rule-card.stock .rule-title {
+  color: #3a5a70;
+}
+
+.rule-card.stock .rule-description {
+  color: #5a7a90;
+}
+
+
+.rule-title {
+  font-size: 1.4em;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.rule-description {
+  font-size: 0.85em;
+  line-height: 1.5;
+}
+
+.badge {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background-color: #e74c3c;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 0.8em;
+  font-weight: bold;
+  transform: rotate(15deg);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 </style>

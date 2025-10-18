@@ -479,7 +479,7 @@ function getMeldTileClass(meld, tileIndex) {
 .yaku-info li { margin-bottom: 3px; }
 .total-score { font-weight: bold; font-size: 1.5em;  color: red;}
 .score-change-table {
-  width: 230px;
+  width: 240px;
   margin: 0 auto;
   border-collapse: collapse;
 }

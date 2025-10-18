@@ -253,9 +253,11 @@
    * @returns {Array<Object>} [下家, 右家, 対面, 左家] の順にソートされたプレイヤー配列。
    */
   const orderedPlayersForDisplay = computed(() => {
-    if (!gameStore.players.length || !myPlayerId.value) return [];
+    // ★ BUG FIX: プレイヤーが4人揃うまでは処理しない
+    if (gameStore.players.length !== 4 || !myPlayerId.value) return [];
 
-    const myIndex = gameStore.players.findIndex(p => p.id === myPlayerId.value);
+    // ★ BUG FIX: findIndexのコールバック内でプレイヤー(p)が未定義でないかチェック
+    const myIndex = gameStore.players.findIndex(p => p && p.id === myPlayerId.value);
     if (myIndex === -1) return []; // 自分のプレイヤーが見つからない場合は空配列
 
     const players = [...gameStore.players];
@@ -1187,7 +1189,7 @@ input:checked + .slider:before {
 
 .stock-indicator {
   position: absolute;
-  width: 120px;
+  width: 140px;
   height: auto;
   z-index: 50;
   pointer-events: none;

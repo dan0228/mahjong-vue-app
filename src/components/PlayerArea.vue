@@ -11,6 +11,10 @@
         @tile-to-stock-selected="onTileToStockSelected"
       />
     </div>
+    <!-- ストック選択中にツモ牌の位置に表示されるクリック領域 -->
+    <div v-if="showStockCountdown && position === 'bottom'" class="draw-from-wall-area" @click="drawFromWall">
+      <span class="draw-from-wall-text">{{ t('playerArea.drawFromWall') }}</span>
+    </div>
     <div v-if="player.melds && player.melds.length > 0" class="melds-area">
         <div v-for="(meld, meldIndex) in player.melds" :key="meldIndex" class="meld">
           <!-- 加槓の場合は、ベースとなるポン(3牌)を表示し、4枚目は重ねて表示する -->
@@ -119,6 +123,13 @@ function onToggleStockedTileSelection(playerId) {
   if (isStockTileSelectable.value) {
     gameStore.toggleStockedTileSelection(playerId);
   }
+}
+
+/**
+ * プレースホルダーがクリックされたときに、山から牌を引くアクションを呼び出します。
+ */
+function drawFromWall() {
+  gameStore.chooseToDrawFromWall(props.player.id);
 }
 
 const playerEligibility = computed(() => gameStore.playerActionEligibility[props.player.id] || {}); // プレイヤーのアクション資格
@@ -769,5 +780,31 @@ function getMeldTileAlt(meld, tile, tileIndex) {
   width: 31px;
   height: 38px;
   transform: translate(7px, -2px); /* ここで微調整 */
+}
+
+.draw-from-wall-area {
+  position: absolute;
+  /* 手牌エリア(.player-game-elements)の隣に配置されるように調整 */
+  top: 12px; /* player-areaの上端からの距離 */
+  left: 220px; /* player-areaの左端からの距離 (手牌4枚分+α) */
+  width: 40px;
+  height: 55px;
+  background-color: rgba(0, 0, 0, 0.4);
+  border: 2px dashed #fff;
+  border-radius: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  z-index: 25; /* 手牌より手前、アクションボタンより奥 */
+  transition: background-color 0.2s;
+}
+.draw-from-wall-area:hover {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+.draw-from-wall-text {
+  color: white;
+  font-size: 9px;
+  text-align: center;
 }
 </style>

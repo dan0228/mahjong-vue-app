@@ -422,7 +422,8 @@
     "ponButtonImg": "/assets/images/button/pon_button.png",
     "skipButtonImg": "/assets/images/button/skip_button.png",
     "stock": "ストック",
-    "stockButtonImg": "/assets/images/button/stock_button.png"
+    "stockButtonImg": "/assets/images/button/stock_button.png",
+    "drawFromWall": "すぐに　引く"
   },
   "centerTableInfo": {
     "infoBottomImg": "/assets/images/info/info_bottom.png",

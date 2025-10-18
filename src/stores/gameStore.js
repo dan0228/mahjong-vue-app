@@ -401,7 +401,7 @@ export const useGameStore = defineStore('game', {
               this.stockSelectionCountdown = 1.3; // ゲージ表示のため初期化
 
               const useStocked = Math.random() < 0.3; // 30%の確率でストック牌を使用
-              const aiDelay = Math.random() * (1200 - 200) + 200; // 0.2秒から1.2秒のランダムな遅延 (ミリ秒)
+              const aiDelay = Math.random() * (700 - 200) + 200; // 0.2秒から0.7秒のランダムな遅延 (ミリ秒)
 
               // AI用のカウントダウンタイマーを開始
               this.stockSelectionTimerId = setInterval(() => {
@@ -1211,6 +1211,20 @@ export const useGameStore = defineStore('game', {
      */
     setRuleMode(mode) {
       this.ruleMode = mode;
+    },
+
+    /**
+     * プレイヤーが山からツモることを選択するアクション。
+     * ストック選択のカウントダウンを中断して即座に山からツモります。
+     * @param {string} playerId - プレイヤーのID。
+     */
+    chooseToDrawFromWall(playerId) {
+      const player = this.players.find(p => p.id === playerId);
+      // カウントダウン中、かつ対象プレイヤーのターンであること
+      if (this.gamePhase === GAME_PHASES.AWAITING_STOCK_SELECTION_TIMER && this.currentTurnPlayerId === playerId && player) {
+        this.stopStockSelectionCountdown();
+        this.drawFromWall(playerId);
+      }
     },
 
     /**

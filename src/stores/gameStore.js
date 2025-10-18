@@ -2751,7 +2751,7 @@ ${roundEndMessage}`;
           const eligibility = this.playerActionEligibility[aiPlayerId];
 
           // 1. ロン可能かチェック (85%実施)
-          if (eligibility?.canRon && Math.random() < 0) {
+          if (eligibility?.canRon && Math.random() < 0.85) {
             this.playerDeclaresCall(aiPlayerId, 'ron', null);
             return;
           }
@@ -2763,7 +2763,7 @@ ${roundEndMessage}`;
           }
 
           // 3. ポン可能かチェック (20%実施)
-          if (eligibility?.canPon && Math.random() < 1) {
+          if (eligibility?.canPon && Math.random() < 0.2) {
             this.playerDeclaresCall(aiPlayerId, 'pon', eligibility.canPon);
             return;
           }

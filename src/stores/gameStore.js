@@ -397,34 +397,36 @@ export const useGameStore = defineStore('game', {
             }
             // AIプレイヤーの場合、自動でストック牌を使用するか山からツモるかを決定
             if (currentPlayer.id !== 'player1') {
-              this.gamePhase = GAME_PHASES.AWAITING_STOCK_SELECTION_TIMER; // AIもカウントダウンフェーズに移行
-              this.stockSelectionCountdown = 1.3; // ゲージ表示のため初期化
+              this.gamePhase = GAME_PHASES.AWAITING_STOCK_SELECTION_TIMER;
+              this.stockSelectionCountdown = 1.3;
 
-              const useStocked = Math.random() < 0.3; // 30%の確率でストック牌を使用
-              const aiDelay = Math.random() * (700 - 200) + 200; // 0.2秒から0.7秒のランダムな遅延 (ミリ秒)
+              const useStocked = Math.random() < 0.3;
 
-              // AI用のカウントダウンタイマーを開始
-              this.stockSelectionTimerId = setInterval(() => {
-                this.stockSelectionCountdown = parseFloat((this.stockSelectionCountdown - 0.01).toFixed(2));
-                // カウントダウンが0以下になったら停止 (山から引く場合のみ)
-                if (!useStocked && this.stockSelectionCountdown <= 0) {
-                  clearInterval(this.stockSelectionTimerId);
-                  this.stockSelectionTimerId = null;
-                  this.stockSelectionCountdown = 1.3; // リセット
-                  this.drawFromWall(currentPlayer.id);
-                }
-              }, 10); // 10ミリ秒ごとに更新
-
-              // ストック牌を使用する場合はランダムな遅延時間後にアクションを実行
               if (useStocked) {
-                setTimeout(() => {
-                  if (this.stockSelectionTimerId) {
+                const aiDelay = Math.random() * (1200 - 200) + 200;
+                this.stockSelectionTimerId = setInterval(() => {
+                  this.stockSelectionCountdown = parseFloat((this.stockSelectionCountdown - 0.01).toFixed(2));
+                  if (this.stockSelectionCountdown <= 0) {
                     clearInterval(this.stockSelectionTimerId);
-                    this.stockSelectionTimerId = null;
-                    this.stockSelectionCountdown = 1.3; // リセット
                   }
+                }, 10);
+                setTimeout(() => {
+                  this.stopStockSelectionCountdown();
                   this.useStockedTile(currentPlayer.id);
                 }, aiDelay);
+              } else { // Draw from wall
+                this.stockSelectionTimerId = setInterval(() => {
+                  this.stockSelectionCountdown = parseFloat((this.stockSelectionCountdown - 0.01).toFixed(2));
+                  if (this.stockSelectionCountdown <= 0) {
+                    clearInterval(this.stockSelectionTimerId);
+                  }
+                }, 10);
+                setTimeout(() => {
+                  if (this.stockSelectionTimerId) {
+                    this.stopStockSelectionCountdown();
+                    this.drawFromWall(currentPlayer.id);
+                  }
+                }, 600);
               }
 
               return; // 処理を中断

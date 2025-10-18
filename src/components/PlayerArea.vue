@@ -41,7 +41,9 @@
           <img :src="getTileImageUrl(player.stockedTile)" :alt="tileToString(player.stockedTile)" />
         </div>
       </div>
-      <StockSelectionCountdown :show-countdown="showStockCountdown" :is-ai-player="player.id !== 'player1'" :position="position" />
+      <transition name="fade-gauge">
+        <StockSelectionCountdown v-if="showStockCountdown" :show-countdown="showStockCountdown" :is-ai-player="player.id !== 'player1'" :position="position" />
+      </transition>
     </div>
     <!-- アクションボタンエリア -->
     <div v-if="isMyHand || gameStore.gameMode === 'allManual'" :class="['player-actions', `player-actions-${position}`]">
@@ -808,5 +810,15 @@ function getMeldTileAlt(meld, tile, tileIndex) {
   text-align: center;
   padding-left: 5px;
   padding-right: 5px;
+}
+
+.fade-gauge-enter-active,
+.fade-gauge-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-gauge-enter-from,
+.fade-gauge-leave-to {
+  opacity: 0;
 }
 </style>

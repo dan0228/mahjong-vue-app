@@ -1276,7 +1276,7 @@ export const useGameStore = defineStore('game', {
               this.stopStockSelectionCountdown(); // 状態をリセット
               this.drawFromWall(playerId);      // アクションを実行
             }
-          }, 100); // 100msの遅延
+          }, 250); // 250msの遅延
         }
       }, 10); // 10ミリ秒ごとに更新
     },

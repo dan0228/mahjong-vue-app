@@ -112,8 +112,26 @@
   },
   "rulePopup": {
     "title": "Rules",
-    "subtitle": "Hand: 1 meld, 1 pair",
+    "subtitle": "1 meld and 1 pair with 4 tiles + 1 drawn tile",
     "closeButton": "Close",
+    "tabs": {
+      "basic": "Basic Rules",
+      "stock": "Stock Rule"
+    },
+    "stockTitle": "What is the Stock Rule?",
+    "stockDescription": "After drawing a tile on your turn, you can choose one tile from your five tiles (hand + drawn tile) to \"stock\". The stocked tile is revealed to all players. On your next turn, you can choose to add the stocked tile to your hand instead of drawing from the wall.",
+    "stockConditionsTitle": "Conditions for Stock Action",
+    "stockConditions": [
+      "After drawing a tile on your turn.",
+      "You do not already have a stocked tile.",
+      "You have not made any calls (Pon, Kan) and are not in Riichi."
+    ],
+    "stockUsageTitle": "Using a Stocked Tile",
+    "stockUsage": [
+      "When your turn comes, you can choose to either draw from the wall or add your stocked tile to your hand.",
+      "A stocked tile that is added to your hand remains visible to other players.",
+      "If you add the stocked tile to your hand, you cannot declare a Tsumo win or Kan with that tile."
+    ],
     "sections": {
       "basics": {
         "title": "Basics",

@@ -1192,7 +1192,7 @@ input:checked + .slider:before {
   z-index: 50;
   pointer-events: none;
   transform: translate(-50%, -50%);
-  animation: stock-pop-in 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: stock-fade-effect 0.6s ease-in-out;
 }
 
 .stock-indicator-bottom {
@@ -1212,14 +1212,25 @@ input:checked + .slider:before {
   left: 72%;
 }
 
-@keyframes stock-pop-in {
-  from {
-    transform: translate(-50%, -50%) scale(0.5);
+@keyframes stock-fade-effect {
+  0% {
+    transform: translate(-50%, -50%) scale(0.8);
     opacity: 0;
   }
-  to {
+  20% {
+    transform: translate(-50%, -50%) scale(1.1);
+    opacity: 1;
+  }
+  40% {
     transform: translate(-50%, -50%) scale(1);
     opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1);
   }
 }
 </style>

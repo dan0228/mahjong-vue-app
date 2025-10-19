@@ -572,12 +572,16 @@ export const useGameStore = defineStore('game', {
             this.playerActionEligibility[currentPlayer.id].canTsumoAgari = tsumoWinResult.isWin;
 
             // ツモ和了可能な場合
-            // AIプレイヤーの場合、自動でツモ和了またはツモ切り
+            // AIプレイヤーの場合、自動でツモ和了、暗槓、またはツモ切り
             if (this.gameMode === 'vsCPU' && currentPlayer.id !== 'player1') {
+                
                 if (this.playerActionEligibility[currentPlayer.id].canTsumoAgari) {
                     this.handleAgari(currentPlayer.id, this.drawnTile, true); // ツモ和了
+                } else if (this.playerActionEligibility[currentPlayer.id].canAnkan && this.playerActionEligibility[currentPlayer.id].canAnkan.length > 0) {
+                    // 暗槓可能であれば暗槓
+                    this.declareAnkan(currentPlayer.id, this.playerActionEligibility[currentPlayer.id].canAnkan[0]);
                 } else {
-                    // ツモ和了できない場合は、自動でツモ切り
+                    // どれもできない場合は、自動でツモ切り
                     setTimeout(() => {
                         if (this.currentTurnPlayerId === currentPlayer.id && this.drawnTile) {
                             this.discardTile(currentPlayer.id, this.drawnTile.id, true);
@@ -631,10 +635,36 @@ export const useGameStore = defineStore('game', {
 
             // AI対戦モードで、かつ現在のプレイヤーがAIの場合、自動でアクションを決定
             if (this.gameMode === 'vsCPU' && currentPlayer.id !== 'player1') {
-              // AIの行動決定ロジックをhandleAiDiscardに集約
-              setTimeout(() => {
-                handleAiDiscardLogic(this, currentPlayer.id); // 新しいヘルパー関数を呼び出す
-              }, 500); // 少し遅延させて実行
+              let actionTaken = false;
+              const riichiRand = Math.random();
+              const ankanRand = Math.random();
+              const kakanRand = Math.random();
+
+              
+
+              // 1. リーチ可能なら8%の確率でリーチを試みる
+              if (this.playerActionEligibility[currentPlayer.id].canRiichi && riichiRand < 0.08) {
+                this.declareRiichi(currentPlayer.id);
+                actionTaken = true;
+              }
+
+              if (!actionTaken) {
+                // リーチを試みなかった、またはリーチできなかった場合、他のアクションをチェック
+                if (this.canDeclareAnkan[currentPlayer.id] && ankanRand < 1.0) { // 2. 暗槓可能なら100%暗槓
+                  this.declareAnkan(currentPlayer.id, this.canDeclareAnkan[currentPlayer.id][0]);
+                  actionTaken = true;
+                } else if (this.canDeclareKakan[currentPlayer.id] && kakanRand < 1.0) { // 3. 加槓可能なら100%加槓
+                  this.declareKakan(currentPlayer.id, this.canDeclareKakan[currentPlayer.id][0]);
+                  actionTaken = true;
+                }
+              }
+
+              if (!actionTaken) {
+                // どれもできない場合は打牌
+                setTimeout(() => {
+                  handleAiDiscardLogic(this, currentPlayer.id); // 新しいヘルパー関数を呼び出す
+                }, 500); // 少し遅延させて実行
+              }
             }
           }
         }
@@ -2859,19 +2889,19 @@ ${roundEndMessage}`;
           const eligibility = this.playerActionEligibility[aiPlayerId];
 
           // 1. ロン可能かチェック (85%実施)
-          if (eligibility?.canRon && Math.random() < 0.85) {
+          if (eligibility?.canRon && Math.random() < 0.0) {
             this.playerDeclaresCall(aiPlayerId, 'ron', null);
             return;
           }
 
           // 2. 明槓可能かチェック (100%実施)
-          if (eligibility?.canMinkan && Math.random() < 1.0) {
+          if (eligibility?.canMinkan && Math.random() < 0.0) {
             this.playerDeclaresCall(aiPlayerId, 'minkan', eligibility.canMinkan);
             return;
           }
 
           // 3. ポン可能かチェック (20%実施)
-          if (eligibility?.canPon && Math.random() < 0.2) {
+          if (eligibility?.canPon && Math.random() < 0.0) {
             this.playerDeclaresCall(aiPlayerId, 'pon', eligibility.canPon);
             return;
           }

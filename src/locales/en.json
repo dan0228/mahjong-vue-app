@@ -124,7 +124,7 @@
     "stockConditions": [
       "After drawing a tile on your turn.",
       "You do not already have a stocked tile.",
-      "You have not made any calls (Pon, Kan) and are not in Riichi."
+      "You are not in Riichi."
     ],
     "stockUsageTitle": "Using a Stocked Tile",
     "stockUsage": [

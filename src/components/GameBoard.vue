@@ -967,7 +967,7 @@ input:checked + .slider:before {
   position: absolute;
   width: 80px; /* アイコンのサイズ */
   height: 80px; /* アイコンのサイズ */
-  object-fit: contain;
+  object-fit: cover;
   z-index: 15; /* 他のUI要素より手前に表示 */
 }
 

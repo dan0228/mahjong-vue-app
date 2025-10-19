@@ -597,7 +597,7 @@
     "classicDescription": "Standard Rules for 4-tiles Mahjong!<br>Start Here!",
     "stock": "Stock",
     "stockDescription": "You can stock one tile!<br>Boost your strategy!",
-    "recommended": "Recommended!"
+    "recommended": "NEW!"
   },
   "supabaseErrors": {
     "userAlreadyRegistered": "This email address is already registered.",

@@ -10,7 +10,7 @@
           :class="[getTileClasses(tile, false), { 'is-in-hand': tile?.isStockedTile }]"
           @click="selectTile(tile, false)"
         >
-          <img :src="getTileImageUrl(tile)" :alt="tileToString(tile)" />
+          <img :src="getTileImageUrl(isMyHand || tile.isPublic ? tile : null)" :alt="isMyHand ? tileToString(tile) : '裏向きの牌'" />
         </div>
       </div>
       <div v-if="drawnTileDisplay" class="drawn-tile-area player-hand">
@@ -18,7 +18,7 @@
           :class="getTileClasses(drawnTileDisplay, true)"
           @click="selectTile(drawnTileDisplay, true)"
         >
-                    <img :src="getTileImageUrl(drawnTileDisplay)" :alt="tileToString(drawnTileDisplay)" />
+                    <img :src="getTileImageUrl(isMyHand || drawnTileDisplay.isPublic ? drawnTileDisplay : null)" :alt="isMyHand ? tileToString(drawnTileDisplay) : '裏向きの牌'" />
         </div>
       </div>
       <!-- ストック牌の表示エリアは PlayerArea.vue に移動しました -->

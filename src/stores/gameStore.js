@@ -640,12 +640,18 @@ export const useGameStore = defineStore('game', {
               const ankanRand = Math.random();
               const kakanRand = Math.random();
 
-              
-
-              // 1. リーチ可能なら8%の確率でリーチを試みる
-              if (this.playerActionEligibility[currentPlayer.id].canRiichi && riichiRand < 0.08) {
-                this.declareRiichi(currentPlayer.id);
+              // 0. ツモ和了可能ならツモ和了
+              if (this.playerActionEligibility[currentPlayer.id].canTsumoAgari) {
+                this.handleAgari(currentPlayer.id, this.drawnTile, true); // ツモ和了
                 actionTaken = true;
+              }
+
+              if (!actionTaken) {
+                // 1. リーチ可能なら8%の確率でリーチを試みる
+                if (this.playerActionEligibility[currentPlayer.id].canRiichi && riichiRand < 0.08) {
+                  this.declareRiichi(currentPlayer.id);
+                  actionTaken = true;
+                }
               }
 
               if (!actionTaken) {
@@ -2889,19 +2895,19 @@ ${roundEndMessage}`;
           const eligibility = this.playerActionEligibility[aiPlayerId];
 
           // 1. ロン可能かチェック (85%実施)
-          if (eligibility?.canRon && Math.random() < 0.0) {
+          if (eligibility?.canRon && Math.random() < 0.85) {
             this.playerDeclaresCall(aiPlayerId, 'ron', null);
             return;
           }
 
           // 2. 明槓可能かチェック (100%実施)
-          if (eligibility?.canMinkan && Math.random() < 0.0) {
+          if (eligibility?.canMinkan && Math.random() < 1.0) {
             this.playerDeclaresCall(aiPlayerId, 'minkan', eligibility.canMinkan);
             return;
           }
 
-          // 3. ポン可能かチェック (20%実施)
-          if (eligibility?.canPon && Math.random() < 0.0) {
+          // 3. ポン可能かチェック (30%実施)
+          if (eligibility?.canPon && Math.random() < 0.3) {
             this.playerDeclaresCall(aiPlayerId, 'pon', eligibility.canPon);
             return;
           }

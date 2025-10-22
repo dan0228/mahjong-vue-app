@@ -57,6 +57,9 @@
             <button @click="showGameModeSelectionPopup = true">{{ $t('titleView.menu.catAiMatch') }}</button>
           </li>
           <li>
+            <button @click="goToMatchmaking">オンライン対戦</button>
+          </li>
+          <li>
             <button @click="goToShrine">{{ $t('titleView.menu.shrine') }}</button>
           </li>
           <li>
@@ -187,6 +190,13 @@ function goToShrine() {
  */
 function goToLeaderboard() {
   router.push('/leaderboard');
+}
+
+/**
+ * Matchmaking画面に遷移します。
+ */
+function goToMatchmaking() {
+  router.push('/matchmaking');
 }
 
 /**

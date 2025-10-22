@@ -599,6 +599,14 @@
     "stockDescription": "1枚だけ牌を<br>取り置き可能！<br>戦略性アップ！",
     "recommended": "NEW！"
   },
+  "matchmaking": {
+    "title": "対戦相手を検索中",
+    "cancel": "キャンセル",
+    "status": {
+      "searching": "対戦相手を探しています...",
+      "error": "エラーが発生しました。タイトルに戻ります。"
+    }
+  },
   "supabaseErrors": {
     "userAlreadyRegistered": "このメールアドレスは既に登録されています。",
     "invalidOtp": "OTPが無効または期限切れです。再度お試しください。",

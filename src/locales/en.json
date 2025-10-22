@@ -599,6 +599,14 @@
     "stockDescription": "You can stock one tile!<br>Boost your strategy!",
     "recommended": "NEW!"
   },
+  "matchmaking": {
+    "title": "Searching for Opponent",
+    "cancel": "Cancel",
+    "status": {
+      "searching": "Searching for an opponent...",
+      "error": "An error occurred. Returning to title."
+    }
+  },
   "supabaseErrors": {
     "userAlreadyRegistered": "This email address is already registered.",
     "invalidOtp": "Invalid or expired OTP. Please try again.",

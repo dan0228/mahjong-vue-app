@@ -287,8 +287,234 @@ export const useGameStore = defineStore('game', {
     stockSelectionCountdown: 1.3, // ストック牌選択のカウントダウン
     stockSelectionTimerId: null, // カウントダウンタイマーのID
     stockAnimationPlayerId: null, // ストックアニメーション表示用フラグ
+
+    // Online Match State
+    onlineGameId: null, // オンライン対戦のゲームID
+    isGameOnline: false, // オンライン対戦かどうかのフラグ
+    localPlayerId: null, // このクライアントのプレイヤーID
   }),
   actions: {
+    // --- Online Match Actions ---
+
+    /**
+     * Sets the store up for an online game session.
+     * @param {string} gameId - The ID of the game from the game_states table.
+     * @param {string} localUserId - The user ID of the player on this client.
+     * @param {string} hostId - The user ID of the host player.
+     */
+    setOnlineGame({ gameId, localUserId, hostId }) {
+      this.isGameOnline = true;
+      this.onlineGameId = gameId;
+      this.localPlayerId = localUserId;
+      this.isHost = localUserId === hostId;
+      this.setRuleMode('stock'); // オンライン対戦ではストックルールを適用
+
+      console.log(`オンライン対戦を開始します。ゲームID: ${gameId}, ユーザーID: ${localUserId}, ホスト: ${this.isHost}`);
+
+      // ホストはゲストからのアクションを受け取るリスナーを設定
+      if (this.isHost) {
+        const channel = supabase.channel(`online-game-broadcast:${this.onlineGameId}`);
+        channel.on('broadcast', { event: 'action-intent' }, ({ payload }) => {
+          console.log('ホストがアクション意図を受信:', payload);
+          
+          // アクション名と引数を取得
+          const { action, args } = payload;
+
+          // 対応するストアのアクションを実行
+          if (typeof this[action] === 'function') {
+            this[action](...args);
+          } else {
+            console.error(`不明なアクションを受信しました: ${action}`);
+          }
+        }).subscribe();
+      }
+    },
+
+    /**
+     * Handles a state update received from Supabase.
+     * @param {object} newState - The new game state from the 'game_data' column.
+     */
+    handleRemoteStateUpdate(newState) {
+      if (!this.isGameOnline || !newState) return;
+
+      // Merge the new state into the local store
+      // This needs to be done carefully to avoid overwriting local UI state.
+      this.players = newState.players || this.players;
+      this.wall = newState.wall || this.wall;
+      this.deadWall = newState.deadWall || this.deadWall;
+      this.doraIndicators = newState.doraIndicators || this.doraIndicators;
+      this.currentTurnPlayerId = newState.currentTurnPlayerId || this.currentTurnPlayerId;
+      this.gamePhase = newState.gamePhase || this.gamePhase;
+      this.lastDiscardedTile = newState.lastDiscardedTile || this.lastDiscardedTile;
+      this.drawnTile = newState.drawnTile || this.drawnTile;
+      this.currentRound = newState.currentRound || this.currentRound;
+      this.honba = newState.honba ?? this.honba;
+      this.riichiSticks = newState.riichiSticks ?? this.riichiSticks;
+      this.turnCount = newState.turnCount ?? this.turnCount;
+      this.agariResultDetails = newState.agariResultDetails || this.agariResultDetails;
+      this.animationState = newState.animationState || this.animationState;
+      this.gamePhase = newState.gamePhase || this.gamePhase;
+      this.showResultPopup = newState.showResultPopup || this.showResultPopup;
+
+    },
+
+    /**
+     * Broadcasts the current game state to Supabase (Host only).
+     */
+    async broadcastGameState() {
+      if (!this.isGameOnline || !this.isHost) return;
+
+      // Create a serializable snapshot of the state
+      const stateSnapshot = {
+        players: this.players,
+        wall: this.wall,
+        deadWall: this.deadWall,
+        doraIndicators: this.doraIndicators,
+        uraDoraIndicators: this.uraDoraIndicators,
+        currentTurnPlayerId: this.currentTurnPlayerId,
+        gamePhase: this.gamePhase,
+        lastDiscardedTile: this.lastDiscardedTile,
+        drawnTile: this.drawnTile,
+        showResultPopup: this.showResultPopup,
+        resultMessage: this.resultMessage,
+        agariResultDetails: this.agariResultDetails,
+        currentRound: this.currentRound,
+        honba: this.honba,
+        riichiSticks: this.riichiSticks,
+        turnCount: this.turnCount,
+        playerTurnCount: this.playerTurnCount,
+        isIppatsuChance: this.isIppatsuChance,
+        isFuriTen: this.isFuriTen,
+        isDoujunFuriTen: this.isDoujunFuriTen,
+        riichiDiscardedTileId: this.riichiDiscardedTileId,
+        animationState: this.animationState,
+        highlightedDiscardTileId: this.highlightedDiscardTileId,
+      };
+
+      const { error } = await supabase
+        .from('game_states')
+        .update({
+          game_data: stateSnapshot,
+          updated_at: new Date(),
+          current_turn_user_id: this.currentTurnPlayerId,
+          status: this.gamePhase === 'gameOver' ? 'finished' : 'in_progress'
+        })
+        .eq('id', this.onlineGameId);
+
+      if (error) {
+        console.error("Error broadcasting game state:", error);
+      } else {
+        // console.log("Successfully broadcasted game state.");
+      }
+
+      // DB更新後、全クライアントにブロードキャストで状態を直接送信
+      const broadcastChannel = supabase.channel(`online-game-broadcast:${this.onlineGameId}`);
+      broadcastChannel.send({
+        type: 'broadcast',
+        event: 'state-update',
+        payload: { newState: stateSnapshot }
+      });
+    },
+
+    /**
+     * 新しいオンラインゲームを初期化します（ホスト専用）。
+     * プレイヤー情報を取得し、配牌を行い、初期状態をブロードキャストします。
+     */
+    async initializeOnlineGame() {
+      // ホストでなければ処理を中断
+      if (!this.isGameOnline || !this.isHost) return;
+      console.log("1. ホストとしてオンラインゲーム初期化を開始。");
+
+      try {
+        // 1. game_statesテーブルからプレイヤーIDを取得
+        const { data: gameData, error: fetchError } = await supabase
+          .from('game_states')
+          .select('player_1_id, player_2_id, player_3_id, player_4_id')
+          .eq('id', this.onlineGameId)
+          .single();
+
+        if (fetchError || !gameData) {
+          throw new Error(`オンラインゲームのプレイヤー情報取得に失敗: ${fetchError?.message}`);
+        }
+        console.log("2. プレイヤーIDを取得:", gameData);
+
+        const playerIds = [gameData.player_1_id, gameData.player_2_id, gameData.player_3_id, gameData.player_4_id];
+
+        // 2. プレイヤーIDに対応するプロフィール情報をusersテーブルから取得
+        const { data: profiles, error: profileError } = await supabase
+          .from('users')
+          .select('id, username, avatar_url')
+          .in('id', playerIds);
+
+        if (profileError || !profiles) {
+          throw new Error(`プレイヤーのプロファイル情報取得に失敗: ${profileError?.message}`);
+        }
+        console.log("3. プロフィール情報を取得:", profiles);
+
+        // 3. プレイヤー配列を構築する（順序を維持）
+        this.players = playerIds.map(id => {
+          const profile = profiles.find(p => p.id === id);
+          if (!profile) console.warn(`ID: ${id} のプロフィールが見つかりません。`);
+          return {
+            id: id,
+            name: profile?.username || 'プレイヤー',
+            avatar_url: profile?.avatar_url,
+            hand: [], discards: [], melds: [], isDealer: false, score: 50000, seatWind: null,
+            stockedTile: null, isUsingStockedTile: false, isStockedTileSelected: false
+          };
+        });
+        console.log("4. プレイヤー配列を構築:", this.players);
+
+        // 4. ゲームの標準的な初期化処理
+        this.turnCount = 0;
+        this.players.forEach(p => { this.playerTurnCount[p.id] = 0; });
+        this.honba = 0;
+        this.riichiSticks = 0;
+        this.currentRound = { wind: 'east', number: 1 };
+
+        const playerCount = this.players.length;
+        this.dealerIndex = Math.floor(Math.random() * playerCount);
+        
+        this.players.forEach((player, index) => {
+          player.isDealer = (index === this.dealerIndex);
+        });
+
+        const playersWithWinds = mahjongLogic.assignPlayerWinds(this.players, this.dealerIndex, playerCount);
+        this.players = playersWithWinds;
+
+        let fullWall = mahjongLogic.getAllTiles();
+        fullWall = mahjongLogic.shuffleWall(fullWall);
+
+        const deadWallSize = 14;
+        this.deadWall = fullWall.slice(0, deadWallSize);
+        const liveWallForDealing = fullWall.slice(deadWallSize);
+
+        const initialHandSize = 4;
+        const { hands: initialHands, wall: updatedLiveWall } = mahjongLogic.dealInitialHands(playerCount, liveWallForDealing, initialHandSize);
+        this.wall = updatedLiveWall;
+
+        this.players.forEach((player, index) => {
+          player.hand = initialHands[index] || [];
+        });
+
+        this.doraIndicators = [mahjongLogic.revealDora(this.deadWall)].filter(Boolean);
+        this.currentTurnPlayerId = this.players[this.dealerIndex]?.id;
+        this.gamePhase = GAME_PHASES.PLAYER_TURN;
+        console.log("5. 配牌と親決めが完了。");
+
+        // 5. 最初のゲーム状態を全プレイヤーにブロードキャスト
+        await this.broadcastGameState();
+        console.log("6. 初期ゲーム状態をブロードキャストしました。");
+
+        // 6. ホスト側でゲームフローを開始（最初のツモなど）
+        this.startGameFlow();
+        console.log("7. ゲームフローを開始しました。");
+
+      } catch (error) {
+        console.error("initializeOnlineGameで致命的なエラーが発生:", error);
+      }
+    },
+
     /**
      * リーチ時のBGMを開始します。
      * 現在のBGMを保存し、リーチ専用BGMに切り替えます。
@@ -461,6 +687,11 @@ export const useGameStore = defineStore('game', {
      * AIプレイヤーの場合は自動で行動を決定します。
      */
     drawTile() {
+      // --- オンライン対戦時はホストのみがこのアクションを実行できる ---
+      if (this.isGameOnline && !this.isHost) {
+        return;
+      }
+
       // プレイヤーがツモる条件: 山牌があり、現在のターンプレイヤーが設定されており、ゲームフェーズがツモ待ちの時
       if (this.wall.length > 0 &&
           this.currentTurnPlayerId &&
@@ -531,6 +762,11 @@ export const useGameStore = defineStore('game', {
         this.drawnTile = tile; // ツモった牌をセット
         this.gamePhase = GAME_PHASES.AWAITING_DISCARD; // プレイヤーの打牌待ち
         this.lastActionPlayerId = this.currentTurnPlayerId; // ツモもアクションとみなす
+
+        // オンライン対戦の場合、ツモった後の状態をブロードキャスト
+        if (this.isGameOnline) {
+          this.broadcastGameState();
+        }
 
         // ツモったので、他家のロン宣言は不可にする
         this.players.forEach(p => this.canDeclareRon[p.id] = false);
@@ -884,6 +1120,26 @@ export const useGameStore = defineStore('game', {
      * @param {boolean} isStocking - ストックアクションの場合はtrue。
      */
     discardTile(playerId, tileIdToDiscard, isFromDrawnTile, isStocking = false) {
+      // --- オンライン対戦時の処理 ---
+      // ゲストの場合、アクションの意図をホストに送信するだけ
+      if (this.isGameOnline && !this.isHost) {
+        // playerIdが自分のものでなければアクションを送信しない（他プレイヤーの操作を防ぐ）
+        if (playerId !== this.localPlayerId) return;
+
+        const channel = supabase.channel(`online-game-broadcast:${this.onlineGameId}`);
+        channel.send({
+          type: 'broadcast',
+          event: 'action-intent',
+          payload: {
+            action: 'discardTile',
+            args: [playerId, tileIdToDiscard, isFromDrawnTile, isStocking]
+          }
+        });
+        // ローカルでのロジック実行を中断
+        return;
+      }
+
+      // --- 以下はホストまたはオフライン時のみ実行 ---
       const audioStore = useAudioStore();
       // 効果音が有効なら打牌音を再生 (ストック時以外)
       if (audioStore.isSeEnabled && !isStocking) {
@@ -1069,6 +1325,19 @@ export const useGameStore = defineStore('game', {
      * @param {boolean} isFromDrawnTile - ツモった牌をストックする場合はtrue、手牌からストックする場合はfalse。
      */
     executeStock(playerId, tileIdToStock, isFromDrawnTile) {
+      // --- オンライン対戦時の処理 ---
+      if (this.isGameOnline && !this.isHost) {
+        if (playerId !== this.localPlayerId) return;
+        const channel = supabase.channel(`online-game-broadcast:${this.onlineGameId}`);
+        channel.send({
+          type: 'broadcast',
+          event: 'action-intent',
+          payload: { action: 'executeStock', args: [playerId, tileIdToStock, isFromDrawnTile] }
+        });
+        return;
+      }
+
+      // --- 以下はホストまたはオフライン時のみ実行 ---
       const audioStore = useAudioStore();
       const player = this.players.find(p => p.id === playerId);
       if (!player) {
@@ -1439,6 +1708,20 @@ export const useGameStore = defineStore('game', {
      * @param {string} playerId - リーチを宣言するプレイヤーのID。
      */
     declareRiichi(playerId) {
+      // --- オンライン対戦時の処理 ---
+      // ゲストの場合、アクションの意図をホストに送信するだけ
+      if (this.isGameOnline && !this.isHost) {
+        if (playerId !== this.localPlayerId) return;
+        const channel = supabase.channel(`online-game-broadcast:${this.onlineGameId}`);
+        channel.send({
+          type: 'broadcast',
+          event: 'action-intent',
+          payload: { action: 'declareRiichi', args: [playerId] }
+        });
+        return;
+      }
+
+      // --- 以下はホストまたはオフライン時のみ実行 ---
       const audioStore = useAudioStore();
       const player = this.players.find(p => p.id === playerId);
       // リーチ宣言の条件チェック:
@@ -1489,6 +1772,25 @@ export const useGameStore = defineStore('game', {
      * @param {string} playerId - アクションを見送るプレイヤーのID。
      */
     playerSkipsCall(playerId) {
+      // --- オンライン対戦時の処理 ---
+      // ゲストの場合、アクションの意図をホストに送信するだけ
+      if (this.isGameOnline && !this.isHost) {
+        // playerIdが自分のものでなければアクションを送信しない
+        if (playerId !== this.localPlayerId) return;
+
+        const channel = supabase.channel(`online-game-broadcast:${this.onlineGameId}`);
+        channel.send({
+          type: 'broadcast',
+          event: 'action-intent',
+          payload: {
+            action: 'playerSkipsCall',
+            args: [playerId]
+          }
+        });
+        return; // ローカルでのロジック実行を中断
+      }
+
+      // --- 以下はホストまたはオフライン時のみ実行 ---
       // 現在アクティブな応答プレイヤーでなければ処理を中断
       if (this.activeActionPlayerId !== playerId) {
         console.warn(`Player ${playerId} cannot skip now. Active player is ${this.activeActionPlayerId}.`);
@@ -1520,6 +1822,25 @@ export const useGameStore = defineStore('game', {
      * @param {Object} tile - ポンやカンの対象となる牌オブジェクト。ロンの場合はnullまたはロン牌。
      */
     playerDeclaresCall(playerId, actionType, tile) {
+      // --- オンライン対戦時の処理 ---
+      // ゲストの場合、アクションの意図をホストに送信するだけ
+      if (this.isGameOnline && !this.isHost) {
+        // playerIdが自分のものでなければアクションを送信しない
+        if (playerId !== this.localPlayerId) return;
+
+        const channel = supabase.channel(`online-game-broadcast:${this.onlineGameId}`);
+        channel.send({
+          type: 'broadcast',
+          event: 'action-intent',
+          payload: {
+            action: 'playerDeclaresCall',
+            args: [playerId, actionType, tile]
+          }
+        });
+        return; // ローカルでのロジック実行を中断
+      }
+
+      // --- 以下はホストまたはオフライン時のみ実行 ---
       // 現在アクティブな応答プレイヤーでなければ処理を中断
       if (this.activeActionPlayerId !== playerId) {
          console.warn(`Player ${playerId} cannot declare ${actionType} now. Active player is ${this.activeActionPlayerId}.`);
@@ -1576,9 +1897,14 @@ export const useGameStore = defineStore('game', {
       }
 
       // 全員が応答済み、または応答待ちのプレイヤーがいない場合
-      this.activeActionPlayerId = null; // アクティブな応答者をクリア
-      // 全員応答済みなら、保留中のアクションを処理する関数を呼び出す
-      this.processPendingActions();
+    this.activeActionPlayerId = null; // アクティブな応答者をクリア
+    // 全員応答済みなら、保留中のアクションを処理する関数を呼び出す
+    this.processPendingActions();
+
+    // If online, broadcast the state change (e.g. who is the active responder)
+    if (this.isGameOnline) {
+      this.broadcastGameState();
+    }
     },
     /**
      * リーチを最終的に成立させる内部ヘルパー関数。
@@ -1884,6 +2210,19 @@ export const useGameStore = defineStore('game', {
      * @param {Object} tileToAnkan - 暗槓する牌のオブジェクト。
      */
     declareAnkan(playerId, tileToAnkan) {
+      // --- オンライン対戦時の処理 ---
+      if (this.isGameOnline && !this.isHost) {
+        if (playerId !== this.localPlayerId) return;
+        const channel = supabase.channel(`online-game-broadcast:${this.onlineGameId}`);
+        channel.send({
+          type: 'broadcast',
+          event: 'action-intent',
+          payload: { action: 'declareAnkan', args: [playerId, tileToAnkan] }
+        });
+        return;
+      }
+
+      // --- 以下はホストまたはオフライン時のみ実行 ---
       const audioStore = useAudioStore();
       const player = this.players.find(p => p.id === playerId);
       // プレイヤーが存在しない、または暗槓する牌が指定されていなければ処理を中断
@@ -1966,6 +2305,19 @@ export const useGameStore = defineStore('game', {
      * @param {Object} tileToKakan - 加槓する牌のオブジェクト。
      */
     declareKakan(playerId, tileToKakan) {
+      // --- オンライン対戦時の処理 ---
+      if (this.isGameOnline && !this.isHost) {
+        if (playerId !== this.localPlayerId) return;
+        const channel = supabase.channel(`online-game-broadcast:${this.onlineGameId}`);
+        channel.send({
+          type: 'broadcast',
+          event: 'action-intent',
+          payload: { action: 'declareKakan', args: [playerId, tileToKakan] }
+        });
+        return;
+      }
+
+      // --- 以下はホストまたはオフライン時のみ実行 ---
       const audioStore = useAudioStore();
       const player = this.players.find(p => p.id === playerId);
       // リーチ後は加槓できない
@@ -2078,6 +2430,19 @@ export const useGameStore = defineStore('game', {
       }
     },
     handleAgari(agariPlayerId, agariTile, isTsumo, ronTargetPlayerId = null) {
+      // --- オンライン対戦時の処理 ---
+      if (this.isGameOnline && !this.isHost) {
+        if (agariPlayerId !== this.localPlayerId) return;
+        const channel = supabase.channel(`online-game-broadcast:${this.onlineGameId}`);
+        channel.send({
+          type: 'broadcast',
+          event: 'action-intent',
+          payload: { action: 'handleAgari', args: [agariPlayerId, agariTile, isTsumo, ronTargetPlayerId] }
+        });
+        return;
+      }
+
+      // --- 以下はホストまたはオフライン時のみ実行 ---
       const audioStore = useAudioStore();
       this.actionResponseQueue = []; // 和了が発生したので他のアクションは無効
       const player = this.players.find(p => p.id === agariPlayerId);

@@ -141,6 +141,7 @@
   import { computed, onMounted, ref, onBeforeUnmount, watch } from 'vue';
   import { useI18n } from 'vue-i18n';
   import { useRouter } from 'vue-router';
+  import { supabase } from '@/supabaseClient';
   import PlayerHand from './PlayerHand.vue';
   import { useGameStore } from '@/stores/gameStore';
   import { useAudioStore } from '@/stores/audioStore';
@@ -524,11 +525,69 @@
   };
 
   // --- ライフサイクルフック ---
-  onMounted(() => {
-    // ゲームがまだ始まっていない場合、初期化処理を実行
-    if (gameStore.gamePhase === 'waitingToStart') {
-      gameStore.initializeGame();
+  let realtimeChannel = null;
+
+  onMounted(async () => {
+    const gameId = router.currentRoute.value.query.id;
+    const localUserId = userStore.profile?.id;
+
+    if (gameId) {
+      // --- Online Mode ---
+      await userStore.fetchUserProfile(); // Ensure profile is loaded
+
+      // Fetch initial game state to determine host and set initial state
+      const { data: initialGameState, error } = await supabase
+        .from('game_states')
+        .select('*')
+        .eq('id', gameId)
+        .single();
+
+      if (error || !initialGameState) {
+        console.error("Error fetching initial game state:", error);
+        router.push('/'); // Redirect to title on error
+        return;
+      }
+
+      // Set up the store for an online game, including host status
+      gameStore.setOnlineGame({
+        gameId,
+        localUserId: userStore.profile?.id,
+        hostId: initialGameState.player_1_id
+      });
+
+      // Apply the initial state from the database
+      // The game_data is initialized as an empty object '{'}'. Check if it has keys to see if it's a real state.
+      if (initialGameState.game_data && Object.keys(initialGameState.game_data).length > 0) {
+        gameStore.handleRemoteStateUpdate(initialGameState.game_data);
+      } else if (gameStore.isHost) {
+        // If no game data exists and this client is the host, initialize the game.
+        console.log("ホストとしてゲームを初期化します...");
+        gameStore.initializeOnlineGame();
+      }
+
+      // Subscribe to future updates via broadcast
+      realtimeChannel = supabase.channel(`online-game-broadcast:${gameId}`)
+        .on('broadcast', { event: 'state-update' }, ( { payload }) => {
+          console.log('Game state update received via broadcast!', payload);
+          if (payload.newState) {
+            gameStore.handleRemoteStateUpdate(payload.newState);
+          }
+        })
+        .subscribe((status, err) => {
+          if (status === 'SUBSCRIBED') {
+            console.log(`Subscribed to game broadcast channel ${gameId}`);
+          } else if (err) {
+            console.error("Realtime broadcast subscription failed:", err);
+          }
+        });
+    } else {
+      // --- Offline Mode ---
+      // ゲームがまだ始まっていない場合、初期化処理を実行
+      if (gameStore.gamePhase === 'waitingToStart') {
+        gameStore.initializeGame();
+      }
     }
+
     // スケーリングの初期化とリサイズイベントの監視
     updateScaleFactor();
     window.addEventListener('resize', updateScaleFactor);
@@ -537,6 +596,13 @@
   onBeforeUnmount(() => {
     // コンポーネントが破棄される際に、リサイズイベントのリスナーを解除
     window.removeEventListener('resize', updateScaleFactor);
+
+    // Unsubscribe from the realtime channel
+    if (realtimeChannel) {
+      supabase.removeChannel(realtimeChannel);
+      realtimeChannel = null;
+      console.log("Unsubscribed from realtime channel.");
+    }
 
     // このコンポーネントに起因する可能性のある、保留中のタイマーをすべてクリアします。
     // 注意: この方法はページ上のすべてのsetTimeoutをクリアするため、他のコンポーネントに影響を与える可能性があります。

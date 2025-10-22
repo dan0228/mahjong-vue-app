@@ -422,12 +422,12 @@ export const useGameStore = defineStore('game', {
 
       // DB更新後、全クライアントにブロードキャストで状態を直接送信
       // これにより、ゲストはDBポーリングなしでリアルタイム更新を受け取れる
-      const broadcastChannel = supabase.channel(`online-game-broadcast:${this.onlineGameId}`);
-      broadcastChannel.send({
-        type: 'broadcast',
-        event: 'state-update',
-        payload: { newState: stateSnapshot }
-      });
+      // const broadcastChannel = supabase.channel(`online-game-broadcast:${this.onlineGameId}`);
+      // broadcastChannel.send({
+      //   type: 'broadcast',
+      //   event: 'state-update',
+      //   payload: { newState: stateSnapshot }
+      // });
     },
 
     /**
@@ -541,8 +541,18 @@ export const useGameStore = defineStore('game', {
       await this.broadcastGameState(); // このアクションはDBを更新するのみ
       console.log("6. 初期ゲーム状態をDBに保存しました。");
 
-      // ホスト側ではゲームフローを開始しない。GameBoard.vueのonMountedで開始する。
-      // ゲストへの通知も不要。ゲストはDBからフェッチする。
+      // 6. DBへの保存が完了したことをゲストにブロードキャストで通知
+      const broadcastChannel = supabase.channel(`online-game-broadcast:${this.onlineGameId}`);
+      broadcastChannel.send({
+        type: 'broadcast',
+        event: 'initial-state-ready',
+        payload: { gameId: this.onlineGameId }
+      });
+      console.log("7. ゲストに初期状態準備完了を通知しました。");
+
+      // 8. ホスト側でゲームフローを開始（最初のツモなど）
+      this.startGameFlow();
+      console.log("9. ゲームフローを開始しました。");
 
       } catch (error) {
         console.error("initializeOnlineGameで致命的なエラーが発生:", error);

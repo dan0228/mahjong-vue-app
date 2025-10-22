@@ -1,5 +1,5 @@
 <template>
-    <div class="game-board">
+    <div class="game-board" v-if="console.log('Debug: GameBoard v-if conditions:', gameStore.isGameOnline, gameStore.players.length === 4, gameStore.isTenpaiDisplay) || (gameStore.isGameOnline && gameStore.players.length === 4 && gameStore.isTenpaiDisplay)">
       <!-- :styleで動的にtransformを適用 -->
       <div class="game-board-scaler" :style="scalerStyle" ref="gameBoardScalerRef">
       <!-- ルール・役一覧ボタン -->
@@ -184,6 +184,17 @@
    */
   const playerIcon = (player) => {
     if (!player) return '';
+
+    // オンライン対戦の場合
+    if (gameStore.isGameOnline) {
+      if (player.avatar_url) {
+        return player.avatar_url;
+      }
+      // デフォルトのオンラインプレイヤーアイコン
+      return '/assets/images/info/hito_icon_1.png'; // 仮のデフォルトアイコン
+    }
+
+    // オフライン対戦の場合 (既存ロジック)
     if (player.id === 'player1' && userStore.profile?.avatar_url) {
       return userStore.profile.avatar_url;
     }
@@ -585,26 +596,31 @@
             gameStore.handleRemoteStateUpdate(payload.newState);
           }
         })
-        .subscribe(async (status, err) => { // Make this async
+        .subscribe(async (status, err) => {
           if (status === 'SUBSCRIBED') {
             console.log(`[Guest] Subscribed to game broadcast channel ${gameId}`);
-            // 購読が確立したら、DBから最新のゲーム状態をフェッチ
-            const { data: currentGameState, error: fetchError } = await supabase
-              .from('game_states')
-              .select('game_data')
-              .eq('id', gameId)
-              .single();
+            // 購読が確立したら、ホストからの初期状態準備完了通知を待つ
+            // このリスナーは、ホストが初期状態をDBに保存した後に送信する
+            realtimeChannel.on('broadcast', { event: 'initial-state-ready' }, async ({ payload }) => {
+              console.log("[Guest] Received initial-state-ready broadcast from host.", payload);
+              // 通知を受け取ったら、DBから最新のゲーム状態をフェッチ
+              const { data: currentGameState, error: fetchError } = await supabase
+                .from('game_states')
+                .select('game_data')
+                .eq('id', gameId)
+                .single();
 
-            if (fetchError) {
-              console.error("[Guest] Error fetching current game state after subscribe:", fetchError);
-              router.push('/'); // Redirect on error
-              return;
-            }
+              if (fetchError) {
+                console.error("[Guest] Error fetching current game state after initial-state-ready:", fetchError);
+                router.push('/'); // Redirect on error
+                return;
+              }
 
-            if (currentGameState && currentGameState.game_data) {
-              console.log("[Guest] Fetched initial game state from DB after subscribe.");
-              gameStore.handleRemoteStateUpdate(currentGameState.game_data);
-            }
+              if (currentGameState && currentGameState.game_data) {
+                console.log("[Guest] Fetched initial game state from DB after initial-state-ready.");
+                gameStore.handleRemoteStateUpdate(currentGameState.game_data);
+              }
+            });
           } else if (err) {
             console.error("[Guest] Realtime broadcast subscription failed:", err);
           } else {

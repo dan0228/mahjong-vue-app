@@ -307,6 +307,7 @@ export const useGameStore = defineStore('game', {
       this.onlineGameId = gameId;
       this.localPlayerId = localUserId;
       this.isHost = localUserId === hostId;
+      this.gameMode = 'online'; // オンライン対戦モードを設定
       this.setRuleMode('stock'); // オンライン対戦ではストックルールを適用
 
       console.log(`オンライン対戦を開始します。ゲームID: ${gameId}, ユーザーID: ${localUserId}, ホスト: ${this.isHost}`);
@@ -336,26 +337,36 @@ export const useGameStore = defineStore('game', {
      */
     handleRemoteStateUpdate(newState) {
       if (!this.isGameOnline || !newState) return;
+      console.log("[Guest/Host] handleRemoteStateUpdate received newState:", newState); // ADD THIS LOG
 
-      // Merge the new state into the local store
-      // This needs to be done carefully to avoid overwriting local UI state.
-      this.players = newState.players || this.players;
-      this.wall = newState.wall || this.wall;
-      this.deadWall = newState.deadWall || this.deadWall;
-      this.doraIndicators = newState.doraIndicators || this.doraIndicators;
-      this.currentTurnPlayerId = newState.currentTurnPlayerId || this.currentTurnPlayerId;
-      this.gamePhase = newState.gamePhase || this.gamePhase;
-      this.lastDiscardedTile = newState.lastDiscardedTile || this.lastDiscardedTile;
-      this.drawnTile = newState.drawnTile || this.drawnTile;
-      this.currentRound = newState.currentRound || this.currentRound;
-      this.honba = newState.honba ?? this.honba;
-      this.riichiSticks = newState.riichiSticks ?? this.riichiSticks;
-      this.turnCount = newState.turnCount ?? this.turnCount;
-      this.agariResultDetails = newState.agariResultDetails || this.agariResultDetails;
-      this.animationState = newState.animationState || this.animationState;
-      this.gamePhase = newState.gamePhase || this.gamePhase;
-      this.showResultPopup = newState.showResultPopup || this.showResultPopup;
-
+      // Piniaの $patch を使用して、リアクティブな方法で状態を更新
+      // これにより、Vueのリアクティビティシステムが変更を検知しやすくなります。
+      this.$patch((state) => {
+        state.players = newState.players || state.players;
+        state.wall = newState.wall || state.wall;
+        state.deadWall = newState.deadWall || state.deadWall;
+        state.doraIndicators = newState.doraIndicators || state.doraIndicators;
+        state.uraDoraIndicators = newState.uraDoraIndicators || state.uraDoraIndicators; // 追加
+        state.currentTurnPlayerId = newState.currentTurnPlayerId || state.currentTurnPlayerId;
+        state.gamePhase = newState.gamePhase || state.gamePhase;
+        state.lastDiscardedTile = newState.lastDiscardedTile || state.lastDiscardedTile;
+        state.drawnTile = newState.drawnTile || state.drawnTile;
+        state.showResultPopup = newState.showResultPopup || state.showResultPopup;
+        state.resultMessage = newState.resultMessage || state.resultMessage;
+        state.agariResultDetails = newState.agariResultDetails || state.agariResultDetails;
+        state.currentRound = newState.currentRound || state.currentRound;
+        state.honba = newState.honba ?? state.honba;
+        state.riichiSticks = newState.riichiSticks ?? state.riichiSticks;
+        state.turnCount = newState.turnCount ?? state.turnCount;
+        state.playerTurnCount = newState.playerTurnCount || state.playerTurnCount; // 追加
+        state.isIppatsuChance = newState.isIppatsuChance || state.isIppatsuChance; // 追加
+        state.isFuriTen = newState.isFuriTen || state.isFuriTen; // 追加
+        state.isDoujunFuriTen = newState.isDoujunFuriTen || state.isDoujunFuriTen; // 追加
+        state.riichiDiscardedTileId = newState.riichiDiscardedTileId || state.riichiDiscardedTileId; // 追加
+        state.animationState = newState.animationState || state.animationState;
+        state.highlightedDiscardTileId = newState.highlightedDiscardTileId || state.highlightedDiscardTileId; // 追加
+        // 他の必要な状態もここに追加
+      });
     },
 
     /**
@@ -386,10 +397,12 @@ export const useGameStore = defineStore('game', {
         isIppatsuChance: this.isIppatsuChance,
         isFuriTen: this.isFuriTen,
         isDoujunFuriTen: this.isDoujunFuriTen,
+        isTenpaiDisplay: this.isTenpaiDisplay, // ADD THIS LINE
         riichiDiscardedTileId: this.riichiDiscardedTileId,
         animationState: this.animationState,
         highlightedDiscardTileId: this.highlightedDiscardTileId,
       };
+      console.log("Debug: Host's this.isTenpaiDisplay before snapshot:", this.isTenpaiDisplay); // Add this log
 
       const { error } = await supabase
         .from('game_states')
@@ -408,6 +421,7 @@ export const useGameStore = defineStore('game', {
       }
 
       // DB更新後、全クライアントにブロードキャストで状態を直接送信
+      // これにより、ゲストはDBポーリングなしでリアルタイム更新を受け取れる
       const broadcastChannel = supabase.channel(`online-game-broadcast:${this.onlineGameId}`);
       broadcastChannel.send({
         type: 'broadcast',
@@ -466,11 +480,32 @@ export const useGameStore = defineStore('game', {
         console.log("4. プレイヤー配列を構築:", this.players);
 
         // 4. ゲームの標準的な初期化処理
-        this.turnCount = 0;
-        this.players.forEach(p => { this.playerTurnCount[p.id] = 0; });
-        this.honba = 0;
-        this.riichiSticks = 0;
-        this.currentRound = { wind: 'east', number: 1 };
+        // 4. ゲームの標準的な初期化処理
+      this.turnCount = 0;
+      this.honba = 0;
+      this.riichiSticks = 0;
+      this.currentRound = { wind: 'east', number: 1 };
+
+      // プレイヤーごとの状態オブジェクトを初期化
+      this.playerTurnCount = {};
+      this.isIppatsuChance = {};
+      this.isFuriTen = {};
+      this.isDoujunFuriTen = {};
+      this.isTenpaiDisplay = {};
+      this.isDeclaringRiichi = {};
+      this.riichiDiscardedTileId = {};
+
+      // 各プレイヤーのオンライン対戦用状態を初期化
+      this.players.forEach(player => {
+        this.playerTurnCount[player.id] = 0;
+        this.isIppatsuChance[player.id] = false;
+        this.isFuriTen[player.id] = false;
+        this.isDoujunFuriTen[player.id] = false;
+        this.isTenpaiDisplay[player.id] = false; // ★ ここで初期化
+        this.isDeclaringRiichi[player.id] = false;
+        this.riichiDiscardedTileId[player.id] = null;
+        // 他のプレイヤー固有の状態もここで初期化
+      });
 
         const playerCount = this.players.length;
         this.dealerIndex = Math.floor(Math.random() * playerCount);
@@ -502,13 +537,12 @@ export const useGameStore = defineStore('game', {
         this.gamePhase = GAME_PHASES.PLAYER_TURN;
         console.log("5. 配牌と親決めが完了。");
 
-        // 5. 最初のゲーム状態を全プレイヤーにブロードキャスト
-        await this.broadcastGameState();
-        console.log("6. 初期ゲーム状態をブロードキャストしました。");
+        // 5. 最初のゲーム状態をDBに保存
+      await this.broadcastGameState(); // このアクションはDBを更新するのみ
+      console.log("6. 初期ゲーム状態をDBに保存しました。");
 
-        // 6. ホスト側でゲームフローを開始（最初のツモなど）
-        this.startGameFlow();
-        console.log("7. ゲームフローを開始しました。");
+      // ホスト側ではゲームフローを開始しない。GameBoard.vueのonMountedで開始する。
+      // ゲストへの通知も不要。ゲストはDBからフェッチする。
 
       } catch (error) {
         console.error("initializeOnlineGameで致命的なエラーが発生:", error);

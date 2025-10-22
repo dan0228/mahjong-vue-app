@@ -34,7 +34,9 @@
         <img :src="playerIcon(playerAtBottom)" alt="Player Icon" class="cat-icon cat-icon-bottom" />
         <!-- フリテン表示 -->
         <img v-if="isMyPlayerInFuriTen" :src="t('gameBoard.furitenImg')" :alt="t('gameBoard.furiten')" class="furiten-indicator bottom-furiten" />
-        <img v-if="gameStore.isTenpaiDisplay[playerAtBottom.id]" :src="t('gameBoard.tenpaiImg')" :alt="t('gameBoard.tenpai')" class="tenpai-indicator bottom-tenpai" />
+        <!-- Debugging: Log values before accessing isTenpaiDisplay -->
+        <template v-if="console.log('Debug: gameStore.isTenpaiDisplay', gameStore.isTenpaiDisplay, 'playerAtBottom.id', playerAtBottom?.id)"></template>
+        <img v-if="gameStore.isTenpaiDisplay && gameStore.isTenpaiDisplay[playerAtBottom.id]" :src="t('gameBoard.tenpaiImg')" :alt="t('gameBoard.tenpai')" class="tenpai-indicator bottom-tenpai" />
         <PlayerArea :player="playerAtBottom" position="bottom" :is-my-hand="determineIsMyHand(playerAtBottom.id)" :drawn-tile-display="drawnTileForPlayer(playerAtBottom.id)" :can-discard="canPlayerDiscard(playerAtBottom.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
       </div>
 
@@ -240,12 +242,16 @@
    * モードによって操作プレイヤーを決定します。
    */
   const myPlayerId = computed(() => {
+    // オンライン対戦の場合、ストアに保持されたユーザー自身のIDを返す
+    if (gameStore.isGameOnline) {
+      return gameStore.localPlayerId;
+    }
     // 全操作モードとCPU対戦モードでは、'player1'を操作プレイヤーと仮定
     if (gameStore.gameMode === 'allManual' || gameStore.gameMode === 'vsCPU') {
       return 'player1';
     }
-    // TODO: オンライン対戦の場合は、ストアに保持されたユーザー自身のIDを返す
-    return gameStore.myActualPlayerId; // 例: ストアに myActualPlayerId を持つ
+    // Fallback (should not happen if gameMode is set correctly)
+    return null;
   });
 
   /**
@@ -561,8 +567,14 @@
         gameStore.handleRemoteStateUpdate(initialGameState.game_data);
       } else if (gameStore.isHost) {
         // If no game data exists and this client is the host, initialize the game.
-        console.log("ホストとしてゲームを初期化します...");
-        gameStore.initializeOnlineGame();
+        // Add a delay to give guests time to subscribe.
+        console.log("ホストです。ゲストの接続を待つため3秒後にゲームを初期化します...");
+        setTimeout(async () => { // Make this async
+          console.log("3秒経過。ゲームを初期化します。");
+          await gameStore.initializeOnlineGame(); // Await initialization
+          // After initialization, start the game flow for the host
+          gameStore.startGameFlow();
+        }, 3000);
       }
 
       // Subscribe to future updates via broadcast
@@ -573,11 +585,30 @@
             gameStore.handleRemoteStateUpdate(payload.newState);
           }
         })
-        .subscribe((status, err) => {
+        .subscribe(async (status, err) => { // Make this async
           if (status === 'SUBSCRIBED') {
-            console.log(`Subscribed to game broadcast channel ${gameId}`);
+            console.log(`[Guest] Subscribed to game broadcast channel ${gameId}`);
+            // 購読が確立したら、DBから最新のゲーム状態をフェッチ
+            const { data: currentGameState, error: fetchError } = await supabase
+              .from('game_states')
+              .select('game_data')
+              .eq('id', gameId)
+              .single();
+
+            if (fetchError) {
+              console.error("[Guest] Error fetching current game state after subscribe:", fetchError);
+              router.push('/'); // Redirect on error
+              return;
+            }
+
+            if (currentGameState && currentGameState.game_data) {
+              console.log("[Guest] Fetched initial game state from DB after subscribe.");
+              gameStore.handleRemoteStateUpdate(currentGameState.game_data);
+            }
           } else if (err) {
-            console.error("Realtime broadcast subscription failed:", err);
+            console.error("[Guest] Realtime broadcast subscription failed:", err);
+          } else {
+            console.log(`[Guest] Realtime broadcast subscription status: ${status}`);
           }
         });
     } else {

@@ -378,6 +378,11 @@ export const useGameStore = defineStore('game', {
         if ('pendingKanDoraReveal' in newState) state.pendingKanDoraReveal = newState.pendingKanDoraReveal;
         if ('isTenpaiDisplay' in newState) state.isTenpaiDisplay = newState.isTenpaiDisplay;
         if ('playerActionEligibility' in newState) state.playerActionEligibility = newState.playerActionEligibility;
+        // ゲーム開始・終了演出の同期
+        if ('showDealerDeterminationPopup' in newState) state.showDealerDeterminationPopup = newState.showDealerDeterminationPopup;
+        if ('dealerDeterminationResult' in newState) state.dealerDeterminationResult = newState.dealerDeterminationResult;
+        if ('showFinalResultPopup' in newState) state.showFinalResultPopup = newState.showFinalResultPopup;
+        if ('finalResultDetails' in newState) state.finalResultDetails = newState.finalResultDetails;
       });
 
       this.isWaitingForHost = false; // ★ 応答待ち終了
@@ -429,6 +434,11 @@ export const useGameStore = defineStore('game', {
         shouldEndGameAfterRound: this.shouldEndGameAfterRound,
         pendingKanDoraReveal: this.pendingKanDoraReveal,
         playerActionEligibility: this.playerActionEligibility,
+        // ゲーム開始・終了演出の同期
+        showDealerDeterminationPopup: this.showDealerDeterminationPopup,
+        dealerDeterminationResult: this.dealerDeterminationResult,
+        showFinalResultPopup: this.showFinalResultPopup,
+        finalResultDetails: this.finalResultDetails,
       };
       console.log("Debug: Host's this.isTenpaiDisplay before snapshot:", this.isTenpaiDisplay); // Add this log
 

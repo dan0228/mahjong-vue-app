@@ -1,5 +1,5 @@
 <template>
-    <div :class="['player-hand-container', `position-${position}`, { 'my-turn-active': isMyHand && canDiscard }]">
+    <div :class="['player-hand-container', `position-${position}`, { 'my-turn-active': isMyHand && canDiscard, 'is-waiting': gameStore.isWaitingForHost && isMyHand }]">
       <!-- プレイヤー情報は PlayerArea に移動済みと仮定 -->
       <div
         class="hand-tiles-area player-hand"
@@ -329,5 +329,10 @@
     border: 0px solid gold;
     box-shadow: 0 0 10px gold; /* 手牌にあるストック牌にのみ影を適用 */
     border-radius: 20px;
+  }
+
+  .is-waiting {
+    pointer-events: none;
+    opacity: 0.7;
   }
 </style>

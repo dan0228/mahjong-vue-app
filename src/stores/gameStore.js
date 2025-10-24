@@ -259,7 +259,7 @@ export const useGameStore = defineStore('game', {
       fu: 0, // 四牌麻雀では符計算は簡略化されることが多いが、念のため
       score: 0, // 最終的な点数
       scoreName: null, // "満貫", "跳満" など
-      pointChanges: {}, // { playerId: changeAmount }
+      pointChanges: {},
     },
     anyPlayerMeldInFirstRound: false, // 最初の1巡で誰かが鳴いたか
     // 必ずしも state に持つ必要はないが、デバッグやUI表示用に持つことも可能。
@@ -293,6 +293,7 @@ export const useGameStore = defineStore('game', {
     onlineGameId: null, // オンライン対戦のゲームID
     isGameOnline: false, // オンライン対戦かどうかのフラグ
     localPlayerId: null, // このクライアントのプレイヤーID
+    isWaitingForHost: false, // ★ ホストからの応答待ちフラグ
   }),
   actions: {
     // --- Online Match Actions ---
@@ -377,6 +378,8 @@ export const useGameStore = defineStore('game', {
         if ('pendingKanDoraReveal' in newState) state.pendingKanDoraReveal = newState.pendingKanDoraReveal;
         if ('isTenpaiDisplay' in newState) state.isTenpaiDisplay = newState.isTenpaiDisplay;
       });
+
+      this.isWaitingForHost = false; // ★ 応答待ち終了
     },
 
     /**
@@ -952,7 +955,7 @@ export const useGameStore = defineStore('game', {
               if (!actionTaken) {
                 // 1. リーチ可能なら8%の確率でリーチを試みる
                 if (this.playerActionEligibility[currentPlayer.id].canRiichi && riichiRand < 0.08) {
-                  this.declareRiichi(currentPlayer.id);
+                  this.declareRiichi(playerId);
                   actionTaken = true;
                 }
               }
@@ -1193,6 +1196,7 @@ export const useGameStore = defineStore('game', {
         // playerIdが自分のものでなければアクションを送信しない（他プレイヤーの操作を防ぐ）
         if (playerId !== this.localPlayerId) return;
 
+        this.isWaitingForHost = true; // ★ 応答待ち開始
         const channel = supabase.channel(`online-game-broadcast:${this.onlineGameId}`);
         channel.send({
           type: 'broadcast',
@@ -1377,7 +1381,8 @@ export const useGameStore = defineStore('game', {
         if (!canAnyoneAct && !this.isDeclaringRiichi[player.id]) {
           this.gamePhase = GAME_PHASES.PLAYER_TURN;
           this.moveToNextPlayer();
-        } else {
+        }
+        else {
           this.gamePhase = GAME_PHASES.AWAITING_ACTION_RESPONSE;
           this.playerResponses = {};
           this.setNextActiveResponder();
@@ -1395,6 +1400,7 @@ export const useGameStore = defineStore('game', {
       // --- オンライン対戦時の処理 ---
       if (this.isGameOnline && !this.isHost) {
         if (playerId !== this.localPlayerId) return;
+        this.isWaitingForHost = true; // ★ 応答待ち開始
         const channel = supabase.channel(`online-game-broadcast:${this.onlineGameId}`);
         channel.send({
           type: 'broadcast',
@@ -1553,20 +1559,20 @@ export const useGameStore = defineStore('game', {
           this.resultMessage = `親（${dealerPlayer.name}）がテンパイでトップのため終局`;
           this.honba = 0; // 本場リセット
           this.nextDealerIndex = (this.dealerIndex + 1) % this.players.length; // 親流れ
-          this.shouldAdvanceRound = true; // 局を進める
+          this.shouldAdvanceRound = true;
           this.shouldEndGameAfterRound = true; // ゲーム終了フラグ
         } else if (isDealerTenpai) {
           // 親がテンパイの場合、連荘
           this.resultMessage = `親（${dealerPlayer.name}）がテンパイのため連荘`;
           this.honba++; // 本場プラス
           this.nextDealerIndex = this.dealerIndex; // 親は継続
-          this.shouldAdvanceRound = false; // 局は進めない
+          this.shouldAdvanceRound = false;
         } else {
           // 親がノーテンの場合、親流れ
           this.resultMessage = `親（${this.players[this.dealerIndex].name}）がノーテンのため親流れ`;
           this.honba = 0; // 本場リセット
           this.nextDealerIndex = (this.dealerIndex + 1) % this.players.length; // 親流れ
-          this.shouldAdvanceRound = true; // 局を進める
+          this.shouldAdvanceRound = true;
         }
 
         // ここに、流局でゲームが終了する追加条件をチェックする
@@ -1784,6 +1790,7 @@ export const useGameStore = defineStore('game', {
       // ゲストの場合、アクションの意図をホストに送信するだけ
       if (this.isGameOnline && !this.isHost) {
         if (playerId !== this.localPlayerId) return;
+        this.isWaitingForHost = true; // ★ 応答待ち開始
         const channel = supabase.channel(`online-game-broadcast:${this.onlineGameId}`);
         channel.send({
           type: 'broadcast',
@@ -1850,6 +1857,7 @@ export const useGameStore = defineStore('game', {
         // playerIdが自分のものでなければアクションを送信しない
         if (playerId !== this.localPlayerId) return;
 
+        this.isWaitingForHost = true; // ★ 応答待ち開始
         const channel = supabase.channel(`online-game-broadcast:${this.onlineGameId}`);
         channel.send({
           type: 'broadcast',
@@ -1900,6 +1908,7 @@ export const useGameStore = defineStore('game', {
         // playerIdが自分のものでなければアクションを送信しない
         if (playerId !== this.localPlayerId) return;
 
+        this.isWaitingForHost = true; // ★ 応答待ち開始
         const channel = supabase.channel(`online-game-broadcast:${this.onlineGameId}`);
         channel.send({
           type: 'broadcast',
@@ -2297,6 +2306,7 @@ export const useGameStore = defineStore('game', {
       // --- オンライン対戦時の処理 ---
       if (this.isGameOnline && !this.isHost) {
         if (playerId !== this.localPlayerId) return;
+        this.isWaitingForHost = true; // ★ 応答待ち開始
         const channel = supabase.channel(`online-game-broadcast:${this.onlineGameId}`);
         channel.send({
           type: 'broadcast',
@@ -2398,6 +2408,7 @@ export const useGameStore = defineStore('game', {
       // --- オンライン対戦時の処理 ---
       if (this.isGameOnline && !this.isHost) {
         if (playerId !== this.localPlayerId) return;
+        this.isWaitingForHost = true; // ★ 応答待ち開始
         const channel = supabase.channel(`online-game-broadcast:${this.onlineGameId}`);
         channel.send({
           type: 'broadcast',
@@ -2434,7 +2445,8 @@ export const useGameStore = defineStore('game', {
       const kakanKey = mahjongLogic.getTileKey(tileToKakan);
       if (this.drawnTile && mahjongLogic.getTileKey(this.drawnTile) === kakanKey) {
           this.drawnTile = null;
-      } else {
+      }
+      else {
         const tileIndexInHand = player.hand.findIndex(t => mahjongLogic.getTileKey(t) === kakanKey);
         if (tileIndexInHand > -1) player.hand.splice(tileIndexInHand, 1);
       }
@@ -2529,6 +2541,7 @@ export const useGameStore = defineStore('game', {
       // --- オンライン対戦時の処理 ---
       if (this.isGameOnline && !this.isHost) {
         if (agariPlayerId !== this.localPlayerId) return;
+        this.isWaitingForHost = true; // ★ 応答待ち開始
         const channel = supabase.channel(`online-game-broadcast:${this.onlineGameId}`);
         channel.send({
           type: 'broadcast',
@@ -2705,8 +2718,7 @@ export const useGameStore = defineStore('game', {
           }
       }
 
-      this.resultMessage = `${baseMessage}
-${roundEndMessage}`;
+      this.resultMessage = `${baseMessage}\n${roundEndMessage}`;
 
       // --- ポップアップ表示 ---
       setTimeout(() => {
@@ -3244,7 +3256,8 @@ ${roundEndMessage}`;
               if (tile.suit !== 'z' && (tile.rank === 1 || tile.rank === 9)) {
                 score -= 200;
               }
-            } else { // 鳴いた牌が中張牌の場合、同じ色の牌を残す
+            }
+            else { // 鳴いた牌が中張牌の場合、同じ色の牌を残す
               if (tile.suit === calledTile.suit) {
                 score -= 200;
               }

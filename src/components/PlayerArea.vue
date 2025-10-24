@@ -1,5 +1,5 @@
 <template>
-  <div :class="['player-area', positionClass, { 'is-current-turn': isCurrentTurn }]">
+  <div :class="['player-area', positionClass, { 'is-current-turn': isCurrentTurn, 'is-waiting': gameStore.isWaitingForHost && isMyHand }]">
     <div :class="['player-game-elements', positionClass + '-elements']">
       <PlayerHand
         :player="player"
@@ -820,5 +820,10 @@ function getMeldTileAlt(meld, tile, tileIndex) {
 .fade-gauge-enter-from,
 .fade-gauge-leave-to {
   opacity: 0;
+}
+
+.is-waiting {
+  pointer-events: none;
+  opacity: 0.7;
 }
 </style>

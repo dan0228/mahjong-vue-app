@@ -346,6 +346,7 @@ export const useGameStore = defineStore('game', {
         state.players = newState.players || state.players;
         state.wall = newState.wall || state.wall;
         state.deadWall = newState.deadWall || state.deadWall;
+        state.dealerIndex = newState.dealerIndex ?? state.dealerIndex;
         state.doraIndicators = newState.doraIndicators || state.doraIndicators;
         state.uraDoraIndicators = newState.uraDoraIndicators || state.uraDoraIndicators; // 追加
         state.currentTurnPlayerId = newState.currentTurnPlayerId || state.currentTurnPlayerId;
@@ -381,6 +382,7 @@ export const useGameStore = defineStore('game', {
         players: this.players,
         wall: this.wall,
         deadWall: this.deadWall,
+        dealerIndex: this.dealerIndex,
         doraIndicators: this.doraIndicators,
         uraDoraIndicators: this.uraDoraIndicators,
         currentTurnPlayerId: this.currentTurnPlayerId,

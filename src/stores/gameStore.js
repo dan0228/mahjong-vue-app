@@ -338,48 +338,44 @@ export const useGameStore = defineStore('game', {
      */
     handleRemoteStateUpdate(newState) {
       if (!this.isGameOnline || !newState) return;
-      console.log("[Guest/Host] handleRemoteStateUpdate received newState:", newState); // ADD THIS LOG
 
-      // Piniaの $patch を使用して、リアクティブな方法で状態を更新
-      // これにより、Vueのリアクティビティシステムが変更を検知しやすくなります。
       this.$patch((state) => {
-        state.players = newState.players || state.players;
-        state.wall = newState.wall || state.wall;
-        state.deadWall = newState.deadWall || state.deadWall;
-        state.dealerIndex = newState.dealerIndex ?? state.dealerIndex;
-        state.doraIndicators = newState.doraIndicators || state.doraIndicators;
-        state.uraDoraIndicators = newState.uraDoraIndicators || state.uraDoraIndicators; // 追加
-        state.currentTurnPlayerId = newState.currentTurnPlayerId || state.currentTurnPlayerId;
-        state.gamePhase = newState.gamePhase || state.gamePhase;
-        state.lastDiscardedTile = newState.lastDiscardedTile || state.lastDiscardedTile;
-        state.drawnTile = newState.drawnTile || state.drawnTile;
-        state.showResultPopup = newState.showResultPopup || state.showResultPopup;
-        state.resultMessage = newState.resultMessage || state.resultMessage;
-        state.agariResultDetails = newState.agariResultDetails || state.agariResultDetails;
-        state.currentRound = newState.currentRound || state.currentRound;
-        state.honba = newState.honba ?? state.honba;
-        state.riichiSticks = newState.riichiSticks ?? state.riichiSticks;
-        state.turnCount = newState.turnCount ?? state.turnCount;
-        state.playerTurnCount = newState.playerTurnCount || state.playerTurnCount; // 追加
-        state.isIppatsuChance = newState.isIppatsuChance || state.isIppatsuChance; // 追加
-        state.isFuriTen = newState.isFuriTen || state.isFuriTen; // 追加
-        state.isDoujunFuriTen = newState.isDoujunFuriTen || state.isDoujunFuriTen; // 追加
-        state.riichiDiscardedTileId = newState.riichiDiscardedTileId || state.riichiDiscardedTileId; // 追加
-        state.animationState = newState.animationState || state.animationState;
-        state.stockAnimationPlayerId = newState.stockAnimationPlayerId || state.stockAnimationPlayerId;
-        state.highlightedDiscardTileId = newState.highlightedDiscardTileId || state.highlightedDiscardTileId; // 追加
-        // 潜在的な問題修正で追加
-        state.activeActionPlayerId = newState.activeActionPlayerId ?? state.activeActionPlayerId;
-        state.isDeclaringRiichi = newState.isDeclaringRiichi ?? state.isDeclaringRiichi;
-        state.isChankanChance = newState.isChankanChance ?? state.isChankanChance;
-        state.chankanTile = newState.chankanTile ?? state.chankanTile;
-        state.rinshanKaihouChance = newState.rinshanKaihouChance ?? state.rinshanKaihouChance;
-        state.lastActionPlayerId = newState.lastActionPlayerId ?? state.lastActionPlayerId;
-        state.shouldAdvanceRound = newState.shouldAdvanceRound ?? state.shouldAdvanceRound;
-        state.nextDealerIndex = newState.nextDealerIndex ?? state.nextDealerIndex;
-        state.shouldEndGameAfterRound = newState.shouldEndGameAfterRound ?? state.shouldEndGameAfterRound;
-        state.pendingKanDoraReveal = newState.pendingKanDoraReveal ?? state.pendingKanDoraReveal;
-        // 他の必要な状態もここに追加
+        if ('players' in newState) state.players = newState.players;
+        if ('wall' in newState) state.wall = newState.wall;
+        if ('deadWall' in newState) state.deadWall = newState.deadWall;
+        if ('dealerIndex' in newState) state.dealerIndex = newState.dealerIndex;
+        if ('doraIndicators' in newState) state.doraIndicators = newState.doraIndicators;
+        if ('uraDoraIndicators' in newState) state.uraDoraIndicators = newState.uraDoraIndicators;
+        if ('currentTurnPlayerId' in newState) state.currentTurnPlayerId = newState.currentTurnPlayerId;
+        if ('gamePhase' in newState) state.gamePhase = newState.gamePhase;
+        if ('lastDiscardedTile' in newState) state.lastDiscardedTile = newState.lastDiscardedTile;
+        if ('drawnTile' in newState) state.drawnTile = newState.drawnTile;
+        if ('showResultPopup' in newState) state.showResultPopup = newState.showResultPopup;
+        if ('resultMessage' in newState) state.resultMessage = newState.resultMessage;
+        if ('agariResultDetails' in newState) state.agariResultDetails = newState.agariResultDetails;
+        if ('currentRound' in newState) state.currentRound = newState.currentRound;
+        if ('honba' in newState) state.honba = newState.honba;
+        if ('riichiSticks' in newState) state.riichiSticks = newState.riichiSticks;
+        if ('turnCount' in newState) state.turnCount = newState.turnCount;
+        if ('playerTurnCount' in newState) state.playerTurnCount = newState.playerTurnCount;
+        if ('isIppatsuChance' in newState) state.isIppatsuChance = newState.isIppatsuChance;
+        if ('isFuriTen' in newState) state.isFuriTen = newState.isFuriTen;
+        if ('isDoujunFuriTen' in newState) state.isDoujunFuriTen = newState.isDoujunFuriTen;
+        if ('riichiDiscardedTileId' in newState) state.riichiDiscardedTileId = newState.riichiDiscardedTileId;
+        if ('animationState' in newState) state.animationState = newState.animationState;
+        if ('stockAnimationPlayerId' in newState) state.stockAnimationPlayerId = newState.stockAnimationPlayerId;
+        if ('highlightedDiscardTileId' in newState) state.highlightedDiscardTileId = newState.highlightedDiscardTileId;
+        if ('activeActionPlayerId' in newState) state.activeActionPlayerId = newState.activeActionPlayerId;
+        if ('isDeclaringRiichi' in newState) state.isDeclaringRiichi = newState.isDeclaringRiichi;
+        if ('isChankanChance' in newState) state.isChankanChance = newState.isChankanChance;
+        if ('chankanTile' in newState) state.chankanTile = newState.chankanTile;
+        if ('rinshanKaihouChance' in newState) state.rinshanKaihouChance = newState.rinshanKaihouChance;
+        if ('lastActionPlayerId' in newState) state.lastActionPlayerId = newState.lastActionPlayerId;
+        if ('shouldAdvanceRound' in newState) state.shouldAdvanceRound = newState.shouldAdvanceRound;
+        if ('nextDealerIndex' in newState) state.nextDealerIndex = newState.nextDealerIndex;
+        if ('shouldEndGameAfterRound' in newState) state.shouldEndGameAfterRound = newState.shouldEndGameAfterRound;
+        if ('pendingKanDoraReveal' in newState) state.pendingKanDoraReveal = newState.pendingKanDoraReveal;
+        if ('isTenpaiDisplay' in newState) state.isTenpaiDisplay = newState.isTenpaiDisplay;
       });
     },
 
@@ -1430,8 +1426,10 @@ export const useGameStore = defineStore('game', {
       // ストックアニメーション表示用のプレイヤーIDをセット
       this.stockAnimationPlayerId = playerId;
       setTimeout(() => {
+        console.log('[Host] Resetting stock animation.'); // デバッグログ
         this.stockAnimationPlayerId = null;
         if (this.isGameOnline) {
+          console.log('[Host] Broadcasting stock animation reset.'); // デバッグログ
           this.broadcastGameState();
         }
       }, 600);

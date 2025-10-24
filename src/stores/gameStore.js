@@ -363,6 +363,7 @@ export const useGameStore = defineStore('game', {
         if ('isFuriTen' in newState) state.isFuriTen = newState.isFuriTen;
         if ('isDoujunFuriTen' in newState) state.isDoujunFuriTen = newState.isDoujunFuriTen;
         if ('riichiDiscardedTileId' in newState) state.riichiDiscardedTileId = newState.riichiDiscardedTileId;
+        if ('riichiDiscardOptions' in newState) state.riichiDiscardOptions = newState.riichiDiscardOptions; // ★追加
         if ('animationState' in newState) state.animationState = newState.animationState;
         if ('stockAnimationPlayerId' in newState) state.stockAnimationPlayerId = newState.stockAnimationPlayerId;
         if ('highlightedDiscardTileId' in newState) state.highlightedDiscardTileId = newState.highlightedDiscardTileId;
@@ -419,6 +420,7 @@ export const useGameStore = defineStore('game', {
         isDoujunFuriTen: this.isDoujunFuriTen,
         isTenpaiDisplay: this.isTenpaiDisplay, // ADD THIS LINE
         riichiDiscardedTileId: this.riichiDiscardedTileId,
+        riichiDiscardOptions: this.riichiDiscardOptions, // ★追加
         animationState: this.animationState,
         stockAnimationPlayerId: this.stockAnimationPlayerId, // ★追加
         highlightedDiscardTileId: this.highlightedDiscardTileId,
@@ -1784,6 +1786,12 @@ export const useGameStore = defineStore('game', {
         this.animationState = { type: null, playerId: null }; // アニメーション状態をリセット
         if (this.gamePhase === GAME_PHASES.RIICHI_ANIMATION) {
           this.gamePhase = GAME_PHASES.AWAITING_RIICHI_DISCARD; // 打牌選択フェーズへ移行
+
+          // ★ 状態変更をブロードキャスト
+          if (this.isGameOnline) {
+            this.broadcastGameState();
+          }
+
           // 現在のプレイヤーがAIの場合、自動で打牌処理を呼び出す
           const currentPlayer = this.players.find(p => p.id === this.currentTurnPlayerId);
           if (this.gameMode === 'vsCPU' && currentPlayer && currentPlayer.id !== 'player1') {
@@ -1855,6 +1863,10 @@ export const useGameStore = defineStore('game', {
 
       // リーチアニメーションの状態を設定
       this.setRiichiAnimationState(playerId);
+
+      if (this.isGameOnline) {
+        this.broadcastGameState();
+      }
     },
 
     /**

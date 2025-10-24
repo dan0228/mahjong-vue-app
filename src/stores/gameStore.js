@@ -366,7 +366,19 @@ export const useGameStore = defineStore('game', {
         state.isDoujunFuriTen = newState.isDoujunFuriTen || state.isDoujunFuriTen; // 追加
         state.riichiDiscardedTileId = newState.riichiDiscardedTileId || state.riichiDiscardedTileId; // 追加
         state.animationState = newState.animationState || state.animationState;
+        state.stockAnimationPlayerId = newState.stockAnimationPlayerId || state.stockAnimationPlayerId;
         state.highlightedDiscardTileId = newState.highlightedDiscardTileId || state.highlightedDiscardTileId; // 追加
+        // 潜在的な問題修正で追加
+        state.activeActionPlayerId = newState.activeActionPlayerId ?? state.activeActionPlayerId;
+        state.isDeclaringRiichi = newState.isDeclaringRiichi ?? state.isDeclaringRiichi;
+        state.isChankanChance = newState.isChankanChance ?? state.isChankanChance;
+        state.chankanTile = newState.chankanTile ?? state.chankanTile;
+        state.rinshanKaihouChance = newState.rinshanKaihouChance ?? state.rinshanKaihouChance;
+        state.lastActionPlayerId = newState.lastActionPlayerId ?? state.lastActionPlayerId;
+        state.shouldAdvanceRound = newState.shouldAdvanceRound ?? state.shouldAdvanceRound;
+        state.nextDealerIndex = newState.nextDealerIndex ?? state.nextDealerIndex;
+        state.shouldEndGameAfterRound = newState.shouldEndGameAfterRound ?? state.shouldEndGameAfterRound;
+        state.pendingKanDoraReveal = newState.pendingKanDoraReveal ?? state.pendingKanDoraReveal;
         // 他の必要な状態もここに追加
       });
     },
@@ -403,7 +415,19 @@ export const useGameStore = defineStore('game', {
         isTenpaiDisplay: this.isTenpaiDisplay, // ADD THIS LINE
         riichiDiscardedTileId: this.riichiDiscardedTileId,
         animationState: this.animationState,
+        stockAnimationPlayerId: this.stockAnimationPlayerId, // ★追加
         highlightedDiscardTileId: this.highlightedDiscardTileId,
+        // 潜在的な問題修正で追加
+        activeActionPlayerId: this.activeActionPlayerId,
+        isDeclaringRiichi: this.isDeclaringRiichi,
+        isChankanChance: this.isChankanChance,
+        chankanTile: this.chankanTile,
+        rinshanKaihouChance: this.rinshanKaihouChance,
+        lastActionPlayerId: this.lastActionPlayerId,
+        shouldAdvanceRound: this.shouldAdvanceRound,
+        nextDealerIndex: this.nextDealerIndex,
+        shouldEndGameAfterRound: this.shouldEndGameAfterRound,
+        pendingKanDoraReveal: this.pendingKanDoraReveal,
       };
       console.log("Debug: Host's this.isTenpaiDisplay before snapshot:", this.isTenpaiDisplay); // Add this log
 
@@ -1407,6 +1431,9 @@ export const useGameStore = defineStore('game', {
       this.stockAnimationPlayerId = playerId;
       setTimeout(() => {
         this.stockAnimationPlayerId = null;
+        if (this.isGameOnline) {
+          this.broadcastGameState();
+        }
       }, 600);
 
       // 効果音を鳴らす
@@ -2150,11 +2177,17 @@ export const useGameStore = defineStore('game', {
 
       // ポンアニメーションの状態を設定
       this.animationState = { type: 'pon', playerId: playerId };
+      if (this.isGameOnline) {
+        this.broadcastGameState();
+      }
       // 効果音を鳴らす
       audioStore.playSound('Percussive_Accent03-1(Dry).mp3');
       // 1.5秒後にアニメーションをリセット
       setTimeout(() => {
         this.animationState = { type: null, playerId: null };
+        if (this.isGameOnline) {
+          this.broadcastGameState();
+        }
       }, 1500);
     },
     /**
@@ -2243,11 +2276,17 @@ export const useGameStore = defineStore('game', {
 
       // カンアニメーションの状態を設定
       this.animationState = { type: 'kan', playerId: playerId };
+      if (this.isGameOnline) {
+        this.broadcastGameState();
+      }
       // 効果音を鳴らす
       audioStore.playSound('Hyoshigi01-1.mp3');
       // 1.5秒後にアニメーションをリセット
       setTimeout(() => {
         this.animationState = { type: null, playerId: null };
+        if (this.isGameOnline) {
+          this.broadcastGameState();
+        }
       }, 1500);
     },
     /**
@@ -2338,11 +2377,17 @@ export const useGameStore = defineStore('game', {
 
       // カンアニメーションの状態を設定
       this.animationState = { type: 'kan', playerId: playerId };
+      if (this.isGameOnline) {
+        this.broadcastGameState();
+      }
       // 効果音を鳴らす
       audioStore.playSound('Hyoshigi01-1.mp3');
       // 1.5秒後にアニメーションをリセット
       setTimeout(() => {
         this.animationState = { type: null, playerId: null };
+        if (this.isGameOnline) {
+          this.broadcastGameState();
+        }
       }, 1500);
     },
     /**
@@ -2435,11 +2480,17 @@ export const useGameStore = defineStore('game', {
 
       // カンアニメーションの状態を設定
       this.animationState = { type: 'kan', playerId: playerId };
+      if (this.isGameOnline) {
+        this.broadcastGameState();
+      }
       // 効果音を鳴らす
       audioStore.playSound('Hyoshigi01-1.mp3');
       // 1.5秒後にアニメーションをリセット
       setTimeout(() => {
         this.animationState = { type: null, playerId: null };
+        if (this.isGameOnline) {
+          this.broadcastGameState();
+        }
       }, 1500);
     },
     

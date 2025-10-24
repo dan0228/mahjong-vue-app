@@ -584,7 +584,6 @@
           console.log("3秒経過。ゲームを初期化します。");
           await gameStore.initializeOnlineGame(); // Await initialization
           // After initialization, start the game flow for the host
-          gameStore.startGameFlow();
         }, 3000);
       }
 

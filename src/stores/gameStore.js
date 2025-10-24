@@ -287,6 +287,7 @@ export const useGameStore = defineStore('game', {
     stockSelectionCountdown: 1.3, // ストック牌選択のカウントダウン
     stockSelectionTimerId: null, // カウントダウンタイマーのID
     stockAnimationPlayerId: null, // ストックアニメーション表示用フラグ
+    isTenpaiDisplay: {}, // ★ 聴牌状態の表示フラグ
 
     // Online Match State
     onlineGameId: null, // オンライン対戦のゲームID
@@ -422,12 +423,12 @@ export const useGameStore = defineStore('game', {
 
       // DB更新後、全クライアントにブロードキャストで状態を直接送信
       // これにより、ゲストはDBポーリングなしでリアルタイム更新を受け取れる
-      // const broadcastChannel = supabase.channel(`online-game-broadcast:${this.onlineGameId}`);
-      // broadcastChannel.send({
-      //   type: 'broadcast',
-      //   event: 'state-update',
-      //   payload: { newState: stateSnapshot }
-      // });
+      const broadcastChannel = supabase.channel(`online-game-broadcast:${this.onlineGameId}`);
+      broadcastChannel.send({
+        type: 'broadcast',
+        event: 'state-update',
+        payload: { newState: stateSnapshot }
+      });
     },
 
     /**

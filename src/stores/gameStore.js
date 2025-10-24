@@ -377,6 +377,7 @@ export const useGameStore = defineStore('game', {
         if ('shouldEndGameAfterRound' in newState) state.shouldEndGameAfterRound = newState.shouldEndGameAfterRound;
         if ('pendingKanDoraReveal' in newState) state.pendingKanDoraReveal = newState.pendingKanDoraReveal;
         if ('isTenpaiDisplay' in newState) state.isTenpaiDisplay = newState.isTenpaiDisplay;
+        if ('playerActionEligibility' in newState) state.playerActionEligibility = newState.playerActionEligibility;
       });
 
       this.isWaitingForHost = false; // ★ 応答待ち終了
@@ -427,6 +428,7 @@ export const useGameStore = defineStore('game', {
         nextDealerIndex: this.nextDealerIndex,
         shouldEndGameAfterRound: this.shouldEndGameAfterRound,
         pendingKanDoraReveal: this.pendingKanDoraReveal,
+        playerActionEligibility: this.playerActionEligibility,
       };
       console.log("Debug: Host's this.isTenpaiDisplay before snapshot:", this.isTenpaiDisplay); // Add this log
 

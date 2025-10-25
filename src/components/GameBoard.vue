@@ -552,6 +552,9 @@
       // --- Online Mode ---
       await userStore.fetchUserProfile(); // Ensure profile is loaded
 
+      // Debug: Log localUserId and gameId
+      console.log(`[GameBoard] Online Mode: gameId=${gameId}, localUserId=${localUserId}`);
+
       // Fetch initial game state to determine host and set initial state
       const { data: initialGameState, error } = await supabase
         .from('game_states')
@@ -572,8 +575,11 @@
         hostId: initialGameState.player_1_id
       });
 
+      // Debug: Log gameStore's online status and host status
+      console.log(`[GameBoard] gameStore initialized for online: isGameOnline=${gameStore.isGameOnline}, isHost=${gameStore.isHost}, localPlayerId=${gameStore.localPlayerId}`);
+
       // Apply the initial state from the database
-      // The game_data is initialized as an empty object '{'}'. Check if it has keys to see if it's a real state.
+      // The game_data is initialized as an empty object '{}'. Check if it has keys to see if it's a real state.
       if (initialGameState.game_data && Object.keys(initialGameState.game_data).length > 0) {
         gameStore.handleRemoteStateUpdate(initialGameState.game_data);
       } else if (gameStore.isHost) {
@@ -589,7 +595,7 @@
       // Subscribe to future updates via broadcast
       realtimeChannel = supabase.channel(`online-game-broadcast:${gameId}`)
         .on('broadcast', { event: 'state-update' }, ( { payload }) => {
-          console.log('Game state update received via broadcast!', payload);
+          console.log('[GameBoard] Game state update received via broadcast!', payload);
           if (payload.newState) {
             gameStore.handleRemoteStateUpdate(payload.newState);
           }
@@ -636,6 +642,16 @@
     // スケーリングの初期化とリサイズイベントの監視
     updateScaleFactor();
     window.addEventListener('resize', updateScaleFactor);
+  });
+
+  // Debug: Log myPlayerId
+  watch(myPlayerId, (newVal) => {
+    console.log(`[GameBoard] myPlayerId changed to: ${newVal}`);
+  });
+
+  // Debug: Log orderedPlayersForDisplay
+  watch(orderedPlayersForDisplay, (newVal) => {
+    console.log(`[GameBoard] orderedPlayersForDisplay changed:`, newVal);
   });
 
   onBeforeUnmount(() => {

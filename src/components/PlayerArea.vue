@@ -141,6 +141,14 @@ watch(playerEligibility, () => {
   actionInProgress.value = false;
 });
 
+// Debug: Log player's eligibility and active action player
+watch(() => gameStore.activeActionPlayerId, (newVal) => {
+  console.log(`[PlayerArea ${props.player.id}] activeActionPlayerId changed to: ${newVal}`);
+});
+watch(() => gameStore.playerActionEligibility[props.player.id], (newVal) => {
+  console.log(`[PlayerArea ${props.player.id}] playerActionEligibility changed:`, newVal);
+}, { deep: true });
+
 /**
  * 自分のターンで、かつ打牌前のアクション（ツモ和了、リーチ、カン）が可能なフェーズかどうかを判定します。
  */
@@ -154,19 +162,26 @@ const isMyTurnAndCanActBeforeDiscard = computed(() => {
  */
 const canDeclareTsumoAgari = computed(() => {
   const result = !actionInProgress.value && isMyTurnAndCanActBeforeDiscard.value && playerEligibility.value.canTsumoAgari;
+  console.log(`[PlayerArea ${props.player.id}] canDeclareTsumoAgari: ${result}, isMyTurnAndCanActBeforeDiscard: ${isMyTurnAndCanActBeforeDiscard.value}, canTsumoAgari: ${playerEligibility.value.canTsumoAgari}`);
   return result;
 });
 /**
  * リーチが可能かどうかを判定します。
  */
-const canDeclareRiichi = computed(() => !actionInProgress.value && isMyTurnAndCanActBeforeDiscard.value && playerEligibility.value.canRiichi);
+const canDeclareRiichi = computed(() => {
+  const result = !actionInProgress.value && isMyTurnAndCanActBeforeDiscard.value && playerEligibility.value.canRiichi;
+  console.log(`[PlayerArea ${props.player.id}] canDeclareRiichi: ${result}, isMyTurnAndCanActBeforeDiscard: ${isMyTurnAndCanActBeforeDiscard.value}, canRiichi: ${playerEligibility.value.canRiichi}`);
+  return result;
+});
 /**
  * 暗槓が可能かどうかを判定します。
  */
 const canDeclareAnkan = computed(() => {
   if (actionInProgress.value || !isMyTurnAndCanActBeforeDiscard.value) return false;
   const ankanInfo = gameStore.canDeclareAnkan[props.player.id];
-  return ankanInfo === true || (Array.isArray(ankanInfo) && ankanInfo.length > 0);
+  const result = ankanInfo === true || (Array.isArray(ankanInfo) && ankanInfo.length > 0);
+  console.log(`[PlayerArea ${props.player.id}] canDeclareAnkan: ${result}, isMyTurnAndCanActBeforeDiscard: ${isMyTurnAndCanActBeforeDiscard.value}, ankanInfo:`, ankanInfo);
+  return result;
 });
 /**
  * 加槓が可能かどうかを判定します。
@@ -174,26 +189,44 @@ const canDeclareAnkan = computed(() => {
 const canDeclareKakan = computed(() => {
   if (actionInProgress.value || !isMyTurnAndCanActBeforeDiscard.value) return false;
   const kakanOptions = gameStore.canDeclareKakan[props.player.id];
-  return Array.isArray(kakanOptions) && kakanOptions.length > 0;
+  const result = Array.isArray(kakanOptions) && kakanOptions.length > 0;
+  console.log(`[PlayerArea ${props.player.id}] canDeclareKakan: ${result}, isMyTurnAndCanActBeforeDiscard: ${isMyTurnAndCanActBeforeDiscard.value}, kakanOptions:`, kakanOptions);
+  return result;
 });
 
 /**
  * ロンが可能かどうかを判定します。
  */
-const canDeclareRon = computed(() => !actionInProgress.value && gameStore.activeActionPlayerId === props.player.id && playerEligibility.value.canRon);
+const canDeclareRon = computed(() => {
+  const result = !actionInProgress.value && gameStore.activeActionPlayerId === props.player.id && playerEligibility.value.canRon;
+  console.log(`[PlayerArea ${props.player.id}] canDeclareRon: ${result}, activeActionPlayerId: ${gameStore.activeActionPlayerId}, myId: ${props.player.id}, canRon: ${playerEligibility.value.canRon}`);
+  return result;
+});
 /**
  * ポンが可能かどうかを判定します。
  */
-const canDeclarePon = computed(() => !actionInProgress.value && gameStore.activeActionPlayerId === props.player.id && playerEligibility.value.canPon);
+const canDeclarePon = computed(() => {
+  const result = !actionInProgress.value && gameStore.activeActionPlayerId === props.player.id && playerEligibility.value.canPon;
+  console.log(`[PlayerArea ${props.player.id}] canDeclarePon: ${result}, activeActionPlayerId: ${gameStore.activeActionPlayerId}, myId: ${props.player.id}, canPon: ${playerEligibility.value.canPon}`);
+  return result;
+});
 /**
  * 明槓が可能かどうかを判定します。
  */
-const canDeclareMinkan = computed(() => !actionInProgress.value && gameStore.activeActionPlayerId === props.player.id && playerEligibility.value.canMinkan);
+const canDeclareMinkan = computed(() => {
+  const result = !actionInProgress.value && gameStore.activeActionPlayerId === props.player.id && playerEligibility.value.canMinkan;
+  console.log(`[PlayerArea ${props.player.id}] canDeclareMinkan: ${result}, activeActionPlayerId: ${gameStore.activeActionPlayerId}, myId: ${props.player.id}, canMinkan: ${playerEligibility.value.canMinkan}`);
+  return result;
+});
 
 /**
  * スキップボタンを表示するかどうかを判定します。
  */
-const showSkipButton = computed(() => !actionInProgress.value && gameStore.activeActionPlayerId === props.player.id);
+const showSkipButton = computed(() => {
+  const result = !actionInProgress.value && gameStore.activeActionPlayerId === props.player.id && (canDeclareRon.value || canDeclarePon.value || canDeclareMinkan.value);
+  console.log(`[PlayerArea ${props.player.id}] showSkipButton: ${result}, activeActionPlayerId: ${gameStore.activeActionPlayerId}, myId: ${props.player.id}, canRon: ${canDeclareRon.value}, canPon: ${canDeclarePon.value}, canMinkan: ${canDeclareMinkan.value}`);
+  return result;
+});
 
 /**
  * ストックアクションが可能かどうかを判定します。

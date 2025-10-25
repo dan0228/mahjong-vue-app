@@ -579,12 +579,11 @@
       } else if (gameStore.isHost) {
         // If no game data exists and this client is the host, initialize the game.
         // Add a delay to give guests time to subscribe.
-        console.log("ホストです。ゲストの接続を待つため3秒後にゲームを初期化します...");
+        console.log("ホストです。ゲストの接続を待つため1秒後にゲームを初期化します...");
         setTimeout(async () => { // Make this async
-          console.log("3秒経過。ゲームを初期化します。");
+          console.log("1秒経過。ゲームを初期化します。");
           await gameStore.initializeOnlineGame(); // Await initialization
-          // After initialization, start the game flow for the host
-        }, 3000);
+        }, 1000);
       }
 
       // Subscribe to future updates via broadcast

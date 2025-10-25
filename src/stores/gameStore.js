@@ -259,7 +259,7 @@ export const useGameStore = defineStore('game', {
       fu: 0, // 四牌麻雀では符計算は簡略化されることが多いが、念のため
       score: 0, // 最終的な点数
       scoreName: null, // "満貫", "跳満" など
-      pointChanges: {},
+      pointChanges: {}, // { playerId: changeAmount }
     },
     anyPlayerMeldInFirstRound: false, // 最初の1巡で誰かが鳴いたか
     // 必ずしも state に持つ必要はないが、デバッグやUI表示用に持つことも可能。
@@ -377,13 +377,18 @@ export const useGameStore = defineStore('game', {
         if ('nextDealerIndex' in newState) state.nextDealerIndex = newState.nextDealerIndex;
         if ('shouldEndGameAfterRound' in newState) state.shouldEndGameAfterRound = newState.shouldEndGameAfterRound;
         if ('pendingKanDoraReveal' in newState) state.pendingKanDoraReveal = newState.pendingKanDoraReveal;
-        if ('isTenpaiDisplay' in newState) state.isTenpaiDisplay = newState.isTenpaiDisplay;
         if ('playerActionEligibility' in newState) state.playerActionEligibility = newState.playerActionEligibility;
         // ゲーム開始・終了演出の同期
         if ('showDealerDeterminationPopup' in newState) state.showDealerDeterminationPopup = newState.showDealerDeterminationPopup;
         if ('dealerDeterminationResult' in newState) state.dealerDeterminationResult = newState.dealerDeterminationResult;
         if ('showFinalResultPopup' in newState) state.showFinalResultPopup = newState.showFinalResultPopup;
         if ('finalResultDetails' in newState) state.finalResultDetails = newState.finalResultDetails;
+        // ゲーム開始・終了演出の同期
+        if ('showDealerDeterminationPopup' in newState) state.showDealerDeterminationPopup = newState.showDealerDeterminationPopup;
+        if ('dealerDeterminationResult' in newState) state.dealerDeterminationResult = newState.dealerDeterminationResult;
+        if ('showFinalResultPopup' in newState) state.showFinalResultPopup = newState.showFinalResultPopup;
+        if ('finalResultDetails' in newState) state.finalResultDetails = newState.finalResultDetails;
+        if ('isTenpaiDisplay' in newState) state.isTenpaiDisplay = newState.isTenpaiDisplay;
       });
 
       this.isWaitingForHost = false; // ★ 応答待ち終了
@@ -436,6 +441,11 @@ export const useGameStore = defineStore('game', {
         shouldEndGameAfterRound: this.shouldEndGameAfterRound,
         pendingKanDoraReveal: this.pendingKanDoraReveal,
         playerActionEligibility: this.playerActionEligibility,
+        // ゲーム開始・終了演出の同期
+        showDealerDeterminationPopup: this.showDealerDeterminationPopup,
+        dealerDeterminationResult: this.dealerDeterminationResult,
+        showFinalResultPopup: this.showFinalResultPopup,
+        finalResultDetails: this.finalResultDetails,
         // ゲーム開始・終了演出の同期
         showDealerDeterminationPopup: this.showDealerDeterminationPopup,
         dealerDeterminationResult: this.dealerDeterminationResult,
@@ -575,6 +585,18 @@ export const useGameStore = defineStore('game', {
         this.doraIndicators = [mahjongLogic.revealDora(this.deadWall)].filter(Boolean);
         this.currentTurnPlayerId = this.players[this.dealerIndex]?.id;
         this.gamePhase = GAME_PHASES.PLAYER_TURN;
+
+        // ★ 親決め結果をセットし、ポップアップ表示フラグを立てる
+        this.dealerDeterminationResult.players = this.players.map(p => ({
+          id: p.id,
+          name: p.name,
+          seatWind: p.seatWind,
+          isDealer: p.isDealer,
+          score: 50000,
+          originalId: p.originalId,
+        }));
+        this.showDealerDeterminationPopup = true;
+
         console.log("5. 配牌と親決めが完了。");
 
         // 5. 最初のゲーム状態をDBに保存
@@ -764,6 +786,9 @@ export const useGameStore = defineStore('game', {
 
       // ゲーム開始フラグを立てる
       userStore.setGameInProgress(true);
+
+      // ★ ポップアップを表示
+      this.showDealerDeterminationPopup = true;
     },
     /**
      * 現在のターンプレイヤーが山から牌を1枚ツモるアクション。
@@ -1205,7 +1230,6 @@ export const useGameStore = defineStore('game', {
      */
     discardTile(playerId, tileIdToDiscard, isFromDrawnTile, isStocking = false) {
       // --- オンライン対戦時の処理 ---
-      // ゲストの場合、アクションの意図をホストに送信するだけ
       if (this.isGameOnline && !this.isHost) {
         // playerIdが自分のものでなければアクションを送信しない（他プレイヤーの操作を防ぐ）
         if (playerId !== this.localPlayerId) return;
@@ -1233,8 +1257,7 @@ export const useGameStore = defineStore('game', {
         audio.play();
       }
 
-      // 牌の処理を少し遅延させる (アニメーションのためなど)
-      setTimeout(() => {
+      const runDiscardLogic = () => {
         const player = this.players.find(p => p.id === playerId);
         // プレイヤーが存在しない、または現在のゲームフェーズで打牌が許可されていない場合は処理を中断
         // ストックアクションの場合はフェーズチェックをバイパス
@@ -1360,7 +1383,8 @@ export const useGameStore = defineStore('game', {
             if (isPlayerInFuriTen) {
               eligibility.canRon = false;
             } else {
-              eligibility.canRon = mahjongLogic.canWinBasicShape(p.hand, this.lastDiscardedTile, p.melds);
+              const gameContext = this.createGameContextForPlayer(p, false, this.lastDiscardedTile);
+              eligibility.canRon = mahjongLogic.checkCanRon(p.hand, this.lastDiscardedTile, gameContext).isWin;
             }
 
             // ★ BUG FIX: 最後の捨て牌に対してはポン・カンはできない
@@ -1395,13 +1419,18 @@ export const useGameStore = defineStore('game', {
         if (!canAnyoneAct && !this.isDeclaringRiichi[player.id]) {
           this.gamePhase = GAME_PHASES.PLAYER_TURN;
           this.moveToNextPlayer();
-        }
-        else {
+        } else {
           this.gamePhase = GAME_PHASES.AWAITING_ACTION_RESPONSE;
           this.playerResponses = {};
           this.setNextActiveResponder();
         }
-      }, 100);
+      };
+
+      if (this.gameMode === 'vsCPU') {
+        setTimeout(runDiscardLogic, 100);
+      } else {
+        runDiscardLogic();
+      }
     },
 
     /**
@@ -1573,20 +1602,20 @@ export const useGameStore = defineStore('game', {
           this.resultMessage = `親（${dealerPlayer.name}）がテンパイでトップのため終局`;
           this.honba = 0; // 本場リセット
           this.nextDealerIndex = (this.dealerIndex + 1) % this.players.length; // 親流れ
-          this.shouldAdvanceRound = true;
+          this.shouldAdvanceRound = true; // 局を進める
           this.shouldEndGameAfterRound = true; // ゲーム終了フラグ
         } else if (isDealerTenpai) {
           // 親がテンパイの場合、連荘
           this.resultMessage = `親（${dealerPlayer.name}）がテンパイのため連荘`;
           this.honba++; // 本場プラス
           this.nextDealerIndex = this.dealerIndex; // 親は継続
-          this.shouldAdvanceRound = false;
+          this.shouldAdvanceRound = false; // 局は進めない
         } else {
           // 親がノーテンの場合、親流れ
           this.resultMessage = `親（${this.players[this.dealerIndex].name}）がノーテンのため親流れ`;
           this.honba = 0; // 本場リセット
           this.nextDealerIndex = (this.dealerIndex + 1) % this.players.length; // 親流れ
-          this.shouldAdvanceRound = true;
+          this.shouldAdvanceRound = true; // 局を進める
         }
 
         // ここに、流局でゲームが終了する追加条件をチェックする
@@ -1807,7 +1836,6 @@ export const useGameStore = defineStore('game', {
      */
     declareRiichi(playerId) {
       // --- オンライン対戦時の処理 ---
-      // ゲストの場合、アクションの意図をホストに送信するだけ
       if (this.isGameOnline && !this.isHost) {
         if (playerId !== this.localPlayerId) return;
         this.isWaitingForHost = true; // ★ 応答待ち開始
@@ -1927,7 +1955,6 @@ export const useGameStore = defineStore('game', {
      */
     playerDeclaresCall(playerId, actionType, tile) {
       // --- オンライン対戦時の処理 ---
-      // ゲストの場合、アクションの意図をホストに送信するだけ
       if (this.isGameOnline && !this.isHost) {
         // playerIdが自分のものでなければアクションを送信しない
         if (playerId !== this.localPlayerId) return;
@@ -3280,8 +3307,7 @@ export const useGameStore = defineStore('game', {
               if (tile.suit !== 'z' && (tile.rank === 1 || tile.rank === 9)) {
                 score -= 200;
               }
-            }
-            else { // 鳴いた牌が中張牌の場合、同じ色の牌を残す
+            } else { // 鳴いた牌が中張牌の場合、同じ色の牌を残す
               if (tile.suit === calledTile.suit) {
                 score -= 200;
               }
@@ -3384,7 +3410,11 @@ export const useGameStore = defineStore('game', {
       }, 500);
     },
     // AIプレイヤーの応答処理 (他家の打牌に対して)
-    handleAiResponse(aiPlayerId) {
+    handleAiResponse() {
+      const aiPlayerId = this.activeActionPlayerId;
+      if (!aiPlayerId || this.gameMode !== 'vsCPU' || aiPlayerId === 'player1') {
+        return;
+      }
 
       // 0秒後に思考・実行
       setTimeout(() => {

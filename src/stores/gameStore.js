@@ -259,6 +259,7 @@ export const useGameStore = defineStore('game', {
     isHost: false,
     isWaitingForHost: false,
     channel: null,
+    playersReadyForNextRound: [], // 次のラウンドに進む準備ができたプレイヤーのリスト
   }),
   actions: {
     // --- Online Match Actions ---
@@ -320,6 +321,10 @@ export const useGameStore = defineStore('game', {
     handleRemoteStateUpdate(newState) {
       if (!this.isGameOnline || !newState) return;
 
+      if ('playersReadyForNextRound' in newState) {
+        console.log('[GUEST LOG] Receiving playersReadyForNextRound:', newState.playersReadyForNextRound);
+      }
+
       this.$patch((state) => {
         if ('players' in newState) state.players = newState.players;
         if ('wall' in newState) state.wall = newState.wall;
@@ -363,9 +368,53 @@ export const useGameStore = defineStore('game', {
         if ('showFinalResultPopup' in newState) state.showFinalResultPopup = newState.showFinalResultPopup;
         if ('finalResultDetails' in newState) state.finalResultDetails = newState.finalResultDetails;
         if ('isTenpaiDisplay' in newState) state.isTenpaiDisplay = newState.isTenpaiDisplay;
+        // playersReadyForNextRound の更新方法をリアクティビティを確実に維持する方法に変更
+        if ('playersReadyForNextRound' in newState) {
+          state.playersReadyForNextRound.length = 0;
+          state.playersReadyForNextRound.push(...newState.playersReadyForNextRound);
+        }
       });
 
       this.isWaitingForHost = false;
+    },
+
+    signalReadyForNextRound(remotePlayerId = null) {
+      const playerId = remotePlayerId || (this.isGameOnline ? this.localPlayerId : 'player1');
+      if (!playerId || this.playersReadyForNextRound.includes(playerId)) return;
+
+      // ゲストからの呼び出しの場合、UIを即時更新し、ホストに通知
+      if (!remotePlayerId && this.isGameOnline && !this.isHost) {
+        this.playersReadyForNextRound.push(playerId);
+        if (this.channel) {
+          this.channel.send({
+            type: 'broadcast',
+            event: 'action-intent',
+            payload: { action: 'signalReadyForNextRound', args: [playerId] }
+          });
+        }
+        return;
+      }
+
+      // --- ホストとオフラインのロジック ---
+      this.playersReadyForNextRound.push(playerId);
+
+      // 全員の準備が完了した場合
+      if (this.playersReadyForNextRound.length >= this.players.length) {
+        this.showResultPopup = false;
+        this.applyPointChanges();
+
+        if (this.shouldEndGameAfterRound) {
+          this.handleGameEnd({ showLoading: false });
+        } else {
+          // この関数がリストのリセットと次のラウンドの状態をブロードキャストする
+          this.prepareNextRound();
+        }
+      } else {
+        // 全員が揃っていない場合は、現在の準備状況をブロードキャスト
+        if (this.isGameOnline) {
+          this.broadcastGameState();
+        }
+      }
     },
 
     async broadcastGameState() {
@@ -572,7 +621,9 @@ export const useGameStore = defineStore('game', {
     },
 
     initializeGame() {
-      const userStore = useUserStore();
+      this.playersReadyForNextRound = []; // ★局の初期化時に、必ず準備完了リストをリセット
+
+      const userStore = useUserStore(); // userStoreを取得
 
       if (this.dealerIndex === null) {
         const shuffledAis = [...allAiPlayers].sort(() => 0.5 - Math.random());
@@ -1401,11 +1452,16 @@ export const useGameStore = defineStore('game', {
         setTimeout(() => {
           this.stopRiichiBgm();
           this.showResultPopup = true;
-        }, 2000);
+          if (this.isGameOnline) {
+            this.broadcastGameState();
+          }
+        }, 2000); // 2秒の遅延
       }
     },
 
     prepareNextRound() {
+      this.playersReadyForNextRound = []; // ★次のラウンドの準備を始める前に、必ず準備完了リストをリセット
+
       const playerBelowZero = this.players.find(p => p.score < 0);
       if (playerBelowZero) {
         this.shouldEndGameAfterRound = true;
@@ -2305,6 +2361,9 @@ export const useGameStore = defineStore('game', {
       setTimeout(() => {
         this.showResultPopup = true;
         this.stopRiichiBgm();
+        if (this.isGameOnline) {
+          this.broadcastGameState();
+        }
       }, 1800);
     },
 
@@ -2414,6 +2473,8 @@ export const useGameStore = defineStore('game', {
     },
 
     resetGameForNewSession(options = { keepStreak: false }) {
+      this.playersReadyForNextRound = []; // ★ 強制的にリセット
+
       const userStore = useUserStore();
       userStore.resetTemporaryData();
 

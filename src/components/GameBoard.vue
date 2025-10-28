@@ -469,24 +469,9 @@
    * 和了結果ポップアップで「次へ」が押された際の処理。
    * ゲーム終了条件を判定し、次の局へ進むか、最終結果画面へ遷移するかを決定します。
    */
-  async function handleProceedToNextRound() {
-    gameStore.showResultPopup = false;
-    gameStore.applyPointChanges(); // 点数を先に反映させる
-
-    // 最終局で親が和了・テンパイでトップの場合や、誰かが飛んだ場合など、
-    // handleAgari/handleRyuukyoku内でshouldEndGameAfterRoundがtrueに設定される
-    // ここではそのフラグを見て遷移を決定する
-    if (gameStore.shouldEndGameAfterRound) {
-      // ゲーム終了時の処理
-      isFadingToFinalResult.value = true;
-      const gameEndPromise = gameStore.handleGameEnd({ showLoading: false });
-      const delayPromise = new Promise(resolve => setTimeout(resolve, 1500));
-      await Promise.all([gameEndPromise, delayPromise]);
-      // isFadingToFinalResult は FinalResultPopup が閉じられるときにリセットする
-    } else {
-      // 次の局へ
-      gameStore.prepareNextRound();
-    }
+  function handleProceedToNextRound() {
+    // ストアに準備完了を通知する。実際の処理はストア側が実行する。
+    gameStore.signalReadyForNextRound();
   }
 
   /**

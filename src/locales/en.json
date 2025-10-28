@@ -483,6 +483,8 @@
     "scoreChanges": "Score Changes",
     "draw": "Draw",
     "next": "Next",
+    "waiting": "Waiting...",
+    "waitingForOthers": "Waiting for other players...",
     "han": "{count} Fan",
     "points": "{score} pts",
     "yakuman": "Yakuman",

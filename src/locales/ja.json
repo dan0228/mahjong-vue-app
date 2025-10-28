@@ -483,6 +483,8 @@
     "scoreChanges": "点数変動",
     "draw": "流局",
     "next": "次へ",
+    "waiting": "待機中...",
+    "waitingForOthers": "他のプレイヤーを待っています...",
     "han": "{count}翻",
     "points": "{score}点",
     "yakuman": "役満",

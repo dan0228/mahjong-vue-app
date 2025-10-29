@@ -744,7 +744,9 @@ export const useGameStore = defineStore('game', {
 
       userStore.setGameInProgress(true);
 
-      this.showDealerDeterminationPopup = true;
+      if (this.currentRound.wind === 'east' && this.currentRound.number === 1 && this.honba === 0) {
+        this.showDealerDeterminationPopup = true;
+      }
     },
 
     drawTile() {

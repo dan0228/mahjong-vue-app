@@ -406,8 +406,11 @@ export const useGameStore = defineStore('game', {
         if (this.shouldEndGameAfterRound) {
           this.handleGameEnd({ showLoading: false });
         } else {
-          // この関数がリストのリセットと次のラウンドの状態をブロードキャストする
           this.prepareNextRound();
+          // ★新しい局の準備が完了した後にブロードキャストする
+          if (this.isGameOnline) {
+            this.broadcastGameState();
+          }
         }
       } else {
         // 全員が揃っていない場合は、現在の準備状況をブロードキャスト
@@ -463,6 +466,7 @@ export const useGameStore = defineStore('game', {
         dealerDeterminationResult: this.dealerDeterminationResult,
         showFinalResultPopup: this.showFinalResultPopup,
         finalResultDetails: this.finalResultDetails,
+        playersReadyForNextRound: this.playersReadyForNextRound,
       };
 
       const { error } = await supabase

@@ -90,7 +90,6 @@
         :message="gameStore.resultMessage"
         :result-details="gameStore.agariResultDetails"
         @close="handleCloseResultPopup"
-        @proceed="handleProceedToNextRound"
       />
       
       <ParentDecisionPopup
@@ -465,14 +464,7 @@
     gameStore.showResultPopup = false;
   }
 
-  /**
-   * 和了結果ポップアップで「次へ」が押された際の処理。
-   * ゲーム終了条件を判定し、次の局へ進むか、最終結果画面へ遷移するかを決定します。
-   */
-  function handleProceedToNextRound() {
-    // ストアに準備完了を通知する。実際の処理はストア側が実行する。
-    gameStore.signalReadyForNextRound();
-  }
+  
 
   /**
    * 親決めポップアップが閉じられた際の処理。

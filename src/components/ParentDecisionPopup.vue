@@ -131,16 +131,22 @@ const formattedTimestamp = computed(() => {
  */
 function getPlayerIcon(player) {
   if (!player) return null;
-  // プレイヤーが自分自身で、かつアバターURLが設定されていればそれを使用
-  if (player.id === 'player1' && userStore.profile?.avatar_url) {
-    return userStore.profile.avatar_url;
+  // 1. プレイヤーオブジェクト自身のavatar_urlを最優先（オンライン対戦用）
+  if (player.avatar_url) {
+    return player.avatar_url;
   }
-  if (player.id === 'player1') return '/assets/images/info/hito_icon_1.png'; // あなた
-  if (player.originalId === 'kuro') return '/assets/images/info/cat_icon_3.png'; // くろ
-  if (player.originalId === 'tama') return '/assets/images/info/cat_icon_2.png'; // たま
-  if (player.originalId === 'tora') return '/assets/images/info/cat_icon_1.png'; // とら
-  if (player.originalId === 'janneko') return '/assets/images/info/cat_icon_4.png'; // 雀猫様
-  return null;
+  // 2. オフライン時の自分（player1）のアバターフォールバック
+  if (player.id === 'player1') {
+    return userStore.profile?.avatar_url || '/assets/images/info/hito_icon_1.png';
+  }
+  // 3. オフライン時のAIプレイヤーのフォールバック
+  if (player.originalId === 'kuro') return '/assets/images/info/cat_icon_3.png';
+  if (player.originalId === 'tama') return '/assets/images/info/cat_icon_2.png';
+  if (player.originalId === 'tora') return '/assets/images/info/cat_icon_1.png';
+  if (player.originalId === 'janneko') return '/assets/images/info/cat_icon_4.png';
+  
+  // 4. 最終フォールバック
+  return '/assets/images/info/hito_icon_1.png';
 }
 </script>
 

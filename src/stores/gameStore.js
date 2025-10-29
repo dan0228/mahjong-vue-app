@@ -586,6 +586,7 @@ export const useGameStore = defineStore('game', {
         this.dealerDeterminationResult.players = this.players.map(p => ({
           id: p.id,
           name: p.name,
+          avatar_url: p.avatar_url,
           seatWind: p.seatWind,
           isDealer: p.isDealer,
           score: 50000,

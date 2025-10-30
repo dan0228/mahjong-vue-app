@@ -1221,7 +1221,7 @@ export const useGameStore = defineStore('game', {
             }
             this.gamePhase = GAME_PHASES.PLAYER_TURN;
             this.moveToNextPlayer();
-            return;
+            // return; // ここでreturnせず、後続の処理（アニメーションなど）を続行させる
           } else {
             player.discards = [...player.discards, discardedTileActual];
           }
@@ -1316,13 +1316,18 @@ export const useGameStore = defineStore('game', {
           console.error("チャンネルが初期化されていません。アクションを送信できません。");
           return;
         }
-        this.isWaitingForHost = true;
+        // 既にホストからの応答待ち中の場合は、新たなアクションを送信しない
+        if (this.isWaitingForHost) {
+          console.warn("ゲスト: ホストからの応答待ち中に、新たなストックアクションを試みました。");
+          return;
+        }
+        this.isWaitingForHost = true; // ホストからの応答待ち状態に設定
         this.channel.send({
           type: 'broadcast',
           event: 'action-intent',
           payload: { action: 'executeStock', args: [playerId, tileIdToStock, isFromDrawnTile] }
         });
-        return;
+        // return; // ここでreturnせず、ローカルでUIを即時更新する
       }
 
       const audioStore = useAudioStore();

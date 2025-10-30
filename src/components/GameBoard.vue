@@ -1073,6 +1073,9 @@ input:checked + .slider:before {
   height: 80px; /* アイコンのサイズ */
   object-fit: cover;
   z-index: 15; /* 他のUI要素より手前に表示 */
+  background-color: white; /* 白背景 */
+  border: 1px solid #ccc; /* 1pxの縁 */
+  border-radius: 6px; /* 角を丸く */
 }
 
 .furiten-indicator {
@@ -1171,9 +1174,7 @@ input:checked + .slider:before {
   right: -65px;
   transform: translate(-50%, -50%);
   scale: 0.9; /* 自分のアイコンは少し小さく */
-  background-color: white; /* 白背景 */
-  border: 1px solid #ccc; /* 1pxの縁 */
-  border-radius: 6px; /* 角を丸く */ 
+
 }   
 
 .player-area-container {

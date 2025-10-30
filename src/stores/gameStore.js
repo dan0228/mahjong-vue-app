@@ -260,6 +260,7 @@ export const useGameStore = defineStore('game', {
     isWaitingForHost: false,
     channel: null,
     playersReadyForNextRound: [], // 次のラウンドに進む準備ができたプレイヤーのリスト
+    isGameReady: false, // ゲームの初期化が完了し、開始準備ができたかどうか
   }),
   actions: {
     // --- Online Match Actions ---
@@ -314,6 +315,7 @@ export const useGameStore = defineStore('game', {
         this.channel = null;
         this.isGameOnline = false;
         this.onlineGameId = null;
+        this.isGameReady = false; // ゲーム準備状態をリセット
         console.log("オンライン対戦チャンネルから切断しました。");
       }
     },
@@ -376,6 +378,7 @@ export const useGameStore = defineStore('game', {
       });
 
       this.isWaitingForHost = false;
+      this.isGameReady = true; // ゲームの準備が完了
     },
 
     signalReadyForNextRound(remotePlayerId = null) {
@@ -614,6 +617,7 @@ export const useGameStore = defineStore('game', {
 
         this.startGameFlow();
         console.log("7. ゲームフローを開始しました。");
+        this.isGameReady = true; // ゲームの準備が完了
 
       } catch (error) {
         console.error("initializeOnlineGameで致命的なエラーが発生:", error);
@@ -2580,6 +2584,7 @@ export const useGameStore = defineStore('game', {
       this.pendingKanDoraReveal = false;
       this.stopRiichiBgm();
       this.previousBgm = null;
+      this.isGameReady = false; // ゲーム準備状態をリセット
     },
 
     updateFuriTenState(playerId) {

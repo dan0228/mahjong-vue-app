@@ -16,7 +16,7 @@
  * 画面表示時にマッチングキューに参加し、リアルタイムで待機人数を監視します。
  * マッチングが成立すると、自動的にゲーム画面に遷移します。
  */
-import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
+import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { supabase } from '@/supabaseClient';
@@ -28,12 +28,26 @@ const userStore = useUserStore();
 const gameStore = useGameStore();
 const { t } = useI18n();
 
+// gameStore.isGameReady の変更を監視し、trueになったらゲーム画面へ遷移
+watch(() => gameStore.isGameReady, (isReady) => {
+  if (isReady) {
+    router.push('/game');
+  }
+});
+
 const statusMessage = ref(t('matchmaking.status.searching'));
 const playerCount = ref(0);
 let realtimeChannel = null;
 
 // ユーザーIDをリアクティブな参照として取得
 const userId = computed(() => userStore.profile?.id);
+
+// gameStore.isGameReady の変更を監視し、trueになったらゲーム画面へ遷移
+watch(() => gameStore.isGameReady, (isReady) => {
+  if (isReady) {
+    router.push('/game');
+  }
+});
 
 /**
  * マッチングキューに参加する
@@ -149,7 +163,7 @@ const subscribeToQueueChanges = () => {
  * ゲームが見つかった時の処理
  * @param {object} payload - Supabaseからのペイロード
  */
-const handleGameFound = (payload) => {
+const handleGameFound = async (payload) => { // Make it async
   console.log("Game found!", payload);
   const gameData = payload.new;
   const gameId = gameData.id;
@@ -169,8 +183,11 @@ const handleGameFound = (payload) => {
     hostId: hostId,
   });
 
-  // ゲーム画面に遷移
-  router.push('/game');
+  // ホストの場合、ゲームの初期化を開始
+  if (gameStore.isHost) {
+    await gameStore.initializeOnlineGame(); // ホストは初期化を待つ
+  }
+  // 画面遷移はisGameReadyのwatchで行うため、ここでは行わない
 };
 
 /**

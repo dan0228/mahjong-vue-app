@@ -395,6 +395,9 @@
     "tora": "Tiger",
     "janneko": "Janeko"
   },
+  "game": {
+    "waitingForSync": "Synchronizing game information..."
+  },
   "gameBoard": {
     "rules": "Rules",
     "yakuList": "Yaku List",

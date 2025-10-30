@@ -395,6 +395,9 @@
     "tora": "とら",
     "janneko": "雀猫様"
   },
+  "game": {
+    "waitingForSync": "ゲーム情報を同期しています..."
+  },
   "gameBoard": {
     "rules": "ルール",
     "yakuList": "役一覧",

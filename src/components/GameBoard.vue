@@ -521,99 +521,12 @@
   // --- ライフサイクルフック ---
   let realtimeChannel = null;
 
-  onMounted(async () => {
-    const gameId = router.currentRoute.value.query.id;
-    const localUserId = userStore.profile?.id;
-
-    if (gameId) {
-      // --- Online Mode ---
-      await userStore.fetchUserProfile(); // Ensure profile is loaded
-
-      // Debug: Log localUserId and gameId
-      console.log(`[GameBoard] Online Mode: gameId=${gameId}, localUserId=${localUserId}`);
-
-      // Fetch initial game state to determine host and set initial state
-      const { data: initialGameState, error } = await supabase
-        .from('game_states')
-        .select('*')
-        .eq('id', gameId)
-        .single();
-
-      if (error || !initialGameState) {
-        console.error("Error fetching initial game state:", error);
-        router.push('/'); // Redirect to title on error
-        return;
-      }
-
-      // Set up the store for an online game, including host status
-      gameStore.setOnlineGame({
-        gameId,
-        localUserId: userStore.profile?.id,
-        hostId: initialGameState.player_1_id
-      });
-
-      // Debug: Log gameStore's online status and host status
-      console.log(`[GameBoard] gameStore initialized for online: isGameOnline=${gameStore.isGameOnline}, isHost=${gameStore.isHost}, localPlayerId=${gameStore.localPlayerId}`);
-
-      // Apply the initial state from the database
-      // The game_data is initialized as an empty object '{}'. Check if it has keys to see if it's a real state.
-      if (initialGameState.game_data && Object.keys(initialGameState.game_data).length > 0) {
-        gameStore.handleRemoteStateUpdate(initialGameState.game_data);
-      } else if (gameStore.isHost) {
-        // If no game data exists and this client is the host, initialize the game.
-        // Add a delay to give guests time to subscribe.
-        console.log("ホストです。ゲストの接続を待つため1秒後にゲームを初期化します...");
-        setTimeout(async () => { // Make this async
-          console.log("1秒経過。ゲームを初期化します。");
-          await gameStore.initializeOnlineGame(); // Await initialization
-        }, 1000);
-      }
-
-      // Subscribe to future updates via broadcast
-      realtimeChannel = supabase.channel(`online-game-broadcast:${gameId}`)
-        .on('broadcast', { event: 'state-update' }, ( { payload }) => {
-          console.log('[GameBoard] Game state update received via broadcast!', payload);
-          if (payload.newState) {
-            gameStore.handleRemoteStateUpdate(payload.newState);
-          }
-        })
-        .subscribe(async (status, err) => {
-          if (status === 'SUBSCRIBED') {
-            console.log(`[Guest] Subscribed to game broadcast channel ${gameId}`);
-            // 購読が確立したら、ホストからの初期状態準備完了通知を待つ
-            // このリスナーは、ホストが初期状態をDBに保存した後に送信する
-            realtimeChannel.on('broadcast', { event: 'initial-state-ready' }, async ({ payload }) => {
-              console.log("[Guest] Received initial-state-ready broadcast from host.", payload);
-              // 通知を受け取ったら、DBから最新のゲーム状態をフェッチ
-              const { data: currentGameState, error: fetchError } = await supabase
-                .from('game_states')
-                .select('game_data')
-                .eq('id', gameId)
-                .single();
-
-              if (fetchError) {
-                console.error("[Guest] Error fetching current game state after initial-state-ready:", fetchError);
-                router.push('/'); // Redirect on error
-                return;
-              }
-
-              if (currentGameState && currentGameState.game_data) {
-                console.log("[Guest] Fetched initial game state from DB after initial-state-ready.");
-                gameStore.handleRemoteStateUpdate(currentGameState.game_data);
-              }
-            });
-          } else if (err) {
-            console.error("[Guest] Realtime broadcast subscription failed:", err);
-          } else {
-            console.log(`[Guest] Realtime broadcast subscription status: ${status}`);
-          }
-        });
-    } else {
-      // --- Offline Mode ---
-      // ゲームがまだ始まっていない場合、初期化処理を実行
-      if (gameStore.gamePhase === 'waitingToStart') {
-        gameStore.initializeGame();
-      }
+  onMounted(() => {
+    // オンラインゲームの初期化ロジックはGameView.vueに移動しました。
+    
+    // オフラインモードの場合、ゲームがまだ始まっていない場合に初期化処理を実行
+    if (!gameStore.isGameOnline && gameStore.gamePhase === GAME_PHASES.WAITING_TO_START) {
+      gameStore.initializeGame();
     }
 
     // スケーリングの初期化とリサイズイベントの監視
@@ -635,12 +548,7 @@
     // コンポーネントが破棄される際に、リサイズイベントのリスナーを解除
     window.removeEventListener('resize', updateScaleFactor);
 
-    // Unsubscribe from the realtime channel
-    if (realtimeChannel) {
-      supabase.removeChannel(realtimeChannel);
-      realtimeChannel = null;
-      console.log("Unsubscribed from realtime channel.");
-    }
+    // オンラインゲームのチャンネル購読解除はgameStoreに集約されているため、ここでは不要
 
     // このコンポーネントに起因する可能性のある、保留中のタイマーをすべてクリアします。
     // 注意: この方法はページ上のすべてのsetTimeoutをクリアするため、他のコンポーネントに影響を与える可能性があります。

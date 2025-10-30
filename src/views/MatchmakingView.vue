@@ -21,9 +21,11 @@ import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { supabase } from '@/supabaseClient';
 import { useUserStore } from '@/stores/userStore';
+import { useGameStore } from '@/stores/gameStore';
 
 const router = useRouter();
 const userStore = useUserStore();
+const gameStore = useGameStore();
 const { t } = useI18n();
 
 const statusMessage = ref(t('matchmaking.status.searching'));
@@ -149,9 +151,26 @@ const subscribeToQueueChanges = () => {
  */
 const handleGameFound = (payload) => {
   console.log("Game found!", payload);
-  const gameId = payload.new.id;
-  // TODO: gameStoreをオンラインモード用に初期化する処理
-  router.push(`/game?id=${gameId}`);
+  const gameData = payload.new;
+  const gameId = gameData.id;
+  const hostId = gameData.player_1_id;
+  const localUserId = userStore.profile?.id;
+
+  if (!localUserId) {
+    console.error("ローカルユーザーIDが見つかりません。");
+    statusMessage.value = t('matchmaking.status.error');
+    return;
+  }
+
+  // gameStoreにオンライン対戦情報をセット
+  gameStore.setOnlineGame({
+    gameId: gameId,
+    localUserId: localUserId,
+    hostId: hostId,
+  });
+
+  // ゲーム画面に遷移
+  router.push('/game');
 };
 
 /**

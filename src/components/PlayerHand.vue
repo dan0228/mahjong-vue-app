@@ -1,5 +1,5 @@
 <template>
-    <div :class="['player-hand-container', `position-${position}`, { 'my-turn-active': isMyHand && canDiscard, 'is-waiting': gameStore.isWaitingForHost && isMyHand }]">
+    <div :class="['player-hand-container', `position-${position}`, { 'my-turn-active': isMyHand && canDiscard }]">
       <!-- プレイヤー情報は PlayerArea に移動済みと仮定 -->
       <div
         class="hand-tiles-area player-hand"
@@ -101,8 +101,8 @@
       return false;
     }
 
-    // 通常の打牌時は常に選択可能
-    return true;
+    // 通常の打牌時は常に選択可能だが、ホストからの応答待ち中は選択不可
+    return !gameStore.isWaitingForHost;
   }
 
   /**
@@ -140,7 +140,7 @@
         'selectable': isSelectable,
         'is-stocked-tile': tile?.isStockedTile, // ストック牌の場合にクラスを追加
         // 自分の手番で、リーチ中で、かつ選択できない牌を無効化する
-        'disabled': props.canDiscard && isRiichiPhase && !isSelectable,
+        'disabled': props.canDiscard && isRiichiPhase && !isSelectable && !gameStore.isWaitingForHost,
       }
     ];
   }

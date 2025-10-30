@@ -1,5 +1,5 @@
 <template>
-  <div :class="['player-area', positionClass, { 'is-current-turn': isCurrentTurn, 'is-waiting': gameStore.isWaitingForHost && isMyHand }]">
+  <div :class="['player-area', positionClass, { 'is-current-turn': isCurrentTurn }]">
     <div :class="['player-game-elements', positionClass + '-elements']">
       <PlayerHand
         :player="player"

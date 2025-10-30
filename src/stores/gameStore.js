@@ -1221,7 +1221,7 @@ export const useGameStore = defineStore('game', {
             }
             this.gamePhase = GAME_PHASES.PLAYER_TURN;
             this.moveToNextPlayer();
-            // return; // ここでreturnせず、後続の処理（アニメーションなど）を続行させる
+            return; // isStockingの場合、他のプレイヤーのアクション確認をスキップして即座に次のターンへ
           } else {
             player.discards = [...player.discards, discardedTileActual];
           }

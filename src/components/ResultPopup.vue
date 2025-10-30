@@ -152,7 +152,15 @@ const userStore = useUserStore();
 
 // 現在のプレイヤーが「次へ」ボタンを押したかどうかを判定する
 const isLocalPlayerReady = computed(() => {
-  const localPlayerId = gameStore.isGameOnline ? gameStore.localPlayerId : 'player1';
+  // オフラインモードでは常にfalseを返し、待機状態にしない
+  if (!gameStore.isGameOnline) {
+    return false;
+  }
+  const localPlayerId = gameStore.localPlayerId;
+  // localPlayerId がまだセットされていない場合も考慮
+  if (!localPlayerId) {
+    return false;
+  }
   return gameStore.playersReadyForNextRound.includes(localPlayerId);
 });
 

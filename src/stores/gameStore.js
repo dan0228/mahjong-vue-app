@@ -379,7 +379,20 @@ export const useGameStore = defineStore('game', {
     },
 
     signalReadyForNextRound(remotePlayerId = null) {
-      const playerId = remotePlayerId || (this.isGameOnline ? this.localPlayerId : 'player1');
+      // オフラインモードでは、待機せずに即座に次のラウンドへ進む
+      if (!this.isGameOnline) {
+        this.showResultPopup = false;
+        this.applyPointChanges();
+        if (this.shouldEndGameAfterRound) {
+          this.handleGameEnd({ showLoading: false });
+        } else {
+          this.prepareNextRound();
+        }
+        return;
+      }
+
+      // --- 以下、オンライン対戦のロジック ---
+      const playerId = remotePlayerId || this.localPlayerId;
       if (!playerId || this.playersReadyForNextRound.includes(playerId)) return;
 
       // ゲストからの呼び出しの場合、UIを即時更新し、ホストに通知

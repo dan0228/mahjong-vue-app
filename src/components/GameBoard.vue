@@ -1,5 +1,5 @@
 <template>
-    <div class="game-board" v-if="console.log('Debug: GameBoard v-if conditions:', gameStore.isGameOnline, gameStore.players.length === 4, gameStore.isTenpaiDisplay) || (gameStore.isGameOnline && gameStore.players.length === 4 && gameStore.isTenpaiDisplay)">
+    <div class="game-board">
       <!-- :styleで動的にtransformを適用 -->
       <div class="game-board-scaler" :style="scalerStyle" ref="gameBoardScalerRef">
       <!-- ルール・役一覧ボタン -->

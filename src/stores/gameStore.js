@@ -2495,8 +2495,12 @@ export const useGameStore = defineStore('game', {
       const currentStreakFromUserStore = userStore.profile?.current_win_streak || 0;
       const wins = options.keepStreak ? currentStreakFromUserStore : 0;
 
-      this.players = [this.players.find(p => p.id === 'player1')];
-      if (userStore.profile) {
+      const localPlayerId = this.isGameOnline ? this.localPlayerId : 'player1';
+      const localPlayer = this.players.find(p => p.id === localPlayerId);
+
+      this.players = localPlayer ? [localPlayer] : [];
+
+      if (this.players.length > 0 && userStore.profile) {
         this.players[0].name = userStore.profile.username;
       }
 

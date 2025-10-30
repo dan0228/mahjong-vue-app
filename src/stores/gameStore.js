@@ -1125,7 +1125,12 @@ export const useGameStore = defineStore('game', {
           console.error("チャンネルが初期化されていません。アクションを送信できません。");
           return;
         }
-        this.isWaitingForHost = true;
+        // 既にホストからの応答待ち中の場合は、新たなアクションを送信しない
+        if (this.isWaitingForHost) {
+          console.warn("ゲスト: ホストからの応答待ち中に、新たな捨て牌アクションを試みました。");
+          return;
+        }
+        this.isWaitingForHost = true; // ホストからの応答待ち状態に設定
         this.channel.send({
           type: 'broadcast',
           event: 'action-intent',
@@ -1134,7 +1139,7 @@ export const useGameStore = defineStore('game', {
             args: [playerId, tileIdToDiscard, isFromDrawnTile, isStocking]
           }
         });
-        return;
+        // return; // ここでreturnせず、ローカルでUIを即時更新する
       }
 
       const audioStore = useAudioStore();

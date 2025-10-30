@@ -57,7 +57,7 @@
             <button @click="showGameModeSelectionPopup = true">{{ $t('titleView.menu.catAiMatch') }}</button>
           </li>
           <li>
-            <button @click="goToMatchmaking">オンライン対戦</button>
+            <button @click="goToMatchmaking">{{ $t('titleView.menu.onlineMatch') }}</button>
           </li>
           <li>
             <button @click="goToShrine">{{ $t('titleView.menu.shrine') }}</button>

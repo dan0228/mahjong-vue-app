@@ -52,8 +52,8 @@ export function getAllTiles() {
   // 萬子(m), 筒子(p), 索子(s) の1から9までを各4枚生成
   [SUITS.MANZU, SUITS.PINZU, SUITS.SOZU].forEach(suit => {
       // [SUITS.MANZU].forEach(suit => {
-    for (let rank = 1; rank <= 9; rank++) {
-      for (let i = 0; i < 4; i++) {
+    for (let rank = 1; rank <= 1; rank++) {
+      for (let i = 0; i < 1; i++) {
         tiles.push({
           suit,
           rank,
@@ -63,16 +63,16 @@ export function getAllTiles() {
     }
   });
 
-  // 字牌 (東南西北白發中) を各4枚生成
-  Object.values(JIHAI_TYPES).forEach(rank => {
-    for (let i = 0; i < 4; i++) {
-      tiles.push({
-        suit: SUITS.JIHAI,
-        rank,
-        id: `${SUITS.JIHAI}${rank}_${i}`, // 例: z1_0 (東), z5_0 (白)
-      });
-    }
-  });
+//   // 字牌 (東南西北白發中) を各4枚生成
+//   Object.values(JIHAI_TYPES).forEach(rank => {
+//     for (let i = 0; i < 4; i++) {
+//       tiles.push({
+//         suit: SUITS.JIHAI,
+//         rank,
+//         id: `${SUITS.JIHAI}${rank}_${i}`, // 例: z1_0 (東), z5_0 (白)
+//       });
+//     }
+//   });
 
   return tiles;
 }

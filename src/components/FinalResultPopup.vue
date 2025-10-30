@@ -26,7 +26,7 @@
           </div>
         </div>
         <div class="actions">
-          <button @click="startNewGame" class="action-button">
+          <button v-if="!gameStore.isGameOnline" @click="startNewGame" class="action-button">
             <span>{{ t('finalResultPopup.newGame') }}</span>
           </button>
           <button @click="backToTitle" class="action-button">

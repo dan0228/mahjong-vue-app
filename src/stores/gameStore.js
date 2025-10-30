@@ -2454,6 +2454,10 @@ export const useGameStore = defineStore('game', {
     userStore.setGameInProgress(false);
 
     this.showFinalResultPopup = true;
+
+    if (this.isGameOnline) {
+      await this.broadcastGameState();
+    }
   },
 
   applyPointChanges() {

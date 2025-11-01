@@ -42,7 +42,7 @@
         </div>
       </div>
       <transition name="fade-gauge">
-        <StockSelectionCountdown v-if="showStockCountdown" :show-countdown="showStockCountdown" :is-ai-player="player.id !== 'player1'" :position="position" />
+        <StockSelectionCountdown v-if="showStockCountdown" :show-countdown="showStockCountdown" :is-ai-player="player.isAi" :position="position" />
       </transition>
     </div>
     <!-- アクションボタンエリア -->

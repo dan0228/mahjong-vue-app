@@ -1376,7 +1376,7 @@ export const useGameStore = defineStore('game', {
       if (nextPlayer) {
         nextPlayer.isUsingStockedTile = false;
       }
-      if (this.ruleMode === 'stock' && nextPlayer && nextPlayer.id === 'player1') {
+      if (this.ruleMode === 'stock' && nextPlayer && !nextPlayer.isAi) {
         if (nextPlayer.stockedTile && !nextPlayer.isRiichi && !nextPlayer.isDoubleRiichi) {
           this.startStockSelectionCountdown(nextPlayer.id);
         } else {
@@ -1388,6 +1388,10 @@ export const useGameStore = defineStore('game', {
       }
       this.waitingForPlayerResponses = [];
       this.activeActionPlayerId = null;
+
+      if (this.isGameOnline) {
+        this.broadcastGameState();
+      }
     },
 
     handleRyuukyoku() {
@@ -1575,7 +1579,7 @@ export const useGameStore = defineStore('game', {
 
     startStockSelectionCountdown(playerId) {
       const player = this.players.find(p => p.id === playerId);
-      if (!player || player.id !== 'player1') return;
+      if (!player || player.isAi) return;
 
       this.gamePhase = GAME_PHASES.AWAITING_STOCK_SELECTION_TIMER;
       this.stockSelectionCountdown = 1.3;

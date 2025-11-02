@@ -1115,6 +1115,10 @@ export const useGameStore = defineStore('game', {
           }
         }
       }
+
+      if (this.isGameOnline) {
+        this.broadcastGameState();
+      }
     },
 
     discardTile(playerId, tileIdToDiscard, isFromDrawnTile, isStocking = false) {
@@ -1559,6 +1563,21 @@ export const useGameStore = defineStore('game', {
     },
 
     chooseToDrawFromWall(playerId) {
+      if (this.isGameOnline && !this.isHost) {
+        if (playerId !== this.localPlayerId) return;
+        if (!this.channel) {
+          console.error("チャンネルが初期化されていません。アクションを送信できません。");
+          return;
+        }
+        this.isWaitingForHost = true;
+        this.channel.send({
+          type: 'broadcast',
+          event: 'action-intent',
+          payload: { action: 'chooseToDrawFromWall', args: [playerId] }
+        });
+        return;
+      }
+
       const player = this.players.find(p => p.id === playerId);
       if (this.gamePhase === GAME_PHASES.AWAITING_STOCK_SELECTION_TIMER && this.currentTurnPlayerId === playerId && player) {
         this.stopStockSelectionCountdown();
@@ -1597,8 +1616,7 @@ export const useGameStore = defineStore('game', {
           setTimeout(() => {
             const currentPlayer = this.players.find(p => p.id === playerId);
             if (this.gamePhase === GAME_PHASES.AWAITING_STOCK_SELECTION_TIMER && currentPlayer && !currentPlayer.isStockedTileSelected) {
-              this.stopStockSelectionCountdown();
-              this.drawFromWall(playerId);
+              this.chooseToDrawFromWall(playerId);
             }
           }, 250);
         }
@@ -1611,7 +1629,6 @@ export const useGameStore = defineStore('game', {
         this.stockSelectionTimerId = null;
       }
       this.stockSelectionCountdown = 1.3;
-      this.gamePhase = GAME_PHASES.PLAYER_TURN;
     },
 
     setRiichiAnimationState(playerId) {

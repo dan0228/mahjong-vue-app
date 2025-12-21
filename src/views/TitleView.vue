@@ -64,6 +64,7 @@
               :class="['menu-button', button.cssClass, { 'image-button': button.imgSrc }]"
             >
               <img :src="button.imgSrc" :alt="button.alt" />
+              <span v-if="button.isUnderConstruction" class="construction-badge">Under Construction</span>
             </button>
           </div>
           <!-- サブ・情報ボタン -->
@@ -170,6 +171,7 @@ const mainButtons = computed(() => [
     action: () => navigateTo('/matchmaking'),
     cssClass: 'main-button',
     imgSrc: locale.value === 'en' ? '/assets/images/button/title_online_match_en.png' : '/assets/images/button/title_online_match.png',
+    isUnderConstruction: true, // 工事中フラグ
   },
 ]);
 
@@ -369,6 +371,11 @@ onBeforeUnmount(() => {
   gap: 15px;
 }
 
+.main-group {
+  margin-top: 70px;
+  margin-bottom: 5px;
+}
+
 /* 新しい複合レイアウト */
 .combined-button-group {
   display: flex;
@@ -391,11 +398,27 @@ onBeforeUnmount(() => {
 
 /* 個別のボタン設定 */
 .menu-button {
+  position: relative; /* バッジの位置の基準にする */
   padding: 0;
   cursor: pointer;
   transition: transform 0.15s ease-out;
   background: none;
   border: none;
+}
+
+.construction-badge {
+  position: absolute;
+  top: -5px;
+  right: -15px;
+  background-color: #ffd700;
+  color: #ff0000;
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: bold;
+  border-radius: 5px;
+  transform: rotate(15deg);
+  box-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+  pointer-events: none; /* バッジがクリックイベントを妨げないようにする */
 }
 
 .menu-button.image-button {
@@ -414,8 +437,6 @@ onBeforeUnmount(() => {
 .main-button img {
   width: 160px;
   filter: drop-shadow(3px 5px 4px rgba(0, 0, 0, 0.7));
-  margin-top: 70px;
-  margin-bottom: 5px;
 }
 .sub-button img {
   width: 95px;

@@ -141,12 +141,10 @@ const showGameModeSelectionPopup = ref(false);
 
 // --- ナビゲーションとアクション ---
 const navigateTo = (path) => {
-  audioStore.playSound('Kagura_Suzu01-1.mp3');
   router.push(path);
 };
 
 const onModeSelected = (mode) => {
-  audioStore.playSound('Kagura_Suzu01-1.mp3');
   gameStore.setRuleMode(mode);
   showGameModeSelectionPopup.value = false;
   const gameMode = 'vsCPU'; // AI対戦モードを固定
@@ -162,7 +160,7 @@ const mainButtons = computed(() => [
   {
     id: 'ai-match',
     alt: t('titleView.menu.catAiMatch'),
-    action: () => { audioStore.playSound('Kagura_Suzu01-1.mp3'); showGameModeSelectionPopup.value = true; },
+    action: () => {showGameModeSelectionPopup.value = true; },
     cssClass: 'main-button',
     imgSrc: locale.value === 'en' ? '/assets/images/button/title_cat_AI_match_en.png' : '/assets/images/button/title_cat_AI_match.png',
   },
@@ -196,21 +194,21 @@ const infoButtons = computed(() => [
   {
     id: 'how-to-play',
     alt: t('titleView.menu.howToPlay'),
-    action: () => { audioStore.playSound('Kagura_Suzu01-1.mp3'); showHowToPlayPopup.value = true; },
+    action: () => { showHowToPlayPopup.value = true; },
     cssClass: 'info-button',
     imgSrc: locale.value === 'en' ? '/assets/images/button/title_howtoplay_en.png' : '/assets/images/button/title_howtoplay.png',
   },
   {
     id: 'rules',
     alt: t('titleView.menu.rules'),
-    action: () => { audioStore.playSound('Kagura_Suzu01-1.mp3'); showRulesPopup.value = true; },
+    action: () => { showRulesPopup.value = true; },
     cssClass: 'info-button',
     imgSrc: locale.value === 'en' ? '/assets/images/button/title_rule_en.png' : '/assets/images/button/title_rule.png',
   },
   {
     id: 'yaku-list',
     alt: t('titleView.menu.handList'),
-    action: () => { audioStore.playSound('Kagura_Suzu01-1.mp3'); showYakuListPopup.value = true; },
+    action: () => { showYakuListPopup.value = true; },
     cssClass: 'info-button',
     imgSrc: locale.value === 'en' ? '/assets/images/button/title_yakulist_en.png' : '/assets/images/button/title_yakulist.png',
   },

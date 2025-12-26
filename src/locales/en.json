@@ -633,5 +633,9 @@
   },
   "stockCountdown": {
     "message": "Tap to take tile"
+  },
+  "emailUpdateConfirmation": {
+    "title": "YONJONG! Email Update Complete",
+    "message": "Your email address has been successfully updated! You can now close this page."
   }
 }

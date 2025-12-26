@@ -45,27 +45,35 @@
 // そしてメインコンテンツのルーティングを管理します。
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useAudioStore } from '@/stores/audioStore';
-import { useUserStore } from '@/stores/userStore'; // ★追加
+import { useUserStore } from '@/stores/userStore';
 import { preloadImages } from '@/utils/imageLoader';
-import UsernameRegistrationPopup from '@/components/UsernameRegistrationPopup.vue'; // 追加
+import UsernameRegistrationPopup from '@/components/UsernameRegistrationPopup.vue';
 import AddToHomeScreenPopup from '@/components/AddToHomeScreenPopup.vue';
 import HowToAddPopup from '@/components/HowToAddPopup.vue';
 import LoadingIndicator from '@/components/LoadingIndicator.vue';
-import PenaltyPopup from '@/components/PenaltyPopup.vue'; // ★追加
+import PenaltyPopup from '@/components/PenaltyPopup.vue';
 
 // --- リアクティブな状態 ---
-const isLoading = ref(true); // ローディング画面の表示状態フラグ
-const loadingProgress = ref(0); // アセット読み込みの進捗率
-const showUsernamePopup = ref(false); // ★追加：ユーザー名登録ポップアップの表示状態
-const showAddToHomeScreenPopup = ref(false); // 「ホーム画面に追加」ポップアップの表示状態フラグ
-const showHowToAddPopup = ref(false); // インストール方法説明ポップアップの表示状態フラグ
+// #/email-confirmed への直接アクセスの場合、ローディング画面を最初から表示しない
+const isEmailConfirmedPage = window.location.hash === '#/email-confirmed';
+const isLoading = ref(!isEmailConfirmedPage); // email-confirmedページでなければtrue、そうであればfalse
+
+const loadingProgress = ref(0);
+const showUsernamePopup = ref(false);
+const showAddToHomeScreenPopup = ref(false);
+const showHowToAddPopup = ref(false);
 
 // --- ストアの利用 ---
 const audioStore = useAudioStore();
-const userStore = useUserStore(); // ★追加
+const userStore = useUserStore();
 
 // --- ライフサイクル フック ---
 onMounted(async () => {
+  // メール確認ページの場合は、重い初期化処理をスキップする
+  if (isEmailConfirmedPage) {
+    return; // これ以降の処理は実行しない
+  }
+
   // ブラウザのタブが非表示になった際に音声を停止するためのイベントリスナー
   document.addEventListener('visibilitychange', audioStore.handleVisibilityChange);
 

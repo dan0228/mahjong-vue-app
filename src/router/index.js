@@ -6,6 +6,15 @@ import { useAudioStore } from '../stores/audioStore';
 
 const routes = [
   {
+    path: '/email-confirmed',
+    name: 'EmailConfirmed',
+    component: () => import('../views/EmailUpdateConfirmationView.vue'),
+    meta: {
+      title: 'メールアドレス更新完了 | よんじゃん！',
+      description: 'メールアドレスの更新が完了しました。',
+    },
+  },
+  {
     path: '/',
     name: 'Title',
     component: TitleView,
@@ -127,7 +136,8 @@ router.beforeEach((to, from, next) => {
   // アプリケーションの初回ロード時、または直接URLアクセス時にタイトル画面へリダイレクト
   // from.name が undefined の場合、それはアプリケーションが初めてロードされたことを意味します。
   // この時、直接 '/game' などにアクセスされた場合でも、必ず '/'(Title) に一度遷移させます。
-  if (from.name === undefined && to.name !== 'Title') {
+  // ただし、メール認証のコールバックページは例外的に直接アクセスを許可します。
+  if (from.name === undefined && to.name !== 'Title' && to.name !== 'EmailConfirmed') {
     next({ name: 'Title' }); // タイトル画面へリダイレクト
   } else {
     next(); // 通常のナビゲーションを続行

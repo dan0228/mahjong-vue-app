@@ -279,7 +279,7 @@ const getCharacterWidth = (str) => {
 };
 
 const isUsernameNotEmpty = computed(() => username.value.trim().length > 0);
-const isUsernameLengthValid = computed(() => getCharacterWidth(username.value) <= 6);
+const isUsernameLengthValid = computed(() => getCharacterWidth(username.value) <= 16);
 const isUsernameProfane = computed(() => containsProfanity(username.value));
 
 const isFormValid = computed(() => {

@@ -529,13 +529,13 @@
     "title": "プレイヤー情報入力🐈‍⬛",
     "description": "👇ゲームで使用する名前を決めてください👇",
     "usernameLabel": "ユーザー名 (必須)",
-    "usernamePlaceholder": "全角3文字、半角6文字以内",
+    "usernamePlaceholder": "全角8文字、半角16文字以内",
     "optional": "任意",
     "avatarLabel": "アバター (任意)",
     "registerButton": "ゲームを始める",
     "errors": {
       "usernameRequired": "ユーザー名は必須です。",
-      "usernameTooLong": "ユーザー名は全角3文字、半角6文字以内で入力してください",
+      "usernameTooLong": "ユーザー名は全角8文字、半角16文字以内で入力してください",
       "xAccountInvalid": "Xアカウントは{'@'}で始まる正しい形式で入力してください",
       "usernameProfane": "不適切な単語が含まれています"
     },

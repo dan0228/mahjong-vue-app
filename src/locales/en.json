@@ -13,7 +13,7 @@
     },
         "officialX": "Official X: {'@'}danAllGreen",
     "maxWinStreak": "🏆Max Win Streak",
-    "currentWinStreak": "Current Win Streak",
+    "currentWinStreak": "🎉Current Win Streak",
     "catCoins": "🪙Cat Coins",
     "sfx": "SFX"
   },
@@ -529,13 +529,13 @@
     "title": "Player Information🐈‍⬛",
     "description": "👇Please enter a name to be used in the game.",
     "usernameLabel": "Username (Required)",
-    "usernamePlaceholder": "Max 3 full-width or 6 half-width chars",
+    "usernamePlaceholder": "Max 8 full-width or 16 half-width chars",
     "optional": "Optional",
     "avatarLabel": "Avatar (Optional)",
     "registerButton": "Start Game",
     "errors": {
       "usernameRequired": "Username is required.",
-      "usernameTooLong": "Username must be within 3 full-width or 6 half-width characters.",
+      "usernameTooLong": "Username must be within 8 full-width or 16 half-width characters.",
       "xAccountInvalid": "Please enter a valid X account format starting with {'@'}.",
       "usernameProfane": "This username contains inappropriate words."
     },

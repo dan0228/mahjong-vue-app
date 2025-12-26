@@ -99,7 +99,7 @@
         <div class="x-account">
           <a href="https://x.com/danAllGreen" target="_blank" rel="noopener noreferrer">{{ $t('titleView.officialX') }}</a>
         </div>
-        <div class="version-info">v1.7.2 | 2025.12.22</div>
+        <div class="version-info">v1.7.3 | 2025.12.27</div>
       </footer>
 
       <!-- ポップアップ -->

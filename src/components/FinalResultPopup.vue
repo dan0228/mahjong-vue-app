@@ -4,11 +4,13 @@
       <div class="popup-content" ref="popupContentRef">
         <h2>{{ t('finalResultPopup.title') }}</h2>
         <div class="final-results-list">
-          <div v-for="player in finalResultDetails.rankedPlayers" :key="player.name" class="player-rank-item">
-            <span class="rank">{{ t('finalResultPopup.rank', { rank: player.rank }) }}</span>
-            <span class="player-name">{{ getTranslatedPlayerName(player) }}</span>          
+          <div v-for="player in finalResultDetails.rankedPlayers" :key="player.name" class="player-rank-item" :class="{ 'is-winner': player.rank === 1 }">
+            <span class="rank">{{ player.rank }}</span>
             <img v-if="getPlayerIcon(player.id)" :src="getPlayerIcon(player.id)" alt="Player Icon" class="player-icon" crossorigin="anonymous" />
-            <span class="score">{{ t('finalResultPopup.score', { score: player.score }) }}</span>
+            <div class="player-info">
+              <span class="player-name">{{ getTranslatedPlayerName(player) }}</span>
+              <span class="score">{{ t('finalResultPopup.score', { score: player.score }) }}</span>
+            </div>
           </div>
         </div>
         <p class="consecutive-wins" v-if="gameStore.gameMode !== 'allManual' && winsToDisplay > 0 && myPlayerRank === 1">
@@ -431,58 +433,81 @@ async function postToX() {
 }
 .popup-content h2 {
   margin-top: 0;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
   color: #333;
-  font-size: 1.7em;
+  font-size: 1.5em;
 }
 .final-results-list {
-  color: #444;
-  font-size: 1.0em;
-  background-color: #f9f9f9;
-  padding: 15px;
-  border-radius: 5px;
-  max-height: 300px;
-  overflow-y: auto;
+  margin-bottom: 0px;
 }
 .player-rank-item {
   display: flex;
   align-items: center;
-  padding: 2px 0;
-  border-bottom: 1px dashed #eee;
+  padding: 7px 15px;
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  margin-bottom: 12px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .player-rank-item:last-child {
-  border-bottom: none;
+  margin-bottom: 0;
+}
+.player-rank-item.is-winner {
+  background: linear-gradient(135deg, #fffbeb 0%, #fff3cd 100%);
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+  border: 1px solid #ffeeba;
+}
+.player-rank-item.is-winner .rank {
+  background-color: #ffc107;
+  color: #212529;
 }
 .rank {
-  font-weight: bold; 
-  width: 55px; 
-  text-align: left;
+  font-weight: bold;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: #e9ecef;
+  color: #495057;
   flex-shrink: 0;
-  margin-right: 10px;
-}
-.player-name {
-  flex-grow: 1; 
-  text-align: left; 
-  width: 50px; 
+  font-size: 1.4em;
+  margin-right: 5px;
 }
 .player-icon {
-  width: 60px;
-  height: 60px;
-  margin: 0 15px;
+  width: 50px;
+  height: 50px;
+  margin: 0 10px;
   flex-shrink: 0;
-  background-color: white; /* 白背景 */
-  border: 1px solid #ccc; /* 6pxの縁 */
-  border-radius: 6px; /* 角を丸く */
+  border-radius: 6px;
+  background-color: white;
+  border: 1px solid #ccc;
+}
+.player-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-grow: 1;
+  overflow: hidden;
+}
+.player-name {
+  font-weight: 600;
+  font-size: 1.2em;
+  color: #212529;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .score {
-  font-weight: bold; 
-  color: #007bff; 
-  width: 95px; 
-  text-align: right;
-  flex-shrink: 0;
+  font-weight: bold;
+  color: #007bff;
+  font-size: 1.3em;
 }
 .consecutive-wins {
-  font-size: 2em;
+  font-size: 1.6em;
   font-weight: bold;
   color: #ff9800; /* オレンジ色 */
   margin-top: 0px;
@@ -491,7 +516,7 @@ async function postToX() {
 }
 
 .coin-gain {
-  font-size: 2em;
+  font-size: 1.5em;
   font-weight: bold;
   margin-bottom: 0px;
   display: flex;
@@ -516,7 +541,7 @@ async function postToX() {
 .total-cat-coins-value {
   font-size: 1.2em; /* 増減値と同じくらいか少し大きく */
   color: #f59e0b; /* positive-gainと同じ色 */
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   margin-top: -20px;
 }
 
@@ -529,8 +554,8 @@ async function postToX() {
 }
 
 .cat-coin-icon {
-  width: 80px;
-  height: 80px;
+  width: 60px;
+  height: 60px;
   margin-left: 0px;
 }
 .actions {

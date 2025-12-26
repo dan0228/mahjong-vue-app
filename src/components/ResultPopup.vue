@@ -449,7 +449,7 @@ function getMeldTileClass(meld, tileIndex) {
 }
 .dora-label {
   margin-right: 8px;
-  min-width: 45px;
+  min-width: 60px;
   text-align: right;
   font-size: 0.9em;
 }
@@ -491,7 +491,7 @@ function getMeldTileClass(meld, tileIndex) {
 }
 .player-name-cell {
   width: 9em; /* 全角9文字分の幅を確保 */
-  text-align: left;
+  text-align: center;
 }
 .score-cell {
   text-align: left;

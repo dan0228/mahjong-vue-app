@@ -6,9 +6,11 @@
         <div class="dealer-determination-list">
           <div v-for="player in dealerDeterminationResults" :key="player.id" class="player-item">
             <span class="seat-wind">{{ $t(`winds.${player.seatWind}`) }}</span>
-            <span class="player-name">{{ player.originalId ? $t(`aiNames.${player.originalId}`) : player.name }}</span>
             <img v-if="getPlayerIcon(player)" :src="getPlayerIcon(player)" alt="Player Icon" class="player-icon" />
-            <span class="score">{{ $t('parentDecisionPopup.score', { score: player.score }) }}</span>
+            <div class="player-info">
+              <span class="player-name">{{ player.originalId ? $t(`aiNames.${player.originalId}`) : player.name }}</span>
+              <span class="score">{{ $t('parentDecisionPopup.score', { score: player.score }) }}</span>
+            </div>
           </div>
         </div>
         <div class="timestamp">{{ formattedTimestamp }}</div>
@@ -195,13 +197,11 @@ function getPlayerIcon(player) {
   background-color: #f9f9f9;
   padding: 15px;
   border-radius: 5px;
-  max-height: 300px;
-  overflow-y: auto;
 }
 .player-item {
   display: flex;
   align-items: center;
-  padding: 5px 0;
+  padding: 8px 0;
   border-bottom: 1px dashed #eee;
 }
 .player-item:last-child {
@@ -209,31 +209,34 @@ function getPlayerIcon(player) {
 }
 .seat-wind {
   font-weight: bold;
-  width: 40px;
+  width: 30px;
   text-align: left;
   flex-shrink: 0;
-}
-.player-name {
-  flex-grow: 1;
-  text-align: left;
-  margin-left: 10px;
+  font-size: 1.2em;
 }
 .player-icon {
-  width: 60px;
-  height: 60px;
-  margin: 0 30px;
+  width: 50px;
+  height: 50px;
+  margin: 0 10px;
   flex-shrink: 0;
-  border-radius: 6px; /* 角を少し丸める */
-  background-color: white; /* 白背景 */
-  border: 1px solid #ccc; /* 1pxの縁 */
-  border-radius: 6px; /* 角を丸く */
+  border-radius: 6px;
+  background-color: white;
+  border: 1px solid #ccc;
+}
+.player-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-grow: 1;
+}
+.player-name {
+  font-weight: bold;
+  font-size: 1.3em;
 }
 .score {
   font-weight: bold;
   color: #007bff;
-  width: 90px;
-  text-align: right;
-  flex-shrink: 0;
+  font-size: 1.0em;
 }
 .timestamp {
   margin-top: 2px;

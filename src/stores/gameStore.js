@@ -929,7 +929,7 @@ export const useGameStore = defineStore('game', {
 
               if (!actionTaken) {
                 if (this.playerActionEligibility[currentPlayer.id].canRiichi && riichiRand < 0.08) {
-                  this.declareRiichi(playerId);
+                  this.declareRiichi(currentPlayer.id);
                   actionTaken = true;
                 }
               }

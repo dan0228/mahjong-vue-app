@@ -417,7 +417,7 @@ function getMeldTileClass(meld, tileIndex) {
   max-width: 600px;
   text-align: center;
   box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-  max-height: 95vh;
+  max-height: 600px;
   overflow-y: auto;
 }
 

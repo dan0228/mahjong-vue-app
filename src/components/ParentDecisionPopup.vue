@@ -4,7 +4,7 @@
       <div class="popup-content">
         <h2>{{ $t('parentDecisionPopup.title') }}</h2>
         <div class="dealer-determination-list">
-          <div v-for="player in dealerDeterminationResults" :key="player.id" class="player-item">
+          <div v-for="player in dealerDeterminationResults" :key="player.id" class="player-item" :class="{ 'is-dealer': player.isDealer }">
             <span class="seat-wind">{{ $t(`winds.${player.seatWind}`) }}</span>
             <img v-if="getPlayerIcon(player)" :src="getPlayerIcon(player)" alt="Player Icon" class="player-icon" />
             <div class="player-info">
@@ -186,33 +186,54 @@ function getPlayerIcon(player) {
 }
 .popup-content h2 {
   margin-top: 0;
-  margin-bottom: 20px;
-  color: #333;
-  font-size: 1.8em;
+  margin-bottom: 25px;
+  color: #343a40;
+  font-size: 2em;
+  font-weight: 600;
+  letter-spacing: 1px;
 }
 .dealer-determination-list {
   margin-bottom: 25px;
-  color: #444;
-  font-size: 1.1em;
-  background-color: #f9f9f9;
-  padding: 15px;
-  border-radius: 5px;
 }
 .player-item {
   display: flex;
   align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px dashed #eee;
+  padding: 12px 15px;
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  margin-bottom: 12px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .player-item:last-child {
-  border-bottom: none;
+  margin-bottom: 0;
+}
+.player-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.player-item.is-dealer {
+  background: linear-gradient(135deg, #fffbeb 0%, #fff3cd 100%);
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+  border: 1px solid #ffeeba;
+}
+.player-item.is-dealer .seat-wind {
+  background-color: #ffc107;
+  color: #212529;
 }
 .seat-wind {
   font-weight: bold;
-  width: 30px;
-  text-align: left;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: #e9ecef;
+  color: #495057;
   flex-shrink: 0;
   font-size: 1.2em;
+  margin-right: 5px;
 }
 .player-icon {
   width: 50px;
@@ -228,10 +249,16 @@ function getPlayerIcon(player) {
   flex-direction: column;
   align-items: center;
   flex-grow: 1;
+  overflow: hidden;
 }
 .player-name {
-  font-weight: bold;
+  font-weight: 600;
   font-size: 1.3em;
+  color: #212529;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .score {
   font-weight: bold;

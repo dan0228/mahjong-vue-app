@@ -417,7 +417,7 @@ function getMeldTileClass(meld, tileIndex) {
   max-width: 600px;
   text-align: center;
   box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-  max-height: 600px;
+  max-height: 590px;
   overflow-y: auto;
 }
 
@@ -436,10 +436,10 @@ function getMeldTileClass(meld, tileIndex) {
   gap: 10px;
   white-space: pre-line;
 }
-.popup-content h2 { margin-top: 0; margin-bottom: 10px; font-size: 1.5em; color: #333; }
+.popup-content h2 { margin-top: 0; margin-bottom: 10px; font-size: 1.2em; color: #333; }
 .popup-content h3 { margin-top: 10px; margin-bottom: 5px; color: #444; border-bottom: 1px solid #eee; padding-bottom: 4px; font-size: 0.9em;}
 .result-section { margin-bottom: 10px; }
-.round-info .round-main-info { margin: 0 0 5px 0; font-size: 1.6em; font-weight: bold; }
+.round-info .round-main-info { margin: 0 0 5px 0; font-size: 1.2em; font-weight: bold; }
 .dora-display {
   display: flex;
   justify-content: flex-end;
@@ -478,13 +478,13 @@ function getMeldTileClass(meld, tileIndex) {
 }
 
 .yaku-info ul { list-style: none; padding: 0; margin: 0 0 8px 0; }
-.yaku-info li { margin-bottom: 2px; font-size: 0.9em; }
-.total-score { font-weight: bold; font-size: 1.3em;  color: red;}
+.yaku-info li { margin-bottom: 0px; font-size: 0.8em; }
+.total-score { font-weight: bold; font-size: 1.1em;  color: red;}
 .score-change-table {
   width: 100%;
   margin: 0 auto;
   border-collapse: collapse;
-  font-size: 0.95em;
+  font-size: 0.9em;
 }
 .score-change-table td {
   padding: 0;

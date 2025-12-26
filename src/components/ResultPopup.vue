@@ -411,13 +411,14 @@ function getMeldTileClass(meld, tileIndex) {
 }
 .popup-content {
   background-color: white;
-  padding: 25px;
+  padding: 15px;
   border-radius: 8px;
-  min-width: 300px; /* ポップアップの最小幅を広げる */
-  max-width: 80%;
+  width: 95%;
+  max-width: 600px;
   text-align: center;
-  transform: scale(0.75); /* ポップアップ全体を縮小して画面に収める */
   box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  max-height: 95vh;
+  overflow-y: auto;
 }
 
 /* Transition styles */
@@ -435,59 +436,61 @@ function getMeldTileClass(meld, tileIndex) {
   gap: 10px;
   white-space: pre-line;
 }
-.popup-content h2 { margin-top: 0; color: #333; }
-.popup-content h3 { margin-top: 15px; margin-bottom: 8px; color: #444; border-bottom: 1px solid #eee; padding-bottom: 5px;}
-.result-section { margin-bottom: 15px; }
-.round-info .round-main-info { margin: 5px 0; font-size: 2em; font-weight: bold; }
+.popup-content h2 { margin-top: 0; margin-bottom: 10px; font-size: 1.5em; color: #333; }
+.popup-content h3 { margin-top: 10px; margin-bottom: 5px; color: #444; border-bottom: 1px solid #eee; padding-bottom: 4px; font-size: 0.9em;}
+.result-section { margin-bottom: 10px; }
+.round-info .round-main-info { margin: 0 0 5px 0; font-size: 1.6em; font-weight: bold; }
 .dora-display {
   display: flex;
-  justify-content: flex-end; /* ドラ表示内の要素は右寄せ */
-  align-items: center; /* 垂直中央揃え */
-  margin: 3px auto; /* 上下マージン3px、左右マージンautoでブロック自体を中央寄せ */
-  width: fit-content; /* 内容に応じた幅にする */
+  justify-content: flex-end;
+  align-items: center;
+  margin: 2px auto;
+  width: fit-content;
 }
 .dora-label {
-  margin-right: 8px; /* ラベルと牌の間のスペース */
-  min-width: 50px; /* ラベル部分の最小幅を確保して揃える */
+  margin-right: 8px;
+  min-width: 45px;
   text-align: right;
+  font-size: 0.9em;
 }
 .dora-tiles {
-  display: flex; /* 牌を横に並べる */
+  display: flex;
 }
-.dora-display img.tile-image-small { width: 24px; height: auto; vertical-align: middle; margin-left: 0; margin-right: 0; /* 牌同士の間隔をなくす */ }
-.hand-display { display: flex; justify-content: center; gap: 0px; margin-bottom: 10px; }
-.hand-display .tile-image-medium img { width: 35px; height: auto; border-radius: 3px; }
-.agari-tile-display { margin-left: 10px; /* 和了牌の左に間隔を空ける */}
+.dora-display img.tile-image-small { width: 22px; height: auto; vertical-align: middle; }
+.hand-display { display: flex; justify-content: center; gap: 0px; margin-bottom: 8px; }
+.hand-display .tile-image-medium img { width: 32px; height: auto; border-radius: 3px; }
+.agari-tile-display { margin-left: 8px; }
 .meld-display {
   display: flex;
-  margin-left: 10px; /* 鳴き牌の塊の左に間隔を空ける */
+  margin-left: 8px;
 }
 
 .sideways {
   transform: rotate(90deg);
-  transform-origin: left center; /* 回転の中心を牌の左端中央に設定 */
-  margin: 0 6px 0 0; /* 左寄せになるようにマージンを調整 */
-  margin-left: 4px;
-  margin-top: -32px;
+  transform-origin: left center;
+  margin: 0 4px 0 0;
+  margin-left: 3px;
+  margin-top: -28px;
 }
 
 .hidden-tile img {
-  content: url('/public/assets/images/tiles/ura.png'); /* 裏向きの牌の画像 */
+  content: url('/public/assets/images/tiles/ura.png');
 }
 
-.yaku-info ul { list-style: none; padding: 0; margin: 0 0 10px 0; }
-.yaku-info li { margin-bottom: 3px; }
-.total-score { font-weight: bold; font-size: 1.5em;  color: red;}
+.yaku-info ul { list-style: none; padding: 0; margin: 0 0 8px 0; }
+.yaku-info li { margin-bottom: 2px; font-size: 0.9em; }
+.total-score { font-weight: bold; font-size: 1.3em;  color: red;}
 .score-change-table {
-  width: 240px;
+  width: 100%;
   margin: 0 auto;
   border-collapse: collapse;
+  font-size: 0.95em;
 }
 .score-change-table td {
-  padding: 1px 0;
+  padding: 0;
 }
 .player-name-cell {
-  width: 4.5em; /* 半角6文字(全角3文字)分の幅を確保 */
+  width: 9em; /* 全角9文字分の幅を確保 */
   text-align: left;
 }
 .score-cell {
@@ -501,22 +504,22 @@ function getMeldTileClass(meld, tileIndex) {
 .point-decrease { color: red; }
 
 .winner-icon {
-  width: 55px;
-  height: 55px;
-  margin-bottom: 15px;
-  background-color: white; /* 白背景 */
-  border: 1px solid #ccc; /* 1pxの縁 */
-  border-radius: 6px; /* 角を丸く */
+  width: 45px;
+  height: 45px;
+  margin-bottom: 10px;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 6px;
 }
 
 .popup-content button {
-  padding: 10px 20px;
+  padding: 8px 18px;
   background-color: #4CAF50;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 1em;
+  font-size: 0.9em;
 }
 .popup-content button:hover {
   background-color: #45a049;

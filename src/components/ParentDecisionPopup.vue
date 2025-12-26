@@ -263,7 +263,7 @@ function getPlayerIcon(player) {
 .score {
   font-weight: bold;
   color: #007bff;
-  font-size: 1.0em;
+  font-size: 1.1em;
 }
 .timestamp {
   margin-top: 2px;

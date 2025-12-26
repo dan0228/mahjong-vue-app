@@ -1676,7 +1676,7 @@ export const useGameStore = defineStore('game', {
       this.isIppatsuChance[playerId] = true;
       this.playerActionEligibility[playerId] = {};
       this.gamePhase = GAME_PHASES.RIICHI_ANIMATION;
-      audioStore.playSound('Kagura_Suzu01-1.mp3');
+      audioStore.playSound('Kagura_Suzu03-1.mp3');
       const potentialDiscards = [...player.hand, this.drawnTile];
       this.riichiDiscardOptions = potentialDiscards.filter(tileToDiscard => {
         if (!tileToDiscard) return false;
@@ -1958,7 +1958,7 @@ export const useGameStore = defineStore('game', {
       if (this.isGameOnline) {
         this.broadcastGameState();
       }
-      audioStore.playSound('Percussive_Accent03-1.mp3');
+      audioStore.playSound('Percussive_Accent03-1(Dry).mp3');
       setTimeout(() => {
         this.animationState = { type: null, playerId: null };
         if (this.isGameOnline) {
@@ -2298,11 +2298,11 @@ export const useGameStore = defineStore('game', {
 
       this.animationState = { type: winResult.isChombo ? 'ron' : (isTsumo ? 'tsumo' : 'ron'), playerId: agariPlayerId };
       if (winResult.isChombo) {
-        audioStore.playSound('Single_Accent17-2.mp3');
+        audioStore.playSound('Single_Accent17-2(Dry).mp3');
       } else if (isTsumo) {
-        audioStore.playSound('Multi_Accent01-3.mp3');
+        audioStore.playSound('Multi_Accent01-3(Dry).mp3');
       } else {
-        audioStore.playSound('Single_Accent17-2.mp3');
+        audioStore.playSound('Single_Accent17-2(Dry).mp3');
       }
 
       const pointChanges = {};

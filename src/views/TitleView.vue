@@ -310,7 +310,7 @@ onBeforeUnmount(() => {
   background-size: 100% auto;
   background-repeat: no-repeat;
   background-position: center;
-  animation: blink-image 5s infinite step-end;
+  background-image: url('/assets/images/back/title_back.png');
   margin-top: 40px;
 }
 
@@ -562,18 +562,7 @@ input:focus + .slider { box-shadow: 0 0 1px #2196f3; }
 input:checked + .slider:before { transform: translateX(10px); }
 .toggle-label { vertical-align: middle; font-size: 0.9em; }
 
-/* アニメーション */
-@keyframes blink-image {
-  0%, 90% {
-    background-image: url('/assets/images/back/title_back.png');
-  }
-  90.1%, 95% {
-    background-image: url('/assets/images/back/title_back_eye.png');
-  }
-  95.1%, 100% {
-    background-image: url('/assets/images/back/title_back.png');
-  }
-}
+
 
 
 </style>

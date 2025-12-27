@@ -274,18 +274,18 @@ onBeforeUnmount(() => {
   position: absolute;
   top: 0;
   left: 0;
-  width: 200%; /* 画像2枚分の幅 */
+  width: 100%; /* 画像1枚分の幅 */
   height: 100%;
   display: flex;
-  animation: scroll-transform 10s linear infinite;
+  animation: scroll-transform 20s linear infinite;
   will-change: transform; /* アニメーションの最適化をブラウザに指示 */
   z-index: 0; /* コンテンツの背後に配置 */
 }
 
 .scrolling-background-container img {
-  width: 50%;
+  width: auto;
   height: 100%;
-  object-fit: cover; /* アスペクト比を維持しつつコンテナを覆う */
+  object-fit: cover; /* アスペクト比を維持しつつコンテナに収める */
 }
 
 @keyframes scroll-transform {

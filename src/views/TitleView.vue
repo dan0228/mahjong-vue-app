@@ -1,5 +1,11 @@
 <template>
   <div class="title-view-container" :style="{ height: viewportHeight }">
+    <!-- パフォーマンスの良い背景スクロール -->
+    <div class="scrolling-background-container">
+      <img src="/assets/images/back/back_out.png" alt="" />
+      <img src="/assets/images/back/back_out.png" alt="" />
+    </div>
+
     <div class="title-screen" :style="scalerStyle">
       <!-- 背景 -->
       <div class="title-background-container">
@@ -260,15 +266,35 @@ onBeforeUnmount(() => {
   position: relative;
   width: 100vw;
   overflow: hidden;
-  background-image: url('/assets/images/back/back_out.png');
-  background-repeat: repeat-x;
-  background-size: auto 100%; /* 高さを画面に合わせ、幅は自動調整 */
-  animation: scroll-background 80s linear infinite;
+  background-color: #f0f0f0; /* 画像読み込みまでのフォールバック背景色 */
 }
 
-@keyframes scroll-background {
-  from { background-position: 0 0; }
-  to { background-position: -2920px 0; } /* 画像が十分にループするように大きな値を指定 */
+/* パフォーマンスの良い背景スクロール */
+.scrolling-background-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200%; /* 画像2枚分の幅 */
+  height: 100%;
+  display: flex;
+  animation: scroll-transform 10s linear infinite;
+  will-change: transform; /* アニメーションの最適化をブラウザに指示 */
+  z-index: 0; /* コンテンツの背後に配置 */
+}
+
+.scrolling-background-container img {
+  width: 50%;
+  height: 100%;
+  object-fit: cover; /* アスペクト比を維持しつつコンテナを覆う */
+}
+
+@keyframes scroll-transform {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%); /* 幅の半分(画像1枚分)移動してループ */
+  }
 }
 
 .title-screen {
@@ -283,6 +309,8 @@ onBeforeUnmount(() => {
   flex-direction: column;
   align-items: center;
   box-sizing: border-box;
+  z-index: 1; /* 背景の上に表示 */
+  background: transparent; /* 背景を透明にする */
 }
 
 .title-screen::before {

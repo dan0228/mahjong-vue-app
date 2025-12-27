@@ -99,7 +99,7 @@
         <div class="x-account">
           <a href="https://x.com/danAllGreen" target="_blank" rel="noopener noreferrer">{{ $t('titleView.officialX') }}</a>
         </div>
-        <div class="version-info">v1.7.3 | 2025.12.27</div>
+        <div class="version-info">v1.7.2 | 2025.12.22</div>
       </footer>
 
       <!-- ポップアップ -->
@@ -261,7 +261,14 @@ onBeforeUnmount(() => {
   width: 100vw;
   overflow: hidden;
   background-image: url('/assets/images/back/back_out.png');
-  background-repeat: repeat;
+  background-repeat: repeat-x;
+  background-size: auto 100%; /* 高さを画面に合わせ、幅は自動調整 */
+  animation: scroll-background 80s linear infinite;
+}
+
+@keyframes scroll-background {
+  from { background-position: 0 0; }
+  to { background-position: -2920px 0; } /* 画像が十分にループするように大きな値を指定 */
 }
 
 .title-screen {
@@ -561,8 +568,4 @@ input:checked + .slider { background-color: #2196f3; }
 input:focus + .slider { box-shadow: 0 0 1px #2196f3; }
 input:checked + .slider:before { transform: translateX(10px); }
 .toggle-label { vertical-align: middle; font-size: 0.9em; }
-
-
-
-
 </style>

@@ -80,9 +80,7 @@ onMounted(async () => {
   // --- アセットのプリロード ---
   const imagePaths = [
     '/assets/images/back/loading.png',
-    '/assets/images/back/shrine.png',
     '/assets/images/back/back_out_shrine.png',
-    
     '/assets/images/back/back_out.png',
     '/assets/images/back/mat.png',
     '/assets/images/back/ranking.png',
@@ -148,7 +146,6 @@ onMounted(async () => {
     '/assets/images/info/ton4_en.png',
     '/assets/images/info/zan_1000.png',
     '/assets/images/info/logo-black.png',
-    '/assets/images/info/Instagram_logo.png',
     '/assets/images/number/-.png',
     '/assets/images/number/0.png',
     '/assets/images/number/00.png',

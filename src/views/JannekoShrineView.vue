@@ -274,7 +274,9 @@ onBeforeUnmount(() => {
   /* height: 100vh; */ /* 動的な高さ指定に置き換え */
   overflow: hidden;
   background-image: url('/assets/images/back/back_out_shrine.png');
-  background-repeat: repeat;
+  background-size: auto 100%;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .shrine-screen {
@@ -292,10 +294,7 @@ onBeforeUnmount(() => {
   font-family: 'M PLUS Rounded 1c', 'Helvetica Neue', Arial, sans-serif;
   overflow: hidden;
   box-sizing: border-box;
-  background-image: url('/assets/images/back/shrine.png');
-  background-size: 100% auto;
-  background-position: center top;
-  background-repeat: no-repeat;
+  background: transparent; /* 背景を透明に */
 }
 
 .omikuji-button {

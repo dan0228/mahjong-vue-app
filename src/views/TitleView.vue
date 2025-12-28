@@ -1,10 +1,7 @@
 <template>
   <div class="title-view-container" :style="{ height: viewportHeight }">
-    <!-- パフォーマンスの良い背景スクロール -->
-    <div class="scrolling-background-container">
-      <img src="/assets/images/back/back_out.png" alt="" />
-      <img src="/assets/images/back/back_out.png" alt="" />
-    </div>
+    <!-- 背景スクロールコンテナ(imgタグは不要) -->
+    <div class="scrolling-background-container"></div>
 
     <div class="title-screen" :style="scalerStyle">
       <!-- 背景 -->
@@ -266,34 +263,32 @@ onBeforeUnmount(() => {
   position: relative;
   width: 100vw;
   overflow: hidden;
-  background-color: #f0f0f0; /* 画像読み込みまでのフォールバック背景色 */
+  background-color: #000; /* 白い帯が見える代わりの背景色 */
 }
 
-/* パフォーマンスの良い背景スクロール */
+/* 背景スクロール(background-image版) */
 .scrolling-background-container {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%; /* 画像1枚分の幅 */
+  width: 100%;
   height: 100%;
-  display: flex;
-  animation: scroll-transform 20s linear infinite;
-  will-change: transform; /* アニメーションの最適化をブラウザに指示 */
-  z-index: 0; /* コンテンツの背後に配置 */
+  background-image: url('/assets/images/back/back_out.png');
+  background-repeat: repeat-x;
+  background-size: auto 100%; /* 高さをビューポートに合わせ、幅はアスペクト比を維持 */
+  animation: scroll-background 60s linear infinite;
+  will-change: background-position;
+  z-index: 0;
 }
 
-.scrolling-background-container img {
-  width: auto;
-  height: 100%;
-  object-fit: cover; /* アスペクト比を維持しつつコンテナに収める */
-}
-
-@keyframes scroll-transform {
-  0% {
-    transform: translateX(0);
+@keyframes scroll-background {
+  from {
+    background-position-x: 0;
   }
-  100% {
-    transform: translateX(-50%); /* 幅の半分(画像1枚分)移動してループ */
+  to {
+    /* 画像の実際の幅に関係なく、大きな値を指定して移動させる */
+    /* 2560pxは一般的な高解像度モニターをカバーするのに十分な値 */
+    background-position-x: -2560px;
   }
 }
 
@@ -597,3 +592,5 @@ input:focus + .slider { box-shadow: 0 0 1px #2196f3; }
 input:checked + .slider:before { transform: translateX(10px); }
 .toggle-label { vertical-align: middle; font-size: 0.9em; }
 </style>
+
+

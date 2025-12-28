@@ -27,29 +27,23 @@
           </div>
         </div>
         <!-- 上部コントロール -->
-        <div class="top-controls">
-          <div class="top-controls-group">
-            <div class="audio-toggles">
-              <label class="toggle-switch">
-                <input type="checkbox" :checked="audioStore.isBgmEnabled" @change="audioStore.toggleBgm()" />
-                <span class="slider round"></span>
-              </label>
-              <span class="toggle-label">BGM</span>
-              <label class="toggle-switch">
-                <input type="checkbox" :checked="audioStore.isSeEnabled" @change="audioStore.toggleSe()" />
-                <span class="slider round"></span>
-              </label>
-              <span class="toggle-label">{{ $t('titleView.sfx') }}</span>
+        <div class="top-controls-wrapper">
+          <div class="top-controls">
+            <div class="top-controls-group">
+              <div class="language-selector">
+                <div class="language-flag language-flag-ja" :class="{ selected: locale === 'ja' }" @click="locale = 'ja'"></div>
+                <div class="language-flag language-flag-en" :class="{ selected: locale === 'en' }" @click="locale = 'en'"></div>
+              </div>
+              <button @click="showSettingsPopup = true" class="settings-button">
+                <img src="/assets/images/button/setting_button.png" alt="Settings" class="settings-button-image" />
+              </button>
             </div>
           </div>
-          <div class="top-controls-group">
-            <div class="language-selector">
-              <div class="language-flag language-flag-ja" :class="{ selected: locale === 'ja' }" @click="locale = 'ja'"></div>
-              <div class="language-flag language-flag-en" :class="{ selected: locale === 'en' }" @click="locale = 'en'"></div>
-            </div>
-            <button @click="showSettingsPopup = true" class="settings-button">
-              <img src="/assets/images/button/setting_button.png" alt="Settings" class="settings-button-image" />
+          <div class="volume-slider-container">
+            <button @click.stop="audioStore.toggleAudio()" class="audio-button">
+              <img :src="audioIconSrc" alt="Audio" class="audio-button-image" />
             </button>
+            <input type="range" min="0" max="1" step="0.01" :value="audioStore.volume" @input="audioStore.setVolume(parseFloat($event.target.value))" class="volume-slider" />
           </div>
         </div>
       </header>
@@ -224,6 +218,12 @@ const titleLogoSrc = computed(() =>
   locale.value === 'en'
     ? '/assets/images/back/タイトルロゴ_en.png'
     : '/assets/images/back/タイトルロゴ.png'
+);
+
+const audioIconSrc = computed(() =>
+  audioStore.isAudioEnabled
+    ? '/assets/images/button/BGM_ON.png'
+    : '/assets/images/button/BGM_OFF.png'
 );
 
 
@@ -524,12 +524,13 @@ onBeforeUnmount(() => {
 
 .language-selector {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 .language-flag {
   width: 22px;
   height: 20px;
+  padding-bottom: 2px;
   cursor: pointer;
   border-radius: 4px;
   transition: opacity 0.2s ease-in-out;
@@ -537,7 +538,7 @@ onBeforeUnmount(() => {
 }
 .language-flag-ja { background-image: url('https://twemoji.maxcdn.com/v/latest/svg/1f1ef-1f1f5.svg'); }
 .language-flag-en { background-image: url('https://twemoji.maxcdn.com/v/latest/svg/1f1fa-1f1f8.svg'); }
-.language-flag:not(.selected) { opacity: 0.6; }
+.language-flag:not(.selected) { opacity: 0.5; }
 .language-flag.selected { opacity: 1; }
 
 .settings-button {
@@ -547,12 +548,9 @@ onBeforeUnmount(() => {
   cursor: pointer;
 }
 .settings-button-image {
-  width: 24px;
-  height: 24px;
-  opacity: 0.8;
-  transition: opacity 0.2s ease-in-out;
+  width: 18px;
+  height: 18px;
 }
-.settings-button:hover .settings-button-image { opacity: 1; }
 
 /* フッター内の要素 */
 .x-account a {
@@ -591,6 +589,62 @@ input:checked + .slider { background-color: #2196f3; }
 input:focus + .slider { box-shadow: 0 0 1px #2196f3; }
 input:checked + .slider:before { transform: translateX(10px); }
 .toggle-label { vertical-align: middle; font-size: 0.9em; }
+
+.audio-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+.audio-button-image {
+  width: 16px;
+  height: 16px;
+}
+
+.top-controls-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.volume-slider-container {
+  margin-top: 8px;
+  width: 80px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.volume-slider {
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 5px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 5px;
+  outline: none;
+  opacity: 0.9;
+  transition: opacity .2s;
+}
+.volume-slider:hover {
+  opacity: 1;
+}
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  background: #fcd9d9;
+  border: 1px solid #ccc;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.volume-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 50%;
+  cursor: pointer;
+}
 </style>
 
 

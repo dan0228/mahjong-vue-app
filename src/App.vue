@@ -122,6 +122,8 @@ onMounted(async () => {
     '/assets/images/button/title_rule_en.png',
     '/assets/images/button/title_yakulist.png',
     '/assets/images/button/title_yakulist_en.png',
+    '/assets/images/button/BGM_ON.png',
+    '/assets/images/button/BGM_OFF.png',
     '/assets/images/info/cat_coin.png',
     '/assets/images/info/cat_icon_1.png',
     '/assets/images/info/cat_icon_2.png',

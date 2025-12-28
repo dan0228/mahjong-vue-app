@@ -4,9 +4,8 @@ import { defineStore } from 'pinia';
 
 export const useAudioStore = defineStore('audio', {
   state: () => ({
-    volume: 0.4, // 全体の音量設定 (0.0から1.0)
-    isBgmEnabled: true, // BGMが有効かどうか
-    isSeEnabled: true, // 効果音が有効かどうか
+    volume: localStorage.getItem('volume') === null ? 0.6 : parseFloat(localStorage.getItem('volume')), // 統一された音量
+    isAudioEnabled: localStorage.getItem('isAudioEnabled') === null ? true : localStorage.getItem('isAudioEnabled') === 'true', // 統一された有効フラグ
     currentBgm: null, // 現在再生中のBGMのファイル名 (例: 'NES-JP-A01-2(Title-Loop115).mp3')
     audioPlayers: new Map(), // プリロードされたAudioオブジェクトを格納するMap (URL -> Audioオブジェクト)
     isSwitchingBgm: false, // BGM切り替え処理中かどうかのフラグ
@@ -46,26 +45,32 @@ export const useAudioStore = defineStore('audio', {
     },
 
     /**
-     * BGMの有効/無効を切り替えます。
-     * 現在BGMが再生中であれば一時停止し、停止中であれば再生を再開します。
+     * 全ての音声の有効/無効を切り替えます。
      */
-    toggleBgm() {
-      this.isBgmEnabled = !this.isBgmEnabled; // 状態を反転
+    toggleAudio() {
+      this.isAudioEnabled = !this.isAudioEnabled;
+      localStorage.setItem('isAudioEnabled', this.isAudioEnabled);
       const audio = this.currentBgm ? this.audioPlayers.get(`/assets/sounds/${this.currentBgm}`) : null;
       if (audio) {
-        if (this.isBgmEnabled) {
-          audio.play(); // BGMが有効なら再生
+        if (this.isAudioEnabled) {
+          audio.play();
         } else {
-          audio.pause(); // BGMが無効なら一時停止
+          audio.pause();
         }
       }
     },
 
     /**
-     * 効果音の有効/無効を切り替えます。
+     * 全ての音声の音量を設定します。
+     * @param {number} newVolume - 新しい音量 (0.0から1.0)
      */
-    toggleSe() {
-      this.isSeEnabled = !this.isSeEnabled; // 状態を反転
+    setVolume(newVolume) {
+      this.volume = Math.max(0, Math.min(1, newVolume));
+      localStorage.setItem('volume', this.volume);
+      const audio = this.currentBgm ? this.audioPlayers.get(`/assets/sounds/${this.currentBgm}`) : null;
+      if (audio) {
+        audio.volume = this.volume;
+      }
     },
 
     /**
@@ -80,25 +85,6 @@ export const useAudioStore = defineStore('audio', {
       }
       this.isSwitchingBgm = true; // 切り替え処理中フラグを立てる
 
-      // 同じBGMが指定された場合でも、再生位置をリセットして再生し直す
-      if (this.currentBgm === newBgmName) {
-        const audio = this.audioPlayers.get(`/assets/sounds/${newBgmName}`);
-        if (audio) {
-          audio.currentTime = 0; // 再生位置を先頭にリセット
-          if (!audio.paused && this.isBgmEnabled) {
-            // 既に再生中であれば、そのまま再生を続ける（最初からになる）
-            // そうでなければ、play()で再生を開始
-            try {
-              await audio.play();
-            } catch (e) {
-              console.error("BGMの再生に失敗しました:", e);
-            }
-          }
-        }
-        this.isSwitchingBgm = false; // 切り替え処理完了
-        return;
-      }
-
       const oldBgmName = this.currentBgm;
       const oldAudio = oldBgmName ? this.audioPlayers.get(`/assets/sounds/${oldBgmName}`) : null;
 
@@ -109,20 +95,28 @@ export const useAudioStore = defineStore('audio', {
       }
 
       this.currentBgm = newBgmName; // 現在のBGMを更新
-      const newAudio = newBgmName ? this.audioPlayers.get(`/assets/sounds/${newBgmName}`) : null;
+      
+      if (!newBgmName) {
+        this.isSwitchingBgm = false;
+        return;
+      }
 
-      // 新しいBGMが有効で、BGMが有効な場合のみ再生
-      if (newAudio && this.isBgmEnabled) {
-        if (!newAudio.paused) {
-          newAudio.pause(); // 既に再生中であれば一度停止
-          newAudio.currentTime = 0; // 再生位置を先頭にリセット
-        }
+      const newAudio = this.audioPlayers.get(`/assets/sounds/${newBgmName}`);
+
+      // 新しいBGMのAudioオブジェクトが存在する場合
+      if (newAudio) {
         newAudio.volume = this.volume; // 音量を設定
         newAudio.loop = true; // ループ再生を有効化
-        try {
-          await newAudio.play(); // 再生を開始
-        } catch (e) {
-          console.error("BGMの再生に失敗しました:", e);
+
+        // オーディオが有効な場合のみ再生
+        if (this.isAudioEnabled) {
+          try {
+            if (newAudio.paused) { // 念のため、停止している場合のみ再生
+              await newAudio.play();
+            }
+          } catch (e) {
+            console.error("BGMの再生に失敗しました:", e);
+          }
         }
       }
       
@@ -131,11 +125,10 @@ export const useAudioStore = defineStore('audio', {
 
     /**
      * 指定された効果音を再生します。
-     * 効果音が有効な場合のみ再生されます。
      * @param {string} sound - 再生する効果音のファイル名 (例: 'se.mp3')。
      */
     playSound(sound) {
-      if (this.isSeEnabled) { // 効果音が有効な場合のみ
+      if (this.isAudioEnabled) { // isAudioEnabled を使用
         let audio = this.audioPlayers.get(`/assets/sounds/${sound}`);
         if (!audio) {
           // プリロードされていない場合、新しいAudioオブジェクトを作成して保存
@@ -165,11 +158,11 @@ export const useAudioStore = defineStore('audio', {
         // ページが再び表示されたら、有効なオーディオを再生再開
         this.audioPlayers.forEach((audio, url) => {
           // BGMの場合
-          if (url.includes(this.currentBgm) && this.isBgmEnabled) {
+          if (url.includes(this.currentBgm) && this.isAudioEnabled) {
             audio.play().catch(e => console.error("BGMの再生に失敗しました:", e));
           }
           // SEの場合 (BGMと異なるURLで、かつSEが有効な場合)
-          else if (!url.includes(this.currentBgm) && this.isSeEnabled) {
+          else if (!url.includes(this.currentBgm) && this.isAudioEnabled) {
             // 効果音は通常ループしないため、再生中のものだけを再開
             // ここでは、効果音は短いため、再開の必要はないと判断し、BGMのみを対象とする
             // もし効果音も長時間再生されるものがある場合は、別途状態管理が必要

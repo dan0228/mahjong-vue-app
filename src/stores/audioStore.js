@@ -4,7 +4,7 @@ import { defineStore } from 'pinia';
 
 export const useAudioStore = defineStore('audio', {
   state: () => ({
-    volume: localStorage.getItem('volume') === null ? 0.6 : parseFloat(localStorage.getItem('volume')), // 統一された音量
+    volume: localStorage.getItem('volume') === null ? 0.3 : parseFloat(localStorage.getItem('volume')), // 統一された音量
     isAudioEnabled: localStorage.getItem('isAudioEnabled') === null ? true : localStorage.getItem('isAudioEnabled') === 'true', // 統一された有効フラグ
     currentBgm: null, // 現在再生中のBGMのファイル名 (例: 'NES-JP-A01-2(Title-Loop115).mp3')
     audioPlayers: new Map(), // プリロードされたAudioオブジェクトを格納するMap (URL -> Audioオブジェクト)

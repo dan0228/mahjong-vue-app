@@ -13,18 +13,8 @@
       <header class="title-header">
         <!-- ユーザー情報 -->
         <div class="user-stats">
-          <div class="stat-item">
-            <span>{{ $t('titleView.maxWinStreak') }}</span>
-            <span class="stat-number max-wins-number">{{ userStore.profile?.max_win_streak || 0 }}</span>
-          </div>
-          <div class="stat-item">
-            <span>{{ $t('titleView.currentWinStreak') }}</span>
-            <span class="stat-number current-wins-number">{{ userStore.profile?.current_win_streak || 0 }}</span>
-          </div>
-          <div class="stat-item">
-            <span>{{ $t('titleView.catCoins') }}</span>
-            <span class="stat-number cat-coins-number">{{ userStore.profile?.cat_coins || 0 }}</span>
-          </div>
+          <img :src="boardImageSrc" alt="Board" class="board-image" />
+          <span class="cat-coins-number-on-board">{{ userStore.profile?.cat_coins || 0 }}</span>
         </div>
         <!-- 上部コントロール -->
         <div class="top-controls-wrapper">
@@ -229,6 +219,12 @@ const audioIconSrc = computed(() =>
     : '/assets/images/button/BGM_OFF.png'
 );
 
+const boardImageSrc = computed(() =>
+  locale.value === 'en'
+    ? '/assets/images/info/board_en.png'
+    : '/assets/images/info/board.png'
+);
+
 const handleVolumeChange = (event) => {
   audioStore.setVolume(parseFloat(event.target.value));
 };
@@ -349,7 +345,7 @@ onBeforeUnmount(() => {
   background-repeat: no-repeat;
   background-position: center;
   background-image: url('/assets/images/back/title_back.png');
-  margin-top: 40px;
+  margin-top: 30px;
 }
 
 /* レイアウトブロック */
@@ -489,8 +485,10 @@ onBeforeUnmount(() => {
 
 /* ヘッダー内の要素 */
 .user-stats {
+  position: relative; /* 猫コインの数値を重ねるための基準 */
   display: flex;
   flex-direction: column;
+  align-items: flex-start; /* 左寄せにする */
   gap: 2px;
 }
 .stat-item {
@@ -655,6 +653,32 @@ input:checked + .slider:before { transform: translateX(10px); }
   border: 1px solid #ccc;
   border-radius: 50%;
   cursor: pointer;
+}
+
+.board-image {
+  width: 90px;
+  height: auto;
+}
+.cat-coin-stat {
+  padding: 2px 8px 2px 4px;
+  display: inline-flex;
+  align-items: center;
+  margin-top: 4px;
+}
+.cat-coin-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 4px;
+}
+
+.cat-coins-number-on-board {
+  position: absolute;
+  top: 37px;
+  right: 12px;
+  font-family: 'Yuji Syuku', serif;
+  font-size: 13px;
+  color: rgb(255, 255, 255);
+  text-shadow: 3px 3px 3px #5a3b22;
 }
 </style>
 

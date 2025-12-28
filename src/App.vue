@@ -88,6 +88,8 @@ onMounted(async () => {
     '/assets/images/back/タイトルロゴ_en.png',
     '/assets/images/back/title_back.png',
     '/assets/images/back/stock_frame.png',
+    '/assets/images/back/board.png',
+    '/assets/images/back/board_en.png',
     '/assets/images/button/buckToTitle.png',
     '/assets/images/button/kan_button.png',
     '/assets/images/button/pon_button.png',

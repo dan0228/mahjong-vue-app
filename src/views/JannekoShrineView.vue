@@ -1,5 +1,14 @@
 <template>
   <div class="shrine-view-container" :style="{ height: viewportHeight }">
+    <div class="sakura-container" ref="sakuraContainer">
+        <img
+          v-for="petal in petals"
+          :key="petal.id"
+          class="sakura-petal"
+          :src="petal.src"
+          :style="petal.style"
+        />
+    </div>
     <div class="shrine-screen" :style="scalerStyle">
       <div class="user-stats">
         <img :src="boardImageSrc" alt="Board" class="board-image" />
@@ -61,115 +70,107 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useAudioStore } from '../stores/audioStore';
-import { useUserStore } from '@/stores/userStore'; // ★ useGameStore から変更
+import { useUserStore } from '@/stores/userStore';
 import SayingPopup from '@/components/SayingPopup.vue';
 import { useViewportHeight } from '@/composables/useViewportHeight';
 
 // --- リアクティブな状態とストア ---
+let petalId = 0;
+const petals = ref([]);
+let animationIntervalId = null;
 const { t, tm, locale } = useI18n();
 const { viewportHeight } = useViewportHeight();
 const router = useRouter();
 const audioStore = useAudioStore();
-const userStore = useUserStore(); // ★ gameStore から userStore に変更
+const userStore = useUserStore();
 
 // ポップアップ関連の状態
 const showPopup = ref(false);
-const randomFortune = ref(''); // ポップアップに表示する運勢
-const randomSaying = ref(''); // ポップアップに表示する名言
-const randomSayingId = ref(null); // ポップアップに表示する名言のID
-const isNewSaying = ref(false); // 新しく解放された名言かどうかのフラグ
-
-const isFading = ref(false); // 画面のフェード演出用フラグ
-const previousBgm = ref(null); // おみくじ演出中にBGMを一時停止・再開するために使用
-
-// ★ revealedSayings の ref は削除し、userStoreから取得する算出プロパティに変更
+const randomFortune = ref('');
+const randomSaying = ref('');
+const randomSayingId = ref(null);
+const isNewSaying = ref(false);
+const isFading = ref(false);
+const previousBgm = ref(null);
 
 // --- 算出プロパティ ---
-
-// 解放済みの名言リストを userStore から取得
 const revealedSayings = computed(() => userStore.profile?.revealed_sayings || {});
-
-// i18nファイルから名言リストを生成
 const sayings = computed(() => {
   const sayingMessages = tm('shrineView.sayings');
-  return Object.keys(sayingMessages).map(key => ({
-    id: key,
-    text: sayingMessages[key]
-  }));
+  return Object.keys(sayingMessages).map(key => ({ id: key, text: sayingMessages[key] }));
 });
-
-// i18nファイルから運勢リストを生成
 const fortunes = computed(() => tm('shrineView.fortunes'));
-
 const boardImageSrc = computed(() =>
   locale.value === 'en'
     ? '/assets/images/info/board_en.png'
     : '/assets/images/info/board.png'
 );
 
+// --- 桜アニメーションのロジック ---
+const sakuraImages = [
+  '/assets/images/back/sakura1.png', '/assets/images/back/sakura2.png',
+  '/assets/images/back/sakura3.png', '/assets/images/back/sakura4.png',
+  '/assets/images/back/sakura5.png', '/assets/images/back/sakura6.png',
+  '/assets/images/back/sakura7.png'
+];
+
+function createSakuraPetal() {
+  const id = petalId++;
+  const fallDuration = Math.random() * 5 + 8; // 8〜13秒
+
+  petals.value.push({
+    id: id,
+    src: sakuraImages[Math.floor(Math.random() * sakuraImages.length)],
+    style: {
+      left: Math.random() * 120 + 'vw',
+      width: `${Math.random() * 10 + 15}px`,
+      animationDuration: `${fallDuration}s`,
+      '--drift': (Math.random() * 220 - 50) + 'px',
+    }
+  });
+
+  // アニメーション時間後に配列から削除
+  setTimeout(() => {
+    const index = petals.value.findIndex(p => p.id === id);
+    if (index !== -1) {
+      petals.value.splice(index, 1);
+    }
+  }, fallDuration * 1000 + 1000); // 1秒のバッファ
+}
+
+
 // --- メソッド ---
-
-// ★ loadRevealedSayings と saveRevealedSayings は不要になったので削除
-
-/**
- * おみくじを引く処理。
- * コインを消費し、運勢と名言をランダムに決定してポップアップで表示します。
- */
 const drawOmikuji = async () => {
-  // userStore.profile がまだ読み込まれていない場合は待つ
   if (!userStore.profile) {
     await userStore.fetchUserProfile();
-    if (!userStore.profile) { // 再度チェック
+    if (!userStore.profile) {
       console.error('ユーザープロファイルが読み込めませんでした。');
       return;
     }
   }
-
-  let isFreeDraw = false;
-  let cost = 100; // デフォルトのコインコスト
-
-  if (userStore.profile.daily_free_omikuji_count > 0) {
-    isFreeDraw = true;
-  } else {
-    // 無料回数がなく、コインも足りない場合
-    if (userStore.profile.cat_coins < cost) {
-      randomFortune.value = '';
-      randomSaying.value = t('shrineView.errors.notEnoughCoins');
-      randomSayingId.value = null;
-      isNewSaying.value = false;
-      showPopup.value = true;
-      return;
-    }
+  let isFreeDraw = userStore.profile.daily_free_omikuji_count > 0;
+  let cost = 100;
+  if (!isFreeDraw && userStore.profile.cat_coins < cost) {
+    randomFortune.value = '';
+    randomSaying.value = t('shrineView.errors.notEnoughCoins');
+    randomSayingId.value = null;
+    isNewSaying.value = false;
+    showPopup.value = true;
+    return;
   }
-
-  // BGMを一時停止し、効果音を再生
   previousBgm.value = audioStore.currentBgm;
   audioStore.setBgm(null);
   audioStore.playSound('Kagura_Suzu01-7.mp3');
-
-  // フェードアウトを開始
   isFading.value = true;
-
   try {
-    let updatePromise;
-    if (isFreeDraw) {
-      // 無料回数を消費
-      updatePromise = userStore.updateOmikujiDrawInfo({
-        daily_free_omikuji_count: userStore.profile.daily_free_omikuji_count - 1,
-        last_omikuji_draw_date: new Date().toISOString().slice(0, 10) // 日付を更新
-      }, { showLoading: false });
-    } else {
-      // コインを消費
-      updatePromise = userStore.updateCatCoins(-cost, { showLoading: false });
-    }
-
-    // 1.5秒待つ（フェードアウトの時間）
+    let updatePromise = isFreeDraw
+      ? userStore.updateOmikujiDrawInfo({
+          daily_free_omikuji_count: userStore.profile.daily_free_omikuji_count - 1,
+          last_omikuji_draw_date: new Date().toISOString().slice(0, 10)
+        }, { showLoading: false })
+      : userStore.updateCatCoins(-cost, { showLoading: false });
     await new Promise(resolve => setTimeout(resolve, 1500));
-
-    // 更新処理が完了していることを確認
     await updatePromise;
-
-    // 結果を計算
     const fortuneValues = Object.values(fortunes.value);
     randomFortune.value = fortuneValues[Math.floor(Math.random() * fortuneValues.length)];
     const sayingsList = sayings.value;
@@ -178,47 +179,31 @@ const drawOmikuji = async () => {
     randomSaying.value = drawnSaying.text;
     randomSayingId.value = drawnSaying.id;
     isNewSaying.value = !revealedSayings.value[drawnSaying.id];
-
-    // 新しい名言なら保存（これもスピナーなし）
     if (isNewSaying.value) {
       await userStore.updateRevealedSaying(drawnSaying.id, { showLoading: false });
     }
-
-    // ポップアップ表示 & フェードイン
     showPopup.value = true;
     isFading.value = false;
-
   } catch (error) {
     console.error('おみくじ処理中にエラー:', error);
-    // エラー時のフォールバック
     randomFortune.value = '';
     randomSaying.value = t('shrineView.errors.failedToSpend');
     randomSayingId.value = null;
     isNewSaying.value = false;
     showPopup.value = true;
-    // フェードを戻す
     isFading.value = false;
-    // BGMを戻す
     if (previousBgm.value) {
       audioStore.setBgm(previousBgm.value);
     }
   }
 };
-
-/**
- * ポップアップを閉じ、BGMを再開します。
- */
 const closePopup = () => {
   showPopup.value = false;
   if (previousBgm.value) {
     audioStore.setBgm(previousBgm.value);
-    previousBgm.value = null; // 次回のためにリセット
+    previousBgm.value = null;
   }
 };
-
-/**
- * タイトル画面に遷移します。
- */
 const goToTitle = () => {
   router.push({ name: 'Title' });
 };
@@ -227,11 +212,9 @@ const goToTitle = () => {
 const DESIGN_WIDTH = 360;
 const DESIGN_HEIGHT = 640;
 const scaleFactor = ref(1);
-
 const scalerStyle = computed(() => ({
   transform: `translate(-50%, -50%) scale(${scaleFactor.value})`
 }));
-
 const updateScaleFactor = () => {
   const currentWidth = window.innerWidth;
   const currentHeight = window.innerHeight;
@@ -241,24 +224,22 @@ const updateScaleFactor = () => {
 };
 
 // --- ライフサイクルフック ---
-onMounted(async () => { // ★ async に変更
+onMounted(async () => {
   updateScaleFactor();
   window.addEventListener('resize', updateScaleFactor);
-  
-  // ユーザープロファイルがまだ読み込まれていない場合は読み込む
   if (!userStore.profile) {
     await userStore.fetchUserProfile();
   }
-
-  // おみくじの無料回数をチェックしてリセット
   await userStore.checkAndResetOmikujiCount();
-
   audioStore.setBgm('GB-JP-A02-2(Menu-Loop105).mp3');
+  animationIntervalId = setInterval(createSakuraPetal, 2500); // 2.5秒ごとに花びらを生成
 });
-
 onBeforeUnmount(() => {
   window.removeEventListener('resize', updateScaleFactor);
-  audioStore.setBgm(null); // 画面を離れる際にBGMを停止
+  audioStore.setBgm(null);
+  if (animationIntervalId) {
+    clearInterval(animationIntervalId);
+  }
 });
 </script>
 
@@ -270,11 +251,11 @@ onBeforeUnmount(() => {
   position: relative;
   width: 100vw;
   /* height: 100vh; */ /* 動的な高さ指定に置き換え */
-  overflow: hidden;
   background-image: url('/assets/images/back/back_out_shrine.png');
   background-size: auto 100%;
   background-position: center;
   background-repeat: no-repeat;
+  transform-origin: center 85%; /* 回転の中心を下寄りに設定 */
 }
 
 .shrine-screen {
@@ -286,17 +267,16 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between; /* 要素を上下に配置 */
-  padding-top: 80px; /* 上部の余白 */
+  justify-content: space-between;
+  padding-top: 80px;
   text-align: center;
   font-family: 'M PLUS Rounded 1c', 'Helvetica Neue', Arial, sans-serif;
   overflow: hidden;
   box-sizing: border-box;
-  background: transparent; /* 背景を透明に */
+  background: transparent;
 }
 
 .omikuji-button {
-  /* 画像を背景にするためスタイルをリセット & 再設定 */
   background-image: url('/assets/images/button/omikuji_button.png');
   background-size: contain;
   background-repeat: no-repeat;
@@ -304,19 +284,13 @@ onBeforeUnmount(() => {
   background-color: transparent;
   border: none;
   box-shadow: none;
-
-  /* サイズと位置の調整 (画像のサイズに合わせて調整が必要) */
   width: 260px;
   height: 110px;
-  padding-top: 6px; /* テキストを画像の中央に配置するための調整 */
-
-  /* テキストのスタイル */
+  padding-top: 6px;
   font-size: 1.3rem;
   font-family: 'Yuji Syuku', serif;
-  text-shadow: 3px 3px 3px rgba(255, 255, 255, 0.9); /* 読みやすさのための僅かな影 */
-  line-height: 1; /* 行間を調整 */
-
-  /* 既存のレイアウトとカーソル設定 */
+  text-shadow: 3px 3px 3px rgba(255, 255, 255, 0.9);
+  line-height: 1;
   cursor: pointer;
   margin-top: 280px;
   margin-bottom: -305px;
@@ -327,7 +301,7 @@ onBeforeUnmount(() => {
 }
 
 .omikuji-button .coin-text {
-  font-size: 0.7em; /* 親要素の1.3remに対して0.8倍 */
+  font-size: 0.7em;
 }
 
 .omikuji-button:hover {
@@ -335,7 +309,7 @@ onBeforeUnmount(() => {
 }
 
 .omikuji-board-wrapper {
-  position: relative; /* 内側の要素を配置する基準 */
+  position: relative;
   top: 10px;
   height: 220px;
   width: 100%;
@@ -347,18 +321,15 @@ onBeforeUnmount(() => {
 }
 
 .sayings-container {
-  /* This is now the inner scroll box */
   position: absolute;
-  top: 15%;    /* ボード画像の内側に合わせて微調整 */
+  top: 15%;
   left: 50%;
   transform: translateX(-50%);
-  height: 65%;   /* 内側の高さを狭くしてスクロール量を増やす */
-  width: 90%;    /* 内側の幅を調整 */
+  height: 65%;
+  width: 90%;
   overflow-y: auto;
   box-sizing: border-box;
-  /* 背景やボーダーは外枠に移しため削除 */
-  padding: 0 5px; /* 左右の僅かなパディング */
-  /* Firefox用のスクロールバースタイル */
+  padding: 0 5px;
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
 }
@@ -438,7 +409,7 @@ onBeforeUnmount(() => {
 }
 
 .back-button img {
-  width: 100px; /* 必要に応じてサイズを調整 */
+  width: 100px;
   margin-top: 405px;
   margin-right: -18px;
   height: auto;
@@ -474,15 +445,62 @@ onBeforeUnmount(() => {
 
 /* Webkit系ブラウザ用のスクロールバースタイル */
 .sayings-container::-webkit-scrollbar {
-  width: 5px; /* スクロールバーの幅を細く */
+  width: 5px;
 }
 
 .sayings-container::-webkit-scrollbar-track {
-  background: transparent; /* トラックを透明に */
+  background: transparent;
 }
 
 .sayings-container::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.2); /* サム（つまみ）を薄い黒に */
+  background-color: rgba(0, 0, 0, 0.2);
   border-radius: 10px;
+}
+
+/* 桜のアニメーション */
+.sakura-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* overflow: hidden; を削除して、花びらが画面外にはみ出るのを許可 */
+  pointer-events: none;
+  z-index: 20; /* 他のUI(z-index: 10)より手前に設定 */
+}
+
+.sakura-petal {
+  position: absolute;
+  top: -5%;
+  pointer-events: none;
+  will-change: top, transform, opacity;
+  animation-name: fall;
+  animation-timing-function: linear;
+  animation-iteration-count: 1;
+  animation-fill-mode: forwards;
+}
+
+@keyframes fall {
+  0% {
+    transform: translateX(0px) rotateZ(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  25% {
+    transform: translateX(var(--drift)) rotateZ(90deg);
+  }
+  50% {
+    transform: translateX(calc(var(--drift) * -0.2)) rotateZ(270deg);
+  }
+  75% {
+    transform: translateX(calc(var(--drift) * 0.7)) rotateZ(450deg);
+  }
+  100% {
+    transform: translateX(var(--drift)) rotateZ(720deg);
+    top: 105%;
+    opacity: 1;
+  }
 }
 </style>

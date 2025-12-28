@@ -460,11 +460,11 @@ onBeforeUnmount(() => {
 }
 
 .menu-button:hover {
-  transform: translateY(-2px);
+  transform: translateY(-4px);
 }
 
 .menu-button:active {
-  transform: translateY(1px);
+  transform: translateY(4px);
 }
 
 /* ボタンサイズとエフェクト */

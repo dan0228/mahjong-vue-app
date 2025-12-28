@@ -296,20 +296,34 @@ onBeforeUnmount(() => {
 }
 
 .omikuji-button {
-  padding: 2px 30px;
+  /* 画像を背景にするためスタイルをリセット & 再設定 */
+  background-image: url('/assets/images/button/omikuji_button.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+
+  /* サイズと位置の調整 (画像のサイズに合わせて調整が必要) */
+  width: 260px;
+  height: 110px;
+  padding-top: 6px; /* テキストを画像の中央に配置するための調整 */
+
+  /* テキストのスタイル */
   font-size: 1.3rem;
-  font-family: 'M PLUS Rounded 1c', sans-serif;
-  font-weight: bold;
-  color: white;
-  background-color: #e53935; /* 少し鮮やかな赤 */
-  border: 5px solid #a02825;
-  border-radius: 50px;
+  font-family: 'Yuji Syuku', serif;
+  text-shadow: 3px 3px 3px rgba(255, 255, 255, 0.9); /* 読みやすさのための僅かな影 */
+  line-height: 1; /* 行間を調整 */
+
+  /* 既存のレイアウトとカーソル設定 */
   cursor: pointer;
-  margin-top: auto; /* 上の余白を自動で最大化 */
-  margin-bottom: -305px; /* 下部の余白 */
-  margin-right: 70px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  margin-top: 280px;
+  margin-bottom: -305px;
+  margin-right: 78px;
   transition: all 0.2s ease;
+  z-index: 10;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 1));
 }
 
 .omikuji-button .coin-text {
@@ -317,9 +331,7 @@ onBeforeUnmount(() => {
 }
 
 .omikuji-button:hover {
-  background-color: #c62828;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+  transform: translateY(-4px);
 }
 
 .omikuji-board-wrapper {
@@ -392,6 +404,7 @@ onBeforeUnmount(() => {
   width: 90px;
   height: auto;
   filter: drop-shadow(0 0 10px rgba(255, 255, 255, 1));
+  opacity: 0.9;
 }
 
 .cat-coins-number-on-board {
@@ -483,14 +496,15 @@ input:checked + .slider {
 
 .back-button img {
   width: 100px; /* 必要に応じてサイズを調整 */
-  margin-top: 410px;
+  margin-top: 405px;
   margin-right: -18px;
   height: auto;
   filter: drop-shadow(0 0 10px rgba(255, 255, 255, 1));
+  transition: all 0.2s ease;
 }
 
 .back-button:hover img {
-  transform: translateY(-2px);
+  transform: translateY(-4px);
 }
 
 .fade-overlay {

@@ -246,8 +246,8 @@
     "sfx": "SFX",
     "backToTitle": "Back to Title",
     "omikujiButton": {
-      "line1": "🔔Fortune Slip🔔",
-      "line2": "100 🪙/draw",
+      "line1": "Fortune Slip",
+      "line2": "100 /draw",
       "freeDrawText": "Free draws remaining: {count}/day"
     },
     "sayingNo": "No.{n}",

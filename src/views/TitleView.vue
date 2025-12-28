@@ -14,6 +14,7 @@
         <!-- ユーザー情報 -->
         <div class="user-stats">
           <img :src="boardImageSrc" alt="Board" class="board-image" />
+          <span class="rating-number-on-board">{{ userStore.profile?.rating ?? 1500 }}</span>
           <span class="cat-coins-number-on-board">{{ userStore.profile?.cat_coins || 0 }}</span>
         </div>
         <!-- 上部コントロール -->
@@ -612,6 +613,16 @@ onBeforeUnmount(() => {
   height: auto;
 }
 
+
+.rating-number-on-board {
+  position: absolute;
+  top: 6px; /* 猫コインより上に配置 */
+  right: 12px;
+  font-family: 'Yuji Syuku', serif;
+  font-size: 13px;
+  color: rgb(255, 255, 255);
+  text-shadow: 3px 3px 3px #5a3b22;
+}
 
 .cat-coins-number-on-board {
   position: absolute;

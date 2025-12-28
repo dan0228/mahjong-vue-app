@@ -12,6 +12,7 @@
     <div class="shrine-screen" :style="scalerStyle">
       <div class="user-stats">
         <img :src="boardImageSrc" alt="Board" class="board-image" />
+        <span class="rating-number-on-board">{{ userStore.profile?.rating ?? 1500 }}</span>
         <span class="cat-coins-number-on-board">{{ userStore.profile?.cat_coins || 0 }}</span>
       </div>
       <div class="top-controls">
@@ -376,6 +377,16 @@ onBeforeUnmount(() => {
   height: auto;
   filter: drop-shadow(0 0 10px rgba(255, 255, 255, 1));
   opacity: 0.9;
+}
+
+.rating-number-on-board {
+  position: absolute;
+  top: 5px; /* 猫コインより上に配置 */
+  right: 12px;
+  font-family: 'Yuji Syuku', serif;
+  font-size: 13px;
+  color: rgb(255, 255, 255);
+  text-shadow: 3px 3px 3px #000000;
 }
 
 .cat-coins-number-on-board {

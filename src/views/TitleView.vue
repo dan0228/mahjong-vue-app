@@ -40,10 +40,10 @@
             </div>
           </div>
           <div class="volume-slider-container">
+            <input v-if="!isMobileDevice" type="range" min="0" max="1" step="0.01" :value="audioStore.volume" @input="handleVolumeChange" @change="handleVolumeChange" class="volume-slider" />
             <button @click.stop="audioStore.toggleAudio()" class="audio-button">
               <img :src="audioIconSrc" alt="Audio" class="audio-button-image" />
             </button>
-            <input type="range" min="0" max="1" step="0.01" :value="audioStore.volume" @input="audioStore.setVolume(parseFloat($event.target.value))" class="volume-slider" />
           </div>
         </div>
       </header>
@@ -122,6 +122,9 @@ import HowToPlayPopup from '@/components/HowToPlayPopup.vue';
 import SettingsPopup from '@/components/SettingsPopup.vue';
 import GameModeSelectionPopup from '@/components/GameModeSelectionPopup.vue';
 import { useViewportHeight } from '@/composables/useViewportHeight';
+
+// --- デバイス判定 ---
+const isMobileDevice = ref(false);
 
 // --- リアクティブな状態とストア ---
 const { t, locale } = useI18n();
@@ -226,6 +229,10 @@ const audioIconSrc = computed(() =>
     : '/assets/images/button/BGM_OFF.png'
 );
 
+const handleVolumeChange = (event) => {
+  audioStore.setVolume(parseFloat(event.target.value));
+};
+
 
 // --- 画面のスケーリング処理 ---
 const DESIGN_WIDTH = 360;
@@ -246,6 +253,7 @@ const updateScaleFactor = () => {
 
 // --- ライフサイクルフック ---
 onMounted(() => {
+  isMobileDevice.value = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   userStore.fetchUserProfile({ showLoading: false });
   updateScaleFactor();
   window.addEventListener('resize', updateScaleFactor);
@@ -599,6 +607,7 @@ input:checked + .slider:before { transform: translateX(10px); }
 .audio-button-image {
   width: 16px;
   height: 16px;
+  padding-right: 1px;
 }
 
 .top-controls-wrapper {
@@ -612,6 +621,8 @@ input:checked + .slider:before { transform: translateX(10px); }
   display: flex;
   align-items: center;
   gap: 5px;
+  touch-action: auto; /* スマホでのスライダー操作を有効にする */
+  justify-content: flex-end; /* スマホ表示時にボタンを右寄せにする */
 }
 .volume-slider {
   width: 100%;
@@ -630,9 +641,9 @@ input:checked + .slider:before { transform: translateX(10px); }
 .volume-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 10px;
-  height: 10px;
-  background: #fcd9d9;
+  width: 12px;
+  height: 12px;
+  background: #ffffff;
   border: 1px solid #ccc;
   border-radius: 50%;
   cursor: pointer;
@@ -646,5 +657,6 @@ input:checked + .slider:before { transform: translateX(10px); }
   cursor: pointer;
 }
 </style>
+
 
 

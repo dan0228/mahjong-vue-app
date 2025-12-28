@@ -276,7 +276,7 @@ onBeforeUnmount(() => {
   background-image: url('/assets/images/back/back_out.png');
   background-repeat: repeat-x;
   background-size: auto 100%; /* 高さをビューポートに合わせ、幅はアスペクト比を維持 */
-  animation: scroll-background 60s linear infinite;
+  animation: scroll-background 80s linear infinite;
   will-change: background-position;
   z-index: 0;
 }

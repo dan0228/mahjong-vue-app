@@ -373,7 +373,8 @@
     "fortune": "運勢：",
     "oracle": "お告げ：",
     "sayingNo": "No.{n}",
-    "newTag": "New！"
+    "newTag": "New！",
+    "closeButton": "閉じる"
   },
   "parentDecisionPopup": {
     "title": "ゲーム開始",

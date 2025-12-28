@@ -7,6 +7,7 @@
         <strong>{{ $t('sayingPopup.oracle') }}</strong>
         <span v-if="sayingNumber !== null">{{ $t('sayingPopup.sayingNo', { n: sayingNumber }) }}</span><span v-if="isNew" class="new-tag">{{ $t('sayingPopup.newTag') }}</span><br>{{ saying }}
       </p>
+      <button @click="$emit('close')" class="new-close-button">{{ $t('sayingPopup.closeButton') }}</button>
     </div>
   </div>
 </template>
@@ -67,28 +68,43 @@ const sayingNumber = computed(() => {
 }
 
 .popup-content {
-  background: #f3e9d2;
-  border: 5px solid #8c6f46;
-  padding: 30px 30px;
+  /* 背景画像を設定 */
+  background: url('/assets/images/back/omikuji_back.png') no-repeat center 20%; /* 垂直位置を20%（少し上）に調整 */
+  background-size: contain;
+  
+  /* 既存のボーダーや背景色は不要に */
+  border: none;
+  
+  /* テキストを画像内に配置するための調整 */
+  padding: 120px 40px 25px; /* 上の余白を増やして文字を下に移動 */
+  
+  /* 画像のアスペクト比に合わせてサイズを調整 (要調整) */
+  width: 90vw;
+  max-width: 400px;
+  aspect-ratio: 3 / 4;
+
+  /* その他スタイル */
   border-radius: 15px;
   text-align: center;
   position: relative;
-  width: 85%;
-  max-width: 450px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .fortune-text {
   font-family: 'Yuji Syuku', serif;
   font-size: 1.25rem;
-  color: #333;
+  color: #4d2c1c; /* 色を濃い茶色に変更 */
   margin-bottom: 15px;
   text-align: left;
 }
 
 .saying-text-with-prefix {
   font-family: 'Yuji Syuku', serif;
-  font-size: 1.25rem;
-  color: #333;
+  font-size: 1rem;
+  color: #4d2c1c; /* 色を濃い茶色に変更 */
   margin: 0;
   white-space: pre-wrap;
   line-height: 1.5;
@@ -122,5 +138,19 @@ const sayingNumber = computed(() => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+.new-close-button {
+  position: absolute;
+  bottom: 90px;
+  right: 35px;
+  background: none;
+  border: none;
+  font-family: 'Yuji Syuku', serif;
+  font-size: 0.85rem;
+  color: #4d2c1c;
+  cursor: pointer;
+  padding: 5px;
+  opacity: 0.9;
 }
 </style>

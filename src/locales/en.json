@@ -373,7 +373,8 @@
     "fortune": "Fortune:",
     "oracle": "Oracle:",
     "sayingNo": "No.{n}",
-    "newTag": "New!"
+    "newTag": "New!",
+    "closeButton": "CLOSE"
   },
   "parentDecisionPopup": {
     "title": "Game Start",

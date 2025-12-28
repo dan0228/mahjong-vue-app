@@ -1,22 +1,12 @@
 <template>
   <div class="shrine-view-container" :style="{ height: viewportHeight }">
     <div class="shrine-screen" :style="scalerStyle">
-      <div class="cat-coins">
-        {{ $t('shrineView.catCoins') }} <span class="cat-coins-number">{{ userStore.profile?.cat_coins || 0 }}</span>
+      <div class="user-stats">
+        <img :src="boardImageSrc" alt="Board" class="board-image" />
+        <span class="cat-coins-number-on-board">{{ userStore.profile?.cat_coins || 0 }}</span>
       </div>
       <div class="top-controls">
-        <div class="audio-toggles">
-          <label class="toggle-switch">
-            <input type="checkbox" :checked="audioStore.isBgmEnabled" @change="audioStore.toggleBgm()" />
-            <span class="slider round"></span>
-          </label>
-          <span class="toggle-label">{{ $t('shrineView.bgm') }}</span>
-          <label class="toggle-switch">
-            <input type="checkbox" :checked="audioStore.isSeEnabled" @change="audioStore.toggleSe()" />
-            <span class="slider round"></span>
-          </label>
-          <span class="toggle-label">{{ $t('shrineView.sfx') }}</span>
-        </div>
+        
         <button @click="goToTitle" class="back-button">
           <img src="/assets/images/button/buckToTitle.png" :alt="$t('shrineView.backToTitle')" />
         </button>
@@ -33,15 +23,17 @@
           </template>
         </span>
       </button>
-      <div class="sayings-container">
-        <table class="sayings-table">
-          <tbody>
-            <tr v-for="(saying, index) in sayings" :key="saying.id">
-              <td class="saying-no">{{ $t('shrineView.sayingNo', { n: index + 1 }) }}</td>
-              <td class="saying-text">{{ revealedSayings[saying.id] ? saying.text : $t('shrineView.unknownSaying') }}</td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="omikuji-board-wrapper">
+        <div class="sayings-container">
+          <table class="sayings-table">
+            <tbody>
+              <tr v-for="(saying, index) in sayings" :key="saying.id">
+                <td class="saying-no">{{ $t('shrineView.sayingNo', { n: index + 1 }) }}</td>
+                <td class="saying-text">{{ revealedSayings[saying.id] ? saying.text : $t('shrineView.unknownSaying') }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
       <transition name="fade">
         <SayingPopup
@@ -74,7 +66,7 @@ import SayingPopup from '@/components/SayingPopup.vue';
 import { useViewportHeight } from '@/composables/useViewportHeight';
 
 // --- リアクティブな状態とストア ---
-const { t, tm } = useI18n();
+const { t, tm, locale } = useI18n();
 const { viewportHeight } = useViewportHeight();
 const router = useRouter();
 const audioStore = useAudioStore();
@@ -108,6 +100,12 @@ const sayings = computed(() => {
 
 // i18nファイルから運勢リストを生成
 const fortunes = computed(() => tm('shrineView.fortunes'));
+
+const boardImageSrc = computed(() =>
+  locale.value === 'en'
+    ? '/assets/images/info/board_en.png'
+    : '/assets/images/info/board.png'
+);
 
 // --- メソッド ---
 
@@ -309,6 +307,7 @@ onBeforeUnmount(() => {
   cursor: pointer;
   margin-top: auto; /* 上の余白を自動で最大化 */
   margin-bottom: -305px; /* 下部の余白 */
+  margin-right: 70px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
   transition: all 0.2s ease;
 }
@@ -323,20 +322,39 @@ onBeforeUnmount(() => {
   box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
 }
 
+.omikuji-board-wrapper {
+  position: relative; /* 内側の要素を配置する基準 */
+  top: 10px;
+  height: 220px;
+  width: 100%;
+  margin-top: auto;
+  margin-bottom: -5px;
+  background-image: url('/assets/images/back/omikuji_board.png');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
 .sayings-container {
-  height: 130px; /* 高さを半分に */
-  width: 90%;
+  /* This is now the inner scroll box */
+  position: absolute;
+  top: 15%;    /* ボード画像の内側に合わせて微調整 */
+  left: 50%;
+  transform: translateX(-50%);
+  height: 65%;   /* 内側の高さを狭くしてスクロール量を増やす */
+  width: 90%;    /* 内側の幅を調整 */
   overflow-y: auto;
-  background-color: #fff3f3;
-  border: 5px solid #ffe600;
-  border-radius: 20px;
-  padding: 10px;
-  margin-top: auto; /* 上の余白を自動で最大化して下へプッシュ */
-  margin-bottom: 10px; /* 下部の余白 */
+  box-sizing: border-box;
+  /* 背景やボーダーは外枠に移しため削除 */
+  padding: 0 5px; /* 左右の僅かなパディング */
+  /* Firefox用のスクロールバースタイル */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
 }
 
 .sayings-table {
-  width: 100%;
+  width: 278px;
+  height: 100px;
+  margin-left: 20px;
   border-collapse: collapse;
 }
 
@@ -363,27 +381,27 @@ onBeforeUnmount(() => {
   color: hsl(0, 0%, 0%);
 }
 
-.cat-coins {
+.user-stats {
   position: absolute;
-  top: 14px;
-  left: 5px;
-  font-size: 0.7em; /* ここを修正 */
-  color: #333;
+  top: 5px;
+  left: 0px;
   z-index: 10;
-  background-color: rgba(255, 255, 255, 0.6);
-  padding: 4px 8px;
-  border-radius: 8px;
-  white-space: nowrap;
-  scale: 0.9;
-  display: flex;
-  align-items: center;
-  height: 28px;
-  box-sizing: border-box;
 }
 
-.cat-coins-number {
-  font-weight: bold;
-  color: #f59e0b; /* 黄色っぽい色 */
+.board-image {
+  width: 90px;
+  height: auto;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 1));
+}
+
+.cat-coins-number-on-board {
+  position: absolute;
+  top: 37px;
+  right: 12px;
+  font-family: 'Yuji Syuku', serif;
+  font-size: 13px;
+  color: rgb(255, 255, 255);
+  text-shadow: 3px 3px 3px #000000;
 }
 
 .top-controls {
@@ -464,13 +482,15 @@ input:checked + .slider {
 }
 
 .back-button img {
-  width: 60px; /* 必要に応じてサイズを調整 */
-  margin-left: 8px;
+  width: 100px; /* 必要に応じてサイズを調整 */
+  margin-top: 410px;
+  margin-right: -18px;
   height: auto;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 1));
 }
 
 .back-button:hover img {
-  opacity: 0.8;
+  transform: translateY(-2px);
 }
 
 .fade-overlay {
@@ -493,5 +513,19 @@ input:checked + .slider {
 
 .fade-leave-active {
   transition-duration: 0.2s;
+}
+
+/* Webkit系ブラウザ用のスクロールバースタイル */
+.sayings-container::-webkit-scrollbar {
+  width: 5px; /* スクロールバーの幅を細く */
+}
+
+.sayings-container::-webkit-scrollbar-track {
+  background: transparent; /* トラックを透明に */
+}
+
+.sayings-container::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2); /* サム（つまみ）を薄い黒に */
+  border-radius: 10px;
 }
 </style>

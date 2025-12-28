@@ -491,21 +491,7 @@ onBeforeUnmount(() => {
   align-items: flex-start; /* 左寄せにする */
   gap: 2px;
 }
-.stat-item {
-  background-color: rgba(255, 255, 255, 0.6);
-  border-radius: 5px;
-  font-size: 0.7em;
-  color: #333;
-  width: 125px;
-  padding: 1px 8px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.stat-number { font-weight: bold; }
-.max-wins-number { color: #cc6633; }
-.current-wins-number { color: #4caf50; }
-.cat-coins-number { color: #f59e0b; }
+
 
 .top-controls {
   display: flex;
@@ -520,13 +506,7 @@ onBeforeUnmount(() => {
   gap: 10px;
 }
 
-.audio-toggles {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 0.8em;
-  color: #333;
-}
+
 
 .language-selector {
   display: flex;
@@ -566,35 +546,7 @@ onBeforeUnmount(() => {
 .x-account a:hover { text-decoration: underline; }
 .version-info { margin-top: 2px; }
 
-/* トグルスイッチ */
-.toggle-switch {
-  position: relative;
-  display: inline-block;
-  width: 24px;
-  height: 14px;
-}
-.toggle-switch input { opacity: 0; width: 0; height: 0; }
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: #ccc;
-  transition: 0.4s;
-  border-radius: 14px;
-}
-.slider:before {
-  position: absolute;
-  content: '';
-  height: 10px; width: 10px;
-  left: 2px; bottom: 2px;
-  background-color: white;
-  transition: 0.4s;
-  border-radius: 50%;
-}
-input:checked + .slider { background-color: #2196f3; }
-input:focus + .slider { box-shadow: 0 0 1px #2196f3; }
-input:checked + .slider:before { transform: translateX(10px); }
-.toggle-label { vertical-align: middle; font-size: 0.9em; }
+
 
 .audio-button {
   background: none;
@@ -659,17 +611,7 @@ input:checked + .slider:before { transform: translateX(10px); }
   width: 90px;
   height: auto;
 }
-.cat-coin-stat {
-  padding: 2px 8px 2px 4px;
-  display: inline-flex;
-  align-items: center;
-  margin-top: 4px;
-}
-.cat-coin-icon {
-  width: 20px;
-  height: 20px;
-  margin-right: 4px;
-}
+
 
 .cat-coins-number-on-board {
   position: absolute;

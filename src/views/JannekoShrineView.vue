@@ -430,63 +430,6 @@ onBeforeUnmount(() => {
   margin-top: -14px; 
 }
 
-.audio-toggles {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  background-color: rgba(255, 255, 255, 0.6);
-  padding: 4px 8px;
-  border-radius: 8px;
-  height: 28px;
-  box-sizing: border-box;
-}
-
-.toggle-label {
-  font-size: 0.8em;
-  color: #333;
-}
-
-.toggle-switch {
-  position: relative;
-  display: inline-block;
-  width: 24px;
-  height: 14px;
-}
-
-.toggle-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  transition: 0.4s;
-  border-radius: 14px;
-}
-
-.slider:before {
-  position: absolute;
-  content: '';
-  height: 10px;
-  width: 10px;
-  left: 2px;
-  bottom: 2px;
-  background-color: white;
-  transition: 0.4s;
-  border-radius: 50%;
-}
-
-input:checked + .slider {
-  background-color: #2196f3;
-}
-
 .back-button {
   background: none;
   border: none;

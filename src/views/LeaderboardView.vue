@@ -33,7 +33,9 @@
         <div v-for="player in displayLeaderboard" :key="player.id" class="ranking-row" :class="{ 'is-first-place': player.isFirstPlace, 'is-second-place': player.isSecondPlace, 'is-third-place': player.isThirdPlace }">
           <span class="rank">{{ player.rank }}</span>
           <img :src="player.profile_image_url" alt="avatar" class="user-avatar" />
-          <span class="user-name">{{ player.name }}</span>
+          <div class="user-name-container">
+            <span class="user-name">{{ player.name }}</span>
+          </div>
           <span class="score">{{ player.score }}</span>
         </div>
       </div>
@@ -153,6 +155,20 @@ const displayLeaderboard = computed(() => {
   return rankedData;
 });
 
+const getCharacterWidth = (str) => {
+  let width = 0;
+  if (!str) return 0;
+  for (let i = 0; i < str.length; i++) {
+    const charCode = str.charCodeAt(i);
+    if ((charCode >= 0x0020 && charCode <= 0x007e) || (charCode >= 0xff61 && charCode <= 0xff9f)) {
+      width += 1;
+    } else {
+      width += 2;
+    }
+  }
+  return width;
+};
+
 const activeRankingTitle = computed(() => {
   if (activeRankingType.value === 'rating') {
     return t('leaderboardView.typeRating');
@@ -238,6 +254,7 @@ watch(activeRankingType, (newType) => {
 
 /* Top-right controls */
 .top-controls {
+  /* ボタンを独立して配置したため、このコンテナは現在ほぼ空 */
   position: absolute;
   top: 10px;
   right: 15px;
@@ -245,18 +262,21 @@ watch(activeRankingType, (newType) => {
   z-index: 10;
 }
 .back-button {
+  position: absolute;
+  bottom: -637px; /* 画面下からの位置 */
+  right: 28px;  /* 画面右からの位置 */
   background: none;
   border: none;
   cursor: pointer;
   padding: 0;
+  z-index: 20;
 }
 .back-button img {
   width: 90px;
   height: auto;
-  margin-right: 20px;
-  margin-top: 560px;
   filter: drop-shadow(0 0 10px rgba(255, 255, 255, 1));
   transition: all 0.2s ease;
+  /* margin-topとmargin-rightを削除 */
 }
 .back-button:hover img { transform: translateY(-4px); }
 
@@ -276,7 +296,7 @@ h1 {
   cursor: pointer;
   font-family: 'Yuji Syuku', serif;
   font-size: 1.1em;
-  color: #6b4c3c;
+  color: #291d17;
   text-shadow: 1px 1px 2px rgba(255,255,255,0.5);
   padding: 5px;
   transition: all 0.2s;
@@ -287,12 +307,12 @@ h1 {
 /* --- Japanese (Vertical) Styles --- */
 .cat-coin-toggle-button.vertical {
   writing-mode: vertical-rl;
-  top: 65px;
+  top: 68px;
   left: 58px;
 }
 .rating-toggle-button.vertical {
   writing-mode: vertical-rl;
-  top: 65px;
+  top: 72px;
   right: 62px;
 }
 
@@ -312,7 +332,9 @@ h1 {
 /* --- Active State --- */
 .cat-coin-toggle-button.active,
 .rating-toggle-button.active {
-  text-shadow: 0 0 5px #fff;
+  font-weight: bold; /* 文字を太く */
+  color: #790d0d;
+  text-shadow: 0 0 8px #fff; /* 影を少し強く */
 }
 
 /* New Ranking List Styles */
@@ -367,22 +389,25 @@ h1 {
 .is-third-place .rank { color: #cd7f32; }
 
 .user-avatar {
-  width: 30px;
-  height: 30px;
+  width: 35px;
+  height: 35px;
   border-radius: 50%;
   border: 1px solid #ccc;
   margin: 0 10px;
   flex-shrink: 0;
 }
 
-.user-name {
+.user-name-container {
   flex-grow: 1;
-  font-size: 1.1em;
-  font-weight: bold;
-  white-space: nowrap;
   text-align: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  /* overflowとwhite-spaceを削除して折り返しを許可 */
+}
+
+.user-name {
+  font-size: 1.2em;
+  font-weight: bold;
+  white-space: normal; /* 明示的に改行を許可 */
+  word-break: break-all; /* 長い単語でも強制的に改行 */
 }
 
 .score {
@@ -408,4 +433,6 @@ h1 {
   margin-top: 22px;
   margin-bottom: -56px;
 }
+
+
 </style>

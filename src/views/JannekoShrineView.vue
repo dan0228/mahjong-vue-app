@@ -400,6 +400,7 @@ onBeforeUnmount(() => {
 }
 
 .top-controls {
+  /* ボタンを独立して配置したため、このコンテナは現在空 */
   position: absolute;
   top: 10px;
   right: 15px;
@@ -413,18 +414,20 @@ onBeforeUnmount(() => {
 }
 
 .back-button {
+  position: absolute;
+  bottom: -515px; /* 画面下からの位置 */
+  right: -12px;  /* 画面右からの位置 */
   background: none;
   border: none;
   cursor: pointer;
   padding: 0;
+  z-index: 20;
 }
 
 .back-button img {
-  width: 100px;
-  margin-top: 405px;
-  margin-right: -18px;
+  width: 100px; /* サイズを調整 */
   height: auto;
-  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 1));
+  filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.5)); /* 影を調整 */
   transition: all 0.2s ease;
 }
 

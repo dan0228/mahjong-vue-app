@@ -96,7 +96,7 @@ const sayingNumber = computed(() => {
 .fortune-text {
   font-family: 'Yuji Syuku', serif;
   font-size: 1.25rem;
-  color: #4d2c1c; /* 色を濃い茶色に変更 */
+  color: #27160e; /* 色を濃い茶色に変更 */
   margin-bottom: 15px;
   text-align: left;
 }
@@ -104,7 +104,7 @@ const sayingNumber = computed(() => {
 .saying-text-with-prefix {
   font-family: 'Yuji Syuku', serif;
   font-size: 1rem;
-  color: #4d2c1c; /* 色を濃い茶色に変更 */
+  color: #27160e; /* 色を濃い茶色に変更 */
   margin: 0;
   white-space: pre-wrap;
   line-height: 1.5;

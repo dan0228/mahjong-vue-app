@@ -90,6 +90,7 @@ onMounted(async () => {
     '/assets/images/back/stock_frame.png',
     '/assets/images/back/omikuji_board.png',
     '/assets/images/back/omikuji_back.png',
+    '/assets/images/back/fude.png',
     '/assets/images/button/buckToTitle.png',
     '/assets/images/button/kan_button.png',
     '/assets/images/button/pon_button.png',

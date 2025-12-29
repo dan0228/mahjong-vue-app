@@ -202,8 +202,9 @@
     "fetchError": "Failed to fetch leaderboard.",
     "tabOverall": "Overall",
     "tabMonthly": "Monthly",
-    "typeWinStreak": "🔥Max Win Streak🔥",
-    "typeCatCoins": "　🪙Cat Coins🪙"
+    "typeWinStreak": "Max Win Streak",
+    "typeCatCoins": "Cat Coins",
+    "typeRating": "Rating"
   },
   "yaku": {
     "riichi": { "name": "Riichi" },

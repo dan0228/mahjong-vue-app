@@ -202,8 +202,9 @@
     "fetchError": "ランキングの取得に失敗しました。",
     "tabOverall": "総合",
     "tabMonthly": "月間",
-    "typeWinStreak": "🔥最大連勝数🔥",
-    "typeCatCoins": "　🪙猫コイン🪙　"
+    "typeWinStreak": "最大連勝数",
+    "typeCatCoins": "猫コイン",
+    "typeRating": "レート"
   },
   "yaku": {
     "riichi": { "name": "立直" },

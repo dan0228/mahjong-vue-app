@@ -1,6 +1,5 @@
 <template>
   <div class="leaderboard-view-container" :style="{ height: viewportHeight }">
-    <LoadingIndicator v-if="isLoading" />
     <div class="leaderboard-screen" :style="scalerStyle">
       <div class="user-stats">
         <img :src="boardImageSrc" alt="Board" class="board-image" />
@@ -29,16 +28,21 @@
 
       <h2 class="ranking-list-title">{{ activeRankingTitle }}</h2>
       <img src="/assets/images/back/fude.png" class="fude-image" alt="" />
-      <div v-if="!isLoading" class="ranking-list-container">
-        <div v-for="player in displayLeaderboard" :key="player.id" class="ranking-row" :class="{ 'is-first-place': player.isFirstPlace, 'is-second-place': player.isSecondPlace, 'is-third-place': player.isThirdPlace }">
-          <span class="rank">{{ player.rank }}</span>
-          <img :src="player.profile_image_url" alt="avatar" class="user-avatar" />
-          <div class="user-name-container">
-            <span class="user-name">{{ player.name }}</span>
+      <transition name="fade" mode="out-in">
+        <div v-if="!isLoading" class="ranking-list-container">
+          <div v-for="player in displayLeaderboard" :key="player.id" class="ranking-row" :class="{ 'is-first-place': player.isFirstPlace, 'is-second-place': player.isSecondPlace, 'is-third-place': player.isThirdPlace }">
+            <span class="rank">{{ player.rank }}</span>
+            <img :src="player.profile_image_url" alt="avatar" class="user-avatar" />
+            <div class="user-name-container">
+              <span class="user-name">{{ player.name }}</span>
+            </div>
+            <span class="score">{{ player.score }}</span>
           </div>
-          <span class="score">{{ player.score }}</span>
         </div>
-      </div>
+        <div v-else class="ranking-list-placeholder">
+          <!-- ローディング中にレイアウトが崩れないようにスペースを確保 -->
+        </div>
+      </transition>
     </div>
   </div>
 </template>
@@ -434,5 +438,22 @@ h1 {
   margin-bottom: -56px;
 }
 
+.ranking-list-placeholder {
+  width: 100%;
+  max-width: 280px;
+  height: 442px;
+  margin-top: 68px;
+  padding: 10px;
+  box-sizing: border-box;
+}
 
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 </style>

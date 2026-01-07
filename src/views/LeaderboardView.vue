@@ -68,7 +68,7 @@ const ratingLeaderboard = ref([]);
 const catCoinsLeaderboard = ref([]);
 const isLoading = ref(true);
 const error = ref(null);
-const activeRankingType = ref('rating'); // 初期表示をレートに変更
+const activeRankingType = ref('catCoins'); // 初期表示を猫コインに変更
 
 // --- 画面のスケーリング処理 ---
 const DESIGN_WIDTH = 360;

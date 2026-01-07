@@ -412,7 +412,7 @@ function getPlayerDisplayLabel(player) {
   position: absolute;
   /* 親画像 (.center-info-image) の中央を基準に配置する例 */
   /* top, left, transform で微調整 */
-  top: 50%;
+  top: 49%;
   left: 50%;
   transform: translate(-51%, -120%); /* まず中央に配置 */
   width: 40%; /* 適切なサイズに調整 */
@@ -422,7 +422,7 @@ function getPlayerDisplayLabel(player) {
 }
 .riichi-stick-base-image {
   position: absolute;
-  top: 50%;
+  top: 54%;
   left: 50%;
   transform: translate(-80%, -80%); /* 位置調整 */
   width: 27%; /* 適切なサイズに調整 */
@@ -433,7 +433,7 @@ function getPlayerDisplayLabel(player) {
 .riichi-stick-count-images {
   position: absolute;
   display: flex; /* 数字画像を横に並べる */
-  top: 50%;
+  top: 53%;
   left: 50%;
   /* zan_1000.png の上に重ねるように位置を調整 */
   transform: translate(13%, -80%); /* 位置調整*/
@@ -447,7 +447,7 @@ function getPlayerDisplayLabel(player) {
 .remaining-tiles-count-images {
   position: absolute;
   display: flex;
-  top: 50%;
+  top: 52%;
   left: 50%;
   transform: translate(-12%, 50%); /* 位置調整*/
   z-index: 3; /* 他の重なり合う画像より手前になるように調整 */

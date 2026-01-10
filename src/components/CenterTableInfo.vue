@@ -225,10 +225,10 @@ const riichiStickBaseImageSrc = computed(() => {
 const riichiStickCountImage1Src = computed(() => {
   const count = gameStore.riichiSticks;
   if (count >= 0 && count <= 9) {
-    return `/assets/images/number/${count}w.png`;
+    return `/assets/images/number/${count}b.png`;
   } else if (count >= 10) {
     const firstDigit = Math.floor(count / 10);
-    return `/assets/images/number/${firstDigit}w.png`;
+    return `/assets/images/number/${firstDigit}b.png`;
   }
   return null;
 });
@@ -240,7 +240,7 @@ const riichiStickCountImage2Src = computed(() => {
   const count = gameStore.riichiSticks;
   if (count >= 10) {
     const secondDigit = count % 10;
-    return `/assets/images/number/${secondDigit}w.png`;
+    return `/assets/images/number/${secondDigit}b.png`;
   }
   return null;
 });
@@ -260,21 +260,21 @@ const remainingTilesDigits = computed(() => {
  */
 const remainingTilesImage1Src = computed(() => {
   if (!remainingTilesDigits.value) return null;
-  return `/assets/images/number/${remainingTilesDigits.value[0]}ao.png`;
+  return `/assets/images/number/${remainingTilesDigits.value[0]}b.png`;
 });
 /**
  * 残り牌数の十の位の数字画像のパスを計算します。
  */
 const remainingTilesImage2Src = computed(() => {
   if (!remainingTilesDigits.value) return null;
-  return `/assets/images/number/${remainingTilesDigits.value[1]}ao.png`;
+  return `/assets/images/number/${remainingTilesDigits.value[1]}b.png`;
 });
 /**
  * 残り牌数の一の位の数字画像のパスを計算します。
  */
 const remainingTilesImage3Src = computed(() => {
   if (!remainingTilesDigits.value) return null;
-  return `/assets/images/number/${remainingTilesDigits.value[2]}ao.png`;
+  return `/assets/images/number/${remainingTilesDigits.value[2]}b.png`;
 });
 
 /**
@@ -415,7 +415,7 @@ function getPlayerDisplayLabel(player) {
   top: 49%;
   left: 50%;
   transform: translate(-51%, -120%); /* まず中央に配置 */
-  width: 40%; /* 適切なサイズに調整 */
+  width: 37%; /* 適切なサイズに調整 */
   height: auto;
   z-index: 2; /* 親画像より手前に表示 */
   object-fit: contain; /* 画像のアスペクト比を保つ */
@@ -423,7 +423,7 @@ function getPlayerDisplayLabel(player) {
 .riichi-stick-base-image {
   position: absolute;
   top: 54%;
-  left: 50%;
+  left: 52%;
   transform: translate(-80%, -80%); /* 位置調整 */
   width: 27%; /* 適切なサイズに調整 */
   height: auto;
@@ -433,8 +433,8 @@ function getPlayerDisplayLabel(player) {
 .riichi-stick-count-images {
   position: absolute;
   display: flex; /* 数字画像を横に並べる */
-  top: 53%;
-  left: 50%;
+  top: 53.5%;
+  left: 51%;
   /* zan_1000.png の上に重ねるように位置を調整 */
   transform: translate(13%, -80%); /* 位置調整*/
   z-index: 3; /* 供託棒ベース画像より手前 */
@@ -447,16 +447,16 @@ function getPlayerDisplayLabel(player) {
 .remaining-tiles-count-images {
   position: absolute;
   display: flex;
-  top: 52%;
+  top: 53.5%;
   left: 50%;
-  transform: translate(-12%, 50%); /* 位置調整*/
+  transform: translate(-10%, 50%); /* 位置調整*/
   z-index: 3; /* 他の重なり合う画像より手前になるように調整 */
 }
 .remaining-tiles-count-digit {
-  width: 14%; /* 適切なサイズに調整 */
+  width: 15%; /* 適切なサイズに調整 */
   height: auto;
   object-fit: contain;
-  margin: 0 1px; /* 数字間のわずかなスペース */
+  margin: 0 0px; /* 数字間のわずかなスペース */
 }
 .player-score-image-container {
   position: absolute; /* .center-image-container を基準に配置 */
@@ -471,23 +471,23 @@ function getPlayerDisplayLabel(player) {
   width: 85px;
 }
 .bottom-player-score { /* 自家点数用の追加位置調整 */
-  bottom: -29.5%; /* コンテナ下部からの位置 */
-  right: 31%;  /* コンテナ右部からの位置 */
+  bottom: -31%; /* コンテナ下部からの位置 */
+  right: 32%;  /* コンテナ右部からの位置 */
 }
 .left-player-score { /* 上家(画面左)点数用の追加位置調整 */
-  top: 57%; /* 垂直方向は中央のまま */
-  left: -4.5%; /* 左端からの距離を固定 */
+  top: 56.5%; /* 垂直方向は中央のまま */
+  left: -5%; /* 左端からの距離を固定 */
   transform: translateY(-50%) rotate(90deg); /* 垂直中央揃えと回転 */
   justify-content: flex-start; /* 左揃え（回転後は上揃え） */
 }
 .top-player-score { /* 対面(画面上)点数用の追加位置調整 */
   top: -31%;
-  left: 50%;
+  left: 49%;
   transform: translateX(-50%) rotate(180deg);
 }
 .right-player-score { /* 下家(画面右)点数用の追加位置調整 */
-  top: 43%; /* 垂直方向は中央のまま */
-  right: -4.5%; /* 右端からの距離を固定 */
+  top: 44%; /* 垂直方向は中央のまま */
+  right: -5%; /* 右端からの距離を固定 */
   transform: translateY(-50%) rotate(-90deg); /* 垂直中央揃えと回転 */
   justify-content: flex-start; /* 右揃え（回転後は上揃え） */
 }
@@ -497,17 +497,17 @@ function getPlayerDisplayLabel(player) {
   margin-right: 0px; /* 符号と数字の間 */
 }
 .bottom-player-score .score-sign-image, .vertical-player-score .score-sign-image {
-  width: 12.5px; /* 固定幅に変更 */
+  width: 12px; /* 固定幅に変更 */
 }
 .bottom-player-score .score-digit-image,
 .vertical-player-score .score-digit-image {
-  width: 12.5px; /* 固定幅に変更 */
+  width: 12px; /* 固定幅に変更 */
 }
 .side-player-score .score-digit-image {
-  width: 12.5px; /* 固定幅に変更 */
+  width: 12px; /* 固定幅に変更 */
 }
 .side-player-score .score-sign-image {
-  width: 12.5px; /* 固定幅に変更 */
+  width: 12px; /* 固定幅に変更 */
 }
 .score-digit-image { /* 共通スタイル */
   height: auto;
@@ -521,13 +521,13 @@ function getPlayerDisplayLabel(player) {
   z-index: 4; /* 点数表示と同等か、少し手前/奥に調整 */
 }
 .bottom-riichi-stick {
-  bottom: 6.5%; /* 自家点数表示の上あたり */
-  left: 50%;
+  bottom: 6%; /* 自家点数表示の上あたり */
+  left: 50.5%;
   transform: translateX(-50%);
 }
 .left-riichi-stick {
   top: 50%;
-  left: -13.5%; /* 上家点数表示の右あたり */
+  left: -13%; /* 上家点数表示の右あたり */
   transform: translateY(-50%) rotate(90deg);
 }
 .top-riichi-stick {

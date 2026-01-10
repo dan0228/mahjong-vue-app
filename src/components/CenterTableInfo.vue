@@ -407,6 +407,7 @@ function getPlayerDisplayLabel(player) {
   height: 100%;
   object-fit: contain;
   z-index: 1;
+  filter: drop-shadow(0px 0px 3px rgba(0, 0, 0, 0.8));
 }
 .round-indicator-image {
   position: absolute;
@@ -548,6 +549,7 @@ function getPlayerDisplayLabel(player) {
   transform-origin: bottom left; /* 回転の基点を左下にする */
   display: flex;
   z-index: 5; /* 他の情報より手前に表示 */
+  filter: drop-shadow(0px -3px 4px rgba(0, 0, 0, 0.8));
 }
 
 .dead-wall-tile-pair {

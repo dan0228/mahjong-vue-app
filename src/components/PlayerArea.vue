@@ -441,12 +441,14 @@ function getMeldTileAlt(meld, tile, tileIndex) {
   align-items: center;
   min-width: 200px; /* 手牌4枚分 (50px * 4) */
   min-height: 70px; /* 牌の高さ */
+  filter: drop-shadow(0px 3px 2px rgba(0, 0, 0, 0.8));
 }
 .player-area-top > .player-game-elements {
   flex-direction: column-reverse;
   align-items: center;
   min-width: 96px; /* 手牌4枚分 (24px * 4) */
   min-height: 35px; /* 牌の高さ */
+  filter: drop-shadow(0px -3px 2px rgba(0, 0, 0, 0.8));
 }
 .player-area-left > .player-game-elements {
   flex-direction: row-reverse;
@@ -454,6 +456,7 @@ function getMeldTileAlt(meld, tile, tileIndex) {
   width: fit-content; /* このコンテナも内容に合わせる */
   min-width: 35px; /* 牌の幅 */
   min-height: 96px; /* 手牌4枚分 (24px * 4) */
+  filter: drop-shadow(-3px 0px 2px rgba(0, 0, 0, 0.8));
 }
 .player-area-right > .player-game-elements {
   flex-direction: row;
@@ -461,6 +464,7 @@ function getMeldTileAlt(meld, tile, tileIndex) {
   width: fit-content; /* このコンテナも内容に合わせる */
   min-width: 35px; /* 牌の幅 */
   min-height: 96px; /* 手牌4枚分 (24px * 4) */
+  filter: drop-shadow(3px 0px 2px rgba(0, 0, 0, 0.8));
 }
 
 /* 左右プレイヤーのエリア全体の幅を内容に合わせる */
@@ -778,6 +782,7 @@ function getMeldTileAlt(meld, tile, tileIndex) {
 
 .stock-frame-image {
   opacity: 1;
+  filter: drop-shadow(0px 0px 2px rgba(0, 0, 0, 0.8));
 }
 
 .stocked-tile-content {

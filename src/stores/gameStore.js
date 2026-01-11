@@ -1147,10 +1147,8 @@ export const useGameStore = defineStore('game', {
       }
 
       const audioStore = useAudioStore();
-      if (audioStore.isSeEnabled && !isStocking) {
-        const audio = new Audio('/assets/sounds/打牌.mp3');
-        audio.volume = audioStore.volume;
-        audio.play();
+      if (!isStocking) {
+        audioStore.playSound('打牌.mp3');
       }
 
       const runDiscardLogic = () => {

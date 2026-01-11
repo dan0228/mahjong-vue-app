@@ -723,20 +723,24 @@
 }
 
 .riichi-slide-animation {
-  animation: riichi-slide 1.5s ease-in-out forwards;
+  /* 変更: cubic-bezier を使用し、キーフレームを調整 */
+  animation: riichi-slide 1.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
 @keyframes riichi-slide {
   0% {
     transform: translate(-50%, 100%);
   }
-  20.0% { /* 0.3s / 1.5s */
+  20% { /* 素早く登場して少し通り過ぎる */
+    transform: translate(-50%, -3%);
+  }
+  25% { /* 軽く戻って静止 */
     transform: translate(-50%, 0);
   }
-  80.0% { /* 1.2s / 1.5s */
+  80% { /* 静止状態を維持 */
     transform: translate(-50%, 0);
   }
-  100% {
+  100% { /* 再び画面外へ */
     transform: translate(-50%, 100%);
   }
 }
@@ -758,20 +762,24 @@
 }
 
 .riichi-slide-animation-top {
-  animation: riichi-slide-top 1.5s ease-in-out forwards;
+  /* 変更: cubic-bezier を使用し、キーフレームを調整 */
+  animation: riichi-slide-top 1.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
 @keyframes riichi-slide-top {
   0% {
     transform: translate(-50%, -100%);
   }
-  20.0% {
+  20% { /* 素早く登場して少し通り過ぎる */
+    transform: translate(-50%, 3%);
+  }
+  25% { /* 軽く戻って静止 */
     transform: translate(-50%, 0);
   }
-  80.0% {
+  80% { /* 静止状態を維持 */
     transform: translate(-50%, 0);
   }
-  100% {
+  100% { /* 再び画面外へ */
     transform: translate(-50%, -100%);
   }
 }
@@ -790,20 +798,24 @@
 }
 
 .riichi-slide-animation-right {
-  animation: riichi-slide-right 1.5s ease-in-out forwards;
+  /* 変更: cubic-bezier を使用し、キーフレームを調整 */
+  animation: riichi-slide-right 1.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
 @keyframes riichi-slide-right {
   0% {
     transform: translate(100%, -50%);
   }
-  20.0% {
+  20% { /* 素早く登場して少し通り過ぎる */
+    transform: translate(-3%, -50%);
+  }
+  25% { /* 軽く戻って静止 */
     transform: translate(0, -50%);
   }
-  80.0% {
+  80% { /* 静止状態を維持 */
     transform: translate(0, -50%);
   }
-  100% {
+  100% { /* 再び画面外へ */
     transform: translate(100%, -50%);
   }
 }
@@ -822,20 +834,24 @@
 }
 
 .riichi-slide-animation-left {
-  animation: riichi-slide-left 1.5s ease-in-out forwards;
+  /* 変更: cubic-bezier を使用し、キーフレームを調整 */
+  animation: riichi-slide-left 1.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
 @keyframes riichi-slide-left {
   0% {
     transform: translate(-100%, -50%);
   }
-  20.0% {
+  20% { /* 素早く登場して少し通り過ぎる */
+    transform: translate(3%, -50%);
+  }
+  25% { /* 軽く戻って静止 */
     transform: translate(0, -50%);
   }
-  80.0% {
+  80% { /* 静止状態を維持 */
     transform: translate(0, -50%);
   }
-  100% {
+  100% { /* 再び画面外へ */
     transform: translate(-100%, -50%);
   }
 }
@@ -904,12 +920,12 @@
 
 .cat-icon {
   position: absolute;
-  width: 80px; /* アイコンのサイズ */
-  height: 80px; /* アイコンのサイズ */
+  width: 70px; /* アイコンのサイズ */
+  height: 70px; /* アイコンのサイズ */
   object-fit: cover;
   z-index: 15; /* 他のUI要素より手前に表示 */
   background-color: white; /* 白背景 */
-  border: 1px solid #ccc; /* 1pxの縁 */
+  border: 3px solid #ccc; /* 縁 */
   border-radius: 6px; /* 角を丸く */
 }
 
@@ -990,14 +1006,14 @@
 }
 
 .cat-icon-top {
-  top: -35px;
+  top: -38px;
   left: 50%;
   transform: translate(-50%, -50%);
 }
 
 .cat-icon-right {
   top: -90px;
-  right: -40px;
+  right: -36px;
   transform: translate(-50%, -50%);
 }
 
@@ -1008,7 +1024,7 @@
   top: -120px;
   right: -65px;
   transform: translate(-50%, -50%);
-  scale: 0.9; /* 自分のアイコンは少し小さく */
+  scale: 1; /* 自分のアイコンは少し小さく */
 
 }   
 

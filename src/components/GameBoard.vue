@@ -867,11 +867,11 @@
 }
 .ron-indicator-left {
   top: 50%;
-  left: 22%;
+  left: 30%;
 }
 .ron-indicator-right {
   top: 53%;
-  left: 78%;
+  left: 70%;
 }
 
 .game-board-top-left-buttons {

@@ -154,6 +154,8 @@ onMounted(async () => {
     '/assets/images/info/logo-black.png',
     '/assets/images/info/board.png',
     '/assets/images/info/board_en.png',
+    '/assets/images/info/OGP.png',
+    '/assets/images/info/X_tag.png',
     '/assets/images/number/-.png',
     '/assets/images/number/0.png',
     '/assets/images/number/1.png',

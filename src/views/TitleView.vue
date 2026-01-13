@@ -234,18 +234,30 @@ const handleVolumeChange = (event) => {
 // --- 画面のスケーリング処理 ---
 const DESIGN_WIDTH = 360;
 const DESIGN_HEIGHT = 640;
-const scaleFactor = ref(1);
+
+/**
+ * 現在のウィンドウサイズに基づいて適切なスケール値を計算します。
+ * @returns {number} 計算されたスケール値
+ */
+const calculateScaleFactor = () => {
+  if (typeof window === 'undefined') return 1; // SSRガード
+  const currentWidth = window.innerWidth;
+  const currentHeight = window.innerHeight;
+  const scaleX = currentWidth / DESIGN_WIDTH;
+  const scaleY = currentHeight / DESIGN_HEIGHT;
+  return Math.min(scaleX, scaleY);
+};
+
+// コンポーネント初期化時に正しいスケール値を設定
+const scaleFactor = ref(calculateScaleFactor());
 
 const scalerStyle = computed(() => ({
   transform: `translate(-50%, -50%) scale(${scaleFactor.value})`,
 }));
 
+// リサイズイベント用にスケールを更新する関数
 const updateScaleFactor = () => {
-  const currentWidth = window.innerWidth;
-  const currentHeight = window.innerHeight;
-  const scaleX = currentWidth / DESIGN_WIDTH;
-  const scaleY = currentHeight / DESIGN_HEIGHT;
-  scaleFactor.value = Math.min(scaleX, scaleY);
+  scaleFactor.value = calculateScaleFactor();
 };
 
 // --- ライフサイクルフック ---
@@ -260,7 +272,7 @@ onMounted(async () => {
     await userStore.registerAsGuest();
   }
 
-  updateScaleFactor();
+  // 初期スケールは既に設定済みのため、ここではリサイズイベントのリスナーを追加するだけ
   window.addEventListener('resize', updateScaleFactor);
 });
 

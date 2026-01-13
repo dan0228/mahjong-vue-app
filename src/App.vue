@@ -69,7 +69,7 @@ onMounted(async () => {
   // ブラウザのタブが非表示になった際に音声を停止するためのイベントリスナー
   document.addEventListener('visibilitychange', audioStore.handleVisibilityChange);
 
-  // --- アセットのプリロード ---
+  // --- アセットのプリロード定義 ---
   const imagePaths = [
     '/assets/images/back/loading.png',
     '/assets/images/back/back_out_shrine.png',
@@ -240,41 +240,48 @@ onMounted(async () => {
     '/assets/sounds/Percussive_Accent04-3(High).mp3',
   ];
 
+  // --- 並列処理の定義 ---
+
+  // プログレスバーの更新関数
   const totalAssets = imagePaths.length + audioPaths.length;
   let loadedAssets = 0;
-
   const updateOverallProgress = () => {
-    loadedAssets++;
-    loadingProgress.value = (loadedAssets / totalAssets) * 100;
+    // ユーザー登録処理はアセット数に含まれないため、プログレスが100%に達しない可能性がある。
+    // そのため、99%で一度停止させ、最後にfinallyブロックで100%にする。
+    if (loadingProgress.value < 99) {
+      loadedAssets++;
+      loadingProgress.value = (loadedAssets / totalAssets) * 100;
+    }
   };
 
-  try {
-    // アセットのプリロードとユーザー情報の取得を並行して実行
-    await Promise.all([
-      preloadImages(imagePaths, updateOverallProgress),
-      audioStore.preloadAudio(audioPaths, updateOverallProgress),
-      userStore.fetchUserProfile()
-    ]);
+  // 1. アセット読み込み処理
+  const assetLoadingPromise = Promise.all([
+    preloadImages(imagePaths, updateOverallProgress),
+    audioStore.preloadAudio(audioPaths, updateOverallProgress),
+  ]);
 
-    // ユーザープロファイルが取得できなかった場合、ゲストとして自動登録
+  // 2. ユーザー情報取得・登録処理
+  const userSetupPromise = (async () => {
+    await userStore.fetchUserProfile({ showLoading: false }); // この処理自体ではローディングを出さない
     if (!userStore.profile) {
       await userStore.registerAsGuest();
     }
-    
-    // ユーザー登録/取得が完了したので、PWAポップアップを表示
-    showAddToHomeScreenPopup.value = true;
+  })(); // 即時実行の非同期関数
 
+  // --- 並列処理の実行と完了待機 ---
+  try {
+    // アセット読み込みとユーザー設定の両方が完了するのを待つ
+    await Promise.all([assetLoadingPromise, userSetupPromise]);
   } catch (error) {
     console.error('初期読み込み処理でエラーが発生しました:', error);
-    // エラーが起きてもポップアップは表示する（フォールバック）
-    showAddToHomeScreenPopup.value = true;
   } finally {
     // すべての初期化処理が終わったので、ローディング画面を非表示にする
     // プログレスバーを100%にしてから少し待つとUXが良い
     loadingProgress.value = 100;
-    isLoading.value = false;
     setTimeout(() => {
-      isLoading.value = false;
+      isLoading.value = false; // まずローディング画面を非表示に
+      // その後、ポップアップを表示（エラー時もここを通る）
+      showAddToHomeScreenPopup.value = true;
     }, 300);
   }
 });

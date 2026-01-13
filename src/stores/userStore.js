@@ -419,8 +419,14 @@ export const useUserStore = defineStore('user', () => {
   async function updateUserEmail(newEmail, t) {
     loading.value = true;
     try {
+      // 確認後のリダイレクト先を明示的に指定
+      const redirectTo = `${window.location.origin}/#/email-confirmed`;
+
       // 事前チェックを削除し、Supabaseの組み込みエラー処理に一本化
-      const { data, error } = await supabase.auth.updateUser({ email: newEmail });
+      const { data, error } = await supabase.auth.updateUser(
+        { email: newEmail },
+        { emailRedirectTo: redirectTo } // オプションを追加
+      );
       if (error) throw error; // 重複メールなどのエラーはここでキャッチされる
 
       console.log('メールアドレス更新リクエスト成功:', data);

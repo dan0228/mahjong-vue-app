@@ -893,9 +893,11 @@
   cursor: pointer;
   pointer-events: auto;
   transition: all 0.2s ease;
+  filter: drop-shadow(0px 0px 3px rgba(0, 0, 0, 0.8));
 }
 .info-button-image:hover {
   transform: translateY(-4px);
+  filter: drop-shadow(0px 0px 3px rgba(0, 0, 0, 0.8));
 }
 
 .game-board-header {
@@ -913,9 +915,11 @@
   display: block; /* imgタグの余分なスペースを消すため */
   pointer-events: auto !important; /* マウスイベントを強制的に有効化 */
   transition: all 0.2s ease;
+  filter: drop-shadow(0px 0px 3px rgba(0, 0, 0, 0.8));
 }
 .return-button-image:hover {
   transform: translateY(-4px);
+  filter: drop-shadow(0px 0px 3px rgba(0, 0, 0, 0.8));
 }
 
 .cat-icon {
@@ -947,7 +951,7 @@
 
 .bottom-furiten {
   /* 手牌の前に表示されるように調整 */
-  bottom: 120px; /* 手牌の高さや位置に応じて調整 */
+  bottom: 140px; /* 手牌の高さや位置に応じて調整 */
   left: 58%;
   transform: translateX(-50%);
 }

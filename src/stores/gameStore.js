@@ -2157,7 +2157,8 @@ export const useGameStore = defineStore('game', {
         console.error("Kakan declaration invalid. Player or tile not found.");
         return;
       }
-      const ponMeldIndex = player.melds.findIndex(m => m.type === 'pon' && mahjongLogic.getTileKey(m.tiles[0]) === mahjongLogic.getTileKey(tileToKakan));
+      const kakanKey = mahjongLogic.getTileKey(tileToKakan);
+      const ponMeldIndex = player.melds.findIndex(m => m.type === 'pon' && mahjongLogic.getTileKey(m.tiles[0]) === kakanKey);
       if (ponMeldIndex === -1) {
         console.error("Kakan failed: Corresponding Pon meld not found.");
         return;

@@ -53,13 +53,13 @@
         <img v-if="canDeclareAnkan" :src="t('playerArea.kanButtonImg')" :alt="t('playerArea.ankan')" class="action-image-button" @click="emitAction('ankan')" />
         <img v-if="canDeclareKakan && !player.isRiichi && !player.isDoubleRiichi" :src="t('playerArea.kanButtonImg')" :alt="t('playerArea.kakan')" class="action-image-button" @click="emitAction('kakan')" />
         <!-- ストックアクション -->
-        <img v-if="canStockAction" :src="t('playerArea.stockButtonImg')" :alt="t('playerArea.stock')" class="action-image-button" @click="emitAction('stock')" />
+        <img v-if="canStockAction" :src="t('playerArea.stockButtonImg')" :alt="t('playerArea.stock')" class="action-image-button stock-button" @click="emitAction('stock')" />
         <!-- 他家の打牌/加槓に対するアクション -->
         <img v-if="canDeclareRon" :src="t('playerArea.ronButtonImg')" :alt="t('playerArea.ron')" class="action-image-button" @click="emitAction('ron')" />
         <img v-if="canDeclarePon && !player.isRiichi && !player.isDoubleRiichi" :src="t('playerArea.ponButtonImg')" :alt="t('playerArea.pon')" class="action-image-button" @click="emitAction('pon')" />
         <img v-if="canDeclareMinkan && !player.isRiichi && !player.isDoubleRiichi" :src="t('playerArea.kanButtonImg')" :alt="t('playerArea.kan')" class="action-image-button" @click="emitAction('minkan')" />
         <!-- スキップボタン -->
-        <img v-if="showSkipButton" :src="t('playerArea.skipButtonImg')" :alt="t('playerArea.skip')" class="action-image-button" @click="emitAction('skip')" />
+        <img v-if="showSkipButton" :src="t('playerArea.skipButtonImg')" :alt="t('playerArea.skip')" class="action-image-button skip-button" @click="emitAction('skip')" />
     </div>
   </div>
 </template>
@@ -648,8 +648,8 @@ function getMeldTileAlt(meld, tile, tileIndex) {
 /* 各ポジションごとのアクションボタンの位置調整 */
 .player-actions-bottom {
   /* 自家: 手牌の右上 */
-  top: -60%; /* 親エリアの上端から少し内側など、調整が必要 */
-  right: -30%; /* 親エリアの右端から少し内側など、調整が必要 */
+  top: -100%; /* 親エリアの上端から少し内側など、調整が必要 */
+  right: -14%; /* 親エリアの右端から少し内側など、調整が必要 */
   /* transform: translate(X, Y); で微調整も可能 */
   flex-direction: row; /* ボタンを横に並べる */
   justify-content: flex-end;
@@ -686,7 +686,7 @@ function getMeldTileAlt(meld, tile, tileIndex) {
 }
 .action-image-button {
   /* ボタン画像を適切なサイズに調整 */
-  width: 84px; /* 例: 幅60px (調整可能) */
+  width: 100px; /* 例: 幅60px (調整可能) */
   height: auto; /* 高さは自動 */
   cursor: pointer;
   transition: transform 0.15s ease, filter 0.15s ease;
@@ -863,5 +863,17 @@ function getMeldTileAlt(meld, tile, tileIndex) {
 .is-waiting {
   pointer-events: none;
   opacity: 0.7;
+}
+
+.skip-button {
+  width: 85px;
+  margin-top: 2px;
+  margin-right: 6px;
+}
+
+.stock-button {
+  width: 65px;
+  height: 35px;
+  margin-right: 6px;
 }
 </style>

@@ -139,7 +139,7 @@ const navigateTo = (path) => {
 const onModeSelected = (mode) => {
   gameStore.setRuleMode(mode);
   showGameModeSelectionPopup.value = false;
-  const gameMode = 'vsCPU'; // AI対戦モードを固定
+  const gameMode = 'vsCPU'; // AI対戦モード(vsCPU)を固定、デバッグ用はallManual
   gameStore.setGameMode(gameMode);
   gameStore.resetGameForNewSession({ keepStreak: true });
   gameStore.initializeGame();

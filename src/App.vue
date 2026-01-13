@@ -18,12 +18,6 @@
   <!-- 通信中ローディングインジケーター -->
   <LoadingIndicator v-if="userStore.loading && !isLoading" />
 
-  <!-- ユーザー名登録ポップアップ -->
-  <UsernameRegistrationPopup
-    :show="showUsernamePopup"
-    @close="handleCloseUsernamePopup"
-  />
-
   <!-- ホーム画面追加ポップアップ -->
   <AddToHomeScreenPopup
     :show="showAddToHomeScreenPopup"
@@ -47,7 +41,6 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { useAudioStore } from '@/stores/audioStore';
 import { useUserStore } from '@/stores/userStore';
 import { preloadImages } from '@/utils/imageLoader';
-import UsernameRegistrationPopup from '@/components/UsernameRegistrationPopup.vue';
 import AddToHomeScreenPopup from '@/components/AddToHomeScreenPopup.vue';
 import HowToAddPopup from '@/components/HowToAddPopup.vue';
 import LoadingIndicator from '@/components/LoadingIndicator.vue';
@@ -59,7 +52,6 @@ const isEmailConfirmedPage = window.location.hash === '#/email-confirmed';
 const isLoading = ref(!isEmailConfirmedPage); // email-confirmedページでなければtrue、そうであればfalse
 
 const loadingProgress = ref(0);
-const showUsernamePopup = ref(false);
 const showAddToHomeScreenPopup = ref(false);
 const showHowToAddPopup = ref(false);
 
@@ -264,12 +256,14 @@ onMounted(async () => {
       userStore.fetchUserProfile()
     ]);
 
-    // ユーザープロファイルが取得できた後の処理
+    // ユーザープロファイルが取得できなかった場合、ゲストとして自動登録
     if (!userStore.profile) {
-      showUsernamePopup.value = true;
-    } else {
-      showAddToHomeScreenPopup.value = true;
+      await userStore.registerAsGuest();
     }
+    
+    // ユーザー登録/取得が完了したので、PWAポップアップを表示
+    showAddToHomeScreenPopup.value = true;
+
   } catch (error) {
     console.error('初期読み込み処理でエラーが発生しました:', error);
     // エラーが起きてもポップアップは表示する（フォールバック）
@@ -291,15 +285,6 @@ onUnmounted(() => {
 });
 
 // --- メソッド ---
-
-/**
- * ★追加：ユーザー名登録ポップアップを閉じ、
- * 次の「ホーム画面に追加」ポップアップを表示します。
- */
-const handleCloseUsernamePopup = () => {
-  showUsernamePopup.value = false;
-  showAddToHomeScreenPopup.value = true;
-};
 
 /**
  * 「ホーム画面に追加」ポップアップを閉じます。

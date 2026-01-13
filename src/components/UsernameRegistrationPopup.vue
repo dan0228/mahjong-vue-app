@@ -1,8 +1,7 @@
 <template>
   <div v-if="show" class="popup-overlay">
     <div class="popup-content">
-      <!-- 登録モード -->
-      <div v-if="!isLoginMode">
+      <div>
         <h2>{{ $t('usernameRegistration.title') }}</h2>
         <p>{{ $t('usernameRegistration.description') }}</p>
         <form @submit.prevent="register">
@@ -52,33 +51,6 @@
             <LoadingIndicator v-else />
           </button>
         </form>
-        <button type="button" class="toggle-mode-button" @click="toggleLoginMode">{{ $t('usernameRegistration.loginHere') }}</button>
-      </div>
-
-      <!-- ログインモード -->
-      <div v-else>
-        <h2>{{ $t('login.title') }}</h2>
-        <p>{{ $t('login.description') }}</p>
-        <form @submit.prevent="userStore.otpSent ? loginWithOtp() : sendOtp()">
-          <div class="form-group">
-            <label for="email">{{ $t('login.emailLabel') }}</label>
-            <input type="email" id="email" v-model="email" :placeholder="$t('login.emailPlaceholder')" :disabled="userStore.otpSent" />
-          </div>
-
-          <div v-if="userStore.otpSent" class="form-group">
-            <label for="otp">{{ $t('login.otpLabel') }}</label>
-            <input type="text" id="otp" v-model="otp" :placeholder="$t('login.otpPlaceholder')" />
-          </div>
-
-          <div v-if="loginError" class="error-message">{{ loginError }}</div>
-
-          <button type="submit" class="login-button" :disabled="userStore.loading || isSendingOtp || isVerifyingOtp">
-            <span v-if="!userStore.otpSent && !isSendingOtp">{{ $t('login.sendOtpButton') }}</span>
-            <span v-else-if="userStore.otpSent && !isVerifyingOtp">{{ $t('login.loginButton') }}</span>
-            <LoadingIndicator v-else />
-          </button>
-        </form>
-        <button type="button" class="toggle-mode-button" @click="toggleLoginMode">{{ $t('login.registerHere') }}</button>
       </div>
     </div>
   </div>
@@ -101,30 +73,19 @@ const userStore = useUserStore();
 const username = ref('');
 const selectedFile = ref(null);
 const previewUrl = ref(null);
-
-// --- 登録モードのメールアドレス関連 --- 
 const registerEmail = ref('');
 const registerEmailError = ref('');
 
-// --- ログイン関連の新しい状態 ---
-const isLoginMode = ref(false);
-const email = ref('');
-const otp = ref('');
-const loginError = ref('');
-const isSendingOtp = ref(false);
-const isVerifyingOtp = ref(false);
-
-// ポップアップ表示時に現在のプロフィール情報をフォームに設定
+// ポップアップ表示時に状態をリセット
 watch(() => props.show, (newValue) => {
   if (newValue) {
-    // ポップアップが開くたびに状態をリセット
     username.value = userStore.profile?.username || '';
     previewUrl.value = userStore.profile?.avatar_url || null;
     selectedFile.value = null;
     xHandleInput.value = '';
     xHandleError.value = '';
-    isLoginMode.value = false; // デフォルトは登録モード
-    resetLoginState(); // ログイン関連の状態もリセット
+    registerEmail.value = '';
+    registerEmailError.value = '';
   }
 });
 
@@ -143,50 +104,6 @@ watch(xHandleInput, () => {
   xHandleError.value = '';
 });
 
-// --- ログイン関連の新しいメソッド ---
-const resetLoginState = () => {
-  email.value = '';
-  otp.value = '';
-  loginError.value = '';
-  userStore.otpSent = false; // userStoreのotpSentもリセット
-  userStore.loginEmail = ''; // userStoreのloginEmailもリセット
-};
-
-const toggleLoginMode = () => {
-  isLoginMode.value = !isLoginMode.value;
-  resetLoginState(); // モード切り替え時にログイン状態をリセット
-};
-
-const sendOtp = async () => {
-  loginError.value = '';
-  if (!email.value) {
-    loginError.value = t('login.errors.emailRequired');
-    return;
-  }
-  isSendingOtp.value = true;
-  const result = await userStore.signInWithEmailOtp(email.value, t);
-  if (!result.success) {
-    loginError.value = result.error || t('login.errors.sendOtpFailed');
-  }
-  isSendingOtp.value = false;
-};
-
-const loginWithOtp = async () => {
-  loginError.value = '';
-  if (!email.value || !otp.value) {
-    loginError.value = t('login.errors.emailOtpRequired');
-    return;
-  }
-  isVerifyingOtp.value = true;
-  const result = await userStore.verifyEmailOtp(email.value, otp.value, t);
-  if (result.success) {
-    emit('close'); // ログイン成功でポップアップを閉じる
-  } else {
-    loginError.value = result.error || t('login.errors.verifyOtpFailed');
-  }
-  isVerifyingOtp.value = false;
-};
-
 // --- ファイル選択ハンドラ ---
 const onFileChange = async (e) => {
   xHandleError.value = '';
@@ -200,7 +117,7 @@ const onFileChange = async (e) => {
 
   try {
     const compressedBlob = await compressImage(file, 200, 200);
-    selectedFile.value = new File([compressedBlob], file.name, { type: blob.type });
+    selectedFile.value = new File([compressedBlob], file.name, { type: 'image/png' });
     previewUrl.value = URL.createObjectURL(selectedFile.value);
   } catch (error) {
     console.error('画像の圧縮に失敗しました:', error);
@@ -362,12 +279,12 @@ p { font-size: 0.9em; color: #666; margin-bottom: 20px; }
 .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9em; }
 .form-group input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
 .error-message { color: #e53935; font-size: 0.8em; margin-top: 5px; }
-.register-button, .login-button { 
+.register-button { 
   background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px;
   cursor: pointer; font-size: 1em; width: 100%; margin-top: 10px; 
 }
-.register-button:hover, .login-button:hover { background-color: #45a049; }
-.register-button:disabled, .login-button:disabled { background-color: #ccc; cursor: not-allowed; }
+.register-button:hover { background-color: #45a049; }
+.register-button:disabled { background-color: #ccc; cursor: not-allowed; }
 
 /* Avatar Styles */
 
@@ -418,18 +335,5 @@ p { font-size: 0.9em; color: #666; margin-bottom: 20px; }
 }
 .avatar-notes p {
   margin-bottom: 5px;
-}
-
-.toggle-mode-button {
-  background: none;
-  border: none;
-  color: #007bff;
-  cursor: pointer;
-  font-size: 0.9em;
-  margin-top: 15px;
-  text-decoration: underline;
-}
-.toggle-mode-button:hover {
-  color: #0056b3;
 }
 </style>

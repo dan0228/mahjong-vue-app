@@ -580,6 +580,8 @@
     "description": "👇Edit your profile information.👇",
     "saveButton": "Save",
     "cancelButton": "Cancel",
+    "logoutButton": "Logout",
+    "switchAccountButton": "Switch Account",
     "deleteAccountSection": {
       "button": "Delete Registration Info",
       "confirm": "Are you sure you want to delete your account? This will permanently delete all your data, including match history and achievements. This action cannot be undone."

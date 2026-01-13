@@ -2,6 +2,16 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { supabase } from '@/supabaseClient';
 
+// ヘルパー関数: ランダムなゲストIDを生成
+function generateGuestId() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for (let i = 0; i < 6; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
 // Supabaseのエラーメッセージをi18nキーにマッピングするヘルパー関数
 function mapSupabaseErrorMessage(errorMessage, t) {
   if (!errorMessage) return t('supabaseErrors.unknown');
@@ -447,6 +457,38 @@ export const useUserStore = defineStore('user', () => {
     await updateUserProfile({ current_win_streak: 0 }, { showLoading: false });
   }
 
+  /**
+   * 初回アクセス時にゲストとして自動登録します。
+   */
+  async function registerAsGuest() {
+    loading.value = true;
+    try {
+      const guestUsername = `Guest#${generateGuestId()}`;
+
+      // 1. 匿名ユーザーとしてサインイン
+      const { data: { user }, error: authError } = await supabase.auth.signInAnonymously();
+      if (authError) throw authError;
+
+      if (user) {
+        // 2. usersテーブルにプロフィールを作成
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert({ id: user.id, username: guestUsername, cat_coins: 2000 });
+        if (insertError) throw insertError;
+
+        // 3. 作成したプロフィールをストアに読み込む
+        await fetchUserProfile({ showLoading: false });
+
+        // 4. localStorageにも保存（既存のロジックを踏襲）
+        localStorage.setItem('mahjongUsername', guestUsername);
+      }
+    } catch (error) {
+      console.error('ゲストとしての自動登録中にエラーが発生しました:', error.message);
+    } finally {
+      loading.value = false;
+    }
+  }
+
   return {
     profile,
     loading,
@@ -470,5 +512,6 @@ export const useUserStore = defineStore('user', () => {
     showPenaltyPopup,
     setShowPenaltyPopup,
     resetWinStreak, // 連勝数リセットアクションを公開
+    registerAsGuest, // 新しいアクションを公開
   };
 });

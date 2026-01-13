@@ -249,9 +249,17 @@ const updateScaleFactor = () => {
 };
 
 // --- ライフサイクルフック ---
-onMounted(() => {
+onMounted(async () => {
   isMobileDevice.value = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  userStore.fetchUserProfile({ showLoading: false });
+  
+  // まずユーザー情報を取得しようと試みる
+  await userStore.fetchUserProfile({ showLoading: false });
+
+  // ユーザー情報がなければ、新しいゲストとして自動登録
+  if (!userStore.profile) {
+    await userStore.registerAsGuest();
+  }
+
   updateScaleFactor();
   window.addEventListener('resize', updateScaleFactor);
 });

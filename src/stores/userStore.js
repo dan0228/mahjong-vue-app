@@ -419,21 +419,10 @@ export const useUserStore = defineStore('user', () => {
   async function updateUserEmail(newEmail, t) {
     loading.value = true;
     try {
-      // 1. 新しいメールアドレスが既に登録されていないかチェック
-      const { data: emailExists, error: rpcError } = await supabase.rpc('check_email_exists', { email_address: newEmail });
-
-      if (rpcError) {
-        console.error('RPCエラー (check_email_exists):', rpcError);
-        throw rpcError;
-      }
-
-      // 既に登録されているメールアドレスで、かつそれが現在のユーザーのメールアドレスではない場合
-      if (emailExists && newEmail !== profile.value?.email) {
-        return { success: false, error: mapSupabaseErrorMessage('Email already registered', t) };
-      }
-
+      // 事前チェックを削除し、Supabaseの組み込みエラー処理に一本化
       const { data, error } = await supabase.auth.updateUser({ email: newEmail });
-      if (error) throw error;
+      if (error) throw error; // 重複メールなどのエラーはここでキャッチされる
+
       console.log('メールアドレス更新リクエスト成功:', data);
       // メールアドレス変更の場合、確認メールが送信されるため、
       // ユーザーはメール内のリンクをクリックして変更を確定する必要がある。
@@ -442,7 +431,7 @@ export const useUserStore = defineStore('user', () => {
       return { success: true };
     } catch (error) {
       console.error('メールアドレス更新エラー:', error.message);
-      // エラーメッセージをi18nキーにマッピング
+      // Supabaseからのエラーをマッピングして返す
       return { success: false, error: mapSupabaseErrorMessage(error.message, t) };
     } finally {
       loading.value = false;

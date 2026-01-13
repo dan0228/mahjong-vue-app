@@ -15,6 +15,9 @@
     </transition>
   </router-view>
 
+  <!-- 遷移用オーバーレイ -->
+  <div class="transition-overlay" :class="{ active: isTransitioning }"></div>
+
   <!-- 通信中ローディングインジケーター -->
   <LoadingIndicator v-if="userStore.loading && !isLoading" />
 
@@ -50,6 +53,7 @@ import PenaltyPopup from '@/components/PenaltyPopup.vue';
 // #/email-confirmed への直接アクセスの場合、ローディング画面を最初から表示しない
 const isEmailConfirmedPage = window.location.hash === '#/email-confirmed';
 const isLoading = ref(!isEmailConfirmedPage); // email-confirmedページでなければtrue、そうであればfalse
+const isTransitioning = ref(false); // ★追加: 画面遷移アニメーションの状態
 
 const loadingProgress = ref(0);
 const showAddToHomeScreenPopup = ref(false);
@@ -275,13 +279,21 @@ onMounted(async () => {
   } catch (error) {
     console.error('初期読み込み処理でエラーが発生しました:', error);
   } finally {
-    // すべての初期化処理が終わったので、ローディング画面を非表示にする
-    // プログレスバーを100%にしてから少し待つとUXが良い
+    // ★修正: 演出的な画面遷移を実行
     loadingProgress.value = 100;
     setTimeout(() => {
-      isLoading.value = false; // まずローディング画面を非表示に
-      // その後、ポップアップを表示（エラー時もここを通る）
-      showAddToHomeScreenPopup.value = true;
+      isTransitioning.value = true; // 白いオーバーレイのアニメーションを開始
+
+      // アニメーションの中間（画面が真っ白）でローディング画面を非表示にする
+      setTimeout(() => {
+        isLoading.value = false;
+      }, 750); // 1.5秒アニメーションの半分
+
+      // アニメーション終了後
+      setTimeout(() => {
+        isTransitioning.value = false; // オーバーレイを非表示に
+        showAddToHomeScreenPopup.value = true; // ポップアップを表示
+      }, 1500); // アニメーション時間と一致させる
     }, 300);
   }
 });
@@ -377,6 +389,36 @@ body {
 .loading-text {
   font-size: 1.2em;
 }
+
+/* --- ★追加: 遷移アニメーション --- */
+.transition-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: white;
+  opacity: 0;
+  z-index: 10000; /* 全ての要素の最前面 */
+  pointer-events: none; /* クリックイベントを透過させる */
+}
+
+.transition-overlay.active {
+  animation: glow-and-fade 1.5s ease-in-out forwards;
+}
+
+@keyframes glow-and-fade {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
 
 /* --- ルートトランジション --- */
 .fade-enter-active,

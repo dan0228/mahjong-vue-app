@@ -51,7 +51,7 @@ import PenaltyPopup from '@/components/PenaltyPopup.vue';
 
 // --- リアクティブな状態 ---
 // #/email-confirmed への直接アクセスの場合、ローディング画面を最初から表示しない
-const isEmailConfirmedPage = window.location.hash === '#/email-confirmed';
+const isEmailConfirmedPage = window.location.hash.startsWith('#/email-confirmed');
 const isLoading = ref(!isEmailConfirmedPage); // email-confirmedページでなければtrue、そうであればfalse
 const isTransitioning = ref(false); // ★追加: 画面遷移アニメーションの状態
 

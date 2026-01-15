@@ -7,6 +7,7 @@
         <span class="cat-coins-number-on-board">{{ userStore.profile?.cat_coins || 0 }}</span>
       </div>
       <div class="top-controls">
+        <h2 class="top-30-text">TOP30</h2>
         <button @click="goBack" class="back-button">
           <img src="/assets/images/button/buckToTitle.png" :alt="$t('shrineView.backToTitle')" />
         </button>
@@ -258,21 +259,29 @@ watch(activeRankingType, (newType) => {
 
 /* Top-right controls */
 .top-controls {
-  /* ボタンを独立して配置したため、このコンテナは現在ほぼ空 */
   position: absolute;
-  top: 10px;
-  right: 15px;
+  top: 567px; /* 画面下からの位置を調整 */
+  left: 67%; /* 中央寄せの基準 */
+  transform: translateX(-50%); /* 中央寄せ */
   display: flex;
+  align-items: center;
+  gap: 10px; /* テキストとボタンの間隔 */
   z-index: 10;
 }
+.top-30-text {
+  font-family: 'Yuji Syuku', serif;
+  font-size: 1.0em;
+  color: #441800;
+  text-shadow: 1px 1px 2px rgba(255,255,255,0.5);
+  margin: 0; /* デフォルトのマージンをリセット */
+}
 .back-button {
-  position: absolute;
-  bottom: -637px; /* 画面下からの位置 */
-  right: 28px;  /* 画面右からの位置 */
+  position: static; /* top-controlsのflexbox内で配置するためstaticに */
   background: none;
   border: none;
   cursor: pointer;
   padding: 0;
+  margin-bottom: 20px;
   z-index: 20;
 }
 .back-button img {
@@ -384,7 +393,7 @@ h1 {
 .rank {
   font-size: 1.6em;
   font-weight: bold;
-  width: 35px;
+  width: 30px;
   text-align: center;
   flex-shrink: 0;
 }

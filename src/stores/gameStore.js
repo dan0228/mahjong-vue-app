@@ -526,7 +526,7 @@ export const useGameStore = defineStore('game', {
 
         const { data: profiles, error: profileError } = await supabase
           .from('users')
-          .select('id, username, avatar_url')
+          .select('id, username, avatar_url, cat_coins, rating')
           .in('id', playerIds);
 
         if (profileError || !profiles) {
@@ -541,6 +541,8 @@ export const useGameStore = defineStore('game', {
             id: id,
             name: profile?.username || 'プレイヤー',
             avatar_url: profile?.avatar_url,
+            cat_coins: profile?.cat_coins || 0, // 追加
+            rating: profile?.rating || 1500,     // 追加
             hand: [], discards: [], melds: [], isDealer: false, score: 50000, seatWind: null,
             stockedTile: null, isUsingStockedTile: false, isStockedTileSelected: false
           };
@@ -649,23 +651,53 @@ export const useGameStore = defineStore('game', {
 
       if (this.dealerIndex === null) {
         const shuffledAis = [...allAiPlayers].sort(() => 0.5 - Math.random());
-        const selectedAis = shuffledAis.slice(0, 3).map((ai, index) => ({
-          id: `player${index + 2}`,
-          name: ai.name,
-          originalId: ai.originalId,
-          hand: [],
-          discards: [],
-          melds: [],
-          isDealer: false,
-          score: 50000,
-          seatWind: null,
-          stockedTile: null,
-          isUsingStockedTile: false,
-          isStockedTileSelected: false
-        }));
+        const selectedAis = shuffledAis.slice(0, 3).map((ai, index) => {
+          let catCoins = 0;
+          let rating = 0;
+          switch (ai.originalId) {
+            case 'kuro':
+              catCoins = 4583;
+              rating = 1671;
+              break;
+            case 'tora':
+              catCoins = 2292;
+              rating = 1421;
+              break;
+            case 'tama':
+              catCoins = 6372;
+              rating = 1584;
+              break;
+            case 'janneko':
+              catCoins = 9235;
+              rating = 1883;
+              break;
+            default:
+              catCoins = 0;
+              rating = 1500;
+          }
+
+          return {
+            id: `player${index + 2}`,
+            name: ai.name,
+            originalId: ai.originalId,
+            hand: [],
+            discards: [],
+            melds: [],
+            isDealer: false,
+            score: 50000,
+            seatWind: null,
+            stockedTile: null,
+            isUsingStockedTile: false,
+            isStockedTileSelected: false,
+            cat_coins: catCoins,
+            rating: rating,
+          };
+        });
 
         if (userStore.profile) {
           this.players[0].name = userStore.profile.username;
+          this.players[0].cat_coins = userStore.profile.cat_coins; // 追加
+          this.players[0].rating = userStore.profile.rating;       // 追加
         }
 
         this.players = [

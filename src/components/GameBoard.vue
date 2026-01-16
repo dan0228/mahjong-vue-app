@@ -19,7 +19,7 @@
 
       <!-- 画面の一番下に表示 -->
       <div class="player-area-container bottom-player-container" v-if="playerAtBottom">
-        <img :src="playerIcon(playerAtBottom)" alt="Player Icon" class="cat-icon cat-icon-bottom" />
+        <img :src="playerIcon(playerAtBottom)" alt="Player Icon" class="cat-icon cat-icon-bottom" @click="openPlayerInfoPopup(playerAtBottom)" />
         <!-- フリテン表示 -->
         <img v-if="isMyPlayerInFuriTen" :src="t('gameBoard.furitenImg')" :alt="t('gameBoard.furiten')" class="furiten-indicator bottom-furiten" />
         <!-- Debugging: Log values before accessing isTenpaiDisplay -->
@@ -31,7 +31,7 @@
       <!-- 中央エリア (左右プレイヤーと中央テーブル) -->
       <div class="middle-row">
         <div class="player-area-container left-player-container" v-if="playerAtLeft">
-          <img :src="playerIcon(playerAtLeft)" :alt="t('gameBoard.leftPlayerIcon')" :class="{'cat-icon-left-flipped': isKuroAtLeft}" class="cat-icon cat-icon-left" />
+          <img :src="playerIcon(playerAtLeft)" :alt="t('gameBoard.leftPlayerIcon')" :class="{'cat-icon-left-flipped': isKuroAtLeft}" class="cat-icon cat-icon-left" @click="openPlayerInfoPopup(playerAtLeft)" />
           <img v-if="isLeftPlayerInFuriTen" :src="t('gameBoard.furitenImg')" :alt="t('gameBoard.furiten')" class="furiten-indicator left-furiten" />
           <img v-if="gameStore.isTenpaiDisplay[playerAtLeft.id]" :src="t('gameBoard.tenpaiImg')" :alt="t('gameBoard.tenpai')" class="tenpai-indicator left-tenpai" />
           <PlayerArea :player="playerAtLeft" position="left" :is-my-hand="determineIsMyHand(playerAtLeft.id)" :drawn-tile-display="drawnTileForPlayer(playerAtLeft.id)" :can-discard="canPlayerDiscard(playerAtLeft.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
@@ -44,7 +44,7 @@
           </div>
         </div>
         <div class="player-area-container right-player-container" v-if="playerAtRight">
-         <img :src="playerIcon(playerAtRight)" :alt="t('gameBoard.rightPlayerIcon')" :class="{'cat-icon-right-flipped': isToraAtRight}" class="cat-icon cat-icon-right" />
+         <img :src="playerIcon(playerAtRight)" :alt="t('gameBoard.rightPlayerIcon')" :class="{'cat-icon-right-flipped': isToraAtRight}" class="cat-icon cat-icon-right" @click="openPlayerInfoPopup(playerAtRight)" />
          <img v-if="isRightPlayerInFuriTen" :src="t('gameBoard.furitenImg')" :alt="t('gameBoard.furiten')" class="furiten-indicator right-furiten" />
          <img v-if="gameStore.isTenpaiDisplay[playerAtRight.id]" :src="t('gameBoard.tenpaiImg')" :alt="t('gameBoard.tenpai')" class="tenpai-indicator right-tenpai" />
          <PlayerArea :player="playerAtRight" position="right" :is-my-hand="determineIsMyHand(playerAtRight.id)" :drawn-tile-display="drawnTileForPlayer(playerAtRight.id)" :can-discard="canPlayerDiscard(playerAtRight.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
@@ -53,7 +53,7 @@
 
       <!-- 画面の一番上に表示 -->
       <div class="player-area-container top-player-container" v-if="playerAtTop">
-         <img :src="playerIcon(playerAtTop)" :alt="t('gameBoard.topPlayerIcon')" class="cat-icon cat-icon-top" />
+         <img :src="playerIcon(playerAtTop)" :alt="t('gameBoard.topPlayerIcon')" class="cat-icon cat-icon-top" @click="openPlayerInfoPopup(playerAtTop)" />
          <PlayerArea :player="playerAtTop" position="top" :is-my-hand="determineIsMyHand(playerAtTop.id)" :drawn-tile-display="drawnTileForPlayer(playerAtTop.id)" :can-discard="canPlayerDiscard(playerAtTop.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
          <img v-if="isTopPlayerInFuriTen" :src="t('gameBoard.furitenImg')" :alt="t('gameBoard.furiten')" class="furiten-indicator top-furiten" />
          <img v-if="gameStore.isTenpaiDisplay[playerAtTop.id]" :src="t('gameBoard.tenpaiImg')" :alt="t('gameBoard.tenpai')" class="tenpai-indicator top-tenpai" />
@@ -123,6 +123,7 @@
         @close="handleCloseDealerDeterminationPopup"
       />
       </div> <!-- game-board-scaler の閉じタグ -->
+      <PlayerInfoPopup :show="showPlayerInfoPopup" :player="selectedPlayerForPopup" @close="closePlayerInfoPopup" />
     </div>
 </template>
   
@@ -143,6 +144,7 @@
   import ParentDecisionPopup from './ParentDecisionPopup.vue';
   import RulePopup from './RulePopup.vue';
   import YakuListPopup from './YakuListPopup.vue';
+  import PlayerInfoPopup from './PlayerInfoPopup.vue'; // PlayerInfoPopupをインポート
   // import Wall from './Wall.vue'; // 将来的に使用
   import * as mahjongLogic from '@/services/mahjongLogic'; // 役判定などに使用
   import { GAME_PHASES } from '@/stores/gameStore'; // ゲームフェーズ定数
@@ -163,6 +165,8 @@
   const showYakuListPopup = ref(false); // 役一覧ポップアップの表示状態
   const gameBoardScalerRef = ref(null); // ゲームボードのスケーリング用divへの参照
   const isFadingToFinalResult = ref(false); // 最終結果へのフェードアウト用フラグ
+  const showPlayerInfoPopup = ref(false); // プレイヤー情報ポップアップの表示状態
+  const selectedPlayerForPopup = ref(null); // ポップアップに表示するプレイヤーデータ
 
   /**
    * プレイヤー情報に基づいてアイコン画像のパスを返します。
@@ -443,7 +447,16 @@
     }
   }
 
-  // --- ポップアップの制御 --- 
+  // --- プレイヤー情報ポップアップの制御 ---
+  function openPlayerInfoPopup(player) {
+    selectedPlayerForPopup.value = player;
+    showPlayerInfoPopup.value = true;
+  }
+
+  function closePlayerInfoPopup() {
+    showPlayerInfoPopup.value = false;
+    selectedPlayerForPopup.value = null;
+  }
 
   /**
    * 和了結果ポップアップを閉じる際の処理。
@@ -451,8 +464,6 @@
   function handleCloseResultPopup() {
     gameStore.showResultPopup = false;
   }
-
-  
 
   /**
    * 親決めポップアップが閉じられた際の処理。
@@ -927,10 +938,12 @@
   width: 70px; /* アイコンのサイズ */
   height: 70px; /* アイコンのサイズ */
   object-fit: cover;
-  z-index: 15; /* 他のUI要素より手前に表示 */
+  z-index: 100; /* 他のUI要素より手前に表示 (値を大きくする) */
   background-color: white; /* 白背景 */
   border: 3px solid #ccc; /* 縁 */
   border-radius: 6px; /* 角を丸く */
+  cursor: pointer; /* クリック可能であることを示す */
+  pointer-events: auto; /* 明示的にクリックイベントを有効にする */
 }
 
 .furiten-indicator {

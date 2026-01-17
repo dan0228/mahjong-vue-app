@@ -1,26 +1,20 @@
 <template>
   <transition name="fade">
-    <div v-if="show" class="player-info-popup-overlay" @click.self="closePopup">
-      <div class="player-info-popup-content">
-        <button class="close-button" @click="closePopup">×</button>
-        <div class="player-info-header">
-          <img :src="playerIconSrc" alt="Player Avatar" class="player-avatar" />
-          <h2 class="player-name">{{ player.name }}</h2>
-        </div>
-        <div class="player-stats">
-          <div class="stat-item stat-item-main">
-            <img :src="statBoardImageSrc" alt="Player Stats Board" class="stat-board-image" />
-            <div class="stat-values-overlay">
-              <div class="stat-value-row rating-row">
-                <span class="stat-value">{{ player.rating }}</span>
-              </div>
-              <div class="stat-value-row cat-coins-row">
-                <span class="stat-value">{{ player.cat_coins }}</span>
-              </div>
+    <div v-if="show && player" class="player-info-tooltip" :style="tooltipStyle">
+      <div class="player-icon-area">
+        <img :src="playerIconSrc" alt="Player Avatar" class="player-avatar-large" />
+      </div>
+      <div class="player-details-area">
+        <h3 class="player-name-large">{{ player.name }}</h3>
+        <div class="player-stats-compact">
+          <img :src="statBoardImageSrc" alt="Player Stats Board" class="stat-board-image-compact" />
+          <div class="stat-values-overlay-compact">
+            <div class="stat-value-row-compact rating-row-compact">
+              <span class="stat-value-compact">{{ player.rating }}</span>
             </div>
-          </div>
-          <div class="stat-item stat-item-empty">
-            <!-- 右側の枠は一旦空欄 -->
+            <div class="stat-value-row-compact cat-coins-row-compact">
+              <span class="stat-value-compact">{{ player.cat_coins }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -31,7 +25,7 @@
 <script setup>
 import { defineProps, defineEmits, computed, watch } from 'vue';
 import { useUserStore } from '@/stores/userStore';
-import { useI18n } from 'vue-i18n'; // useI18nをインポート // ユーザーのデフォルトアイコン取得用
+import { useI18n } from 'vue-i18n';
 
 const props = defineProps({
   show: {
@@ -42,26 +36,37 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
+  x: { // X座標
+    type: Number,
+    default: 0,
+  },
+  y: { // Y座標
+    type: Number,
+    default: 0,
+  },
+  offsetX: { // 新しいプロパティ: X方向のオフセット
+    type: Number,
+    default: 0,
+  },
+  offsetY: { // 新しいプロパティ: Y方向のオフセット
+    type: Number,
+    default: 0,
+  },
 });
 
-const emit = defineEmits(['close']);
-const userStore = useUserStore();
-const { locale } = useI18n(); // localeを取得
+const emit = defineEmits(['close']); // closeイベントは残しておくが、GameBoard側でマウスアウトなどで制御する
 
-const closePopup = () => {
-  emit('close');
-};
+const userStore = useUserStore();
+const { locale } = useI18n();
 
 const playerIconSrc = computed(() => {
   if (props.player.avatar_url) {
     return props.player.avatar_url;
   }
-  // ゲストプレイヤーやAIプレイヤーのデフォルトアイコン
   if (props.player.originalId === 'kuro') return '/assets/images/info/cat_icon_3.png';
   if (props.player.originalId === 'tama') return '/assets/images/info/cat_icon_2.png';
   if (props.player.originalId === 'tora') return '/assets/images/info/cat_icon_1.png';
   if (props.player.originalId === 'janneko') return '/assets/images/info/cat_icon_4.png';
-  // ユーザー自身のデフォルトアイコン
   return '/assets/images/info/hito_icon_1.png';
 });
 
@@ -71,194 +76,138 @@ const statBoardImageSrc = computed(() => {
     : '/assets/images/info/board.png';
 });
 
-// ポップアップ表示時にbodyのスクロールを制御
-watch(() => props.show, (newVal) => {
-  if (newVal) {
-    document.body.style.overflow = 'hidden';
-  } else {
-    document.body.style.overflow = '';
-  }
-});
+const tooltipStyle = computed(() => ({
+  left: `${props.x}px`,
+  top: `${props.y}px`,
+  '--offset-x': `${props.offsetX}px`,
+  '--offset-y': `${props.offsetY}px`,
+}));
+
+// bodyのスクロール制御は不要になるため削除
+// watch(() => props.show, (newVal) => {
+//   if (newVal) {
+//     document.body.style.overflow = 'hidden';
+//   } else {
+//     document.body.style.overflow = '';
+//   }
+// });
 </script>
 
 <style scoped>
-.player-info-popup-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.7); /* 半透明の黒いオーバーレイ */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000; /* 最前面に表示 */
-}
-
-.player-info-popup-content {
-  background-color: #fdf8e1; /* 和風なクリーム色 */
-  border: 5px solid #8b4513; /* 茶色の枠線 */
-  border-radius: 15px;
-  padding: 25px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-  text-align: center;
-  position: relative;
-  width: 80%;
-  max-width: 300px;
-  font-family: 'M PLUS Rounded 1c', sans-serif;
-  color: #333;
-  animation: popup-scale-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.close-button {
+.player-info-tooltip {
   position: absolute;
-  top: 10px;
-  right: 15px;
-  background: none;
+  width: 350px; /* さらに横長に */
+  height: 180px; /* 高さは維持 */
+  background-image: url('/assets/images/back/omikuji_board.png');
+  background-size: 100% 100%; /* 画像を要素全体に引き伸ばす */
+  background-position: center;
+  background-repeat: no-repeat;
   border: none;
-  font-size: 2em;
-  color: #8b4513;
-  cursor: pointer;
-  line-height: 1;
-  padding: 0;
-  transition: color 0.2s;
-}
-
-.close-button:hover {
-  color: #a0522d;
-}
-
-.player-info-header {
+  border-radius: 0;
+  padding: 43px;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5)); /* filter: drop-shadow() を使用 */
+  z-index: 1001;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.player-avatar {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  border: 3px solid #a0522d; /* アイコンの縁取り */
-  object-fit: cover;
-  margin-bottom: 10px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-}
-
-.player-name {
-  font-size: 1.8em;
-  color: #4a2c1a;
-  margin: 0;
-  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
-}
-
-.player-stats {
-  display: flex;
+  flex-direction: row;
   justify-content: space-around;
-  gap: 15px;
-  margin-top: 15px;
+  align-items: center;
+  font-family: 'Yuji Syuku', serif;
+  color: #333;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translate(calc(-50% + var(--offset-x, 0px)), calc(-100% + var(--offset-y, 0px)));
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+  box-sizing: border-box;
 }
 
-.stat-item {
-  background-color: #fff; /* デフォルトの背景色を維持 */
-  border: 2px solid #d2b48c;
-  border-radius: 10px;
-  padding: 10px; /* 内部パディングを調整 */
-  min-width: 100px;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-  position: relative; /* 内部の絶対配置の基準 */
-  display: flex; /* 内部要素の配置用 */
+/* 内部要素の調整 */
+.player-info-header-compact {
+  margin-bottom: 2px; /* 調整 */
+}
+.player-avatar-large {
+  width: 80px; /* 大きく */
+  height: 80px;
+  border-radius: 50%; /* 丸型 */
+  border: 2px solid #a0522d;
+  object-fit: cover;
+}
+
+.player-details-area {
+  flex-grow: 1; /* 残りのスペースを占める */
+  display: flex;
+  flex-direction: column; /* 名前と統計を縦並びにする */
+  align-items: center;
+  justify-content: center;
+  padding-left: 5px; /* アイコンとの間隔 */
+}
+
+.player-name-large {
+  font-size: 1.4em; /* 大きく */
+  font-weight: bold;
+  color: #4a2c1a;;
+  margin: 0 0 5px 0; /* マージン調整 */
+  text-shadow: 1px 1px 2px rgba(43, 42, 42, 0.3); /* 読みやすくする */
+}
+
+.player-stats-compact {
+  position: relative;
+  width: 160px; /* 横に引き伸ばすために幅を広げる */
+  height: 100px; /* 高さは維持 */
+  display: flex;
   justify-content: center;
   align-items: center;
+  overflow: hidden;
+  margin-top: -6px;
+  margin-bottom: 3px;
 }
 
-.stat-item-main {
-  flex: 2; /* メインの枠を大きく */
-  min-width: 180px; /* 適切なサイズに調整 */
-  height: 120px; /* 適切なサイズに調整 */
-  padding: 0; /* 画像が枠いっぱいに広がるようにパディングを0に */
-  overflow: hidden; /* はみ出しを隠す */
-}
-
-.stat-board-image {
+.stat-board-image-compact {
+  position: absolute;
   width: 100%;
   height: 100%;
-  object-fit: cover; /* 枠いっぱいに画像を拡大 */
-  position: absolute;
-  top: 0;
-  left: 0;
+  object-fit: fill; /* 画像を横に引き伸ばす */
   z-index: 1;
 }
 
-.stat-values-overlay {
-  position: absolute; /* 親要素に対して絶対配置 */
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 2; /* 画像の上に表示 */
-  display: flex; /* flexboxは維持しつつ、個別の位置調整を可能にする */
+.stat-values-overlay-compact {
+  position: relative;
+  z-index: 2;
+  display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: center;
-  color: white; /* 数値の色を白に */
-  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8); /* 読みやすくするための影 */
+  align-items: flex-end; /* 右寄せ */
+  width: 100%;
+  height: 100%;
+  padding-right: 0px; /* 右からの余白を調整 */
+  color: #fff; /* 背景が暗くなる可能性があるので白に変更 */
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 }
 
-.stat-value-row {
-  position: absolute; /* 個別に位置調整できるように絶対配置 */
+.stat-value-row-compact {
   display: flex;
   align-items: center;
-  justify-content: flex-end; /* 右寄せに変更 */
-  width: 100%; /* 親の幅いっぱいに広げる */
-  padding-right: 20%; /* 右からの余白を調整 */
+  margin: 2px 0;
 }
 
-.rating-row {
-  top: 19%; /* 上からの位置を調整 */
-  right: -4%;
-  transform: translateY(-50%); /* 垂直方向の中央寄せ */
+.rating-row-compact {
+  margin-top: -2px; /* 微調整 */
+  margin-bottom: -5px;
 }
 
-.cat-coins-row {
-  top: 73%; /* 上からの位置を調整 */
-  right: -4%;
-  transform: translateY(-50%); /* 垂直方向の中央寄せ */
+.cat-coins-row-compact {
+  margin-top: 24px; /* 微調整 */
+  margin-bottom: 4px;
 }
 
-.stat-value {
-  margin-left: 56px;
+/* 不要になったスタイルを削除 */
+/* .player-info-header-compact, .player-avatar-compact, .player-name-compact は新しいものに置き換え */
+/* .player-info-header-compact { display: none; } */
+/* .player-avatar-compact { display: none; } */
+/* .player-name-compact { display: none; } */
+
+.stat-value-compact {
+  font-size: 1.3em; /* 数値を小さく */
   font-family: 'Yuji Syuku', serif;
-  font-size: 1.7em; /* 数値を大きく */
-  font-weight: bold;
-  color: white; /* 数値の色を白に */
-}
-
-.stat-item-empty {
-  flex: 1; /* 空の枠は小さく */
-  min-width: 80px; /* 適切なサイズに調整 */
-  height: 120px; /* メインの枠と高さを合わせる */
-  background-color: #f0e6d2; /* 空欄の背景色 */
-  border: 2px dashed #d2b48c; /* 破線にするなど、空欄であることを示す */
-}
-
-/* フェードトランジション */
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-.fade-enter-from, .fade-leave-to {
-  opacity: 0;
-}
-
-/* ポップアップのスケールインアニメーション */
-@keyframes popup-scale-in {
-  0% {
-    transform: scale(0.8);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
+  margin-right: 23px;
 }
 </style>

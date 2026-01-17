@@ -19,7 +19,7 @@
 
       <!-- 画面の一番下に表示 -->
       <div class="player-area-container bottom-player-container" v-if="playerAtBottom">
-        <img :src="playerIcon(playerAtBottom)" alt="Player Icon" class="cat-icon cat-icon-bottom" @click="openPlayerInfoPopup(playerAtBottom)" />
+        <img :src="playerIcon(playerAtBottom)" alt="Player Icon" class="cat-icon cat-icon-bottom" @click="openPlayerInfoPopup(playerAtBottom, $event)" />
         <!-- フリテン表示 -->
         <img v-if="isMyPlayerInFuriTen" :src="t('gameBoard.furitenImg')" :alt="t('gameBoard.furiten')" class="furiten-indicator bottom-furiten" />
         <!-- Debugging: Log values before accessing isTenpaiDisplay -->
@@ -31,7 +31,7 @@
       <!-- 中央エリア (左右プレイヤーと中央テーブル) -->
       <div class="middle-row">
         <div class="player-area-container left-player-container" v-if="playerAtLeft">
-          <img :src="playerIcon(playerAtLeft)" :alt="t('gameBoard.leftPlayerIcon')" :class="{'cat-icon-left-flipped': isKuroAtLeft}" class="cat-icon cat-icon-left" @click="openPlayerInfoPopup(playerAtLeft)" />
+          <img :src="playerIcon(playerAtLeft)" :alt="t('gameBoard.leftPlayerIcon')" :class="{'cat-icon-left-flipped': isKuroAtLeft}" class="cat-icon cat-icon-left" @click="openPlayerInfoPopup(playerAtLeft, $event)" />
           <img v-if="isLeftPlayerInFuriTen" :src="t('gameBoard.furitenImg')" :alt="t('gameBoard.furiten')" class="furiten-indicator left-furiten" />
           <img v-if="gameStore.isTenpaiDisplay[playerAtLeft.id]" :src="t('gameBoard.tenpaiImg')" :alt="t('gameBoard.tenpai')" class="tenpai-indicator left-tenpai" />
           <PlayerArea :player="playerAtLeft" position="left" :is-my-hand="determineIsMyHand(playerAtLeft.id)" :drawn-tile-display="drawnTileForPlayer(playerAtLeft.id)" :can-discard="canPlayerDiscard(playerAtLeft.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
@@ -44,7 +44,7 @@
           </div>
         </div>
         <div class="player-area-container right-player-container" v-if="playerAtRight">
-         <img :src="playerIcon(playerAtRight)" :alt="t('gameBoard.rightPlayerIcon')" :class="{'cat-icon-right-flipped': isToraAtRight}" class="cat-icon cat-icon-right" @click="openPlayerInfoPopup(playerAtRight)" />
+         <img :src="playerIcon(playerAtRight)" :alt="t('gameBoard.rightPlayerIcon')" :class="{'cat-icon-right-flipped': isToraAtRight}" class="cat-icon cat-icon-right" @click="openPlayerInfoPopup(playerAtRight, $event)" />
          <img v-if="isRightPlayerInFuriTen" :src="t('gameBoard.furitenImg')" :alt="t('gameBoard.furiten')" class="furiten-indicator right-furiten" />
          <img v-if="gameStore.isTenpaiDisplay[playerAtRight.id]" :src="t('gameBoard.tenpaiImg')" :alt="t('gameBoard.tenpai')" class="tenpai-indicator right-tenpai" />
          <PlayerArea :player="playerAtRight" position="right" :is-my-hand="determineIsMyHand(playerAtRight.id)" :drawn-tile-display="drawnTileForPlayer(playerAtRight.id)" :can-discard="canPlayerDiscard(playerAtRight.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
@@ -53,7 +53,7 @@
 
       <!-- 画面の一番上に表示 -->
       <div class="player-area-container top-player-container" v-if="playerAtTop">
-         <img :src="playerIcon(playerAtTop)" :alt="t('gameBoard.topPlayerIcon')" class="cat-icon cat-icon-top" @click="openPlayerInfoPopup(playerAtTop)" />
+         <img :src="playerIcon(playerAtTop)" :alt="t('gameBoard.topPlayerIcon')" class="cat-icon cat-icon-top" @click="openPlayerInfoPopup(playerAtTop, $event)" />
          <PlayerArea :player="playerAtTop" position="top" :is-my-hand="determineIsMyHand(playerAtTop.id)" :drawn-tile-display="drawnTileForPlayer(playerAtTop.id)" :can-discard="canPlayerDiscard(playerAtTop.id)" @tile-selected="handleTileSelection" @action-declared="handlePlayerAction" />
          <img v-if="isTopPlayerInFuriTen" :src="t('gameBoard.furitenImg')" :alt="t('gameBoard.furiten')" class="furiten-indicator top-furiten" />
          <img v-if="gameStore.isTenpaiDisplay[playerAtTop.id]" :src="t('gameBoard.tenpaiImg')" :alt="t('gameBoard.tenpai')" class="tenpai-indicator top-tenpai" />
@@ -123,7 +123,14 @@
         @close="handleCloseDealerDeterminationPopup"
       />
       </div> <!-- game-board-scaler の閉じタグ -->
-      <PlayerInfoPopup :show="showPlayerInfoPopup" :player="selectedPlayerForPopup" @close="closePlayerInfoPopup" />
+      <PlayerInfoPopup 
+        :show="showPlayerInfoPopup" 
+        :player="selectedPlayerForPopup" 
+        :x="selectedPlayerForPopupX" 
+        :y="selectedPlayerForPopupY" 
+        :offset-x="playerPopupOffsetX"
+        :offset-y="playerPopupOffsetY"
+        @close="closePlayerInfoPopup" />
     </div>
 </template>
   
@@ -167,6 +174,10 @@
   const isFadingToFinalResult = ref(false); // 最終結果へのフェードアウト用フラグ
   const showPlayerInfoPopup = ref(false); // プレイヤー情報ポップアップの表示状態
   const selectedPlayerForPopup = ref(null); // ポップアップに表示するプレイヤーデータ
+  const selectedPlayerForPopupX = ref(0); // ポップアップのX座標
+  const selectedPlayerForPopupY = ref(0); // ポップアップのY座標
+  const playerPopupOffsetX = ref(0); // ポップアップのXオフセット
+  const playerPopupOffsetY = ref(0); // ポップアップのYオフセット
 
   /**
    * プレイヤー情報に基づいてアイコン画像のパスを返します。
@@ -448,14 +459,44 @@
   }
 
   // --- プレイヤー情報ポップアップの制御 ---
-  function openPlayerInfoPopup(player) {
+  function openPlayerInfoPopup(player, event) { // event引数を追加
+    console.log("Player icon clicked:", player);
     selectedPlayerForPopup.value = player;
+
+    // クリックされた要素の位置を取得
+    if (event && event.target) {
+      const rect = event.target.getBoundingClientRect();
+      // game-board-scaler の相対位置に変換
+      const scalerRect = gameBoardScalerRef.value.getBoundingClientRect();
+
+      selectedPlayerForPopupX.value = rect.left + rect.width / 2 - scalerRect.left;
+      selectedPlayerForPopupY.value = rect.top - scalerRect.top;
+    }
+
+    // プレイヤーのIDに基づいてオフセットを調整
+    if (player.id === playerAtBottom.value.id) { // 自分のプレイヤー
+      playerPopupOffsetX.value = 450;
+      playerPopupOffsetY.value = 70; // 少し上にずらす
+    } else if (player.id === playerAtRight.value.id) { // 右のプレイヤー
+      playerPopupOffsetX.value = 450; // 少し左にずらす
+      playerPopupOffsetY.value = 70;
+    } else if (player.id === playerAtTop.value.id) { // 対面のプレイヤー
+      playerPopupOffsetX.value = 490;
+      playerPopupOffsetY.value = 150; // 少し下にずらす
+    } else if (player.id === playerAtLeft.value.id) { // 左のプレイヤー
+      playerPopupOffsetX.value = 520; // 少し右にずらす
+      playerPopupOffsetY.value = 70;
+    }
+
     showPlayerInfoPopup.value = true;
   }
 
   function closePlayerInfoPopup() {
+    console.log("Closing player info popup.");
     showPlayerInfoPopup.value = false;
     selectedPlayerForPopup.value = null;
+    selectedPlayerForPopupX.value = 0;
+    selectedPlayerForPopupY.value = 0;
   }
 
   /**
@@ -543,9 +584,41 @@
     console.log(`[GameBoard] orderedPlayersForDisplay changed:`, newVal);
   });
 
+  // ポップアップ外クリックで閉じるロジック
+  const handleDocumentClick = (event) => {
+    // ポップアップが表示されている場合のみ処理
+    if (showPlayerInfoPopup.value) {
+      // クリックされた要素がポップアップ内ではない場合、ポップアップを閉じる
+      // ただし、アイコン自体をクリックした場合は閉じないようにする
+      const clickedElement = event.target;
+      const isIconClicked = clickedElement.classList.contains('cat-icon'); // アイコンのクラス名で判定
+      
+      // ポップアップ自体、またはポップアップ内の要素がクリックされた場合は閉じない
+      // PlayerInfoPopupはpointer-events: none; なので、この判定は不要かもしれないが念のため
+      const isPopupClicked = clickedElement.closest('.player-info-tooltip');
+
+      if (!isIconClicked && !isPopupClicked) {
+        closePlayerInfoPopup();
+      }
+    }
+  };
+
+  // showPlayerInfoPopup の変更を監視し、イベントリスナーを追加/削除
+  watch(showPlayerInfoPopup, (newVal) => {
+    if (newVal) {
+      // ポップアップが表示されたら、ドキュメント全体にクリックイベントリスナーを追加
+      document.addEventListener('click', handleDocumentClick);
+    } else {
+      // ポップアップが閉じたら、イベントリスナーを削除
+      document.removeEventListener('click', handleDocumentClick);
+    }
+  });
+
   onBeforeUnmount(() => {
     // コンポーネントが破棄される際に、リサイズイベントのリスナーを解除
     window.removeEventListener('resize', updateScaleFactor);
+    // ドキュメントクリックイベントリスナーも削除
+    document.removeEventListener('click', handleDocumentClick);
 
     // オンラインゲームのチャンネル購読解除はgameStoreに集約されているため、ここでは不要
 
@@ -554,6 +627,13 @@
     let id = window.setTimeout(function() {}, 0);
     while (id--) {
       window.clearTimeout(id);
+    }
+  });
+
+  // gameBoardScalerRef の監視を追加
+  watch(gameBoardScalerRef, (newVal) => {
+    if (newVal) {
+      console.log("gameBoardScalerRef is now available:", newVal);
     }
   });
 

@@ -13,6 +13,7 @@ body, html, #app {
 body {
   font-family: 'M PLUS 1', sans-serif;
   min-height: 100vh; /* bodyも最小の高さをビューポートに合わせる */
+  background-color: black; /* ローディング画面のレターボックスの背景色 */
 }
 
 /* 特定の要素（例: input や textarea）では選択を許可したい場合 */

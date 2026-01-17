@@ -1,11 +1,10 @@
 <template>
   <!-- ローディング画面 -->
   <div v-if="isLoading" class="loading-screen">
-    <img src="/assets/images/back/loading.png" alt="Loading..." class="loading-image" />
     <div class="progress-bar-container">
       <div class="progress-bar" :style="{ width: loadingProgress + '%' }"></div>
     </div>
-    <p class="loading-text">Loading... {{ Math.floor(loadingProgress) }}%</p>
+    <p class="loading-text">{{ Math.floor(loadingProgress) }}%</p>
   </div>
 
   <!-- メインコンテンツ -->
@@ -349,32 +348,44 @@ body {
 
 /* --- ローディング画面スタイル --- */
 .loading-screen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: #222; /* ローディング画面の背景色（暗め） */
+  position: absolute; /* fixedからabsoluteに変更 */
+  top: 50%; /* 画面中央に配置 */
+  left: 50%; /* 画面中央に配置 */
+  transform: translate(-50%, -50%); /* 中央揃え */
+  
+  /* 9:16のアスペクト比を維持しつつ、画面にフィットさせる */
+  width: 100vw;
+  height: 100vh;
+  max-width: calc(100vh * 9 / 16); /* 高さ基準で幅を制限 */
+  max-height: calc(100vw * 16 / 9); /* 幅基準で高さを制限 */
+  
+  background-image: url('/assets/images/back/loading.png'); /* 背景画像として設定 */
+  background-size: cover; /* 画像が画面いっぱいに拡大 */
+  background-position: center; /* 中央に配置 */
+  background-repeat: no-repeat;
+  
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: center; /* プログレスバーとテキストを画面下部に配置 */
   align-items: center;
   z-index: 9999; /* 最前面に表示 */
   color: white;
-  font-family: 'M PLUS Rounded 1c', sans-serif;
+  font-family: 'Yuji Syuku', serif;
+  padding-bottom: 50px; /* 下からの余白 */
+  
+  /* 周りの黒い部分を埋めるための背景色 */
+  background-color: #000; 
 }
 
-.loading-image {
-  width: 80%; /* 必要に応じてサイズ調整 */
-  max-width: 300px;
-  margin-bottom: 20px;
-}
+/* .loading-image は削除されたので不要 */
 
 .progress-bar-container {
-  width: 80%;
+  position: absolute;
+  top: 400px;
+  width: 60%;
   max-width: 400px;
   height: 20px;
-  background-color: #555;
+  background-color: rgba(85, 85, 85, 0.7); /* 背景が透けるように */
   border-radius: 10px;
   overflow: hidden;
   margin-bottom: 10px;
@@ -382,13 +393,15 @@ body {
 
 .progress-bar {
   height: 100%;
-  background-color: #4caf50; /* プログレスバーの色（緑） */
+  background-color: #311402; /* プログレスバーの色（こげ茶色） */
   width: 0%; /* 初期幅 */
   transition: width 0.1s linear; /* プログレスバーの滑らかなアニメーション */
 }
 
 .loading-text {
-  font-size: 1.2em;
+  font-size: 1.8em;
+  font-family: 'Yuji Syuku', serif;
+  color: #201e1e;
 }
 
 /* --- ★追加: 遷移アニメーション --- */

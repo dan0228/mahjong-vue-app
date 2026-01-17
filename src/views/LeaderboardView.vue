@@ -223,7 +223,7 @@ watch(activeRankingType, (newType) => {
   flex-direction: column;
   align-items: center;
   /* padding: 20px; */ /* 全体paddingを削除 */
-  font-family: 'M PLUS Rounded 1c', sans-serif;
+  font-family: 'Yuji Syuku', serif;
   color: #333;
   background-image: url('/assets/images/back/ranking.png');
   background-size: contain; /* coverからcontainに変更 */

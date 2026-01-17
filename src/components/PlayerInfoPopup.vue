@@ -115,6 +115,7 @@ const statBoardImageSrc = computed(() => {
   align-items: center;
   justify-items: center;
   gap: 5px; /* グリッドアイテム間の隙間 */
+  scale: 0.9;
 }
 
 /* 1. プレイヤー名 (一番上の中央) */

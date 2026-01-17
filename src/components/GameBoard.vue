@@ -475,17 +475,17 @@
 
     // プレイヤーのIDに基づいてオフセットを調整
     if (player.id === playerAtBottom.value.id) { // 自分のプレイヤー
-      playerPopupOffsetX.value = 450;
-      playerPopupOffsetY.value = 70; // 少し上にずらす
+      playerPopupOffsetX.value = 370;
+      playerPopupOffsetY.value = 120; // 少し上にずらす
     } else if (player.id === playerAtRight.value.id) { // 右のプレイヤー
-      playerPopupOffsetX.value = 450; // 少し左にずらす
-      playerPopupOffsetY.value = 70;
+      playerPopupOffsetX.value = 370; // 少し左にずらす
+      playerPopupOffsetY.value = 140;
     } else if (player.id === playerAtTop.value.id) { // 対面のプレイヤー
       playerPopupOffsetX.value = 490;
-      playerPopupOffsetY.value = 150; // 少し下にずらす
+      playerPopupOffsetY.value = 200; // 少し下にずらす
     } else if (player.id === playerAtLeft.value.id) { // 左のプレイヤー
-      playerPopupOffsetX.value = 520; // 少し右にずらす
-      playerPopupOffsetY.value = 70;
+      playerPopupOffsetX.value = 610; // 少し右にずらす
+      playerPopupOffsetY.value = 140;
     }
 
     showPlayerInfoPopup.value = true;

@@ -57,6 +57,11 @@
       </transition>
 
       <div :class="{ 'fade-overlay': true, 'is-fading': isFading }"></div>
+
+      <!-- 収集率カウンター -->
+      <div class="collection-rate-counter">
+        {{ collectionRateText }}
+      </div>
     </div>
   </div>
 </template>
@@ -106,6 +111,18 @@ const boardImageSrc = computed(() =>
     ? '/assets/images/info/board_en.png'
     : '/assets/images/info/board.png'
 );
+
+const totalSayingsCount = computed(() => {
+  return sayings.value.length;
+});
+
+const collectedSayingsCount = computed(() => {
+  return Object.keys(revealedSayings.value).length;
+});
+
+const collectionRateText = computed(() => {
+  return `${collectedSayingsCount.value}/${totalSayingsCount.value}`;
+});
 
 // --- 桜アニメーションのロジック ---
 const sakuraImages = [
@@ -455,6 +472,19 @@ onBeforeUnmount(() => {
 
 .fade-leave-active {
   transition-duration: 0.2s;
+}
+
+.collection-rate-counter {
+  position: absolute;
+  bottom: -3px;
+  right: 30px;
+  font-family: 'Yuji Syuku', serif;
+  font-size: 0.5em;
+  color: #e0e0e0; /* Dark brown color */
+  text-shadow: 1px 1px 2px rgba(54, 54, 54, 0.7);
+  padding: 5px 10px;
+  z-index: 10;
+  pointer-events: none; /* クリックイベントを無効化 */
 }
 
 /* Webkit系ブラウザ用のスクロールバースタイル */

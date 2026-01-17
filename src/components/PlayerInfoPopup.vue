@@ -77,10 +77,9 @@ const statBoardImageSrc = computed(() => {
 });
 
 const tooltipStyle = computed(() => ({
-  left: `${props.x}px`,
-  top: `${props.y}px`,
-  '--offset-x': `${props.offsetX}px`,
-  '--offset-y': `${props.offsetY}px`,
+  left: `calc(${props.x}px + ${props.offsetX}px)`, // オフセットをleftに直接加算
+  top: `calc(${props.y}px + ${props.offsetY}px)`,   // オフセットをtopに直接加算
+  // transformはアニメーションのためだけに使う
 }));
 
 // bodyのスクロール制御は不要になるため削除
@@ -105,7 +104,7 @@ const tooltipStyle = computed(() => ({
   border: none;
   border-radius: 0;
   padding: 43px;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5)); /* filter: drop-shadow() を使用 */
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 1)); /* filter: drop-shadow() を使用 */
   z-index: 1001;
   display: flex;
   flex-direction: row;
@@ -115,9 +114,62 @@ const tooltipStyle = computed(() => ({
   color: #333;
   white-space: nowrap;
   pointer-events: none;
-  transform: translate(calc(-50% + var(--offset-x, 0px)), calc(-100% + var(--offset-y, 0px)));
-  transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+  transform: translate(-50%, -100%); /* 要素の中心をアイコンのクリック位置に合わせる */
   box-sizing: border-box;
+  scale: 0.7;
+}
+
+/* フェードトランジションをぽよんアニメーションに変更 */
+.fade-enter-active {
+  animation: pop-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; /* forwards を追加 */
+}
+.fade-leave-active {
+  animation: pop-out 0.2s ease-out forwards; /* 素早く消える */
+}
+
+/* アニメーションの開始/終了状態を明示的に定義 */
+.fade-enter-from {
+  opacity: 0;
+  transform: scale(0.8);
+}
+.fade-leave-to {
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.fade-enter-from {
+  opacity: 0;
+  transform: scale(0.8); /* scaleのみ */
+}
+.fade-leave-to {
+  opacity: 0;
+  transform: scale(0.8); /* scaleのみ */
+}
+
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.8); /* scaleのみ */
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.05); /* 少し大きめに */
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pop-out {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
 }
 
 /* 内部要素の調整 */
@@ -210,4 +262,5 @@ const tooltipStyle = computed(() => ({
   font-family: 'Yuji Syuku', serif;
   margin-right: 23px;
 }
+
 </style>

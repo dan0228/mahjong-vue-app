@@ -122,15 +122,17 @@
         :dealer-determination-results="sortedPlayersForPopup"
         @close="handleCloseDealerDeterminationPopup"
       />
-      </div> <!-- game-board-scaler の閉じタグ -->
+      <!-- PlayerInfoPopup を game-board-scaler の内部に移動 -->
       <PlayerInfoPopup 
-        :show="showPlayerInfoPopup" 
-        :player="selectedPlayerForPopup" 
-        :x="selectedPlayerForPopupX" 
-        :y="selectedPlayerForPopupY" 
-        :offset-x="playerPopupOffsetX"
-        :offset-y="playerPopupOffsetY"
-        @close="closePlayerInfoPopup" />
+          :key="selectedPlayerForPopup ? selectedPlayerForPopup.id : 'default'"
+          :show="showPlayerInfoPopup" 
+          :player="selectedPlayerForPopup" 
+          :x="selectedPlayerForPopupX" 
+          :y="selectedPlayerForPopupY" 
+          :offset-x="playerPopupOffsetX"
+          :offset-y="playerPopupOffsetY"
+          @close="closePlayerInfoPopup" />
+      </div> <!-- game-board-scaler の閉じタグ -->
     </div>
 </template>
   
@@ -459,33 +461,39 @@
   }
 
   // --- プレイヤー情報ポップアップの制御 ---
-  function openPlayerInfoPopup(player, event) { // event引数を追加
+  function openPlayerInfoPopup(player, event) { // event引数は不要になるが、互換性のため残す
     console.log("Player icon clicked:", player);
     selectedPlayerForPopup.value = player;
 
-    // クリックされた要素の位置を取得
-    if (event && event.target) {
-      const rect = event.target.getBoundingClientRect();
-      // game-board-scaler の相対位置に変換
-      const scalerRect = gameBoardScalerRef.value.getBoundingClientRect();
-
-      selectedPlayerForPopupX.value = rect.left + rect.width / 2 - scalerRect.left;
-      selectedPlayerForPopupY.value = rect.top - scalerRect.top;
-    }
-
-    // プレイヤーのIDに基づいてオフセットを調整
+    // クリックされた要素の位置の取得は行わない
+    // 代わりに、プレイヤーのIDに基づいて固定の表示位置を設定
+    // これらの値は DESIGN_WIDTH x DESIGN_HEIGHT のボード内での相対座標
     if (player.id === playerAtBottom.value.id) { // 自分のプレイヤー
-      playerPopupOffsetX.value = 370;
-      playerPopupOffsetY.value = 120; // 少し上にずらす
+      selectedPlayerForPopupX.value = DESIGN_WIDTH / 2; // 中央
+      selectedPlayerForPopupY.value = DESIGN_HEIGHT - 100; // 下から少し上
+      playerPopupOffsetX.value = 0;
+      playerPopupOffsetY.value = -10; // ポップアップをアイコンの少し上に
     } else if (player.id === playerAtRight.value.id) { // 右のプレイヤー
-      playerPopupOffsetX.value = 370; // 少し左にずらす
-      playerPopupOffsetY.value = 140;
+      selectedPlayerForPopupX.value = DESIGN_WIDTH - 160; // 右端から少し左
+      selectedPlayerForPopupY.value = DESIGN_HEIGHT / 2 - 60; // 中央
+      playerPopupOffsetX.value = -20; // ポップアップをアイコンの少し左に
+      playerPopupOffsetY.value = 0;
     } else if (player.id === playerAtTop.value.id) { // 対面のプレイヤー
-      playerPopupOffsetX.value = 490;
-      playerPopupOffsetY.value = 200; // 少し下にずらす
+      selectedPlayerForPopupX.value = DESIGN_WIDTH / 2 - 50; // 中央
+      selectedPlayerForPopupY.value = 130; // 上から少し下
+      playerPopupOffsetX.value = 0;
+      playerPopupOffsetY.value = 10; // ポップアップをアイコンの少し下に
     } else if (player.id === playerAtLeft.value.id) { // 左のプレイヤー
-      playerPopupOffsetX.value = 610; // 少し右にずらす
-      playerPopupOffsetY.value = 140;
+      selectedPlayerForPopupX.value = 50; // 左端から少し右
+      selectedPlayerForPopupY.value = DESIGN_HEIGHT / 2 - 60; // 中央
+      playerPopupOffsetX.value = 20; // ポップアップをアイコンの少し右に
+      playerPopupOffsetY.value = 0;
+    } else {
+      // 予期せぬプレイヤーIDの場合のデフォルト値
+      selectedPlayerForPopupX.value = DESIGN_WIDTH / 2;
+      selectedPlayerForPopupY.value = DESIGN_HEIGHT / 2;
+      playerPopupOffsetX.value = 0;
+      playerPopupOffsetY.value = 0;
     }
 
     showPlayerInfoPopup.value = true;

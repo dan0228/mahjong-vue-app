@@ -698,6 +698,7 @@ export const useGameStore = defineStore('game', {
           this.players[0].name = userStore.profile.username;
           this.players[0].cat_coins = userStore.profile.cat_coins; // 追加
           this.players[0].rating = userStore.profile.rating;       // 追加
+          this.players[0].avatar_url = userStore.profile.avatar_url; // 自分のアバターURLを追加
         }
 
         this.players = [

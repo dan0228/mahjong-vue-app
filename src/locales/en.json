@@ -604,9 +604,9 @@
   "gameModeSelection": {
     "title": "Select Game Rule",
     "classic": "Classic",
-    "classicDescription": "Standard Rules for 4-tiles Mahjong!<br>Start Here!",
+    "classicDescription": "Standard Rules for 4-tiles Mahjong",
     "stock": "Stock",
-    "stockDescription": "You can stock one tile!<br>Boost your strategy!",
+    "stockDescription": "You can stock one tile",
     "recommended": "NEW!"
   },
   "matchmaking": {

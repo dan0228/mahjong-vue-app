@@ -604,9 +604,9 @@
   "gameModeSelection": {
     "title": "対戦ルール選択",
     "classic": "クラシック",
-    "classicDescription": "四牌で行う<br>基本のルール！<br>まずはここから！",
+    "classicDescription": "四牌で行う<br>基本のルール",
     "stock": "ストック",
-    "stockDescription": "1枚だけ牌を<br>取り置き可能！<br>戦略性アップ！",
+    "stockDescription": "1枚だけ牌を<br>取り置き可能",
     "recommended": "NEW！"
   },
   "matchmaking": {

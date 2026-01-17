@@ -1,24 +1,15 @@
 <template>
   <div class="popup-overlay" @click.self="$emit('close')">
     <div class="popup-container">
-      <div class="popup-header">
-        <h2 class="popup-title">{{ t('gameModeSelection.title') }}</h2>
-        <button class="close-button" @click="$emit('close')">×</button>
-      </div>
+      <button class="close-button" @click="$emit('close')">×</button> <!-- Close button moved here -->
       <div class="popup-content">
-        <div class="mode-selection-cards">
-          <!-- Classic Rule Card -->
-          <div class="rule-card classic" @click="selectMode('classic')">
-            <div class="rule-title">{{ t('gameModeSelection.classic') }}</div>
-            <div class="rule-description" v-html="t('gameModeSelection.classicDescription')"></div>
-          </div>
-
-          <!-- Stock Rule Card -->
-          <div class="rule-card stock" @click="selectMode('stock')">
-            <div class="badge">{{ t('gameModeSelection.recommended') }}</div>
-            <div class="rule-title">{{ t('gameModeSelection.stock') }}</div>
-            <div class="rule-description" v-html="t('gameModeSelection.stockDescription')"></div>
-          </div>
+        <div class="mode-option" @click="selectMode('classic')">
+          <div class="mode-title">{{ t('gameModeSelection.classic') }}</div>
+          <div class="mode-description" v-html="t('gameModeSelection.classicDescription')"></div>
+        </div>
+        <div class="mode-option" @click="selectMode('stock')">
+          <div class="mode-title">{{ t('gameModeSelection.stock') }}</div>
+          <div class="mode-description" v-html="t('gameModeSelection.stockDescription')"></div>
         </div>
       </div>
     </div>
@@ -52,124 +43,86 @@ const selectMode = (mode) => {
 }
 
 .popup-container {
-  background: linear-gradient(180deg, #ffffff, #ffffff);
-  border-radius: 15px;
+  background-image: url('/assets/images/back/mode_back.png'); /* 背景画像に変更 */
+  background-size: cover;
+  background-position: center;
+  border-radius: 0px;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-  width: 90%;
-  max-width: 400px;
-  border: 2px solid #7a6a53;
+  width: 600px;
+  height: 180px;
   position: relative;
-  font-family: 'M PLUS Rounded 1c', sans-serif;
+  font-family: 'Yuji Syuku', serif;
   padding: 20px;
-}
-
-.popup-header {
-  text-align: center;
-  margin-bottom: 20px;
-  position: relative;
-}
-
-.popup-title {
-  font-size: 1.6em;
-  color: #5c4b33;
-  font-weight: 700;
-  margin: 0;
+  display: flex; /* Flexboxを使ってコンテンツを中央に配置 */
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .close-button {
   position: absolute;
-  top: -15px;
-  right: -15px;
-  background: #7a6a53;
-  color: white;
-  border: 2px solid white;
+  top: 8px; /* 位置を微調整 */
+  right: 8px; /* 位置を微調整 */
+  background: rgba(122, 106, 83, 0.6); /* 半透明の背景色 */
+  color: rgba(255, 255, 255, 0.8); /* 文字色も半透明に */
+  border: 0px solid rgba(255, 255, 255, 0.5); /* 細く、半透明の枠線 */
   border-radius: 50%;
-  width: 30px;
-  height: 30px;
-  font-size: 1.5em;
-  line-height: 26px;
+  width: 24px; /* 小さく */
+  height: 24px; /* 小さく */
+  font-size: 1.2em; /* 文字サイズも小さく */
+  line-height: 22px; /* 行の高さを調整 */
   cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  box-shadow: none; /* 影を削除 */
+  z-index: 10;
+  transition: background 0.2s, color 0.2s, border-color 0.2s; /* ホバー効果のためのトランジション */
 }
 
-.mode-selection-cards {
+.close-button:hover {
+  background: rgba(122, 106, 83, 0.8); /* ホバーで少し濃く */
+  color: white; /* ホバーで文字を白に */
+}
+
+.popup-content {
   display: flex;
-  justify-content: center;
-  gap: 20px;
+  flex-direction: row; /* 左右に配置 */
+  justify-content: center; /* 中央揃え */
+  gap: 22px; /* オプション間のスペースを広げる */
+  margin-top: 0px; /* 上部の余白 */
+  margin-right: 18px;
 }
 
-.rule-card {
-  position: relative;
-  width: 150px;
-  height: 180px;
-  padding: 15px;
-  border-radius: 12px;
+.mode-option {
+  background: none; /* 背景を削除 */
+  border: none; /* 枠線を削除 */
+  font-family: 'Yuji Syuku', serif;
+  color: #4a2c1a;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
-
-.rule-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-}
-
-/* --- Classic Card Style --- */
-.rule-card.classic {
-  background: linear-gradient(145deg, #fffbf0, #f8f2e0);
-  border: 2px solid #c8bda5;
-}
-
-.rule-card.classic .rule-title {
-  color: #6d5f4b;
-}
-
-.rule-card.classic .rule-description {
-  color: #8c7d6b;
-}
-
-/* --- Stock Card Style --- */
-.rule-card.stock {
-  background: linear-gradient(145deg, #eef7ff, #dbeffa);
-  border: 2px solid #b0cde0;
-}
-
-.rule-card.stock .rule-title {
-  color: #3a5a70;
-}
-
-.rule-card.stock .rule-description {
-  color: #5a7a90;
-}
-
-
-.rule-title {
-  font-size: 1.4em;
-  font-weight: bold;
+  padding: 10px 15px; /* パディングを調整 */
   margin-bottom: 10px;
+  transition: transform 0.2s, color 0.2s; /* box-shadowのトランジションは不要 */
+  position: relative;
+  text-align: center;
+  box-shadow: none; /* 影を削除 */
 }
 
-.rule-description {
-  font-size: 0.85em;
-  line-height: 1.5;
+.mode-option:hover {
+  transform: scale(1.05); /* 少し拡大 */
+  color: #7a6a53; /* ホバーで色変更 */
+  text-shadow: 0px 0px 8px rgba(255, 255, 255, 1); /* より強い光彩効果 */
 }
 
-.badge {
-  position: absolute;
-  top: -10px;
-  right: -10px;
-  background-color: #e74c3c;
-  color: white;
-  padding: 4px 8px;
-  border-radius: 8px;
-  font-size: 0.8em;
+.mode-title {
+  font-size: 1.5em; /* タイトルを大きく */
   font-weight: bold;
-  transform: rotate(15deg);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  margin-bottom: 5px; /* タイトルと説明文の間隔 */
+  color: #4a2c1a; /* タイトルの色 */
 }
+
+.mode-description {
+  font-size: 0.9em; /* 説明文のサイズ */
+  line-height: 1.4;
+  color: #6d5f4b; /* 説明文の色 */
+}
+
 </style>

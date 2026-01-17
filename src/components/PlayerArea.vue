@@ -648,8 +648,8 @@ function getMeldTileAlt(meld, tile, tileIndex) {
 /* 各ポジションごとのアクションボタンの位置調整 */
 .player-actions-bottom {
   /* 自家: 手牌の右上 */
-  top: -100%; /* 親エリアの上端から少し内側など、調整が必要 */
-  right: -14%; /* 親エリアの右端から少し内側など、調整が必要 */
+  top: -95%; /* 親エリアの上端から少し内側など、調整が必要 */
+  right: -10.5%; /* 親エリアの右端から少し内側など、調整が必要 */
   /* transform: translate(X, Y); で微調整も可能 */
   flex-direction: row; /* ボタンを横に並べる */
   justify-content: flex-end;

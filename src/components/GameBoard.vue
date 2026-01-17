@@ -124,13 +124,8 @@
       />
       <!-- PlayerInfoPopup を game-board-scaler の内部に移動 -->
       <PlayerInfoPopup 
-          :key="selectedPlayerForPopup ? selectedPlayerForPopup.id : 'default'"
           :show="showPlayerInfoPopup" 
           :player="selectedPlayerForPopup" 
-          :x="selectedPlayerForPopupX" 
-          :y="selectedPlayerForPopupY" 
-          :offset-x="playerPopupOffsetX"
-          :offset-y="playerPopupOffsetY"
           @close="closePlayerInfoPopup" />
       </div> <!-- game-board-scaler の閉じタグ -->
     </div>
@@ -176,10 +171,6 @@
   const isFadingToFinalResult = ref(false); // 最終結果へのフェードアウト用フラグ
   const showPlayerInfoPopup = ref(false); // プレイヤー情報ポップアップの表示状態
   const selectedPlayerForPopup = ref(null); // ポップアップに表示するプレイヤーデータ
-  const selectedPlayerForPopupX = ref(0); // ポップアップのX座標
-  const selectedPlayerForPopupY = ref(0); // ポップアップのY座標
-  const playerPopupOffsetX = ref(0); // ポップアップのXオフセット
-  const playerPopupOffsetY = ref(0); // ポップアップのYオフセット
 
   /**
    * プレイヤー情報に基づいてアイコン画像のパスを返します。
@@ -461,50 +452,14 @@
   }
 
   // --- プレイヤー情報ポップアップの制御 ---
-  function openPlayerInfoPopup(player, event) { // event引数は不要になるが、互換性のため残す
-    console.log("Player icon clicked:", player);
+  function openPlayerInfoPopup(player, event) {
+    event.stopPropagation();
     selectedPlayerForPopup.value = player;
-
-    // クリックされた要素の位置の取得は行わない
-    // 代わりに、プレイヤーのIDに基づいて固定の表示位置を設定
-    // これらの値は DESIGN_WIDTH x DESIGN_HEIGHT のボード内での相対座標
-    if (player.id === playerAtBottom.value.id) { // 自分のプレイヤー
-      selectedPlayerForPopupX.value = DESIGN_WIDTH / 2; // 中央
-      selectedPlayerForPopupY.value = DESIGN_HEIGHT - 100; // 下から少し上
-      playerPopupOffsetX.value = 0;
-      playerPopupOffsetY.value = -10; // ポップアップをアイコンの少し上に
-    } else if (player.id === playerAtRight.value.id) { // 右のプレイヤー
-      selectedPlayerForPopupX.value = DESIGN_WIDTH - 160; // 右端から少し左
-      selectedPlayerForPopupY.value = DESIGN_HEIGHT / 2 - 60; // 中央
-      playerPopupOffsetX.value = -20; // ポップアップをアイコンの少し左に
-      playerPopupOffsetY.value = 0;
-    } else if (player.id === playerAtTop.value.id) { // 対面のプレイヤー
-      selectedPlayerForPopupX.value = DESIGN_WIDTH / 2 - 50; // 中央
-      selectedPlayerForPopupY.value = 130; // 上から少し下
-      playerPopupOffsetX.value = 0;
-      playerPopupOffsetY.value = 10; // ポップアップをアイコンの少し下に
-    } else if (player.id === playerAtLeft.value.id) { // 左のプレイヤー
-      selectedPlayerForPopupX.value = 50; // 左端から少し右
-      selectedPlayerForPopupY.value = DESIGN_HEIGHT / 2 - 60; // 中央
-      playerPopupOffsetX.value = 20; // ポップアップをアイコンの少し右に
-      playerPopupOffsetY.value = 0;
-    } else {
-      // 予期せぬプレイヤーIDの場合のデフォルト値
-      selectedPlayerForPopupX.value = DESIGN_WIDTH / 2;
-      selectedPlayerForPopupY.value = DESIGN_HEIGHT / 2;
-      playerPopupOffsetX.value = 0;
-      playerPopupOffsetY.value = 0;
-    }
-
     showPlayerInfoPopup.value = true;
   }
 
   function closePlayerInfoPopup() {
-    console.log("Closing player info popup.");
     showPlayerInfoPopup.value = false;
-    selectedPlayerForPopup.value = null;
-    selectedPlayerForPopupX.value = 0;
-    selectedPlayerForPopupY.value = 0;
   }
 
   /**
@@ -592,41 +547,12 @@
     console.log(`[GameBoard] orderedPlayersForDisplay changed:`, newVal);
   });
 
-  // ポップアップ外クリックで閉じるロジック
-  const handleDocumentClick = (event) => {
-    // ポップアップが表示されている場合のみ処理
-    if (showPlayerInfoPopup.value) {
-      // クリックされた要素がポップアップ内ではない場合、ポップアップを閉じる
-      // ただし、アイコン自体をクリックした場合は閉じないようにする
-      const clickedElement = event.target;
-      const isIconClicked = clickedElement.classList.contains('cat-icon'); // アイコンのクラス名で判定
-      
-      // ポップアップ自体、またはポップアップ内の要素がクリックされた場合は閉じない
-      // PlayerInfoPopupはpointer-events: none; なので、この判定は不要かもしれないが念のため
-      const isPopupClicked = clickedElement.closest('.player-info-tooltip');
-
-      if (!isIconClicked && !isPopupClicked) {
-        closePlayerInfoPopup();
-      }
-    }
-  };
-
-  // showPlayerInfoPopup の変更を監視し、イベントリスナーを追加/削除
-  watch(showPlayerInfoPopup, (newVal) => {
-    if (newVal) {
-      // ポップアップが表示されたら、ドキュメント全体にクリックイベントリスナーを追加
-      document.addEventListener('click', handleDocumentClick);
-    } else {
-      // ポップアップが閉じたら、イベントリスナーを削除
-      document.removeEventListener('click', handleDocumentClick);
-    }
-  });
+  // ポップアップ外クリックで閉じる古いロジックは削除されました。
+  // 新しいPlayerInfoPopupコンポーネントがオーバーレイでクリックを処理します。
 
   onBeforeUnmount(() => {
     // コンポーネントが破棄される際に、リサイズイベントのリスナーを解除
     window.removeEventListener('resize', updateScaleFactor);
-    // ドキュメントクリックイベントリスナーも削除
-    document.removeEventListener('click', handleDocumentClick);
 
     // オンラインゲームのチャンネル購読解除はgameStoreに集約されているため、ここでは不要
 

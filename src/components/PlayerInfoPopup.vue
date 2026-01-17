@@ -1,19 +1,24 @@
 <template>
-  <transition name="fade">
-    <div v-if="show && player" class="player-info-tooltip" :style="tooltipStyle">
-      <div class="player-icon-area">
-        <img :src="playerIconSrc" alt="Player Avatar" class="player-avatar-large" />
-      </div>
-      <div class="player-details-area">
-        <h3 class="player-name-large">{{ player.name }}</h3>
-        <div class="player-stats-compact">
-          <img :src="statBoardImageSrc" alt="Player Stats Board" class="stat-board-image-compact" />
-          <div class="stat-values-overlay-compact">
-            <div class="stat-value-row-compact rating-row-compact">
-              <span class="stat-value-compact">{{ player.rating }}</span>
+  <transition name="popup-animation">
+    <div v-if="show" class="popup-overlay" @click="$emit('close')">
+      <div class="player-info-popup" @click.stop>
+        <!-- 1. プレイヤー名 (一番上の中央) -->
+        <h3 class="player-name">{{ player.name }}</h3>
+        
+        <!-- 2. プレイヤーアイコン (左下) -->
+        <div class="player-icon-area">
+          <img :src="playerIconSrc" alt="Player Avatar" class="player-avatar" />
+        </div>
+
+        <!-- 3. レートと猫コイン (右下) -->
+        <div class="player-stats-area">
+          <img :src="statBoardImageSrc" alt="Player Stats Board" class="stat-board-image" />
+          <div class="stat-values-overlay">
+            <div class="stat-value-row rating-row">
+              <span class="stat-value">{{ player.rating }}</span>
             </div>
-            <div class="stat-value-row-compact cat-coins-row-compact">
-              <span class="stat-value-compact">{{ player.cat_coins }}</span>
+            <div class="stat-value-row cat-coins-row">
+              <span class="stat-value">{{ player.cat_coins }}</span>
             </div>
           </div>
         </div>
@@ -23,8 +28,7 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits, computed, watch } from 'vue';
-import { useUserStore } from '@/stores/userStore';
+import { defineProps, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const props = defineProps({
@@ -36,33 +40,13 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
-  x: { // X座標
-    type: Number,
-    default: 0,
-  },
-  y: { // Y座標
-    type: Number,
-    default: 0,
-  },
-  offsetX: { // 新しいプロパティ: X方向のオフセット
-    type: Number,
-    default: 0,
-  },
-  offsetY: { // 新しいプロパティ: Y方向のオフセット
-    type: Number,
-    default: 0,
-  },
 });
 
-const emit = defineEmits(['close']); // closeイベントは残しておくが、GameBoard側でマウスアウトなどで制御する
-
-const userStore = useUserStore();
 const { locale } = useI18n();
 
 const playerIconSrc = computed(() => {
-  if (props.player.avatar_url) {
-    return props.player.avatar_url;
-  }
+  if (!props.player) return '/assets/images/info/hito_icon_1.png';
+  if (props.player.avatar_url) return props.player.avatar_url;
   if (props.player.originalId === 'kuro') return '/assets/images/info/cat_icon_3.png';
   if (props.player.originalId === 'tama') return '/assets/images/info/cat_icon_2.png';
   if (props.player.originalId === 'tora') return '/assets/images/info/cat_icon_1.png';
@@ -75,192 +59,145 @@ const statBoardImageSrc = computed(() => {
     ? '/assets/images/info/board_en.png'
     : '/assets/images/info/board.png';
 });
-
-const tooltipStyle = computed(() => ({
-  left: `calc(${props.x}px + ${props.offsetX}px)`, // オフセットをleftに直接加算
-  top: `calc(${props.y}px + ${props.offsetY}px)`,   // オフセットをtopに直接加算
-  // transformはアニメーションのためだけに使う
-}));
-
-// bodyのスクロール制御は不要になるため削除
-// watch(() => props.show, (newVal) => {
-//   if (newVal) {
-//     document.body.style.overflow = 'hidden';
-//   } else {
-//     document.body.style.overflow = '';
-//   }
-// });
 </script>
 
 <style scoped>
-.player-info-tooltip {
+/* オーバーレイとアニメーションの基本スタイルは変更なし */
+.popup-overlay {
   position: absolute;
-  width: 350px; /* さらに横長に */
-  height: 180px; /* 高さは維持 */
-  background-image: url('/assets/images/back/omikuji_board.png');
-  background-size: 100% 100%; /* 画像を要素全体に引き伸ばす */
-  background-position: center;
-  background-repeat: no-repeat;
-  border: none;
-  border-radius: 0;
-  padding: 43px;
-  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 1)); /* filter: drop-shadow() を使用 */
-  z-index: 1001;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-around;
-  align-items: center;
-  font-family: 'Yuji Syuku', serif;
-  color: #333;
-  white-space: nowrap;
-  pointer-events: none;
-  transform: translate(-50%, -100%); /* 要素の中心をアイコンのクリック位置に合わせる */
-  box-sizing: border-box;
-  scale: 0.7;
-}
-
-/* フェードトランジションをぽよんアニメーションに変更 */
-.fade-enter-active {
-  animation: pop-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; /* forwards を追加 */
-}
-.fade-leave-active {
-  animation: pop-out 0.2s ease-out forwards; /* 素早く消える */
-}
-
-/* アニメーションの開始/終了状態を明示的に定義 */
-.fade-enter-from {
-  opacity: 0;
-  transform: scale(0.8);
-}
-.fade-leave-to {
-  opacity: 0;
-  transform: scale(0.8);
-}
-
-.fade-enter-from {
-  opacity: 0;
-  transform: scale(0.8); /* scaleのみ */
-}
-.fade-leave-to {
-  opacity: 0;
-  transform: scale(0.8); /* scaleのみ */
-}
-
-@keyframes pop-in {
-  0% {
-    opacity: 0;
-    transform: scale(0.8); /* scaleのみ */
-  }
-  70% {
-    opacity: 1;
-    transform: scale(1.05); /* 少し大きめに */
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes pop-out {
-  0% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-}
-
-/* 内部要素の調整 */
-.player-info-header-compact {
-  margin-bottom: 2px; /* 調整 */
-}
-.player-avatar-large {
-  width: 80px; /* 大きく */
-  height: 80px;
-  border-radius: 50%; /* 丸型 */
-  border: 2px solid #a0522d;
-  object-fit: cover;
-}
-
-.player-details-area {
-  flex-grow: 1; /* 残りのスペースを占める */
-  display: flex;
-  flex-direction: column; /* 名前と統計を縦並びにする */
-  align-items: center;
-  justify-content: center;
-  padding-left: 5px; /* アイコンとの間隔 */
-}
-
-.player-name-large {
-  font-size: 1.4em; /* 大きく */
-  font-weight: bold;
-  color: #4a2c1a;;
-  margin: 0 0 5px 0; /* マージン調整 */
-  text-shadow: 1px 1px 2px rgba(43, 42, 42, 0.3); /* 読みやすくする */
-}
-
-.player-stats-compact {
-  position: relative;
-  width: 160px; /* 横に引き伸ばすために幅を広げる */
-  height: 100px; /* 高さは維持 */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: hidden;
-  margin-top: -6px;
-  margin-bottom: 3px;
-}
-
-.stat-board-image-compact {
-  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  object-fit: fill; /* 画像を横に引き伸ばす */
-  z-index: 1;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  pointer-events: auto;
 }
 
-.stat-values-overlay-compact {
+.popup-animation-enter-active,
+.popup-animation-leave-active {
+  transition: opacity 0.3s ease;
+}
+.popup-animation-enter-active .player-info-popup,
+.popup-animation-leave-active .player-info-popup {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.popup-animation-enter-from,
+.popup-animation-leave-to {
+  opacity: 0;
+}
+.popup-animation-enter-from .player-info-popup,
+.popup-animation-leave-to .player-info-popup {
+  transform: scale(0.8);
+}
+
+/* ポップアップ本体のレイアウトをCSS Gridに変更 */
+.player-info-popup {
+  width: 350px;
+  height: 200px;
+  background-image: url('/assets/images/back/omikuji_board.png');
+  background-size: 100% 100%;
+  padding: 20px;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 1));
+  box-sizing: border-box;
+  transform-origin: center;
+
+  /* CSS Gridで新しいレイアウトを定義 */
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "name   name"
+    "icon   stats";
+  align-items: center;
+  justify-items: center;
+  gap: 5px; /* グリッドアイテム間の隙間 */
+}
+
+/* 1. プレイヤー名 (一番上の中央) */
+.player-name {
+  grid-area: name;
+  font-size: 1.6em;
+  font-family: 'Yuji Syuku', serif;
+  font-weight: bold;
+  color: #4a2c1a;
+  text-shadow: 1px 1px 2px rgba(43, 42, 42, 0.3);
+  margin: 0;
+  white-space: normal; /* 長い名前の場合、折り返しを許可 */
+  text-align: center;
+  line-height: 1.2;
+  align-self: start; /* 上端に配置 */
+  padding-top: 10px; /* 上部の余白を調整 */
+}
+
+/* 2. プレイヤーアイコン (左下) */
+.player-icon-area {
+  grid-area: icon;
+  justify-self: center; /* 水平方向中央 */
+  align-self: center; /* 垂直方向中央 */
+}
+
+.player-avatar {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  border: 3px solid #a0522d;
+  object-fit: cover;
+  margin-bottom: 15px;
+  margin-left: 20px;
+}
+
+/* 3. レートと猫コイン (右下) */
+.player-stats-area {
+  grid-area: stats;
   position: relative;
-  z-index: 2;
+  width: 160px;
+  height: 100px;
+  justify-self: center; /* 水平方向中央 */
+  align-self: center; /* 垂直方向中央 */
+  margin-bottom: 20px;
+  margin-right: 13px;
+}
+
+.stat-board-image {
+  width: 100%;
+  height: 100%;
+}
+
+.stat-values-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: flex-end; /* 右寄せ */
-  width: 100%;
-  height: 100%;
-  padding-right: 0px; /* 右からの余白を調整 */
-  color: #fff; /* 背景が暗くなる可能性があるので白に変更 */
+  align-items: flex-end;
+  color: #fff;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 }
 
-.stat-value-row-compact {
-  display: flex;
-  align-items: center;
+.stat-value-row {
   margin: 2px 0;
 }
 
-.rating-row-compact {
-  margin-top: -2px; /* 微調整 */
+.rating-row {
+  margin-top: -2px;
   margin-bottom: -5px;
 }
 
-.cat-coins-row-compact {
-  margin-top: 24px; /* 微調整 */
+.cat-coins-row {
+  margin-top: 24px;
   margin-bottom: 4px;
 }
 
-/* 不要になったスタイルを削除 */
-/* .player-info-header-compact, .player-avatar-compact, .player-name-compact は新しいものに置き換え */
-/* .player-info-header-compact { display: none; } */
-/* .player-avatar-compact { display: none; } */
-/* .player-name-compact { display: none; } */
-
-.stat-value-compact {
-  font-size: 1.3em; /* 数値を小さく */
+.stat-value {
+  font-size: 1.3em;
   font-family: 'Yuji Syuku', serif;
   margin-right: 23px;
 }
-
 </style>

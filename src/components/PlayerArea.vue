@@ -12,8 +12,8 @@
       />
     </div>
     <!-- ストック選択中にツモ牌の位置に表示されるクリック領域 -->
-    <div v-if="showStockCountdown && position === 'bottom'" class="draw-from-wall-area" @click="drawFromWall">
-      <span class="draw-from-wall-text">{{ t('playerArea.drawFromWall') }}</span>
+    <div v-if="shouldRenderDrawFromWallButton" :class="['draw-from-wall-area', { 'is-active': isDrawFromWallActive, 'has-melds': hasMelds }]" @click="isDrawFromWallActive && drawFromWall()">
+      <img src="/assets/images/button/wall_drow.png" :alt="t('playerArea.drawFromWall')" class="draw-from-wall-image" />
     </div>
     <div v-if="player.melds && player.melds.length > 0" class="melds-area">
         <div v-for="(meld, meldIndex) in player.melds" :key="meldIndex" class="meld">
@@ -253,12 +253,35 @@ const showStockCountdown = computed(() => {
          currentPlayer && !currentPlayer.isRiichi && !currentPlayer.isDoubleRiichi; // リーチ中は表示しない
 });
 
+const isDrawFromWallActive = computed(() => {
+  // ボタンが押せる（アクティブな）条件
+  return props.player.id === gameStore.currentTurnPlayerId &&
+         gameStore.gamePhase === GAME_PHASES.AWAITING_STOCK_SELECTION_TIMER &&
+         props.position === 'bottom';
+});
+
+const shouldRenderDrawFromWallButton = computed(() => {
+  // ボタンが表示されるべき条件
+  // 1. 画面下部のプレイヤーであること (props.position === 'bottom')
+  // 2. 引いてきた牌がないこと (!props.drawnTileDisplay)
+  // 3. 自分のアクション直後（ポンやカン、打牌など）でないこと
+  const isMyActionPhase = gameStore.gamePhase === GAME_PHASES.AWAITING_DISCARD && gameStore.lastActionPlayerId === props.player.id;
+
+  return props.position === 'bottom' &&
+         !props.drawnTileDisplay &&
+         !isMyActionPhase;
+});
+
 const isStockTileSelectable = computed(() => {
   return props.isMyHand &&
          gameStore.currentTurnPlayerId === props.player.id && // 自分のターンであること
          gameStore.ruleMode === 'stock' && // ストックルールが有効
          gameStore.gamePhase === GAME_PHASES.AWAITING_STOCK_SELECTION_TIMER &&
          !!props.player.stockedTile;
+});
+
+const hasMelds = computed(() => {
+  return props.player.melds && props.player.melds.length > 0;
 });
 
 /**
@@ -824,31 +847,40 @@ function getMeldTileAlt(meld, tile, tileIndex) {
 
 .draw-from-wall-area {
   position: absolute;
-  /* 手牌エリア(.player-game-elements)の隣に配置されるように調整 */
   top: 12px; /* player-areaの上端からの距離 */
-  left: 220px; /* player-areaの左端からの距離 (手牌4枚分+α) */
-  width: 40px;
-  height: 55px;
-  background-color: rgba(0, 0, 0, 0.4);
-  border: 2px dashed #fff;
-  border-radius: 5px;
+  left: 215px; /* player-areaの左端からの距離 (手牌4枚分+α) */
+  width: 60px; /* 画像のサイズに合わせて調整 */
+  height: 60px; /* 画像のサイズに合わせて調整 */
+  background-color: transparent; /* 背景色を透明に */
+  border: none; /* 枠線を削除 */
+  border-radius: 0; /* 角丸を削除 */
   display: flex;
   justify-content: center;
   align-items: center;
   cursor: pointer;
   z-index: 25; /* 手牌より手前、アクションボタンより奥 */
-  transition: background-color 0.2s;
+  transition: transform 0.2s ease; /* leftプロパティのトランジションを削除 */
 }
-.draw-from-wall-area:hover {
-  background-color: rgba(0, 0, 0, 0.6);
+
+.draw-from-wall-area.has-melds {
+  left: 140px; /* ポンやカンがある場合は左にずらす */
 }
-.draw-from-wall-text {
-  color: white;
-  font-size: 9px;
-  text-align: center;
-  padding-left: 5px;
-  padding-right: 5px;
+.draw-from-wall-area:hover.is-active { /* アクティブな時だけホバー効果 */
+  transform: translateY(-3px); /* ホバーで少し浮き上がる */
 }
+
+.draw-from-wall-area:not(.is-active) {
+  opacity: 0.5; /* 非アクティブ時は半透明 */
+  cursor: not-allowed; /* カーソルを禁止マークに */
+  pointer-events: none; /* クリックイベントを無効化 */
+}
+.draw-from-wall-image {
+  width: 100%; /* 親要素いっぱいに */
+  height: 100%; /* 親要素いっぱいに */
+  object-fit: contain; /* 画像全体が表示されるように */
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3)); /* 影を追加 */
+}
+/* .draw-from-wall-text は削除されたので不要 */
 
 .fade-gauge-enter-active,
 .fade-gauge-leave-active {

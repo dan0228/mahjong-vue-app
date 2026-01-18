@@ -211,6 +211,7 @@
   .drawn-tile-area {
     display: flex; /* 内部の.tileを正しく配置するため */
     position: absolute; /* 手牌の位置に影響を与えないように絶対配置 */
+    z-index: 30; /* すぐに引くボタンより手前に表示 */
   }
   .position-top .drawn-tile-area {
     right: 100%; /* 手牌エリアの左側に配置 */

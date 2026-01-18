@@ -321,15 +321,13 @@
   }
 
   .is-stocked-tile {
-    border: 0px solid gold;
-    box-shadow: 0 0 10px gold; /* 手牌にあるストック牌にのみ影を適用 */
     border-radius: 20px;
+    box-shadow: 0 0 10px 2px rgba(30, 144, 255, 0.8), 0 0 5px rgba(4, 21, 71, 0.6); /* 中央から光るような多層グロー */
   }
 
   .is-in-hand.is-stocked-tile {
-    border: 0px solid gold;
-    box-shadow: 0 0 10px gold; /* 手牌にあるストック牌にのみ影を適用 */
     border-radius: 20px;
+    box-shadow: 0 0 10px 2px rgba(30, 144, 255, 0.8), 0 0 5px rgba(4, 21, 71, 0.6); /* 中央から光るような多層グロー */
   }
 
   .is-waiting {

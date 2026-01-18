@@ -544,7 +544,8 @@ export const useGameStore = defineStore('game', {
             cat_coins: profile?.cat_coins || 0, // 追加
             rating: profile?.rating || 1500,     // 追加
             hand: [], discards: [], melds: [], isDealer: false, score: 50000, seatWind: null,
-            stockedTile: null, isUsingStockedTile: false, isStockedTileSelected: false
+            stockedTile: null, isUsingStockedTile: false, isStockedTileSelected: false,
+            isAi: false, // オンラインプレイヤーはAIではない
           };
         });
         console.log("4. プレイヤー配列を構築:", this.players);
@@ -691,6 +692,7 @@ export const useGameStore = defineStore('game', {
             isStockedTileSelected: false,
             cat_coins: catCoins,
             rating: rating,
+            isAi: true, // AIプレイヤーであることを明示
           };
         });
 

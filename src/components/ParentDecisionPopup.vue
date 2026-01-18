@@ -120,7 +120,7 @@ const startCloseTimer = () => {
   clearTimeout(timer); // 既存のタイマーがあればクリア
   timer = setTimeout(() => {
     emit('close'); // 'close'イベントを発行してポップアップを閉じる
-  }, 300000); // 3秒後に自動で閉じる
+  }, 3000); // 3秒後に自動で閉じる
 };
 
 /**

@@ -1,6 +1,6 @@
 <template>
   <div v-if="props.showCountdown" class="countdown-overlay" :style="overlayStyle">
-    <div :class="['countdown-container', { 'ai-player': props.isAiPlayer }]">
+    <div :class="['countdown-container', { 'ai-player': props.position !== 'bottom' }]" :style="{ width: containerSize, height: containerSize }">
       <svg class="progress-ring" :width="size" :height="size">
         <circle
           class="progress-ring-circle-bg"
@@ -18,7 +18,7 @@
           :style="{ strokeDasharray: circumference, strokeDashoffset: strokeDashoffset }"
         />
       </svg>
-      <div v-if="!props.isAiPlayer" class="countdown-message">{{ $t('stockCountdown.message') }}</div>
+      <img src="/assets/images/button/stock_in.png" alt="Stock Icon" class="stock-icon" :style="{ width: iconSize, height: iconSize }" />
     </div>
   </div>
 </template>
@@ -38,8 +38,17 @@ const gameStore = useGameStore();
 const { t } = useI18n();
 
 // 円ゲージのサイズ設定
-const size = computed(() => props.isAiPlayer ? 50 : 80); // AIなら小さく、人間なら通常サイズ
-const strokeWidth = computed(() => props.isAiPlayer ? 5 : 8); // AIなら細く
+const gaugeSize = computed(() => props.position === 'bottom' ? 80 : 40); // SVG size
+const gaugeStrokeWidth = computed(() => props.position === 'bottom' ? 8 : 4); // SVG stroke width
+
+const containerSize = computed(() => `${gaugeSize.value}px`); // Container size in px
+const iconSize = computed(() => {
+  const multiplier = props.position === 'bottom' ? 1.2 : 1.2;
+  return `${gaugeSize.value * multiplier}px`;
+});
+
+const size = computed(() => gaugeSize.value); // For SVG width/height
+const strokeWidth = computed(() => gaugeStrokeWidth.value); // For SVG stroke-width
 const center = computed(() => size.value / 2);
 const radius = computed(() => size.value / 2 - strokeWidth.value / 2);
 const circumference = computed(() => 2 * Math.PI * radius.value);
@@ -87,8 +96,7 @@ const overlayStyle = computed(() => {
 .countdown-container {
   background-color: rgba(0, 0, 0, 0.4);
   border-radius: 50%; /* 円形にする */
-  width: 80px;
-  height: 80px;
+  /* widthとheightはテンプレートで動的に設定 */
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -97,12 +105,10 @@ const overlayStyle = computed(() => {
   font-family: 'M PLUS 1', sans-serif;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
   position: relative; /* SVGとテキストの配置のため */
+  /* border: 1px solid red; */ /* 一時的なボーダーを削除 */
 }
 
-.countdown-container.ai-player {
-  width: 50px; /* AIプレイヤー用の小さいサイズ */
-  height: 50px;
-}
+/* .countdown-container.ai-player は不要 */
 
 .progress-ring {
   position: absolute;
@@ -121,21 +127,11 @@ const overlayStyle = computed(() => {
   fill: transparent;
 }
 
-.countdown-text {
-  font-size: 1.5em;
-  font-weight: bold;
-  line-height: 1em;
-  position: relative; /* SVGの上に表示 */
-  z-index: 1;
+.stock-icon {
+  position: absolute;
+  object-fit: contain;
+  z-index: 1; /* SVGの上に表示 */
+  /* widthとheightはテンプレートで動的に設定 */
 }
 
-.countdown-container.ai-player .countdown-text {
-  font-size: 1em; /* AIプレイヤー用の小さいフォントサイズ */
-}
-
-.countdown-message {
-  font-size: 0.5em;
-  position: relative;
-  z-index: 1;
-}
 </style>

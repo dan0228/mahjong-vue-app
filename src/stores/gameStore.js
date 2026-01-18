@@ -169,7 +169,7 @@ function handleAiDiscardLogic(store, playerId) {
 export const useGameStore = defineStore('game', {
   state: () => ({
     players: [
-      { id: 'player1', name: localStorage.getItem('mahjongUsername') || 'あなた', hand: [], discards: [], melds: [], isDealer: false, score: 50000, seatWind: null, stockedTile: null, isUsingStockedTile: false, isStockedTileSelected: false },
+      { id: 'player1', name: localStorage.getItem('mahjongUsername') || 'あなた', hand: [], discards: [], melds: [], isDealer: false, score: 50000, seatWind: null, stockedTile: null, isUsingStockedTile: false, isStockedTileSelected: false, isAi: false }, // isAi: false を追加
     ],
     wall: [],
     deadWall: [],
@@ -699,6 +699,7 @@ export const useGameStore = defineStore('game', {
           this.players[0].cat_coins = userStore.profile.cat_coins; // 追加
           this.players[0].rating = userStore.profile.rating;       // 追加
           this.players[0].avatar_url = userStore.profile.avatar_url; // 自分のアバターURLを追加
+          this.players[0].isAi = false; // 人間プレイヤーであることを明示
         }
 
         this.players = [

@@ -2,10 +2,13 @@
   <transition name="popup">
     <div v-if="show" class="popup-overlay">
       <div class="popup-content">
-        <h2>{{ $t('parentDecisionPopup.title') }}</h2>
+        <div>
+          <h2 class="popup-title">{{ $t('parentDecisionPopup.title') }}</h2>
+          <img src="/assets/images/back/fude.png" alt="fude" class="fude-image" />
+        </div>
         <div class="dealer-determination-list">
           <div v-for="player in dealerDeterminationResults" :key="player.id" class="player-item" :class="{ 'is-dealer': player.isDealer }">
-            <span class="seat-wind">{{ $t(`winds.${player.seatWind}`) }}</span>
+            <img :src="getWindIcon(player)" alt="Seat Wind" :class="['seat-wind-icon', { 'east-wind-icon': player.seatWind === '東' }]" />
             <img v-if="getPlayerIcon(player)" :src="getPlayerIcon(player)" alt="Player Icon" class="player-icon" />
             <div class="player-info">
               <span class="player-name">{{ player.originalId ? $t(`aiNames.${player.originalId}`) : player.name }}</span>
@@ -13,8 +16,10 @@
             </div>
           </div>
         </div>
-        <div class="timestamp">{{ formattedTimestamp }}</div>
-        <p class="countdown-text">{{ $t('parentDecisionPopup.countdown', { n: countdown }) }}</p>
+        <div class="bottom-info">
+          <p class="countdown-text">{{ $t('parentDecisionPopup.countdown', { n: countdown }) }}</p>
+          <div class="timestamp">{{ formattedTimestamp }}</div>
+        </div>
       </div>
     </div>
   </transition>
@@ -26,7 +31,7 @@ import { useI18n } from 'vue-i18n';
 import { useZoomLock } from '@/composables/useZoomLock';
 import { useUserStore } from '@/stores/userStore'; // userStoreをインポート
 
-const { t } = useI18n(); // i18nの翻訳関数を取得
+const { t, locale } = useI18n(); // i18nの翻訳関数とロケールを取得
 
 // ズーム防止機能を有効化
 useZoomLock();
@@ -59,6 +64,26 @@ let timer = null; // setTimeoutのタイマーID
 let interval = null; // setIntervalのタイマーID
 
 const userStore = useUserStore(); // userStoreのインスタンスを取得
+
+const windImagesJa = {
+  '東': '/assets/images/info/ton_icon.png',
+  '南': '/assets/images/info/minami_icon.png',
+  '西': '/assets/images/info/nishi_icon.png',
+  '北': '/assets/images/info/kita_icon.png',
+};
+
+const windImagesEn = {
+  '東': '/assets/images/info/ton_icon_en.png',
+  '南': '/assets/images/info/minami_icon_en.png',
+  '西': '/assets/images/info/nishi_icon_en.png',
+  '北': '/assets/images/info/kita_icon_en.png',
+};
+
+function getWindIcon(player) {
+  if (!player || !player.seatWind) return '';
+  const imageMap = locale.value === 'en' ? windImagesEn : windImagesJa;
+  return imageMap[player.seatWind] || '';
+}
 
 /**
  * `show` プロパティの変更を監視し、ポップアップが表示されたときにタイマーを開始します。
@@ -95,7 +120,7 @@ const startCloseTimer = () => {
   clearTimeout(timer); // 既存のタイマーがあればクリア
   timer = setTimeout(() => {
     emit('close'); // 'close'イベントを発行してポップアップを閉じる
-  }, 3000); // 3秒後に自動で閉じる
+  }, 300000); // 3秒後に自動で閉じる
 };
 
 /**
@@ -154,7 +179,7 @@ function getPlayerIcon(player) {
 
 <style scoped>
 .popup-overlay {
-  position: absolute; /* fixedからabsoluteに変更 */
+  position: absolute;
   top: 0;
   left: 0;
   width: 100%;
@@ -166,14 +191,18 @@ function getPlayerIcon(player) {
   z-index: 1050;
 }
 .popup-content {
-  background-color: white;
-  padding: 30px;
+  background-image: url('/assets/images/back/start_back.png');
+  background-size: cover;
+  background-position: center;
+  padding: 20px;
   border-radius: 10px;
-  min-width: 350px;
-  max-width: 90%;
+  width: 400px; /* Adjust width as needed */
+  height: 600px; /* Adjust height as needed */
   text-align: center;
-  transform: scale(0.85);
   box-shadow: 0 5px 20px rgba(0,0,0,0.25);
+  display: flex;
+  flex-direction: column;
+  color: rgb(43, 6, 6);
 }
 
 /* Transition styles */
@@ -184,64 +213,53 @@ function getPlayerIcon(player) {
   opacity: 0;
   transform: scale(0.7);
 }
-.popup-content h2 {
-  margin-top: 0;
-  margin-bottom: 25px;
-  color: #343a40;
-  font-size: 2em;
-  font-weight: 600;
-  letter-spacing: 1px;
+.popup-title {
+  margin-top: 20px;
+  margin-bottom: 0;
+  font-family: 'Yuji Syuku', serif;
+  font-size: 2.2em;
+  font-weight: bold;
+}
+.fude-image {
+  width: 250px;
+  height: 30px;
+  max-width: 300px;
+  margin-top: 0px;
+  margin-bottom: 0px;
 }
 .dealer-determination-list {
-  margin-bottom: 25px;
+  margin-top: 20px; /* 上の要素との隙間 */
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 .player-item {
   display: flex;
   align-items: center;
-  padding: 12px 15px;
-  background-color: #ffffff;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  margin-bottom: 12px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  padding: 10px;
 }
-.player-item:last-child {
-  margin-bottom: 0;
-}
-.player-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-.player-item.is-dealer {
-  background: linear-gradient(135deg, #fffbeb 0%, #fff3cd 100%);
-  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
-  border: 1px solid #ffeeba;
-}
-.player-item.is-dealer .seat-wind {
-  background-color: #ffc107;
-  color: #212529;
-}
-.seat-wind {
-  font-weight: bold;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background-color: #e9ecef;
-  color: #495057;
-  flex-shrink: 0;
-  font-size: 1.2em;
-  margin-right: 5px;
-}
-.player-icon {
+
+.seat-wind-icon {
   width: 50px;
   height: 50px;
-  margin: 0 10px;
-  flex-shrink: 0;
+  margin-right: 5px;
+  transition: transform 0.3s ease;
+}
+
+.east-wind-icon {
+  width: 62px; /* 他より大きく */
+  height: 62px;
+  margin-right: -5px;
+  margin-top: -18px;
+  transform: scale(1.1); /* 少しだけ拡大 */
+}
+
+.player-icon {
+  width: 45px;
+  height: 45px;
+  margin-left: 10px;
+  margin-right: 15px;
   border-radius: 6px;
-  background-color: white;
   border: 1px solid #ccc;
 }
 .player-info {
@@ -253,28 +271,34 @@ function getPlayerIcon(player) {
 }
 .player-name {
   font-weight: 600;
-  font-size: 1.3em;
-  color: #212529;
+  font-size: 1.2em;
+  font-family: 'Yuji Syuku', serif;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .score {
-  font-weight: bold;
-  color: #007bff;
   font-size: 1.1em;
+  font-family: 'Yuji Syuku', serif;
 }
+
+.bottom-info {
+  margin-top: auto; /* 残りの空間をすべてマージンとして使い、この要素を一番下に押しやる */
+}
+
 .timestamp {
   margin-top: 2px;
-  font-size: 0.8em;
-  color: #666;
+  font-size: 0.9em;
+  font-family: 'Yuji Syuku', serif;
+  color: #3f0b0b;
 }
 
 .countdown-text {
-  margin-top: 15px;
   font-size: 1.2em;
+  font-family: 'Yuji Syuku', serif;
   font-weight: bold;
-  color: #d32f2f; /* 赤色 */
+  color: #94000f;
+  margin-top: -120px;
 }
 </style>

@@ -1,13 +1,13 @@
 <template>
   <div class="popup-overlay" @click.self="$emit('close')">
     <div class="popup-container">
-      <button class="close-button" @click="$emit('close')">×</button> <!-- Close button moved here -->
+      <button class="close-button" @click="$emit('close')">×</button>
       <div class="popup-content">
-        <div class="mode-option" @click="selectMode('classic')">
+        <div class="mode-option mode-left" @click="selectMode('classic')">
           <div class="mode-title">{{ t('gameModeSelection.classic') }}</div>
           <div class="mode-description" v-html="t('gameModeSelection.classicDescription')"></div>
         </div>
-        <div class="mode-option" @click="selectMode('stock')">
+        <div class="mode-option mode-right" @click="selectMode('stock')">
           <div class="mode-title">{{ t('gameModeSelection.stock') }}</div>
           <div class="mode-description" v-html="t('gameModeSelection.stockDescription')"></div>
         </div>
@@ -43,17 +43,17 @@ const selectMode = (mode) => {
 }
 
 .popup-container {
-  background-image: url('/assets/images/back/mode_back.png'); /* 背景画像に変更 */
+  background-image: url('/assets/images/back/mode_back.png');
   background-size: cover;
   background-position: center;
   border-radius: 0px;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-  width: 600px;
+  width: 650px;
   height: 180px;
   position: relative;
   font-family: 'Yuji Syuku', serif;
   padding: 20px;
-  display: flex; /* Flexboxを使ってコンテンツを中央に配置 */
+  display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
@@ -61,68 +61,77 @@ const selectMode = (mode) => {
 
 .close-button {
   position: absolute;
-  top: 8px; /* 位置を微調整 */
-  right: 8px; /* 位置を微調整 */
-  background: rgba(122, 106, 83, 0.6); /* 半透明の背景色 */
-  color: rgba(255, 255, 255, 0.8); /* 文字色も半透明に */
-  border: 0px solid rgba(255, 255, 255, 0.5); /* 細く、半透明の枠線 */
+  top: 8px;
+  right: 8px;
+  background: rgba(122, 106, 83, 0.6);
+  color: rgba(255, 255, 255, 0.8);
+  border: 0px solid rgba(255, 255, 255, 0.5);
   border-radius: 50%;
-  width: 24px; /* 小さく */
-  height: 24px; /* 小さく */
-  font-size: 1.2em; /* 文字サイズも小さく */
-  line-height: 22px; /* 行の高さを調整 */
+  width: 24px;
+  height: 24px;
+  font-size: 1.2em;
+  line-height: 22px;
   cursor: pointer;
-  box-shadow: none; /* 影を削除 */
+  box-shadow: none;
   z-index: 10;
-  transition: background 0.2s, color 0.2s, border-color 0.2s; /* ホバー効果のためのトランジション */
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
 }
 
 .close-button:hover {
-  background: rgba(122, 106, 83, 0.8); /* ホバーで少し濃く */
-  color: white; /* ホバーで文字を白に */
+  background: rgba(122, 106, 83, 0.8);
+  color: white;
 }
 
 .popup-content {
-  display: flex;
-  flex-direction: row; /* 左右に配置 */
-  justify-content: center; /* 中央揃え */
-  gap: 22px; /* オプション間のスペースを広げる */
-  margin-top: 0px; /* 上部の余白 */
-  margin-right: 18px;
+  position: relative;
+  width: 100%;
+  height: 100%;
 }
 
 .mode-option {
-  background: none; /* 背景を削除 */
-  border: none; /* 枠線を削除 */
+  width: 130px; /* コンテナの幅を固定してテキストを改行させる */
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
   font-family: 'Yuji Syuku', serif;
   color: #4a2c1a;
   text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
   cursor: pointer;
-  padding: 10px 15px; /* パディングを調整 */
-  margin-bottom: 10px;
-  transition: transform 0.2s, color 0.2s; /* box-shadowのトランジションは不要 */
-  position: relative;
+  padding: 10px 0px;
+  transition: transform 0.2s, color 0.2s;
   text-align: center;
-  box-shadow: none; /* 影を削除 */
+  box-shadow: none;
+}
+
+.mode-left {
+  left: 10px; /* この値を調整して左側のモードの位置を変更 */
+  top: 80px;
+}
+
+.mode-right {
+  right: 20px; /* この値を調整して右側のモードの位置を変更 */
+  top: 80px;
 }
 
 .mode-option:hover {
-  transform: scale(1.05); /* 少し拡大 */
-  color: #7a6a53; /* ホバーで色変更 */
-  text-shadow: 0px 0px 8px rgba(255, 255, 255, 1); /* より強い光彩効果 */
+  transform: translateY(-50%) scale(1.05); /* Y軸方向の変異を維持しつつ拡大 */
+  color: #7a6a53;
+  text-shadow: 0px 0px 8px rgba(255, 255, 255, 1);
 }
 
 .mode-title {
-  font-size: 1.5em; /* タイトルを大きく */
+  font-size: 1.5em;
   font-weight: bold;
-  margin-bottom: 5px; /* タイトルと説明文の間隔 */
-  color: #4a2c1a; /* タイトルの色 */
+  margin-bottom: 5px;
+  color: #4a2c1a;
 }
 
 .mode-description {
-  font-size: 0.9em; /* 説明文のサイズ */
-  line-height: 1.4;
-  color: #6d5f4b; /* 説明文の色 */
+  font-size: 0.9em;
+  line-height: 1.2;
+  color: #6d5f4b;
 }
 
 </style>

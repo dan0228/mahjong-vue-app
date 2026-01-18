@@ -908,4 +908,9 @@ function getMeldTileAlt(meld, tile, tileIndex) {
   height: 35px;
   margin-right: 6px;
 }
+
+.stocked-tile-content .is-stocked-tile img {
+  /* 牌の背後から光っているように見せるため、drop-shadowを使用 */
+  filter: drop-shadow(0 0 5px rgb(14, 59, 194));
+}
 </style>

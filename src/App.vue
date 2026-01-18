@@ -124,6 +124,8 @@ onMounted(async () => {
     '/assets/images/button/BGM_ON.png',
     '/assets/images/button/BGM_OFF.png',
     '/assets/images/button/omikuji_button.png',
+    '/assets/images/button/wall_drow.png',
+    '/assets/images/button/stock_in.png',
     '/assets/images/info/cat_coin.png',
     '/assets/images/info/cat_icon_1.png',
     '/assets/images/info/cat_icon_2.png',

@@ -2993,7 +2993,7 @@ export const useGameStore = defineStore('game', {
         if (this.activeActionPlayerId === aiPlayerId) {
           const eligibility = this.playerActionEligibility[aiPlayerId];
 
-          if (eligibility?.canRon && Math.random() < 0.05) {
+          if (eligibility?.canRon && Math.random() < 0.75) {
             this.playerDeclaresCall(aiPlayerId, 'ron', null);
             return;
           }

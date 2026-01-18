@@ -112,12 +112,12 @@ const overlayStyle = computed(() => {
 }
 
 .progress-ring-circle-bg {
-  stroke: #555; /* 背景色 */
+  stroke: #f8f8e0; /* 残り時間の部分を薄いベージュに */
   fill: transparent; 
 }
 
 .progress-ring-circle {
-  stroke: #4caf50; /* プログレスバーの色（緑） */
+  stroke: #4a2c1a; /* プログレスの色をこげ茶色に */
   fill: transparent;
 }
 

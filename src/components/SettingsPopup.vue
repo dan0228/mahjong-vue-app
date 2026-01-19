@@ -1,11 +1,14 @@
 <template>
-  <div v-if="show" class="popup-overlay">
+  <div v-if="show" class="popup-overlay" @click.self="closePopup">
     <div class="popup-content">
-      <!-- ログインフォーム（未ログイン時 or アカウント切替時） -->
-      <div v-if="!userStore.profile || showLoginForm">
-        <h2>{{ $t('login.title') }}</h2>
-        <p>{{ $t('login.description') }}</p>
-        <form @submit.prevent="userStore.otpSent ? loginWithOtp() : sendOtp()">
+      <!-- ログインフォーム -->
+      <div v-if="!userStore.profile || showLoginForm" class="form-container">
+        <div>
+          <h2 class="popup-title">{{ $t('login.title') }}</h2>
+          <img src="/assets/images/back/fude.png" alt="fude" class="fude-image" />
+        </div>
+        <form @submit.prevent="userStore.otpSent ? loginWithOtp() : sendOtp()" class="form-content-container">
+          <p class="form-description">{{ $t('login.description') }}</p>
           <div class="form-group">
             <label for="email">{{ $t('login.emailLabel') }}</label>
             <input type="email" id="email" v-model="email" :placeholder="$t('login.emailPlaceholder')" :disabled="userStore.otpSent" />
@@ -18,20 +21,21 @@
 
           <div v-if="loginError" class="error-message">{{ loginError }}</div>
 
-          <button type="submit" class="login-button" :disabled="userStore.loading || isSendingOtp || isVerifyingOtp">
-            <span v-if="!userStore.otpSent && !isSendingOtp">{{ $t('login.sendOtpButton') }}</span>
-            <span v-else-if="userStore.otpSent && !isVerifyingOtp">{{ $t('login.loginButton') }}</span>
-            <LoadingIndicator v-else />
+          <button type="submit" class="custom-button" :disabled="userStore.loading || isSendingOtp || isVerifyingOtp">
+            <LoadingIndicator v-if="userStore.loading || isSendingOtp || isVerifyingOtp" />
+            <span v-else>{{ userStore.otpSent ? $t('login.loginButton') : $t('login.sendOtpButton') }}</span>
           </button>
         </form>
-        <!-- キャンセルボタン -->
-        <button type="button" @click="cancelLogin" class="cancel-button-standalone">{{ $t('settingsPopup.cancelButton') }}</button>
+        <button type="button" @click="cancelLogin" class="custom-button cancel-button">{{ $t('settingsPopup.cancelButton') }}</button>
       </div>
 
-      <!-- プロフィール編集フォーム（ログイン済み） -->
-      <div v-else>
-        <h2>{{ $t('settingsPopup.title') }}</h2>
-        <form @submit.prevent="saveProfile">
+      <!-- プロフィール編集フォーム -->
+      <div v-else class="form-container">
+        <div>
+          <h2 class="popup-title">{{ $t('settingsPopup.title') }}</h2>
+          <img src="/assets/images/back/fude.png" alt="fude" class="fude-image" />
+        </div>
+        <form @submit.prevent="saveProfile" class="form-content-container">
           <div class="form-group">
             <label for="username-settings">{{ $t('usernameRegistration.usernameLabel') }}</label>
             <input type="text" id="username-settings" v-model="username" :placeholder="$t('usernameRegistration.usernamePlaceholder')" />
@@ -43,17 +47,19 @@
             </div>
           </div>
 
-          <!-- アバターアップロード部分 -->
           <div class="form-group avatar-group">
             <label>{{ $t('usernameRegistration.avatarLabel') }}</label>
             <div class="avatar-upload-container">
-              <img :src="previewUrl || userStore.profile?.avatar_url || '/assets/images/info/hito_icon_1.png'" alt="Avatar Preview" class="avatar-preview" />
+              <label for="avatar-upload-settings">
+                <img :src="previewUrl || userStore.profile?.avatar_url || '/assets/images/info/hito_icon_1.png'" alt="Avatar Preview" class="avatar-preview" />
+              </label>
+              <input type="file" id="avatar-upload-settings" @change="onFileChange" accept="image/png, image/jpeg" style="display: none;" ref="fileInput" />
               <div class="x-input-and-buttons">
                 <div class="button-stack">
-                  <input type="file" id="avatar-upload-settings" @change="onFileChange" accept="image/png, image/jpeg" style="display: none;" ref="fileInput" />
-                  <label for="avatar-upload-settings" class="upload-button">{{ $t('avatarSection.uploadImageButton') }}</label>
-                  <button type="button" class="x-avatar-button" @click="onXAvatarClick" :disabled="isLoadingXAvatar">{{ $t('avatarSection.getXIconButton') }}</button>
-                  <LoadingIndicator v-if="isLoadingXAvatar" />
+                  <button type="button" class="custom-button x-avatar-button" @click="onXAvatarClick" :disabled="isLoadingXAvatar">
+                    <LoadingIndicator v-if="isLoadingXAvatar" />
+                    <span v-else>{{ $t('avatarSection.getXIconButton') }}</span>
+                  </button>
                 </div>
                 <input type="text" id="x-handle-input-settings" v-model="xHandleInput" :placeholder="$t('avatarSection.xAccountPlaceholder')" class="x-handle-input" />
                 <div v-if="xHandleError" class="error-message">{{ xHandleError }}</div>
@@ -66,12 +72,11 @@
             <p>{{ $t('avatarSection.rightsNote') }}</p>
           </div>
 
-          <!-- メールアドレス編集セクション -->
           <div class="email-edit-section">
-            <label for="email-settings" class="email-label-small">{{ $t('settingsPopup.emailSection.label') }}</label>
+            <label class="email-label-small">{{ $t('settingsPopup.emailSection.label') }}</label>
             <div v-if="!isEditingEmail">
               <p class="email-text-small">{{ userStore.profile?.email || $t('settingsPopup.emailSection.notSet') }}</p>
-              <button type="button" @click="startEditEmail" class="edit-email-button">{{ $t('settingsPopup.emailSection.editEmailButton') }}</button>
+              <button type="button" @click="startEditEmail" class="custom-button edit-email-button">{{ $t('settingsPopup.emailSection.editEmailButton') }}</button>
             </div>
             <form v-else @submit.prevent="requestEmailUpdate">
               <div class="form-group">
@@ -81,24 +86,23 @@
               <div v-if="emailError" class="error-message">{{ emailError }}</div>
               <div v-if="emailUpdateMessage" class="success-message">{{ emailUpdateMessage }}</div>
               <div class="button-group" v-if="!emailUpdateMessage">
-                <button type="button" @click="cancelEditEmail" class="cancel-button">{{ $t('settingsPopup.cancelButton') }}</button>
-                <button type="submit" class="save-button" :disabled="isUpdatingEmail">
-                  <span v-if="!isUpdatingEmail">{{ $t('settingsPopup.emailSection.sendUpdateRequestButton') }}</span>
-                  <LoadingIndicator v-else />
+                <button type="button" @click="cancelEditEmail" class="custom-button cancel-button">{{ $t('settingsPopup.cancelButton') }}</button>
+                <button type="submit" class="custom-button" :disabled="isUpdatingEmail">
+                  <LoadingIndicator v-if="isUpdatingEmail" />
+                  <span v-else>{{ $t('settingsPopup.emailSection.sendUpdateRequestButton') }}</span>
                 </button>
               </div>
             </form>
           </div>
 
           <div class="button-group">
-            <button type="button" @click="closePopup" class="cancel-button" :disabled="isEditingEmail && !emailUpdateMessage" :class="{'disabled-button-style': isEditingEmail && !emailUpdateMessage}">{{ $t('settingsPopup.cancelButton') }}</button>
-            <button type="submit" class="save-button" :disabled="!isFormValid || (isEditingEmail && !emailUpdateMessage)">
+            <button type="button" @click="closePopup" class="custom-button cancel-button" :disabled="isEditingEmail && !emailUpdateMessage" :class="{'disabled-button-style': isEditingEmail && !emailUpdateMessage}">{{ $t('settingsPopup.cancelButton') }}</button>
+            <button type="submit" class="custom-button" :disabled="!isFormValid || (isEditingEmail && !emailUpdateMessage)">
               {{ $t('settingsPopup.saveButton') }}
             </button>
           </div>
         </form>
 
-        <!-- アカウントアクション -->
         <div class="account-actions-container">
           <button @click="showLoginForm = true" class="secondary-action-button">
             {{ $t('settingsPopup.switchAccountButton') }}
@@ -377,112 +381,235 @@ const handleDeleteAccount = () => {
 </script>
 
 <style scoped>
-/* スタイルは既存のものと新規のものをマージ */
-.popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 10001; }
-.popup-content { background-color: #fff; padding: 20px 30px; border-radius: 10px; text-align: center; max-width: 90%; width: 350px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); color: #333; }
-h2 { margin-top: 0; font-size: 1.4em; }
-p { font-size: 0.9em; color: #666; margin-bottom: 20px; }
-.form-group { margin-bottom: 15px; text-align: left; }
-.form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9em; }
-.form-group input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-.error-message { color: #e53935; font-size: 0.8em; margin-top: 5px; }
-
-/* ログインボタン */
-.login-button { 
-  background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px;
-  cursor: pointer; font-size: 1em; width: 100%; margin-top: 10px; 
+/* 基本的なオーバレイとコンテンツのスタイル */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
 }
-.login-button:hover { background-color: #45a049; }
-.login-button:disabled { background-color: #ccc; cursor: not-allowed; }
-.cancel-button-standalone {
-  background-color: #f44336; color: white; padding: 10px 20px; border: none; border-radius: 5px;
-  cursor: pointer; font-size: 1em; width: 100%; margin-top: 10px;
+.popup-content {
+  background-image: url('/assets/images/back/start_back.png');
+  background-size: cover;
+  background-position: center;
+  padding: 10px;
+  margin-right: 5px;
+  border-radius: 10px;
+  width: 400px;
+  max-width: 95vw;
+  height: 600px;
+  max-height: 90vh;
+  text-align: center;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.25);
+  display: flex;
+  flex-direction: column;
+  color: rgb(43, 6, 6);
+  font-family: 'Yuji Syuku', serif;
 }
-.cancel-button-standalone:hover { background-color: #da190b; }
 
+/* フォームコンテナ */
+.form-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
 
-/* Avatar Styles */
-.avatar-upload-container { display: flex; align-items: flex-start; gap: 10px; }
-.x-input-and-buttons { display: flex; flex-direction: column; gap: 10px; flex-grow: 1; }
-.button-stack { display: flex; flex-direction: column; gap: 10px; }
-.x-handle-input { width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 0.8em; height: 32px; }
-.avatar-buttons { display: flex; gap: 10px; }
+/* フォームコンテンツのスクロール設定 */
+.form-content-container {
+  padding: 0 10px;
+  margin: 0 -10px;
+  flex-grow: 1;
+}
+
+/* タイトルと筆画像 */
+.popup-title {
+  margin-top: 15px;
+  margin-bottom: 0;
+  font-size: 2em;
+  font-weight: bold;
+}
+.fude-image {
+  width: 220px;
+  height: 15px;
+  max-width: 80%;
+  margin-top: -5px;
+  margin-bottom: 5px;
+}
+
+/* フォーム要素 */
+.form-group {
+  width: 85%;
+  margin-left: 28px;
+  margin-bottom: 8px;
+  text-align: left;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 3px;
+  font-weight: bold;
+  font-size: 0.9em;
+}
+.form-group input {
+  width: 100%;
+  height: 25px;
+  padding: 6px 2px;
+  border: none;
+  border-bottom: 1px solid rgba(43, 6, 6, 0.5);
+  border-radius: 0;
+  box-sizing: border-box;
+  background-color: transparent;
+  color: rgb(43, 6, 6);
+  font-family: 'Yuji Syuku', serif;
+  outline: none;
+  transition: border-bottom-color 0.3s;
+}
+.form-group input:focus {
+  border-bottom-color: rgb(43, 6, 6);
+}
+.form-group input::placeholder {
+  color: rgba(43, 6, 6, 0.6);
+}
+
+/* エラーメッセージ */
+.error-message {
+  color: #e53935;
+  font-size: 0.6em;
+  margin-top: 3px;
+}
+
+/* カスタムボタン */
+.custom-button {
+  background-color: #8B4513; /* SaddleBrown */
+  color: #FFF8DC; /* Cornsilk */
+  padding: 6px 12px;
+  border: 2px solid #D2B48C; /* Tan */
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1em;
+  font-family: 'Yuji Syuku', serif;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+  transition: all 0.2s ease;
+  margin-top: 5px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.custom-button:hover {
+  background-color: #A0522D; /* Sienna */
+  border-color: #DEB887; /* BurlyWood */
+}
+.custom-button:disabled {
+  background-color: #A9A9A9; /* DarkGray */
+  color: #D3D3D3; /* LightGray */
+  cursor: not-allowed;
+  border-color: #696969;
+}
+.custom-button.cancel-button {
+  background-color: #A9A9A9;
+}
+.custom-button.cancel-button:hover {
+  background-color: #808080;
+}
+
+/* アバター関連 */
+.avatar-group { margin-top: 10px; }
+.avatar-upload-container { display: flex; align-items: center; gap: 10px; }
+.avatar-upload-container > label {
+  cursor: pointer;
+}
 .avatar-preview {
-  width: 120px; height: 120px;
-  background-color: white;
-  border: 1px solid #ccc;
+  width: 70px; height: 70px;
+  border: 2px solid #D2B48C;
   border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+  transition: opacity 0.2s;
 }
-.upload-button {
-  background-color: #f0f0f0; color: #333; padding: 6px 8px; border: 1px solid #ccc;
-  border-radius: 4px; cursor: pointer; display: flex; align-items: center;
-  justify-content: center; font-size: 1em; transition: background-color 0.2s;
-  height: 18px; text-align: center;
+.avatar-preview:hover {
+  opacity: 0.8;
 }
-.upload-button:hover { background-color: #e0e0e0; }
-.x-avatar-button {
-  background-color: #000000; color: white; padding: 6px 8px;
-  border: 1px solid #000000; border-radius: 4px; cursor: pointer;
-  font-size: 0.8em; transition: background-color 0.2s;
-  height: 32px; text-align: center;
+.x-input-and-buttons { display: flex; flex-direction: column; gap: 5px; flex-grow: 1; }
+.button-stack { display: flex; flex-direction: column; gap: 5px; }
+.x-handle-input { font-size: 0.8em; }
+.upload-button, .x-avatar-button {
+  font-size: 0.8em;
+  padding: 5px 8px;
+  width: auto;
+  margin-top: 0;
 }
-.x-avatar-button:hover { background-color: #333333; }
-
 .avatar-notes {
-  font-size: 0.7em; color: #666; margin-top: 15px;
-  text-align: left; border-top: 1px solid #eee; padding-top: 10px;
+  width: 85%;
+  font-size: 0.6em;
+  margin-top: 8px;
+  margin-left: 28px;
+  text-align: left;
+  border-top: 1px solid rgba(139, 69, 19, 0.2);
+  padding-top: 0px;
 }
-.avatar-notes p { margin-bottom: 5px; }
+.avatar-notes p { margin: 0 0 3px 0; }
 
-/* Button Group */
-.button-group { display: flex; justify-content: space-between; margin-top: 20px; }
-.save-button, .cancel-button { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 1em; width: 48%; }
-.save-button { background-color: #4CAF50; color: white; }
-.save-button:hover { background-color: #45a049; }
-.save-button:disabled { background-color: #ccc; cursor: not-allowed; }
-.cancel-button { background-color: #f44336; color: white; }
-.cancel-button:hover { background-color: #da190b; }
+/* メール編集セクション */
+.email-edit-section {
+  width: 85%;
+  margin-left: 28px;;
+  margin-top: 10px; padding-top: 10px;
+  border-top: 1px solid rgba(139, 69, 19, 0.2);
+  text-align: left;
+}
+.email-label-small { font-size: 0.9em; font-weight: bold; }
+.email-text-small { font-size: 0.8em; margin-bottom: 5px; }
+.edit-email-button {
+  font-size: 0.8em;
+  padding: 5px 10px;
+  width: auto;
+  align-self: flex-start;
+  margin-top: 0;
+}
+.success-message { color: #2E8B57; font-size: 0.8em; margin-top: 5px; }
+
+/* ボタン群 */
+.button-group {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  margin-top: 10px;
+  margin-left: 28px;
+  margin-right: 28px;
+}
+
+.button-group .custom-button { width: 40%; }
 
 /* アカウントアクション */
 .account-actions-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 15px;
-  padding-top: 15px;
-  border-top: 1px solid #eee;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(139, 69, 19, 0.2);
 }
-.secondary-action-button {
-  background: none;
-  border: none;
-  color: #007bff;
+.secondary-action-button, .delete-button {
+  background: none; border: none;
   text-decoration: underline;
   cursor: pointer;
-  font-size: 0.9em;
-  padding: 0;
+  font-size: 0.8em;
+  padding: 10px 0px;
+  margin-left: 25px;
+  margin-right: 20px;
+  margin-bottom: 30px;
+  font-family: 'Yuji Syuku', serif;
+  transition: color 0.2s;
 }
-.secondary-action-button:hover {
-  color: #0056b3;
-}
-.delete-button {
-  background: none; border: none; color: #e53935;
-  text-decoration: underline; cursor: pointer; font-size: 0.9em; padding: 0;
-}
-.delete-button:hover { color: #c62828; }
+.secondary-action-button { color: #556B2F; } /* DarkOliveGreen (抹茶色) */
+.secondary-action-button:hover { color: #3A4F21; }
+.delete-button { color: #9F353A; } /* 臙脂色 */
+.delete-button:hover { color: #7C2A2E; }
 
-.email-edit-section {
-  margin-top: 20px; padding-top: 15px;
-  border-top: 1px solid #eee; text-align: left;
-}
-.email-edit-section p { font-size: 0.9em; color: #555; margin-bottom: 10px; }
-.edit-email-button {
-  background-color: #007bff; color: white; padding: 8px 15px;
-  border: none; border-radius: 5px; cursor: pointer;
-  font-size: 0.9em; margin-top: 5px;
-}
-.edit-email-button:hover { background-color: #0056b3; }
-.success-message { color: #4CAF50; font-size: 0.8em; margin-top: 5px; }
-.email-label-small { font-size: 0.9em; font-weight: bold; }
-.email-text-small { font-size: 0.8em; color: #555; margin-bottom: 5px; }
 .disabled-button-style { opacity: 0.6; cursor: not-allowed; }
 </style>

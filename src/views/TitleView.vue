@@ -93,7 +93,7 @@
       <!-- ポップアップ -->
       <RulePopup v-if="showRulesPopup" @close="showRulesPopup = false" />
       <YakuListPopup v-if="showYakuListPopup" @close="showYakuListPopup = false" />
-      <HowToPlayPopup v-if="showHowToPlayPopup" @close="showHowToPlayPopup = false" />
+      <HowToPlayPopup :show="showHowToPlayPopup" @close="showHowToPlayPopup = false" />
       <SettingsPopup :show="showSettingsPopup" @close="showSettingsPopup = false" />
       <GameModeSelectionPopup v-if="showGameModeSelectionPopup" @close="showGameModeSelectionPopup = false" @mode-selected="onModeSelected" />
     </div>

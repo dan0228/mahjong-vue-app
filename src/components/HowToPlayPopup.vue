@@ -1,6 +1,6 @@
 <template>
-  <transition name="popup">
-    <div class="popup-overlay" @click.self="$emit('close')">
+  <transition name="scroll">
+    <div v-if="show" class="popup-overlay" @click.self="$emit('close')">
       <div class="popup-content">
         <h2>{{ $t('howToPlayPopup.title') }}</h2>
         <div class="popup-body">
@@ -72,7 +72,11 @@
 
 <script setup>
 // このコンポーネントは、遊び方を表示するためのポップアップです。
-// 親コンポーネントから 'close' イベントを受け取って自身を閉じます。
+// 親コンポーネントから 'show' プロパティを受け取って表示を制御し、
+// 'close' イベントを発行して自身を閉じます。
+defineProps({
+  show: Boolean
+});
 defineEmits(['close']);
 </script>
 
@@ -217,12 +221,37 @@ defineEmits(['close']);
     pointer-events: none; /* 画像がクリックイベントを妨げないように */
   }
 
-  /* トランジション用スタイル */
-  .popup-enter-active, .popup-leave-active {
-    transition: opacity 0.3s ease, transform 0.3s ease;
+/* --- 巻物アニメーション --- */
+
+/* 表示アニメーション */
+.scroll-enter-active {
+  transition: background-color 0.3s ease; /* 背景のフェードイン */
+}
+.scroll-enter-from {
+  background-color: rgba(0,0,0,0);
+}
+.scroll-enter-active .popup-content {
+  animation: unroll 0.6s cubic-bezier(0.25, 1, 0.5, 1); /* 巻物コンテンツが開く */
+}
+
+/* 非表示アニメーション */
+.scroll-leave-active {
+  /* 背景のフェードアウト。巻物が閉じるアニメーション(0.4s)が終わってから開始 */
+  transition: background-color 0.3s ease 0.4s;
+}
+.scroll-leave-to {
+  background-color: rgba(0,0,0,0);
+}
+.scroll-leave-active .popup-content {
+  animation: unroll 0.4s cubic-bezier(0.25, 1, 0.5, 1) reverse forwards; /* 巻物コンテンツが閉じる & 最終状態で停止 */
+}
+
+@keyframes unroll {
+  0% {
+    clip-path: inset(0 0 100% 0);
   }
-  .popup-enter-from, .popup-leave-to {
-    opacity: 0;
-    transform: scale(0.95);
+  100% {
+    clip-path: inset(0 0 0 0);
   }
+}
 </style>

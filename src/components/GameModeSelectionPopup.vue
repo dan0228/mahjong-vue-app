@@ -57,6 +57,8 @@ const selectMode = (mode) => {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  /* 勢いよく登場するアニメーション */
+  animation: slap-in 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .close-button {
@@ -134,4 +136,21 @@ const selectMode = (mode) => {
   color: #6d5f4b;
 }
 
+/* 勢いよく登場するアニメーションのキーフレーム */
+@keyframes slap-in {
+  0% {
+    opacity: 0;
+    transform: scale(1.5); /* 手前にある状態 */
+  }
+  60% {
+    opacity: 1;
+    transform: scale(0.95); /* 勢い余って少し行き過ぎる（机にめり込むイメージ） */
+  }
+  80% {
+    transform: scale(1.02); /* 反動で少し浮く */
+  }
+  100% {
+    transform: scale(1);    /* 定位置 */
+  }
+}
 </style>

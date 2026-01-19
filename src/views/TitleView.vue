@@ -152,7 +152,10 @@ const mainButtons = computed(() => [
   {
     id: 'ai-match',
     alt: t('titleView.menu.catAiMatch'),
-    action: () => {showGameModeSelectionPopup.value = true; },
+    action: () => {
+      audioStore.playSound('Hit-Slap01-3(Dry).mp3');
+      showGameModeSelectionPopup.value = true;
+    },
     cssClass: 'main-button',
     imgSrc: locale.value === 'en' ? '/assets/images/button/title_cat_AI_match_en.png' : '/assets/images/button/title_cat_AI_match.png',
   },

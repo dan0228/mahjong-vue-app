@@ -74,10 +74,23 @@
 // このコンポーネントは、遊び方を表示するためのポップアップです。
 // 親コンポーネントから 'show' プロパティを受け取って表示を制御し、
 // 'close' イベントを発行して自身を閉じます。
-defineProps({
+import { watch } from 'vue';
+import { useAudioStore } from '@/stores/audioStore';
+
+const props = defineProps({
   show: Boolean
 });
 defineEmits(['close']);
+
+const audioStore = useAudioStore();
+
+watch(() => props.show, (newValue) => {
+  if (newValue) {
+    audioStore.playSound('Flyer02-1(Take).mp3');
+  } else {
+    audioStore.playSound('Flyer02-1(Take).mp3');
+  }
+});
 </script>
 
 <style scoped>

@@ -80,23 +80,25 @@
 </template>
 
 <script setup>
-  import { computed, ref, onMounted } from 'vue';
+  import { computed, ref, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getTileImageUrl, tileToString } from '@/utils/tileUtils'; // 画像表示用ユーティリティ
 import { YONHAI_YAKU, YONHAI_YAKUMAN } from '@/services/mahjongLogic'; // 役定義をインポート
 import { useUserStore } from '@/stores/userStore'; // userStoreをインポート
+import { useAudioStore } from '@/stores/audioStore'; // audioStoreをインポート
 
 /**
  * 役一覧ポップアップコンポーネント。
  * 通常役と役満の一覧を表示し、達成済みの役をハイライトします。
  */
-defineProps({
+const props = defineProps({
   show: Boolean
 });
 defineEmits(['close']);
 
 const { t } = useI18n();
 const userStore = useUserStore(); // userStoreを使用
+const audioStore = useAudioStore(); // audioStoreを使用
 
 // achievedYakuはuserStoreから取得するため、refは不要
 
@@ -104,6 +106,14 @@ const userStore = useUserStore(); // userStoreを使用
 onMounted(() => {
   // userStoreがデータを読み込むのを待つ
   // achievedYakuはcomputedでuserStore.profileから直接参照するため、ここでは特別な処理は不要
+});
+
+watch(() => props.show, (newValue) => {
+  if (newValue) {
+    audioStore.playSound('Flyer02-1(Take).mp3');
+  } else {
+    audioStore.playSound('Flyer02-1(Take).mp3');
+  }
 });
 
 /**

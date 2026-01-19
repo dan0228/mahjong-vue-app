@@ -254,6 +254,7 @@ onMounted(async () => {
     '/assets/sounds/Single_Accent17-2(Dry).mp3',
     '/assets/sounds/Kagura_Suzu03-1.mp3',
     '/assets/sounds/Percussive_Accent04-3(High).mp3',
+    '/assets/sounds/Flyer02-1(Take).mp3',
   ];
 
   // --- 並列処理の定義 ---

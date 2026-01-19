@@ -55,9 +55,10 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
+import { useAudioStore } from '@/stores/audioStore';
 
-defineProps({
+const props = defineProps({
   show: Boolean
 });
 defineEmits(['close']);
@@ -76,6 +77,16 @@ const basicRuleSections = ref([
   'points',
   'endCondition'
 ]);
+
+const audioStore = useAudioStore();
+
+watch(() => props.show, (newValue) => {
+  if (newValue) {
+    audioStore.playSound('Flyer02-1(Take).mp3');
+  } else {
+    audioStore.playSound('Flyer02-1(Take).mp3');
+  }
+});
 </script>
 
 <style scoped>

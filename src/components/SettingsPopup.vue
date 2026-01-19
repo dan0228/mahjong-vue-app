@@ -84,7 +84,6 @@
                 <input type="email" id="email-settings" v-model="emailInput" :placeholder="$t('settingsPopup.emailSection.newEmailPlaceholder')" />
               </div>
               <div v-if="emailError" class="error-message">{{ emailError }}</div>
-              <div v-if="emailUpdateMessage" class="success-message">{{ emailUpdateMessage }}</div>
               <div class="button-group" v-if="!emailUpdateMessage">
                 <button type="button" @click="cancelEditEmail" class="custom-button cancel-button">{{ $t('settingsPopup.cancelButton') }}</button>
                 <button type="submit" class="custom-button" :disabled="isUpdatingEmail">
@@ -93,9 +92,10 @@
                 </button>
               </div>
             </form>
+            <div v-if="emailUpdateMessage" class="success-message">{{ emailUpdateMessage }}</div>
           </div>
 
-          <div class="button-group">
+          <div class="button-group" v-if="!isEditingEmail">
             <button type="button" @click="closePopup" class="custom-button cancel-button" :disabled="isEditingEmail && !emailUpdateMessage" :class="{'disabled-button-style': isEditingEmail && !emailUpdateMessage}">{{ $t('settingsPopup.cancelButton') }}</button>
             <button type="submit" class="custom-button" :disabled="!isFormValid || (isEditingEmail && !emailUpdateMessage)">
               {{ $t('settingsPopup.saveButton') }}
@@ -257,6 +257,7 @@ const requestEmailUpdate = async () => {
   const result = await userStore.updateUserEmail(emailInput.value, t);
   if (result.success) {
     emailUpdateMessage.value = t('settingsPopup.emailSection.updateRequestSent');
+    isEditingEmail.value = false; // Set immediately to false
   } else {
     emailError.value = result.error || t('settingsPopup.emailSection.errors.updateFailed');
   }
@@ -370,6 +371,8 @@ const saveProfile = async () => {
 
 const closePopup = () => {
   emit('close');
+  emailUpdateMessage.value = ''; // Clear message on close
+  emailError.value = ''; // Clear error on close
 };
 
 const handleDeleteAccount = () => {
@@ -510,12 +513,6 @@ const handleDeleteAccount = () => {
   cursor: not-allowed;
   border-color: #696969;
 }
-.custom-button.cancel-button {
-  background-color: #A9A9A9;
-}
-.custom-button.cancel-button:hover {
-  background-color: #808080;
-}
 
 /* アバター関連 */
 .avatar-group { margin-top: 10px; }
@@ -537,12 +534,64 @@ const handleDeleteAccount = () => {
 .x-input-and-buttons { display: flex; flex-direction: column; gap: 5px; flex-grow: 1; }
 .button-stack { display: flex; flex-direction: column; gap: 5px; }
 .x-handle-input { font-size: 0.8em; }
-.upload-button, .x-avatar-button {
+
+/* 画像ボタンの共通スタイル */
+.x-avatar-button,
+.edit-email-button,
+.email-edit-section form .button-group .custom-button:not(.cancel-button),
+.form-content-container > .button-group .custom-button:not(.cancel-button),
+.custom-button.cancel-button {
+  background-size: 100% 100%;
+  background-color: transparent;
+  border: none;
+  color: #4a2c12;
+  font-weight: bold;
+  text-shadow: none;
+  filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.4));
+  transition: all 0.1s ease-out;
+}
+
+.x-avatar-button:hover,
+.edit-email-button:hover,
+.email-edit-section form .button-group .custom-button:not(.cancel-button):hover,
+.form-content-container > .button-group .custom-button:not(.cancel-button):hover,
+.custom-button.cancel-button:hover {
+  background-color: transparent;
+  border: none;
+  filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.4)) brightness(1.1);
+}
+
+.x-avatar-button:active,
+.edit-email-button:active,
+.email-edit-section form .button-group .custom-button:not(.cancel-button):active,
+.form-content-container > .button-group .custom-button:not(.cancel-button):active,
+.custom-button.cancel-button:active {
+  transform: translateY(1px);
+  filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.5));
+}
+
+/* 個別の画像ボタンのスタイル */
+.x-avatar-button {
+  background-image: url('/assets/images/button/board_ori.png');
   font-size: 0.8em;
   padding: 5px 8px;
   width: auto;
   margin-top: 0;
 }
+
+.edit-email-button,
+.email-edit-section form .button-group .custom-button:not(.cancel-button) {
+  background-image: url('/assets/images/button/board_ori.png');
+}
+
+.form-content-container > .button-group .custom-button:not(.cancel-button) {
+  background-image: url('/assets/images/button/board_hand.png');
+}
+
+.custom-button.cancel-button {
+  background-image: url('/assets/images/button/board_cancel.png');
+}
+
 .avatar-notes {
   width: 85%;
   font-size: 0.6em;
@@ -572,6 +621,24 @@ const handleDeleteAccount = () => {
   margin-top: 0;
 }
 .success-message { color: #2E8B57; font-size: 0.8em; margin-top: 5px; }
+
+/* メール編集フォーム内の特定要素を小さくする */
+.email-edit-section form .email-label-small {
+  font-size: 0.8em;
+}
+.email-edit-section form input {
+  height: 22px;
+  font-size: 0.7em;
+  padding: 4px 2px;
+}
+.email-edit-section form .button-group {
+  margin-top: 5px;
+}
+.email-edit-section form .button-group .custom-button {
+  padding: 4px 10px;
+  font-size: 0.8em;
+}
+
 
 /* ボタン群 */
 .button-group {

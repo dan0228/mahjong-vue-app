@@ -5,7 +5,11 @@
         <h2>{{ $t('howToPlayPopup.title') }}</h2>
         <div class="popup-body">
           <div class="section">
-            <h3>{{ $t('howToPlayPopup.section1.title') }}</h3>
+            <h3>
+              <i class="fa-solid fa-fan icon-left"></i>
+              <span>{{ $t('howToPlayPopup.section1.title') }}</span>
+              <i class="fa-solid fa-fan icon-right"></i>
+            </h3>
             <p v-html="$t('howToPlayPopup.section1.line1')"></p>
             <p v-html="$t('howToPlayPopup.section1.line2')"></p>
             <p v-html="$t('howToPlayPopup.section1.line3')"></p>
@@ -13,7 +17,11 @@
           </div>
 
           <div class="section">
-            <h3>{{ $t('howToPlayPopup.section2.title') }}</h3>
+            <h3>
+              <i class="fa-solid fa-dragon icon-left"></i>
+              <span>{{ $t('howToPlayPopup.section2.title') }}</span>
+              <i class="fa-solid fa-dragon icon-right"></i>
+            </h3>
             <p v-html="$t('howToPlayPopup.section2.objective')"></p>
             <p v-html="$t('howToPlayPopup.section2.tileTypesTitle')"></p>
             <ul>
@@ -25,7 +33,11 @@
           </div>
 
           <div class="section">
-            <h3>{{ $t('howToPlayPopup.section3.title') }}</h3>
+            <h3>
+              <i class="fa-solid fa-list-ol icon-left"></i>
+              <span>{{ $t('howToPlayPopup.section3.title') }}</span>
+              <i class="fa-solid fa-list-ol icon-right"></i>
+            </h3>
             <p v-html="$t('howToPlayPopup.section3.intro')"></p>
             <ol>
               <li v-for="item in $tm('howToPlayPopup.section3.flow')" :key="item" v-html="item"></li>
@@ -37,7 +49,11 @@
           </div>
 
           <div class="section">
-            <h3>{{ $t('howToPlayPopup.section4.title') }}</h3>
+            <h3>
+              <i class="fa-solid fa-bolt icon-left"></i>
+              <span>{{ $t('howToPlayPopup.section4.title') }}</span>
+              <i class="fa-solid fa-bolt icon-right"></i>
+            </h3>
             <dl>
               <div v-for="(action, key) in $tm('howToPlayPopup.section4.actions')" :key="key">
                 <dt>{{ action.term }}</dt>
@@ -48,6 +64,7 @@
           <p class="conclusion" v-html="$t('howToPlayPopup.conclusion')"></p>
         </div>
         <button @click="$emit('close')" class="close-button">{{ $t('howToPlayPopup.closeButton') }}</button>
+        <img src="/assets/images/back/fude.png" class="close-fude-image" alt="fude" />
       </div>
     </div>
   </transition>
@@ -130,6 +147,18 @@ defineEmits(['close']);
     color: #4a2c1a;
     border-bottom: 1px solid #8a6d3b;
     padding-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .icon-left {
+    opacity: 0.9;    /* 少しだけ透けさせる */
+    transform: rotate(-15deg);
+  }
+  .icon-right {
+    opacity: 0.9;    /* 少しだけ透けさせる */
+    transform: rotate(15deg);
   }
   .section p, .section ul, .section ol, .section dl {
     margin-left: 3px;
@@ -159,17 +188,33 @@ defineEmits(['close']);
 
   .close-button {
     position: absolute;
-    bottom: 34px; /* 位置調整用 */
-    right: 55px;  /* 位置調整用 */
+    bottom: 42px; /* fude.pngを配置するため少し上に調整 */
+    right: 55px;
     background: none;
     border: none;
     font-family: 'Yuji Syuku', serif;
-    font-size: 1.1em;
-    color: #4d2c1c;
+    font-size: 1.0em;
+    color: white; /* テキストを白に変更 */
     cursor: pointer;
     padding: 5px;
     opacity: 0.9;
-    text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.7);
+    /* 暗い色のシャドウで、白いテキストの周りにグロー効果を作成 */
+    text-shadow: 0 0 5px #4d2c1c, 0 0 8px #4d2c1c;
+    transition: text-shadow 0.3s ease, color 0.3s ease;
+  }
+
+  .close-button:hover {
+    color: #fffde7; /* 少し黄色がかった白 */
+    text-shadow: 0 0 8px #4d2c1c, 0 0 12px #4d2c1c; /* ホバーで発光を強く */
+  }
+
+  .close-fude-image {
+    position: absolute;
+    bottom: 40px;
+    right: 58px; /* ボタンの位置に合わせて調整 */
+    width: 60px; /* 小さく表示 */
+    opacity: 0.8;
+    pointer-events: none; /* 画像がクリックイベントを妨げないように */
   }
 
   /* トランジション用スタイル */

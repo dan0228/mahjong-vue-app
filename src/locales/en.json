@@ -50,14 +50,14 @@
     "title": "How to Play",
     "closeButton": "Close",
     "section1": {
-      "title": "🎉 Game Features 🎉",
+      "title": "Game Features",
       "line1": "'YonJong!' is a casual mahjong game based on Japanese Riichi Mahjong.",
       "line2": "Instead of 13 tiles, you only have <strong>4</strong>!",
       "line3": "Enjoy a game that's simple yet deep, blending luck and strategy.",
       "line4": "It's also perfect as an introduction for mahjong beginners!"
     },
     "section2": {
-      "title": "🀄 What is Mahjong? 🀄",
+      "title": "What is Mahjong?",
       "objective": "<strong>Objective:</strong> Be the first to create a specific combination of tiles (a 'yaku' or winning hand) to win ('agari').",
       "tileTypesTitle": "<strong>Tile Types:</strong>",
       "tileTypes": [
@@ -68,7 +68,7 @@
       "handComposition": "Normally, you build a hand with 13 tiles, but in 'YonJong!', you only use <strong>4</strong> (drawing one tile makes a total of 5).<br>The basics are to form <strong>'melds' (mentsu)</strong>, which are sets of three (such as 222 or 567), and a <strong>'pair' (toitsu)</strong>, which is a set of two (such as 88 or 99).<br>In 'YonJong!', you win by forming <strong>1 meld + 1 pair</strong>!"
     },
     "section3": {
-      "title": "📖 Basic Flow 📖",
+      "title": "Basic Flow",
       "intro": "Mahjong progresses in units called 'rounds' (kyoku).<br>*'YonJong!' is played only in the East round (Tonpuusen).",
       "flow": [
         "In each round, a 'dealer' (oya) and 'non-dealers' (ko) are determined, and players draw tiles in order, starting with the dealer.",
@@ -85,7 +85,7 @@
       ]
     },
     "section4": {
-      "title": "⚡ Actions ⚡",
+      "title": "Actions",
       "actions": {
         "ron": {
           "term": "Ron",

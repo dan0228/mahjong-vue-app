@@ -47,9 +47,7 @@
           </div>
           <p class="conclusion" v-html="$t('howToPlayPopup.conclusion')"></p>
         </div>
-        <div class="close-button-container">
-          <button @click="$emit('close')" class="close-button">{{ $t('howToPlayPopup.closeButton') }}</button>
-        </div>
+        <button @click="$emit('close')" class="close-button">{{ $t('howToPlayPopup.closeButton') }}</button>
       </div>
     </div>
   </transition>
@@ -62,7 +60,6 @@ defineEmits(['close']);
 </script>
 
 <style scoped>
-  /* スタイルは他のポップアップ(RulePopup.vueなど)を参考にしています */
   .popup-overlay {
     position: fixed;
     top: 0;
@@ -76,67 +73,103 @@ defineEmits(['close']);
     z-index: 1000;
   }
   .popup-content {
-    background-color: white;
-    padding: 20px;
+    background-image: url('/assets/images/back/rule.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    padding: 20px 38px;
     border-radius: 8px;
-    max-width: 90%;
-    max-height: 80%;
+    width: 90%;
+    max-width: 500px; /* 最大幅を調整 */
+    height: 90%;
+    max-height: 700px; /* 最大高さを調整 */
     overflow-y: auto;
     text-align: center;
-    font-family: 'M PLUS 1', sans-serif;
+    font-family: 'Yuji Syuku', serif;
+    color: #3a2417; /* テキストの基本色 */
+    text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.2);
+    display: flex;
+    flex-direction: column;
+    position: relative; /* close-buttonの基準点 */
   }
   .popup-body {
-    margin-top: 20px;
-    margin-bottom: 20px;
+    width: 89%;
+    margin-left: 25px;
+    margin-top: -20px;
+    margin-bottom: 48px;
     text-align: left;
-    font-size: 14px;
-    line-height: 1.6;
+    font-size: 12px;
+    line-height: 1.2;
+    flex-grow: 1;
+    overflow-y: auto; /* 内容が多い場合にスクロール */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  }
+  .popup-body::-webkit-scrollbar {
+    width: 5px;
+  }
+  .popup-body::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .popup-body::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+  }
+  h2 {
+    font-size: 2em;
+    margin-top: 30px;
+    color: #4a2c1a;
   }
   .section {
-    margin-bottom: 20px;
+    margin-bottom: 5px;
   }
   .section h3 {
-    font-size: 1.2em;
+    font-size: 1.4em;
     text-align: center;
-    margin-bottom: 10px;
-    color: #586810;
-    border-bottom: 2px solid #d8c8a0;
-    padding-bottom: 5px;
+    margin-bottom: 15px;
+    color: #4a2c1a;
+    border-bottom: 1px solid #8a6d3b;
+    padding-bottom: 8px;
   }
   .section p, .section ul, .section ol, .section dl {
-    margin-left: 10px;
-    margin-right: 10px;
+    margin-left: 3px;
+    margin-right: 3px;
   }
   .section ul, .section ol {
-    padding-left: 20px;
+    padding-left: 25px;
   }
   .section strong {
-    color: #c0392b;
+    color: #a94442;
   }
   .section dt {
     font-weight: bold;
-    margin-top: 10px;
+    margin-top: 15px;
+    color: #4a2c1a;
   }
   .section dd {
-    margin-left: 1em;
+    margin-left: 1.5em;
   }
   .conclusion {
     text-align: center;
     font-weight: bold;
-    margin-top: 20px;
-    color: #586810;
+    margin-top: 25px;
+    font-size: 1.4em;
+    color: #4a2c1a;
   }
-  .close-button-container {
-    text-align: center;
-  }
+
   .close-button {
-    padding: 10px 30px;
-    background-color: #6c757d;
-    color: white;
+    position: absolute;
+    bottom: 34px; /* 位置調整用 */
+    right: 55px;  /* 位置調整用 */
+    background: none;
     border: none;
-    border-radius: 5px;
+    font-family: 'Yuji Syuku', serif;
+    font-size: 1.1em;
+    color: #4d2c1c;
     cursor: pointer;
-    font-size: 1em;
+    padding: 5px;
+    opacity: 0.9;
+    text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.7);
   }
 
   /* トランジション用スタイル */

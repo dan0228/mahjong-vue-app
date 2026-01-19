@@ -88,6 +88,7 @@ onMounted(async () => {
     '/assets/images/back/fude.png',
     '/assets/images/back/mode_back.png',
     '/assets/images/back/start_back.png',
+    '/assets/images/back/rule.png',
     '/assets/images/button/buckToTitle.png',
     '/assets/images/button/kan_button.png',
     '/assets/images/button/pon_button.png',

@@ -19,8 +19,8 @@
 }
 
 .spinner {
-  border: 6px solid #f3f3f3; /* Light grey */
-  border-top: 6px solid #3498db; /* Blue */
+  border: 6px solid #FFF8DC; /* Cornsilk (和風のオフホワイト/薄茶色) */
+  border-top: 6px solid #8B4513; /* SaddleBrown (和風の濃い茶色) */
   border-radius: 50%;
   width: 50px;
   height: 50px;

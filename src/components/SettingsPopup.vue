@@ -87,8 +87,7 @@
               <div class="button-group" v-if="!emailUpdateMessage">
                 <button type="button" @click="cancelEditEmail" class="custom-button cancel-button">{{ $t('settingsPopup.cancelButton') }}</button>
                 <button type="submit" class="custom-button" :disabled="isUpdatingEmail">
-                  <LoadingIndicator v-if="isUpdatingEmail" />
-                  <span v-else>{{ $t('settingsPopup.emailSection.sendUpdateRequestButton') }}</span>
+                  {{ $t('settingsPopup.emailSection.sendUpdateRequestButton') }}
                 </button>
               </div>
             </form>

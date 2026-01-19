@@ -1,6 +1,6 @@
 <template>
-  <transition name="popup">
-    <div class="popup-overlay" @click.self="$emit('close')">
+  <transition name="scroll">
+    <div v-if="show" class="popup-overlay" @click.self="$emit('close')">
       <div class="popup-content">
         <h2>{{ $t('rulePopup.title') }}</h2>
 
@@ -48,6 +48,7 @@
         <div class="close-button-container">
           <button @click="$emit('close')" class="close-button">{{ $t('rulePopup.closeButton') }}</button>
         </div>
+        <img src="/assets/images/back/fude.png" class="close-fude-image" alt="fude" />
       </div>
     </div>
   </transition>
@@ -56,6 +57,9 @@
 <script setup>
 import { ref } from 'vue';
 
+defineProps({
+  show: Boolean
+});
 defineEmits(['close']);
 
 const activeTab = ref('basic'); // 'basic' or 'stock'
@@ -89,96 +93,190 @@ const basicRuleSections = ref([
   z-index: 1000;
 }
 .popup-content {
-  background-color: white;
-  padding: 20px;
+  background-image: url('/assets/images/back/rule.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  padding: 20px 38px;
   border-radius: 8px;
-  max-width: 90%;
-  max-height: 80%;
+  width: 90%;
+  max-width: 500px; /* 最大幅を調整 */
+  height: 90%;
+  max-height: 700px; /* 最大高さを調整 */
   overflow-y: auto;
   text-align: center;
-  font-family: 'M PLUS 1', sans-serif;
+  font-family: 'Yuji Syuku', serif;
+  color: #3a2417; /* テキストの基本色 */
+  text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.2);
   display: flex;
   flex-direction: column;
-}
-.popup-content h2 {
-  margin-top: 0;
-  margin-bottom: 15px; /* タブとの間隔 */
-}
-.subtitle {
-  margin-top: 0;
-  margin-bottom: 20px;
-  color: #555;
-  font-size: 0.9em;
+  position: relative; /* close-buttonの基準点 */
 }
 .popup-body {
-  margin-top: 20px;
-  margin-bottom: 20px;
+  width: 89%;
+  margin-left: 25px;
+  margin-top: -10px;
+  margin-bottom: 28px;
   text-align: left;
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 12px;
+  line-height: 1.2;
   flex-grow: 1; /* 内容部分が残りの高さを埋めるように */
-  overflow-y: auto; /* 内容が多ければスクロール */
+  overflow-y: auto; /* 内容が多い場合にスクロール */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+.popup-body::-webkit-scrollbar {
+  width: 5px;
+}
+.popup-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+.popup-body::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+}
+h2 {
+  font-size: 2em;
+  margin-top: 30px;
+  color: #4a2c1a;
 }
 .section {
-  margin-bottom: 20px;
+  margin-bottom: 5px;
 }
 .section h3 {
-  font-size: 1.1em;
-  text-align: left;
-  margin-bottom: 8px;
-  color: #586810;
-  border-bottom: 2px solid #d8c8a0;
-  padding-bottom: 5px;
+  font-size: 1.5em;
+  text-align: center;
+  margin-bottom: 15px;
+  color: #4a2c1a;
+  border-bottom: 1px solid #8a6d3b;
+  padding-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
-.section p, .section ul {
-  margin-left: 10px;
-  margin-right: 10px;
+.section p, .section ul, .section ol, .section dl {
+  margin-left: 3px;
+  margin-right: 3px;
 }
-.section ul {
-  padding-left: 20px;
+.section ul, .section ol {
+  padding-left: 25px;
 }
+.section strong {
+  color: #a94442;
+}
+.section dt {
+  font-weight: bold;
+  margin-top: 15px;
+  color: #4a2c1a;
+}
+.section dd {
+  margin-left: 1.5em;
+}
+.conclusion {
+  text-align: center;
+  font-weight: bold;
+  margin-top: 25px;
+  font-size: 1.4em;
+  color: #4a2c1a;
+}
+
 .close-button-container {
   text-align: center;
   margin-top: 20px;
 }
 .close-button {
-  padding: 10px 30px;
-  background-color: #6c757d;
-  color: white;
+  position: absolute;
+  bottom: 42px; /* fude.pngを配置するため少し上に調整 */
+  right: 55px;
+  background: none;
   border: none;
-  border-radius: 5px;
+  font-family: 'Yuji Syuku', serif;
+  font-size: 1.0em;
+  color: white; /* テキストを白に変更 */
   cursor: pointer;
-  font-size: 1em;
+  padding: 5px;
+  opacity: 0.9;
+  /* 暗い色のシャドウで、白いテキストの周りにグロー効果を作成 */
+  text-shadow: 0 0 5px #4d2c1c, 0 0 8px #4d2c1c;
+  transition: text-shadow 0.3s ease, color 0.3s ease;
+}
+
+.close-button:hover {
+  color: #fffde7; /* 少し黄色がかった白 */
+  text-shadow: 0 0 8px #4d2c1c, 0 0 12px #4d2c1c; /* ホバーで発光を強く */
+}
+
+.close-fude-image {
+  position: absolute;
+  bottom: 40px;
+  right: 58px; /* ボタンの位置に合わせて調整 */
+  width: 60px; /* 小さく表示 */
+  opacity: 0.8;
+  pointer-events: none; /* 画像がクリックイベントを妨げないように */
 }
 
 /* Tab styles */
 .tab-buttons {
   display: flex;
-  border-bottom: 1px solid #ccc;
+  justify-content: center; /* 中央寄せ */
+  border-bottom: 1px solid #8a6d3b; /* 線の色を調整 */
   margin-bottom: 10px;
+  padding-bottom: 5px; /* 線とボタンの間に少しスペース */
 }
 .tab-buttons button {
-  padding: 10px 15px;
+  padding: 8px 12px; /* パディングを調整 */
   border: none;
   background-color: transparent;
   cursor: pointer;
-  font-size: 1em;
-  color: #666;
+  font-size: 0.9em; /* フォントサイズを調整 */
+  font-family: 'Yuji Syuku', serif; /* フォントを合わせる */
+  color: #4a2c1a; /* テキスト色を合わせる */
   border-bottom: 3px solid transparent;
-  margin-bottom: -1px; /* 下線を親のborderに重ねる */
+  margin: 0 5px; /* ボタン間のマージン */
+  transition: all 0.2s ease;
 }
 .tab-buttons button.active {
-  color: #000;
+  color: #a94442; /* アクティブなタブの色 */
   font-weight: bold;
-  border-bottom-color: #586810;
+  border-bottom-color: #a94442; /* アクティブなタブの下線色 */
+}
+.tab-buttons button:hover:not(.active) {
+  color: #7a3c2a; /* ホバー時の色 */
 }
 
-/* トランジション用スタイル */
-.popup-enter-active, .popup-leave-active {
-  transition: opacity 0.3s ease, transform 0.3s ease;
+
+/* --- 巻物アニメーション --- */
+
+/* 表示アニメーション */
+.scroll-enter-active {
+  transition: background-color 0.3s ease; /* 背景のフェードイン */
 }
-.popup-enter-from, .popup-leave-to {
-  opacity: 0;
-  transform: scale(0.95);
+.scroll-enter-from {
+  background-color: rgba(0,0,0,0);
+}
+.scroll-enter-active .popup-content {
+  animation: unroll 0.6s cubic-bezier(0.25, 1, 0.5, 1); /* 巻物コンテンツが開く */
+}
+
+/* 非表示アニメーション */
+.scroll-leave-active {
+  /* 背景のフェードアウト。巻物が閉じるアニメーション(0.4s)が終わってから開始 */
+  transition: background-color 0.3s ease 0.4s;
+}
+.scroll-leave-to {
+  background-color: rgba(0,0,0,0);
+}
+.scroll-leave-active .popup-content {
+  animation: unroll 0.4s cubic-bezier(0.25, 1, 0.5, 1) reverse forwards; /* 巻物コンテンツが閉じる & 最終状態で停止 */
+}
+
+@keyframes unroll {
+  0% {
+    clip-path: inset(0 0 100% 0);
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+  }
 }
 </style>

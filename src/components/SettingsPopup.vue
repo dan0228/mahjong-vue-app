@@ -97,7 +97,7 @@
 
           <div class="button-group" v-if="!isEditingEmail">
             <button type="button" @click="closePopup" class="custom-button cancel-button" :disabled="isEditingEmail && !emailUpdateMessage" :class="{'disabled-button-style': isEditingEmail && !emailUpdateMessage}">{{ $t('settingsPopup.cancelButton') }}</button>
-            <button type="submit" class="custom-button" :disabled="!isFormValid || (isEditingEmail && !emailUpdateMessage)">
+            <button type="submit" class="custom-button" :disabled="!isFormValid">
               {{ $t('settingsPopup.saveButton') }}
             </button>
           </div>
@@ -123,11 +123,13 @@ import { useUserStore } from '@/stores/userStore';
 import { containsProfanity } from '@/utils/validationUtils';
 import { compressImage } from '@/utils/imageUtils';
 import LoadingIndicator from '@/components/LoadingIndicator.vue';
+import { useAudioStore } from '@/stores/audioStore'; // Import audio store
 
 const props = defineProps({ show: Boolean });
 const emit = defineEmits(['close']);
 const { t } = useI18n();
 const userStore = useUserStore();
+const audioStore = useAudioStore(); // Get audio store instance
 
 // --- 状態管理 ---
 const showLoginForm = ref(false);
@@ -168,6 +170,7 @@ watch(() => props.show, (newValue) => {
     } else {
       initializeLoginForm();
     }
+    audioStore.playSound('Hit-Slap01-3(Dry).mp3'); // Play sound when popup opens
   }
 });
 
@@ -352,6 +355,10 @@ const isUsernameLengthValid = computed(() => getCharacterWidth(username.value) <
 const isUsernameProfane = computed(() => containsProfanity(username.value));
 const isFormValid = computed(() => isUsernameNotEmpty.value && isUsernameLengthValid.value && !isUsernameProfane.value);
 
+const hasPendingProfileChanges = computed(() => {
+  return username.value !== userStore.profile?.username || selectedFile.value !== null;
+});
+
 // --- 保存処理 ---
 const saveProfile = async () => {
   if (!isFormValid.value) return;
@@ -414,6 +421,24 @@ const handleDeleteAccount = () => {
   flex-direction: column;
   color: rgb(43, 6, 6);
   font-family: 'Yuji Syuku', serif;
+  animation: slap-in 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes slap-in {
+  0% {
+    opacity: 0;
+    transform: scale(1.5); /* 手前にある状態 */
+  }
+  60% {
+    opacity: 1;
+    transform: scale(0.95); /* 勢い余って少し行き過ぎる（机にめり込むイメージ） */
+  }
+  80% {
+    transform: scale(1.02); /* 反動で少し浮く */
+  }
+  100% {
+    transform: scale(1);    /* 定位置 */
+  }
 }
 
 /* フォームコンテナ */

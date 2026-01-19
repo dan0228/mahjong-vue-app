@@ -113,7 +113,7 @@ const basicRuleSections = ref([
   position: relative; /* close-buttonの基準点 */
 }
 .popup-body {
-  width: 89%;
+  width: 85%;
   margin-left: 25px;
   margin-top: -10px;
   margin-bottom: 28px;
@@ -222,6 +222,8 @@ h2 {
   justify-content: center; /* 中央寄せ */
   border-bottom: 1px solid #8a6d3b; /* 線の色を調整 */
   margin-bottom: 10px;
+  margin-left: 25px;
+  margin-right: 25px;
   padding-bottom: 5px; /* 線とボタンの間に少しスペース */
 }
 .tab-buttons button {
@@ -233,7 +235,7 @@ h2 {
   font-family: 'Yuji Syuku', serif; /* フォントを合わせる */
   color: #4a2c1a; /* テキスト色を合わせる */
   border-bottom: 3px solid transparent;
-  margin: 0 5px; /* ボタン間のマージン */
+  margin: 0 0px; /* ボタン間のマージン */
   transition: all 0.2s ease;
 }
 .tab-buttons button.active {

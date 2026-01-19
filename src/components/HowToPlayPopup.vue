@@ -114,7 +114,7 @@ defineEmits(['close']);
     position: relative; /* close-buttonの基準点 */
   }
   .popup-body {
-    width: 89%;
+    width: 86%;
     margin-left: 25px;
     margin-top: -20px;
     margin-bottom: 48px;

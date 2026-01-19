@@ -174,7 +174,7 @@
   },
   "yakuListPopup": {
     "title": "役一覧",
-    "achievementNote": "※和了したことがある役はハイライトされます",
+    "achievementNote": "※和了済みの役はハイライト",
     "yakuNameHeader": "役名",
     "hanHeader": "翻数",
     "exampleHeader": "例",

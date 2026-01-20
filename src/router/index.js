@@ -19,7 +19,7 @@ const routes = [
     name: 'Title',
     component: TitleView,
     meta: {
-      title: 'よんじゃん！ - 猫と一緒に楽しむ麻雀ゲーム',
+      title: 'よんじゃん！ - シンプルだけど奥深い４牌麻雀',
       description: 'かわいい猫たちとオンラインで楽しめる麻雀ゲーム。初心者から上級者まで、いつでもどこでも手軽にプレイ！',
       bgm: 'NES-JP-A01-2(Title-Loop115).mp3'
     },

@@ -17,33 +17,10 @@
     "catCoins": "🪙猫コイン",
     "sfx": "効果音"
   },
-  "addToHomeScreenPopup": {
+  "notificationPopup": {
     "title": "お知らせ😸",
-    "mobile": {
-      "heading": "📱ホーム画面に追加しよう",
-      "body": "アプリのようにワンタップでゲーム開始"
-    },
-    "desktop": {
-      "heading": "⭐ブックマークに登録しよう",
-      "body": "すぐにアクセスしてゲーム開始"
-    },
-    "closeButton": "閉じる",
-    "howToAddButton": "追加方法を見る"
-  },
-  "howToAddPopup": {
-    "title": "📲ホーム画面への追加方法📲",
-    "iphone": {
-      "title": "【iPhone（Safariの場合）】",
-      "step1": "画面下の共有ボタンをタップ",
-      "step2": "「ホーム画面に追加」を選択",
-      "step3": "右上の「追加」をタップ"
-    },
-    "android": {
-      "title": "【Android（Chromeの場合）】",
-      "step1": "画面右上の「<span class=\"icon\">︙</span>」メニューをタップ",
-      "step2": "「ホーム画面に追加」または「アプリをインストール」を選択",
-      "step3": "表示された指示に従って追加"
-    },
+    "heading": "⭐ブックマークに登録しよう",
+    "body": "すぐにアクセスしてゲーム開始",
     "closeButton": "閉じる"
   },
   "howToPlayPopup": {

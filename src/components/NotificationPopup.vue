@@ -1,24 +1,13 @@
 <template>
-  <div v-if="show" class="how-to-add-popup-overlay">
-    <div class="how-to-add-popup-content">
-      <h2>{{ $t('howToAddPopup.title') }}</h2>
-
-      <h3>{{ $t('howToAddPopup.iphone.title') }}</h3>
-      <ol>
-        <li>{{ $t('howToAddPopup.iphone.step1') }}</li>
-        <li>{{ $t('howToAddPopup.iphone.step2') }}</li>
-        <li>{{ $t('howToAddPopup.iphone.step3') }}</li>
-      </ol>
-
-      <h3>{{ $t('howToAddPopup.android.title') }}</h3>
-      <ol>
-        <li v-html="$t('howToAddPopup.android.step1')"></li>
-        <li>{{ $t('howToAddPopup.android.step2') }}</li>
-        <li>{{ $t('howToAddPopup.android.step3') }}</li>
-      </ol>
-
+  <div v-if="show" class="notification-popup-overlay">
+    <div class="notification-popup-content">
+      <h2>{{ $t('notificationPopup.title') }}</h2>
+      <div>
+        <p><b>{{ $t('notificationPopup.heading') }}</b></p>
+        <p>{{ $t('notificationPopup.body') }}</p>
+      </div>
       <div class="buttons">
-        <button @click="closePopup">{{ $t('howToAddPopup.closeButton') }}</button>
+        <button @click="closePopup">{{ $t('notificationPopup.closeButton') }}</button>
       </div>
     </div>
   </div>
@@ -27,6 +16,7 @@
 <script setup>
 import { defineProps, defineEmits } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useAudioStore } from '@/stores/audioStore';
 
 const { t } = useI18n(); // i18nの翻訳関数を取得
 
@@ -44,16 +34,19 @@ const props = defineProps({
  */
 const emit = defineEmits(['close']);
 
+const audioStore = useAudioStore(); // オーディオストアのインスタンスを取得
+
 /**
- * ポップアップを閉じる処理を行います。
+ * ポップアップを閉じ、BGMをタイトル画面のBGMに設定します。
  */
 const closePopup = () => {
+  audioStore.setBgm('NES-JP-A01-2(Title-Loop115).mp3'); // 音楽再生
   emit('close'); // 'close'イベントを発行してポップアップを閉じる
 };
 </script>
 
 <style scoped>
-.how-to-add-popup-overlay {
+.notification-popup-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -63,51 +56,36 @@ const closePopup = () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 10001; /* AddToHomeScreenPopupより前面に表示 */
+  z-index: 10000;
 }
 
-.how-to-add-popup-content {
+.notification-popup-content {
   background-color: #fff;
   padding: 20px;
   border-radius: 10px;
-  text-align: left;
-  max-width: 90%;
-  max-height: 80%;
-  overflow-y: auto;
+  text-align: center;
+  max-width: 80%;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   color: #333;
 }
 
 h2 {
   margin-top: 0;
-  text-align: center;
   color: #333;
+  font-size: 1.2em; /* 文字サイズを小さく調整 */
 }
 
-h3 {
-  margin-top: 15px;
-  margin-bottom: 5px;
-  color: #555;
-}
-
-ol {
-  margin-top: 0;
+p {
   margin-bottom: 10px;
-  padding-left: 20px;
 }
 
-li {
-  margin-bottom: 5px;
-}
-
-.icon {
-  font-weight: bold;
-  color: #007bff;
+.note {
+  font-size: 0.8em;
+  color: #666;
 }
 
 .buttons {
   margin-top: 20px;
-  text-align: center;
 }
 
 button {
@@ -118,6 +96,7 @@ button {
   border-radius: 5px;
   cursor: pointer;
   font-size: 1em;
+  margin: 0 5px;
 }
 
 button:hover {

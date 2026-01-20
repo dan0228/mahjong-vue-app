@@ -20,15 +20,10 @@
   <!-- 通信中ローディングインジケーター -->
   <LoadingIndicator v-if="userStore.loading && !isLoading" />
 
-  <!-- ホーム画面追加ポップアップ -->
-  <AddToHomeScreenPopup
-    :show="showAddToHomeScreenPopup"
-    @close="handleCloseAddToHomeScreenPopup"
-    @showInstructions="handleShowInstructions"
-  />
-  <HowToAddPopup
-    :show="showHowToAddPopup"
-    @close="handleCloseHowToAddPopup"
+  <!-- お知らせポップアップ -->
+  <NotificationPopup
+    :show="showNotificationPopup"
+    @close="handleCloseNotificationPopup"
   />
 
   <!-- ペナルティポップアップ -->
@@ -43,8 +38,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { useAudioStore } from '@/stores/audioStore';
 import { useUserStore } from '@/stores/userStore';
 import { preloadImages } from '@/utils/imageLoader';
-import AddToHomeScreenPopup from '@/components/AddToHomeScreenPopup.vue';
-import HowToAddPopup from '@/components/HowToAddPopup.vue';
+import NotificationPopup from '@/components/NotificationPopup.vue';
 import LoadingIndicator from '@/components/LoadingIndicator.vue';
 import PenaltyPopup from '@/components/PenaltyPopup.vue';
 
@@ -55,8 +49,7 @@ const isLoading = ref(!isEmailConfirmedPage); // email-confirmedページでな�
 const isTransitioning = ref(false); // ★追加: 画面遷移アニメーションの状態
 
 const loadingProgress = ref(0);
-const showAddToHomeScreenPopup = ref(false);
-const showHowToAddPopup = ref(false);
+const showNotificationPopup = ref(false);
 
 // --- ストアの利用 ---
 const audioStore = useAudioStore();
@@ -89,6 +82,8 @@ onMounted(async () => {
     '/assets/images/back/mode_back.png',
     '/assets/images/back/start_back.png',
     '/assets/images/back/rule.png',
+    '/assets/images/back/sleeping.gif',
+    '/assets/images/back/wakeup.gif',
     '/assets/images/button/buckToTitle.png',
     '/assets/images/button/kan_button.png',
     '/assets/images/button/pon_button.png',
@@ -309,7 +304,7 @@ onMounted(async () => {
       // アニメーション終了後
       setTimeout(() => {
         isTransitioning.value = false; // オーバーレイを非表示に
-        showAddToHomeScreenPopup.value = true; // ポップアップを表示
+        showNotificationPopup.value = true; // ポップアップを表示
       }, 1500); // アニメーション時間と一致させる
     }, 300);
   }
@@ -323,26 +318,10 @@ onUnmounted(() => {
 // --- メソッド ---
 
 /**
- * 「ホーム画面に追加」ポップアップを閉じます。
+ * お知らせポップアップを閉じます。
  */
-const handleCloseAddToHomeScreenPopup = () => {
-  showAddToHomeScreenPopup.value = false;
-};
-
-/**
- * インストール方法のポップアップを表示します。
- * この際、「ホーム画面に追加」ポップアップは閉じられます。
- */
-const handleShowInstructions = () => {
-  showAddToHomeScreenPopup.value = false;
-  showHowToAddPopup.value = true;
-};
-
-/**
- * インストール方法のポップアップを閉じます。
- */
-const handleCloseHowToAddPopup = () => {
-  showHowToAddPopup.value = false;
+const handleCloseNotificationPopup = () => {
+  showNotificationPopup.value = false;
 };
 </script>
 

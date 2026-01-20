@@ -53,6 +53,7 @@
             >
               <img :src="button.imgSrc" :alt="button.alt" />
               <span v-if="button.isUnderConstruction" class="construction-badge">Under Construction</span>
+              <div v-if="button.showStockText" class="stock-text">STOCK</div> <!-- 追加 -->
             </button>
           </div>
           <!-- サブ・情報ボタン -->
@@ -166,6 +167,7 @@ const mainButtons = computed(() => [
     cssClass: 'main-button',
     imgSrc: locale.value === 'en' ? '/assets/images/button/title_online_match_en.png' : '/assets/images/button/title_online_match.png',
     isUnderConstruction: true, // 工事中フラグ
+    showStockText: true, // STOCKテキストを表示するフラグ
   },
 ]);
 
@@ -504,6 +506,20 @@ onBeforeUnmount(() => {
 .info-button img {
   width: 104px;
   filter: drop-shadow(2px 3px 2px rgba(0, 0, 0, 0.7));
+}
+
+.stock-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(70%, 130%);
+  font-family: 'Yuji Syuku', serif;
+  font-size: 0.9em; /* 適切なサイズに調整 */
+  font-weight: bold;
+  color: #0f0202;
+  text-shadow: 1px 1px 3px rgb(255, 255, 255);
+  z-index: 10; /* ボタン画像の上に表示 */
+  pointer-events: none; /* クリックイベントを透過させる */
 }
 
 

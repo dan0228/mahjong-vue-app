@@ -21,9 +21,8 @@
 
           <div v-if="loginError" class="error-message">{{ loginError }}</div>
 
-          <button type="submit" class="custom-button" :disabled="userStore.loading || isSendingOtp || isVerifyingOtp">
-            <LoadingIndicator v-if="userStore.loading || isSendingOtp || isVerifyingOtp" />
-            <span v-else>{{ userStore.otpSent ? $t('login.loginButton') : $t('login.sendOtpButton') }}</span>
+          <button type="submit" class="custom-button login-submit-button" :disabled="userStore.loading || isSendingOtp || isVerifyingOtp">
+            <span>{{ userStore.otpSent ? $t('login.loginButton') : $t('login.sendOtpButton') }}</span>
           </button>
         </form>
         <button type="button" @click="cancelLogin" class="custom-button cancel-button">{{ $t('settingsPopup.cancelButton') }}</button>
@@ -470,6 +469,13 @@ const handleDeleteAccount = () => {
   margin-bottom: 5px;
 }
 
+/* ログインフォームの説明文 */
+.form-description {
+  font-size: 0.8em; /* 文言のサイズを小さく */
+  padding: 0 15px;
+  margin-bottom: 10px;
+}
+
 /* フォーム要素 */
 .form-group {
   width: 85%;
@@ -564,7 +570,8 @@ const handleDeleteAccount = () => {
 .edit-email-button,
 .email-edit-section form .button-group .custom-button:not(.cancel-button),
 .form-content-container > .button-group .custom-button:not(.cancel-button),
-.custom-button.cancel-button {
+.custom-button.cancel-button,
+.login-submit-button {
   background-size: 100% 100%;
   background-color: transparent;
   border: none;
@@ -579,7 +586,8 @@ const handleDeleteAccount = () => {
 .edit-email-button:hover,
 .email-edit-section form .button-group .custom-button:not(.cancel-button):hover,
 .form-content-container > .button-group .custom-button:not(.cancel-button):hover,
-.custom-button.cancel-button:hover {
+.custom-button.cancel-button:hover,
+.login-submit-button:hover:not(:disabled) {
   background-color: transparent;
   border: none;
   filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.4)) brightness(1.1);
@@ -589,7 +597,8 @@ const handleDeleteAccount = () => {
 .edit-email-button:active,
 .email-edit-section form .button-group .custom-button:not(.cancel-button):active,
 .form-content-container > .button-group .custom-button:not(.cancel-button):active,
-.custom-button.cancel-button:active {
+.custom-button.cancel-button:active,
+.login-submit-button:active:not(:disabled) {
   transform: translateY(1px);
   filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.5));
 }
@@ -614,6 +623,24 @@ const handleDeleteAccount = () => {
 
 .custom-button.cancel-button {
   background-image: url('/assets/images/button/board_cancel.png');
+}
+
+.login-submit-button {
+  background-image: url('/assets/images/button/board_ori.png');
+  width: 80%;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.login-submit-button:disabled {
+  background-image: url('/assets/images/button/board_ori.png');
+  background-color: transparent; /* Ensure background is transparent */
+  border: none; /* Ensure no border */
+  color: #4a2c12; /* disabledでも文字色は維持 */
+  filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.4)) grayscale(0.7);
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .avatar-notes {
@@ -682,7 +709,9 @@ const handleDeleteAccount = () => {
   justify-content: space-between;
   align-items: center;
   margin-top: 10px;
+  margin-left: 24px;
   padding-top: 10px;
+  width: 88%;
   border-top: 1px solid rgba(139, 69, 19, 0.2);
 }
 .secondary-action-button, .delete-button {
@@ -691,7 +720,7 @@ const handleDeleteAccount = () => {
   cursor: pointer;
   font-size: 0.8em;
   padding: 10px 0px;
-  margin-left: 25px;
+  margin-left: 10px;
   margin-right: 20px;
   margin-bottom: 30px;
   font-family: 'Yuji Syuku', serif;
@@ -703,4 +732,14 @@ const handleDeleteAccount = () => {
 .delete-button:hover { color: #7C2A2E; }
 
 .disabled-button-style { opacity: 0.6; cursor: not-allowed; }
+
+/* ログインフォームのキャンセルボタンの隙間調整 */
+.form-container > .cancel-button {
+  margin-bottom: 300px; /* ボタン間の隙間を小さく */
+  width: 80%;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
 </style>
+

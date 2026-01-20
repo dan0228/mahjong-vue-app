@@ -9,6 +9,7 @@ export const useAudioStore = defineStore('audio', {
     currentBgm: null, // 現在再生中のBGMのファイル名 (例: 'NES-JP-A01-2(Title-Loop115).mp3')
     audioPlayers: new Map(), // プリロードされたAudioオブジェクトを格納するMap (URL -> Audioオブジェクト)
     isSwitchingBgm: false, // BGM切り替え処理中かどうかのフラグ
+    isBgmPlaybackAllowed: false, // BGMの再生が許可されているかどうかのフラグ
   }),
   actions: {
     /**
@@ -74,6 +75,21 @@ export const useAudioStore = defineStore('audio', {
     },
 
     /**
+     * BGMの再生が許可されているかどうかを設定します。
+     * @param {boolean} allowed - 再生を許可する場合はtrue、しない場合はfalse。
+     */
+    setBgmPlaybackAllowed(allowed) {
+      this.isBgmPlaybackAllowed = allowed;
+      // 再生が許可されていない場合は、現在のBGMを一時停止
+      if (!allowed) {
+        const audio = this.currentBgm ? this.audioPlayers.get(`/assets/sounds/${this.currentBgm}`) : null;
+        if (audio && !audio.paused) {
+          audio.pause();
+        }
+      }
+    },
+
+    /**
      * 現在のBGMを新しいBGMに切り替えて再生します。
      * 同じBGMが指定された場合は、再生位置をリセットして再開します。
      * @param {string|null} newBgmName - 新しいBGMのファイル名 (例: 'bgm.mp3')。nullを指定すると現在のBGMを停止します。
@@ -97,6 +113,7 @@ export const useAudioStore = defineStore('audio', {
       this.currentBgm = newBgmName; // 現在のBGMを更新
       
       if (!newBgmName) {
+        this.isBgmPlaybackAllowed = false; // BGMが停止されるので再生は許可しない
         this.isSwitchingBgm = false;
         return;
       }
@@ -108,8 +125,8 @@ export const useAudioStore = defineStore('audio', {
         newAudio.volume = this.volume; // 音量を設定
         newAudio.loop = true; // ループ再生を有効化
 
-        // オーディオが有効な場合のみ再生
-        if (this.isAudioEnabled) {
+        // オーディオが有効で、かつ再生が許可されている場合のみ再生
+        if (this.isAudioEnabled && this.isBgmPlaybackAllowed) {
           try {
             if (newAudio.paused) { // 念のため、停止している場合のみ再生
               await newAudio.play();
@@ -158,7 +175,7 @@ export const useAudioStore = defineStore('audio', {
         // ページが再び表示されたら、有効なオーディオを再生再開
         this.audioPlayers.forEach((audio, url) => {
           // BGMの場合
-          if (url.includes(this.currentBgm) && this.isAudioEnabled) {
+          if (url.includes(this.currentBgm) && this.isAudioEnabled && this.isBgmPlaybackAllowed) {
             audio.play().catch(e => console.error("BGMの再生に失敗しました:", e));
           }
           // SEの場合 (BGMと異なるURLで、かつSEが有効な場合)

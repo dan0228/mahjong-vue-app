@@ -317,6 +317,8 @@ onUnmounted(() => {
 // --- メソッド ---
 const onWakeUpFinished = () => {
   isTransitioning.value = true;
+  // BGM再生を許可
+  audioStore.setBgmPlaybackAllowed(true);
   // タイトル画面のBGMを再生 (0.9秒遅延)
 setTimeout(() => {
   audioStore.setBgm('NES-JP-A01-2(Title-Loop115).mp3');

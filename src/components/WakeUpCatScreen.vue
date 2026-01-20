@@ -1,10 +1,13 @@
 <template>
   <div class="wake-up-screen-overlay">
     <div class="content-container">
-      <img v-if="isSleeping" src="/assets/images/back/sleeping.gif" alt="Sleeping Cat" class="cat-gif" />
-      <img v-if="isWakingUp" :src="wakeupGifSrc" alt="Waking Up Cat" class="cat-gif" />
+      <img :src="currentGifSrc" alt="Cat" class="cat-gif" />
       
-      <button v-if="isSleeping" @click="wakeUp" class="wake-up-button">
+      <button 
+        :class="{ invisible: !isSleeping }" 
+        @click="wakeUp" 
+        class="wake-up-button"
+      >
         {{ $t('wakeUpCat.button') }}
       </button>
     </div>
@@ -12,27 +15,32 @@
 </template>
 
 <script setup>
-import { ref, defineProps, defineEmits } from 'vue';
+import { ref, computed, defineEmits } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAudioStore } from '@/stores/audioStore';
 
 const { t } = useI18n();
-
-
 
 const emit = defineEmits(['finished']);
 
 const audioStore = useAudioStore();
 
 const isSleeping = ref(true);
-const isWakingUp = ref(false);
-const wakeupGifSrc = ref('');
+const wakeupTimestamp = ref(null);
+
+const currentGifSrc = computed(() => {
+  if (isSleeping.value) {
+    return '/assets/images/back/sleeping.gif';
+  }
+  if (wakeupTimestamp.value) {
+    return `/assets/images/back/wakeup.gif?t=${wakeupTimestamp.value}`;
+  }
+  return ''; // Should not happen
+});
 
 const wakeUp = () => {
   isSleeping.value = false;
-  isWakingUp.value = true;
-  // GIFを最初から再生するためにキャッシュを無効化する
-  wakeupGifSrc.value = `/assets/images/back/wakeup.gif?t=${Date.now()}`;
+  wakeupTimestamp.value = Date.now();
   
   // 効果音を再生
   audioStore.playSound('Kagura_Suzu01-7.mp3');
@@ -40,11 +48,24 @@ const wakeUp = () => {
   // GIFの再生時間（仮に2.5秒）後に 'finished' イベントを発行
   setTimeout(() => {
     emit('finished');
-  }, 2500);
+  }, 2200);
 };
 </script>
 
-
+<i18n lang="json">
+{
+  "ja": {
+    "wakeUpCat": {
+      "button": "猫を起こす"
+    }
+  },
+  "en": {
+    "wakeUpCat": {
+      "button": "Wake up the cat"
+    }
+  }
+}
+</i18n>
 
 <style scoped>
 .wake-up-screen-overlay {
@@ -82,7 +103,7 @@ const wakeUp = () => {
   font-weight: bold;
   text-shadow: none;
   filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.4));
-  transition: all 0.1s ease-out;
+  transition: all 0.1s ease-out, opacity 0.3s ease-out;
   padding: 12px 24px;
   font-size: 1.2em;
   cursor: pointer;
@@ -97,4 +118,11 @@ const wakeUp = () => {
   transform: translateY(1px);
   filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.5));
 }
+
+.wake-up-button.invisible {
+  opacity: 0;
+  pointer-events: none;
+}
 </style>
+
+

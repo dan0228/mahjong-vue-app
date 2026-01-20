@@ -17,6 +17,9 @@
   <!-- 猫を起こす画面 -->
   <WakeUpCatScreen v-if="showWakeUpScreen" @finished="onWakeUpFinished" />
 
+  <!-- ローディングから猫起こし画面への遷移用黒フェードオーバーレイ -->
+  <div class="black-fade-overlay" :class="{ active: isFadingToWakeUp }"></div>
+
   <!-- 遷移用オーバーレイ -->
   <div class="transition-overlay" :class="{ active: isTransitioning }"></div>
 
@@ -45,6 +48,7 @@ const isLoading = ref(!isEmailConfirmedPage);
 const isTransitioning = ref(false);
 const showWakeUpScreen = ref(false);
 const loadingProgress = ref(0);
+const isFadingToWakeUp = ref(false);
 
 // --- ストアの利用 ---
 const audioStore = useAudioStore();
@@ -287,9 +291,20 @@ onMounted(async () => {
   } finally {
     loadingProgress.value = 100;
     setTimeout(() => {
-      isLoading.value = false;
-      showWakeUpScreen.value = true;
-    }, 500);
+      // 1. Start the black fade
+      isFadingToWakeUp.value = true;
+
+      // 2. Halfway through the fade, switch the screens
+      setTimeout(() => {
+        isLoading.value = false; // Hide loading screen
+        showWakeUpScreen.value = true; // Show wake-up screen
+      }, 500); // 1s animation, switch at 0.5s
+
+      // 3. After the fade is complete, reset the flag
+      setTimeout(() => {
+        isFadingToWakeUp.value = false;
+      }, 1000);
+    }, 300); // A small delay after loading hits 100%
   }
 });
 
@@ -414,6 +429,27 @@ body {
   }
 }
 
+
+/* --- ローディングから猫起こし画面への遷移用黒フェードオーバーレイ --- */
+.black-fade-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: black;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9999; /* Above router-view, below transition-overlay */
+}
+.black-fade-overlay.active {
+  animation: short-fade 1s ease-in-out forwards; /* Short duration, e.g., 1s total */
+}
+@keyframes short-fade {
+  0% { opacity: 0; }
+  50% { opacity: 1; }
+  100% { opacity: 0; }
+}
 
 /* --- ルートトランジション --- */
 .fade-enter-active,

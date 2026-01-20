@@ -14,17 +14,14 @@
     </transition>
   </router-view>
 
+  <!-- 猫を起こす画面 -->
+  <WakeUpCatScreen v-if="showWakeUpScreen" @finished="onWakeUpFinished" />
+
   <!-- 遷移用オーバーレイ -->
   <div class="transition-overlay" :class="{ active: isTransitioning }"></div>
 
   <!-- 通信中ローディングインジケーター -->
   <LoadingIndicator v-if="userStore.loading && !isLoading" />
-
-  <!-- お知らせポップアップ -->
-  <NotificationPopup
-    :show="showNotificationPopup"
-    @close="handleCloseNotificationPopup"
-  />
 
   <!-- ペナルティポップアップ -->
   <PenaltyPopup />
@@ -32,24 +29,22 @@
 
 <script setup>
 // このコンポーネントは、アプリケーションのルートです。
-// アセットのプリロード、ローディング画面、PWAインストール関連のポップアップ、
+// アセットのプリロード、ローディング画面、起動シーケンス、
 // そしてメインコンテンツのルーティングを管理します。
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useAudioStore } from '@/stores/audioStore';
 import { useUserStore } from '@/stores/userStore';
 import { preloadImages } from '@/utils/imageLoader';
-import NotificationPopup from '@/components/NotificationPopup.vue';
+import WakeUpCatScreen from '@/components/WakeUpCatScreen.vue';
 import LoadingIndicator from '@/components/LoadingIndicator.vue';
 import PenaltyPopup from '@/components/PenaltyPopup.vue';
 
 // --- リアクティブな状態 ---
-// #/email-confirmed への直接アクセスの場合、ローディング画面を最初から表示しない
 const isEmailConfirmedPage = window.location.hash.startsWith('#/email-confirmed');
-const isLoading = ref(!isEmailConfirmedPage); // email-confirmedページでなければtrue、そうであればfalse
-const isTransitioning = ref(false); // ★追加: 画面遷移アニメーションの状態
-
+const isLoading = ref(!isEmailConfirmedPage);
+const isTransitioning = ref(false);
+const showWakeUpScreen = ref(false);
 const loadingProgress = ref(0);
-const showNotificationPopup = ref(false);
 
 // --- ストアの利用 ---
 const audioStore = useAudioStore();
@@ -57,17 +52,18 @@ const userStore = useUserStore();
 
 // --- ライフサイクル フック ---
 onMounted(async () => {
-  // メール確認ページの場合は、重い初期化処理をスキップする
   if (isEmailConfirmedPage) {
-    return; // これ以降の処理は実行しない
+    isLoading.value = false;
+    return;
   }
 
-  // ブラウザのタブが非表示になった際に音声を停止するためのイベントリスナー
   document.addEventListener('visibilitychange', audioStore.handleVisibilityChange);
 
   // --- アセットのプリロード定義 ---
   const imagePaths = [
     '/assets/images/back/loading.png',
+    '/assets/images/back/sleeping.gif',
+    '/assets/images/back/wakeup.gif',
     '/assets/images/back/back_out_shrine.png',
     '/assets/images/back/back_out.png',
     '/assets/images/back/mat.png',
@@ -82,8 +78,6 @@ onMounted(async () => {
     '/assets/images/back/mode_back.png',
     '/assets/images/back/start_back.png',
     '/assets/images/back/rule.png',
-    '/assets/images/back/sleeping.gif',
-    '/assets/images/back/wakeup.gif',
     '/assets/images/button/buckToTitle.png',
     '/assets/images/button/kan_button.png',
     '/assets/images/button/pon_button.png',
@@ -291,22 +285,11 @@ onMounted(async () => {
   } catch (error) {
     console.error('初期読み込み処理でエラーが発生しました:', error);
   } finally {
-    // ★修正: 演出的な画面遷移を実行
     loadingProgress.value = 100;
     setTimeout(() => {
-      isTransitioning.value = true; // 白いオーバーレイのアニメーションを開始
-
-      // アニメーションの中間（画面が真っ白）でローディング画面を非表示にする
-      setTimeout(() => {
-        isLoading.value = false;
-      }, 750); // 1.5秒アニメーションの半分
-
-      // アニメーション終了後
-      setTimeout(() => {
-        isTransitioning.value = false; // オーバーレイを非表示に
-        showNotificationPopup.value = true; // ポップアップを表示
-      }, 1500); // アニメーション時間と一致させる
-    }, 300);
+      isLoading.value = false;
+      showWakeUpScreen.value = true;
+    }, 500);
   }
 });
 
@@ -316,12 +299,14 @@ onUnmounted(() => {
 });
 
 // --- メソッド ---
-
-/**
- * お知らせポップアップを閉じます。
- */
-const handleCloseNotificationPopup = () => {
-  showNotificationPopup.value = false;
+const onWakeUpFinished = () => {
+  isTransitioning.value = true;
+  setTimeout(() => {
+    showWakeUpScreen.value = false;
+  }, 750); // 遷移アニメーションの中間で画面を切り替え
+  setTimeout(() => {
+    isTransitioning.value = false;
+  }, 1500); // アニメーション時間と一致させる
 };
 </script>
 

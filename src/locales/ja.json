@@ -23,6 +23,9 @@
     "body": "すぐにアクセスしてゲーム開始",
     "closeButton": "閉じる"
   },
+  "wakeUpCat": {
+    "button": "猫を起こす"
+  },
   "howToPlayPopup": {
     "title": "遊び方",
     "closeButton": "閉じる",

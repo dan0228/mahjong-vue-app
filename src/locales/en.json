@@ -23,6 +23,9 @@
     "body": "Get quick access and jump into the game instantly.",
     "closeButton": "Close"
   },
+  "wakeUpCat": {
+    "button": "Wake up the cat"
+  },
   "howToPlayPopup": {
     "title": "How to Play",
     "closeButton": "Close",

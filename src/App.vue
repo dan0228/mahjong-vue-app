@@ -252,6 +252,7 @@ onMounted(async () => {
     '/assets/sounds/Percussive_Accent04-3(High).mp3',
     '/assets/sounds/Flyer02-1(Take).mp3',
     '/assets/sounds/Hit-Slap01-3(Dry).mp3',
+    '/assets/sounds/Xylophone04-05(Fast-Long-3-Up).mp3',
   ];
 
   // --- 並列処理の定義 ---
@@ -316,6 +317,10 @@ onUnmounted(() => {
 // --- メソッド ---
 const onWakeUpFinished = () => {
   isTransitioning.value = true;
+  // タイトル画面のBGMを再生 (0.9秒遅延)
+setTimeout(() => {
+  audioStore.setBgm('NES-JP-A01-2(Title-Loop115).mp3');
+}, 900);
   setTimeout(() => {
     showWakeUpScreen.value = false;
   }, 750); // 遷移アニメーションの中間で画面を切り替え

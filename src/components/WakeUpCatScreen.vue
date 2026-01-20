@@ -1,15 +1,15 @@
 <template>
   <div class="wake-up-screen-overlay">
-    <div class="content-container">
+    <div class="content-container" @click="wakeUp" :class="{ 'clickable-area': isSleeping }">
       <img :src="currentGifSrc" alt="Cat" class="cat-gif" />
       
-      <button 
+      <span 
+        v-if="isSleeping" 
         :class="{ invisible: !isSleeping }" 
-        @click="wakeUp" 
-        class="wake-up-button"
+        class="wake-up-text"
       >
         {{ $t('wakeUpCat.button') }}
-      </button>
+      </span>
     </div>
   </div>
 </template>
@@ -43,29 +43,14 @@ const wakeUp = () => {
   wakeupTimestamp.value = Date.now();
   
   // 効果音を再生
-  audioStore.playSound('Kagura_Suzu01-7.mp3');
+  audioStore.playSound('Xylophone04-05(Fast-Long-3-Up).mp3');
 
-  // GIFの再生時間（仮に2.5秒）後に 'finished' イベントを発行
+  // GIFの再生時間後に 'finished' イベントを発行
   setTimeout(() => {
     emit('finished');
   }, 2200);
 };
 </script>
-
-<i18n lang="json">
-{
-  "ja": {
-    "wakeUpCat": {
-      "button": "猫を起こす"
-    }
-  },
-  "en": {
-    "wakeUpCat": {
-      "button": "Wake up the cat"
-    }
-  }
-}
-</i18n>
 
 <style scoped>
 .wake-up-screen-overlay {
@@ -82,10 +67,15 @@ const wakeUp = () => {
 }
 
 .content-container {
+  position: relative; /* テキストの絶対配置の基準 */
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 20px;
+}
+
+.content-container.clickable-area {
+  cursor: pointer;
 }
 
 .cat-gif {
@@ -94,34 +84,38 @@ const wakeUp = () => {
   border-radius: 10px;
 }
 
-.wake-up-button {
-  background-image: url('/assets/images/button/board_hand.png');
-  background-size: 100% 100%;
-  background-color: transparent;
-  border: none;
-  color: #4a2c12;
-  font-weight: bold;
-  text-shadow: none;
-  filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.4));
-  transition: all 0.1s ease-out, opacity 0.3s ease-out;
-  padding: 12px 24px;
-  font-size: 1.2em;
-  cursor: pointer;
-  font-family: 'Yuji Syuku', serif;
+.wake-up-text { /* ボタンからテキスト表示に変更 */
+  position: absolute; /* 画像の右下に配置 */
+  bottom: 58%; /* 調整可能 */
+  right: 30%; /* 調整可能 */
+  color: #F5F5DC; /* 薄いベージュ色 */
+  font-size: 1.5em; /* 大きめのフォントサイズ */
+  font-family: 'Kiwi Maru', cursive; /* Kiwi Maruフォント */
+  text-shadow: 
+    0 0 5px rgba(255, 255, 255, 0.5), /* Soft glow */
+    2px 2px 0 #4a2c12, -2px -2px 0 #4a2c12, 2px -2px 0 #4a2c12, -2px 2px 0 #4a2c12;
+  transition: opacity 0.3s ease-out; /* フェードアウト用 */
+  transform: rotate(-5deg); /* 弧を描くような効果 */
+  transform-origin: bottom center; /* 回転の中心 */
+  animation: slow-blink 3s infinite alternate, breathe-vertical 4s infinite ease-in-out; /* 点滅と上下移動アニメーション */
+  pointer-events: none; /* クリックイベントは親コンテナで処理 */
 }
 
-.wake-up-button:hover {
-  filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.4)) brightness(1.1);
-}
-
-.wake-up-button:active {
-  transform: translateY(1px);
-  filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.5));
-}
-
-.wake-up-button.invisible {
+.wake-up-text.invisible {
   opacity: 0;
   pointer-events: none;
+}
+
+@keyframes slow-blink {
+  0% { opacity: 0.3; } /* ほとんど透明から開始 */
+  50% { opacity: 1; }  /* 完全に見える状態 */
+  100% { opacity: 0.3; } /* ほとんど透明に戻る */
+}
+
+@keyframes breathe-vertical {
+  0% { transform: translateY(0) rotate(-5deg); } /* 開始位置 */
+  50% { transform: translateY(-5px) rotate(-5deg); } /* 上にわずかに移動 */
+  100% { transform: translateY(0) rotate(-5deg); } /* 開始位置に戻る */
 }
 </style>
 

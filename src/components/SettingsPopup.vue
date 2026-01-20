@@ -74,7 +74,7 @@
           <div class="email-edit-section">
             <label class="email-label-small">{{ $t('settingsPopup.emailSection.label') }}</label>
             <div v-if="!isEditingEmail">
-              <p class="email-text-small">{{ userStore.profile?.email || $t('settingsPopup.emailSection.notSet') }}</p>
+              <p class="email-text-small">{{ pendingEmail || userStore.profile?.email || $t('settingsPopup.emailSection.notSet') }}</p>
               <button type="button" @click="startEditEmail" class="custom-button edit-email-button">{{ $t('settingsPopup.emailSection.editEmailButton') }}</button>
             </div>
             <form v-else @submit.prevent="requestEmailUpdate">
@@ -153,6 +153,7 @@ const emailError = ref('');
 const isEditingEmail = ref(false);
 const isUpdatingEmail = ref(false);
 const emailUpdateMessage = ref('');
+const pendingEmail = ref(null);
 
 watch(xHandleInput, () => {
   xHandleError.value = '';
@@ -182,6 +183,7 @@ const initializeProfileForm = () => {
   isEditingEmail.value = false;
   emailError.value = '';
   emailUpdateMessage.value = '';
+  pendingEmail.value = null;
 };
 
 const initializeLoginForm = () => {
@@ -258,6 +260,7 @@ const requestEmailUpdate = async () => {
   const result = await userStore.updateUserEmail(emailInput.value, t);
   if (result.success) {
     emailUpdateMessage.value = t('settingsPopup.emailSection.updateRequestSent');
+    pendingEmail.value = emailInput.value;
     isEditingEmail.value = false; // Set immediately to false
   } else {
     emailError.value = result.error || t('settingsPopup.emailSection.errors.updateFailed');
@@ -378,6 +381,7 @@ const closePopup = () => {
   emit('close');
   emailUpdateMessage.value = ''; // Clear message on close
   emailError.value = ''; // Clear error on close
+  pendingEmail.value = null;
 };
 
 const handleDeleteAccount = () => {

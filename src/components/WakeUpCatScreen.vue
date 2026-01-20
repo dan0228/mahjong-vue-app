@@ -90,10 +90,10 @@ const wakeUp = () => {
   right: 30%; /* 調整可能 */
   color: #F5F5DC; /* 薄いベージュ色 */
   font-size: 1.5em; /* 大きめのフォントサイズ */
-  font-family: 'Kiwi Maru', cursive; /* Kiwi Maruフォント */
+  font-family: "Yomogi", cursive;
   text-shadow: 
     0 0 5px rgba(255, 255, 255, 0.5), /* Soft glow */
-    2px 2px 0 #4a2c12, -2px -2px 0 #4a2c12, 2px -2px 0 #4a2c12, -2px 2px 0 #4a2c12;
+    1px 1px 0 #4a2c12, -1px -1px 0 #4a2c12, 1px -1px 0 #4a2c12, -1px 1px 0 #4a2c12;
   transition: opacity 0.3s ease-out; /* フェードアウト用 */
   transform: rotate(-5deg); /* 弧を描くような効果 */
   transform-origin: bottom center; /* 回転の中心 */

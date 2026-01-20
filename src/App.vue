@@ -384,7 +384,7 @@ body {
 
 .progress-bar-container {
   position: absolute;
-  top: 400px;
+  top: 350px;
   width: 60%;
   max-width: 400px;
   height: 20px;

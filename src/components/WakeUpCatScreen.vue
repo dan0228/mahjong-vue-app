@@ -39,6 +39,10 @@ const currentGifSrc = computed(() => {
 });
 
 const wakeUp = () => {
+  // すでに猫が起きている（isSleepingがfalse）場合は、何もしない
+  if (!isSleeping.value) {
+    return;
+  }
   isSleeping.value = false;
   wakeupTimestamp.value = Date.now();
   

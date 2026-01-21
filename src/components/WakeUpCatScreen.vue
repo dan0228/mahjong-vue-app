@@ -1,10 +1,10 @@
 <template>
   <div class="wake-up-screen-overlay">
     <div class="content-container" @click="wakeUp" :class="{ 'clickable-area': isSleeping }">
-      <img :src="currentGifSrc" alt="Cat" class="cat-gif" />
+      <img :src="currentGifSrc" alt="Cat" class="cat-gif" @load="onImageLoad" />
       
       <span 
-        v-if="isSleeping" 
+        v-if="isSleeping && isImageLoaded" 
         :class="{ invisible: !isSleeping }" 
         class="wake-up-text"
       >
@@ -27,6 +27,7 @@ const audioStore = useAudioStore();
 
 const isSleeping = ref(true);
 const wakeupTimestamp = ref(null);
+const isImageLoaded = ref(false); // 画像の読み込みが完了したかどうかを追跡
 
 const currentGifSrc = computed(() => {
   if (isSleeping.value) {
@@ -37,6 +38,11 @@ const currentGifSrc = computed(() => {
   }
   return ''; // Should not happen
 });
+
+// 画像が読み込まれたときに呼び出される
+const onImageLoad = () => {
+  isImageLoaded.value = true;
+};
 
 const wakeUp = () => {
   // すでに猫が起きている（isSleepingがfalse）場合は、何もしない
@@ -122,5 +128,3 @@ const wakeUp = () => {
   100% { transform: translateY(0) rotate(-5deg); } /* 開始位置に戻る */
 }
 </style>
-
-

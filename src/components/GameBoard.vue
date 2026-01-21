@@ -115,8 +115,8 @@
       <img v-if="stockAnimationDisplay" :src="t('gameBoard.stockImg')" :class="['stock-indicator', `stock-indicator-${stockAnimationDisplay.position}`]" :alt="t('gameBoard.stock')" />
 
       <!-- 各種ポップアップ -->
-      <RulePopup v-if="showRulesPopup" @close="showRulesPopup = false" />
-      <YakuListPopup v-if="showYakuListPopup" @close="showYakuListPopup = false" />
+      <RulePopup :show="showRulesPopup" @close="showRulesPopup = false" />
+      <YakuListPopup :show="showYakuListPopup" @close="showYakuListPopup = false" />
       <ParentDecisionPopup
         :show="gameStore.showDealerDeterminationPopup"
         :dealer-determination-results="sortedPlayersForPopup"

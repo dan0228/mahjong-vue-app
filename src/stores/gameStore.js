@@ -801,7 +801,7 @@ export const useGameStore = defineStore('game', {
         originalId: p.originalId,
       }));
 
-      userStore.setGameInProgress(true);
+            // userStore.setGameInProgress(true); // AI対戦では切断ペナルティを無効にするため、ゲーム進行中フラグを立てない
 
       if (this.currentRound.wind === 'east' && this.currentRound.number === 1 && this.honba === 0) {
         this.showDealerDeterminationPopup = true;

@@ -279,9 +279,7 @@ onUnmounted(() => {
 const onWakeUpFinished = () => {
   isTransitioning.value = true;
   audioStore.setBgmPlaybackAllowed(true);
-  setTimeout(() => {
-    audioStore.setBgm('NES-JP-A01-2(Title-Loop115).mp3');
-  }, 1000);
+  audioStore.setBgm('NES-JP-A01-2(Title-Loop115).mp3'); // 遅延なしでBGMを再生
   setTimeout(() => {
     showWakeUpScreen.value = false;
     router.push({ name: 'Title' }); // タイトル画面へ遷移

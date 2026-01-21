@@ -261,8 +261,13 @@ export const useGameStore = defineStore('game', {
     channel: null,
     playersReadyForNextRound: [], // 次のラウンドに進む準備ができたプレイヤーのリスト
     isGameReady: false, // ゲームの初期化が完了し、開始準備ができたかどうか
+    isAppReady: false, // アプリケーションの初期読み込みが完了したかどうか
+
   }),
   actions: {
+    setAppReady(status) {
+      this.isAppReady = status;
+    },
     // --- Online Match Actions ---
     setOnlineGame({ gameId, localUserId, hostId }) {
       this.isGameOnline = true;

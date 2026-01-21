@@ -1,5 +1,8 @@
 <template>
   <div class="title-view-container" :style="{ height: viewportHeight }">
+    <!-- アプリケーションの準備ができていない場合はローディングインジケーターを表示 -->
+    <LoadingIndicator v-if="!gameStore.isAppReady" />
+
     <!-- 背景スクロールコンテナ(imgタグは不要) -->
     <div class="scrolling-background-container"></div>
 
@@ -113,6 +116,7 @@ import YakuListPopup from '@/components/YakuListPopup.vue';
 import HowToPlayPopup from '@/components/HowToPlayPopup.vue';
 import SettingsPopup from '@/components/SettingsPopup.vue';
 import GameModeSelectionPopup from '@/components/GameModeSelectionPopup.vue';
+import LoadingIndicator from '@/components/LoadingIndicator.vue'; // LoadingIndicator をインポート
 import { useViewportHeight } from '@/composables/useViewportHeight';
 
 // --- デバイス判定 ---
@@ -283,7 +287,6 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', updateScaleFactor);
-  audioStore.setBgm(null);
 });
 </script>
 

@@ -1,6 +1,6 @@
 <template>
   <!-- メインコンテンツ -->
-  <router-view v-if="isAppReady" v-slot="{ Component }">
+  <router-view v-if="!showWakeUpScreen" v-slot="{ Component }">
     <transition name="fade" mode="out-in">
       <component :is="Component" />
     </transition>
@@ -13,7 +13,7 @@
   <div class="transition-overlay" :class="{ active: isTransitioning }"></div>
 
   <!-- 通信中ローディングインジケーター -->
-  <LoadingIndicator v-if="userStore.loading || isWaitingForAssets" />
+  <LoadingIndicator v-if="userStore.loading" />
 
   <!-- ペナルティポップアップ -->
   <PenaltyPopup />
@@ -23,9 +23,11 @@
 // このコンポーネントは、アプリケーションのルートです。
 // アセットのプリロード、ローディング画面、起動シーケンス、
 // そしてメインコンテンツのルーティングを管理します。
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
+import { useRouter } from 'vue-router'; // useRouter をインポート
 import { useAudioStore } from '@/stores/audioStore';
 import { useUserStore } from '@/stores/userStore';
+import { useGameStore } from '@/stores/gameStore'; // gameStore をインポート
 import { preloadImages } from '@/utils/imageLoader';
 import WakeUpCatScreen from '@/components/WakeUpCatScreen.vue';
 import LoadingIndicator from '@/components/LoadingIndicator.vue';
@@ -33,38 +35,29 @@ import PenaltyPopup from '@/components/PenaltyPopup.vue';
 
 // --- リアクティブな状態 ---
 const isEmailConfirmedPage = window.location.hash.startsWith('#/email-confirmed');
-
-// 起動シーケンスの状態
-const showWakeUpScreen = ref(!isEmailConfirmedPage);
-const areAllAssetsReady = ref(false);
-const isAppReady = ref(isEmailConfirmedPage); // アプリのメインコンテンツを表示してよいか
-const isWaitingForAssets = ref(false); // 猫のアニメーション後、アセットを待っている状態
-
-// 画面遷移の状態
 const isTransitioning = ref(false);
+const showWakeUpScreen = ref(true); // 初期値を true に変更
 
 // --- ストアの利用 ---
 const audioStore = useAudioStore();
 const userStore = useUserStore();
+const gameStore = useGameStore(); // gameStore を使用
+const router = useRouter(); // useRouter を使用
 
 // --- ライフサイクル フック ---
 onMounted(async () => {
   if (isEmailConfirmedPage) {
+    gameStore.setAppReady(true); // メール確認ページではすぐにアプリ準備完了とする
     return;
   }
 
   document.addEventListener('visibilitychange', audioStore.handleVisibilityChange);
 
-  // --- アセットの定義 ---
-  // 1. 猫を起こす画面に必須のアセット
-  const coreImagePaths = [
+  // --- アセットのプリロード定義 ---
+  const imagePaths = [
+    '/assets/images/back/loading.png',
     '/assets/images/back/sleeping.gif',
     '/assets/images/back/wakeup.gif',
-  ];
-  const coreAudioPaths = ['/assets/sounds/Xylophone04-05(Fast-Long-3-Up).mp3'];
-
-  // 2. その他の全アセット
-  const otherImagePaths = [
     '/assets/images/back/back_out_shrine.png',
     '/assets/images/back/back_out.png',
     '/assets/images/back/mat.png',
@@ -234,7 +227,7 @@ onMounted(async () => {
     '/assets/images/tiles/z6.png',
     '/assets/images/tiles/z7.png',
   ];
-  const otherAudioPaths = [
+  const audioPaths = [
     '/assets/sounds/Kagura_Suzu01-7.mp3',
     '/assets/sounds/NES-JP-A03-2(Stage2-Loop140).mp3',
     '/assets/sounds/GB-JP-A02-2(Menu-Loop105).mp3',
@@ -249,86 +242,53 @@ onMounted(async () => {
     '/assets/sounds/Percussive_Accent04-3(High).mp3',
     '/assets/sounds/Flyer02-1(Take).mp3',
     '/assets/sounds/Hit-Slap01-3(Dry).mp3',
+    '/assets/sounds/Xylophone04-05(Fast-Long-3-Up).mp3',
   ];
 
-  // --- 起動処理 ---
+  // --- 並列処理の定義 ---
+
+  // 1. アセット読み込み処理
+  const assetLoadingPromise = Promise.all([
+    preloadImages(imagePaths), // プログレスバー更新関数は不要になったため削除
+    audioStore.preloadAudio(audioPaths), // プログレスバー更新関数は不要になったため削除
+  ]);
+
+  // 2. ユーザー情報取得・登録処理
+  const userSetupPromise = (async () => {
+    await userStore.fetchUserProfile({ showLoading: false });
+    if (!userStore.profile) {
+      await userStore.registerAsGuest();
+    }
+  })();
+
+  // --- 並列処理の実行と完了待機 ---
   try {
-    // 1. まず猫画面に必要な最低限のアセットだけ読み込む
-    await Promise.all([
-      preloadImages(coreImagePaths),
-      audioStore.preloadAudio(coreAudioPaths),
-    ]);
-    // これで WakeUpCatScreen は表示・操作可能になる
-
-    // 2. 裏で残りの全アセットとユーザー情報を読み込む
-    const backgroundAssetPromise = Promise.all([
-      preloadImages(otherImagePaths),
-      audioStore.preloadAudio(otherAudioPaths),
-    ]);
-    const userSetupPromise = (async () => {
-      await userStore.fetchUserProfile({ showLoading: false });
-      if (!userStore.profile) {
-        await userStore.registerAsGuest();
-      }
-    })();
-
-    // すべてのバックグラウンド処理が終わるのを待つ
-    await Promise.all([backgroundAssetPromise, userSetupPromise]);
-
-    // 準備完了フラグを立てる
-    areAllAssetsReady.value = true;
+    await Promise.all([assetLoadingPromise, userSetupPromise]);
   } catch (error) {
     console.error('初期読み込み処理でエラーが発生しました:', error);
-    // ここでエラーハンドリングをすることも可能
+  } finally {
+    gameStore.setAppReady(true); // 全ての読み込みが完了したら isAppReady を true に設定
   }
 });
 
 onUnmounted(() => {
-  // コンポーネントが破棄される際にイベントリスナーをクリーンアップ
   document.removeEventListener('visibilitychange', audioStore.handleVisibilityChange);
 });
 
 // --- メソッド ---
-
-// 猫を起こすアニメーションが終わった時に呼ばれる
 const onWakeUpFinished = () => {
-  showWakeUpScreen.value = false;
-
-  // もし全アセットの読み込みが終わっていなければ、スピナーを表示
-  if (!areAllAssetsReady.value) {
-    isWaitingForAssets.value = true;
-  } else {
-    // 読み込みが終わっていれば、タイトル画面へ遷移
-    transitionToTitle();
-  }
-};
-
-// アセットの準備ができたことを監視
-watch(areAllAssetsReady, (isReady) => {
-  // スピナーで待機中にアセットの準備ができたら、タイトルへ遷移
-  if (isReady && isWaitingForAssets.value) {
-    isWaitingForAssets.value = false;
-    transitionToTitle();
-  }
-});
-
-// タイトル画面への遷移処理
-const transitionToTitle = () => {
   isTransitioning.value = true;
-  // BGM再生を許可
   audioStore.setBgmPlaybackAllowed(true);
-  // タイトル画面のBGMを再生 (1.0秒遅延)
   setTimeout(() => {
     audioStore.setBgm('NES-JP-A01-2(Title-Loop115).mp3');
   }, 1000);
-
   setTimeout(() => {
-    isAppReady.value = true; // router-view を表示
-  }, 750); // 遷移アニメーションの中間で画面を切り替え
-
+    showWakeUpScreen.value = false;
+    router.push({ name: 'Title' }); // タイトル画面へ遷移
+  }, 750);
   setTimeout(() => {
     isTransitioning.value = false;
-  }, 1500); // アニメーション時間と一致させる
+  }, 1500);
 };
 </script>
 
@@ -349,7 +309,7 @@ body {
   width: 100%;
 }
 
-/* --- ★削除: ローディング画面スタイルは不要になったため削除 --- */
+
 
 /* --- ★追加: 遷移アニメーション --- */
 .transition-overlay {
@@ -380,7 +340,27 @@ body {
   }
 }
 
-/* --- ★削除: black-fade-overlay は不要になったため削除 --- */
+
+/* --- ローディングから猫起こし画面への遷移用黒フェードオーバーレイ --- */
+.black-fade-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: black;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9999; /* Above router-view, below transition-overlay */
+}
+.black-fade-overlay.active {
+  animation: short-fade 1s ease-in-out forwards; /* Short duration, e.g., 1s total */
+}
+@keyframes short-fade {
+  0% { opacity: 0; }
+  50% { opacity: 1; }
+  100% { opacity: 0; }
+}
 
 /* --- ルートトランジション --- */
 .fade-enter-active,

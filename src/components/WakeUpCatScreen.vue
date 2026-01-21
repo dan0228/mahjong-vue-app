@@ -48,7 +48,7 @@ const wakeUp = () => {
   // GIFの再生時間後に 'finished' イベントを発行
   setTimeout(() => {
     emit('finished');
-  }, 2200);
+  }, 3100);
 };
 </script>
 

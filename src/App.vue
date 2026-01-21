@@ -319,10 +319,10 @@ const onWakeUpFinished = () => {
   isTransitioning.value = true;
   // BGM再生を許可
   audioStore.setBgmPlaybackAllowed(true);
-  // タイトル画面のBGMを再生 (0.9秒遅延)
+  // タイトル画面のBGMを再生 (1.0秒遅延)
 setTimeout(() => {
   audioStore.setBgm('NES-JP-A01-2(Title-Loop115).mp3');
-}, 900);
+}, 1000);
   setTimeout(() => {
     showWakeUpScreen.value = false;
   }, 750); // 遷移アニメーションの中間で画面を切り替え

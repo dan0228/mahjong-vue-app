@@ -1,14 +1,6 @@
 <template>
-  <!-- ローディング画面 -->
-  <div v-if="isLoading" class="loading-screen">
-    <div class="progress-bar-container">
-      <div class="progress-bar" :style="{ width: loadingProgress + '%' }"></div>
-    </div>
-    <p class="loading-text">{{ Math.floor(loadingProgress) }}%</p>
-  </div>
-
   <!-- メインコンテンツ -->
-  <router-view v-else v-slot="{ Component }">
+  <router-view v-if="isAppReady" v-slot="{ Component }">
     <transition name="fade" mode="out-in">
       <component :is="Component" />
     </transition>
@@ -17,14 +9,11 @@
   <!-- 猫を起こす画面 -->
   <WakeUpCatScreen v-if="showWakeUpScreen" @finished="onWakeUpFinished" />
 
-  <!-- ローディングから猫起こし画面への遷移用黒フェードオーバーレイ -->
-  <div class="black-fade-overlay" :class="{ active: isFadingToWakeUp }"></div>
-
   <!-- 遷移用オーバーレイ -->
   <div class="transition-overlay" :class="{ active: isTransitioning }"></div>
 
   <!-- 通信中ローディングインジケーター -->
-  <LoadingIndicator v-if="userStore.loading && !isLoading" />
+  <LoadingIndicator v-if="userStore.loading || isWaitingForAssets" />
 
   <!-- ペナルティポップアップ -->
   <PenaltyPopup />
@@ -34,7 +23,7 @@
 // このコンポーネントは、アプリケーションのルートです。
 // アセットのプリロード、ローディング画面、起動シーケンス、
 // そしてメインコンテンツのルーティングを管理します。
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { useAudioStore } from '@/stores/audioStore';
 import { useUserStore } from '@/stores/userStore';
 import { preloadImages } from '@/utils/imageLoader';
@@ -44,11 +33,15 @@ import PenaltyPopup from '@/components/PenaltyPopup.vue';
 
 // --- リアクティブな状態 ---
 const isEmailConfirmedPage = window.location.hash.startsWith('#/email-confirmed');
-const isLoading = ref(!isEmailConfirmedPage);
+
+// 起動シーケンスの状態
+const showWakeUpScreen = ref(!isEmailConfirmedPage);
+const areAllAssetsReady = ref(false);
+const isAppReady = ref(isEmailConfirmedPage); // アプリのメインコンテンツを表示してよいか
+const isWaitingForAssets = ref(false); // 猫のアニメーション後、アセットを待っている状態
+
+// 画面遷移の状態
 const isTransitioning = ref(false);
-const showWakeUpScreen = ref(false);
-const loadingProgress = ref(0);
-const isFadingToWakeUp = ref(false);
 
 // --- ストアの利用 ---
 const audioStore = useAudioStore();
@@ -57,17 +50,21 @@ const userStore = useUserStore();
 // --- ライフサイクル フック ---
 onMounted(async () => {
   if (isEmailConfirmedPage) {
-    isLoading.value = false;
     return;
   }
 
   document.addEventListener('visibilitychange', audioStore.handleVisibilityChange);
 
-  // --- アセットのプリロード定義 ---
-  const imagePaths = [
-    '/assets/images/back/loading.png',
+  // --- アセットの定義 ---
+  // 1. 猫を起こす画面に必須のアセット
+  const coreImagePaths = [
     '/assets/images/back/sleeping.gif',
     '/assets/images/back/wakeup.gif',
+  ];
+  const coreAudioPaths = ['/assets/sounds/Xylophone04-05(Fast-Long-3-Up).mp3'];
+
+  // 2. その他の全アセット
+  const otherImagePaths = [
     '/assets/images/back/back_out_shrine.png',
     '/assets/images/back/back_out.png',
     '/assets/images/back/mat.png',
@@ -237,7 +234,7 @@ onMounted(async () => {
     '/assets/images/tiles/z6.png',
     '/assets/images/tiles/z7.png',
   ];
-  const audioPaths = [
+  const otherAudioPaths = [
     '/assets/sounds/Kagura_Suzu01-7.mp3',
     '/assets/sounds/NES-JP-A03-2(Stage2-Loop140).mp3',
     '/assets/sounds/GB-JP-A02-2(Menu-Loop105).mp3',
@@ -252,60 +249,37 @@ onMounted(async () => {
     '/assets/sounds/Percussive_Accent04-3(High).mp3',
     '/assets/sounds/Flyer02-1(Take).mp3',
     '/assets/sounds/Hit-Slap01-3(Dry).mp3',
-    '/assets/sounds/Xylophone04-05(Fast-Long-3-Up).mp3',
   ];
 
-  // --- 並列処理の定義 ---
-
-  // プログレスバーの更新関数
-  const totalAssets = imagePaths.length + audioPaths.length;
-  let loadedAssets = 0;
-  const updateOverallProgress = () => {
-    // ユーザー登録処理はアセット数に含まれないため、プログレスが100%に達しない可能性がある。
-    // そのため、99%で一度停止させ、最後にfinallyブロックで100%にする。
-    if (loadingProgress.value < 99) {
-      loadedAssets++;
-      loadingProgress.value = (loadedAssets / totalAssets) * 100;
-    }
-  };
-
-  // 1. アセット読み込み処理
-  const assetLoadingPromise = Promise.all([
-    preloadImages(imagePaths, updateOverallProgress),
-    audioStore.preloadAudio(audioPaths, updateOverallProgress),
-  ]);
-
-  // 2. ユーザー情報取得・登録処理
-  const userSetupPromise = (async () => {
-    await userStore.fetchUserProfile({ showLoading: false }); // この処理自体ではローディングを出さない
-    if (!userStore.profile) {
-      await userStore.registerAsGuest();
-    }
-  })(); // 即時実行の非同期関数
-
-  // --- 並列処理の実行と完了待機 ---
+  // --- 起動処理 ---
   try {
-    // アセット読み込みとユーザー設定の両方が完了するのを待つ
-    await Promise.all([assetLoadingPromise, userSetupPromise]);
+    // 1. まず猫画面に必要な最低限のアセットだけ読み込む
+    await Promise.all([
+      preloadImages(coreImagePaths),
+      audioStore.preloadAudio(coreAudioPaths),
+    ]);
+    // これで WakeUpCatScreen は表示・操作可能になる
+
+    // 2. 裏で残りの全アセットとユーザー情報を読み込む
+    const backgroundAssetPromise = Promise.all([
+      preloadImages(otherImagePaths),
+      audioStore.preloadAudio(otherAudioPaths),
+    ]);
+    const userSetupPromise = (async () => {
+      await userStore.fetchUserProfile({ showLoading: false });
+      if (!userStore.profile) {
+        await userStore.registerAsGuest();
+      }
+    })();
+
+    // すべてのバックグラウンド処理が終わるのを待つ
+    await Promise.all([backgroundAssetPromise, userSetupPromise]);
+
+    // 準備完了フラグを立てる
+    areAllAssetsReady.value = true;
   } catch (error) {
     console.error('初期読み込み処理でエラーが発生しました:', error);
-  } finally {
-    loadingProgress.value = 100;
-    setTimeout(() => {
-      // 1. Start the black fade
-      isFadingToWakeUp.value = true;
-
-      // 2. Halfway through the fade, switch the screens
-      setTimeout(() => {
-        isLoading.value = false; // Hide loading screen
-        showWakeUpScreen.value = true; // Show wake-up screen
-      }, 500); // 1s animation, switch at 0.5s
-
-      // 3. After the fade is complete, reset the flag
-      setTimeout(() => {
-        isFadingToWakeUp.value = false;
-      }, 1000);
-    }, 300); // A small delay after loading hits 100%
+    // ここでエラーハンドリングをすることも可能
   }
 });
 
@@ -315,17 +289,43 @@ onUnmounted(() => {
 });
 
 // --- メソッド ---
+
+// 猫を起こすアニメーションが終わった時に呼ばれる
 const onWakeUpFinished = () => {
+  showWakeUpScreen.value = false;
+
+  // もし全アセットの読み込みが終わっていなければ、スピナーを表示
+  if (!areAllAssetsReady.value) {
+    isWaitingForAssets.value = true;
+  } else {
+    // 読み込みが終わっていれば、タイトル画面へ遷移
+    transitionToTitle();
+  }
+};
+
+// アセットの準備ができたことを監視
+watch(areAllAssetsReady, (isReady) => {
+  // スピナーで待機中にアセットの準備ができたら、タイトルへ遷移
+  if (isReady && isWaitingForAssets.value) {
+    isWaitingForAssets.value = false;
+    transitionToTitle();
+  }
+});
+
+// タイトル画面への遷移処理
+const transitionToTitle = () => {
   isTransitioning.value = true;
   // BGM再生を許可
   audioStore.setBgmPlaybackAllowed(true);
   // タイトル画面のBGMを再生 (1.0秒遅延)
-setTimeout(() => {
-  audioStore.setBgm('NES-JP-A01-2(Title-Loop115).mp3');
-}, 1000);
   setTimeout(() => {
-    showWakeUpScreen.value = false;
+    audioStore.setBgm('NES-JP-A01-2(Title-Loop115).mp3');
+  }, 1000);
+
+  setTimeout(() => {
+    isAppReady.value = true; // router-view を表示
   }, 750); // 遷移アニメーションの中間で画面を切り替え
+
   setTimeout(() => {
     isTransitioning.value = false;
   }, 1500); // アニメーション時間と一致させる
@@ -349,63 +349,7 @@ body {
   width: 100%;
 }
 
-/* --- ローディング画面スタイル --- */
-.loading-screen {
-  position: absolute; /* fixedからabsoluteに変更 */
-  top: 50%; /* 画面中央に配置 */
-  left: 50%; /* 画面中央に配置 */
-  transform: translate(-50%, -50%); /* 中央揃え */
-  
-  /* 9:16のアスペクト比を維持しつつ、画面にフィットさせる */
-  width: 100vw;
-  height: 100vh;
-  max-width: calc(100vh * 9 / 16); /* 高さ基準で幅を制限 */
-  max-height: calc(100vw * 16 / 9); /* 幅基準で高さを制限 */
-  
-  background-image: url('/assets/images/back/loading.png'); /* 背景画像として設定 */
-  background-size: cover; /* 画像が画面いっぱいに拡大 */
-  background-position: center; /* 中央に配置 */
-  background-repeat: no-repeat;
-  
-  display: flex;
-  flex-direction: column;
-  justify-content: center; /* プログレスバーとテキストを画面下部に配置 */
-  align-items: center;
-  z-index: 9999; /* 最前面に表示 */
-  color: white;
-  font-family: 'Yuji Syuku', serif;
-  padding-bottom: 50px; /* 下からの余白 */
-  
-  /* 周りの黒い部分を埋めるための背景色 */
-  background-color: #000; 
-}
-
-/* .loading-image は削除されたので不要 */
-
-.progress-bar-container {
-  position: absolute;
-  top: 350px;
-  width: 60%;
-  max-width: 400px;
-  height: 20px;
-  background-color: rgba(85, 85, 85, 0.7); /* 背景が透けるように */
-  border-radius: 10px;
-  overflow: hidden;
-  margin-bottom: 10px;
-}
-
-.progress-bar {
-  height: 100%;
-  background-color: #311402; /* プログレスバーの色（こげ茶色） */
-  width: 0%; /* 初期幅 */
-  transition: width 0.1s linear; /* プログレスバーの滑らかなアニメーション */
-}
-
-.loading-text {
-  font-size: 1.8em;
-  font-family: 'Yuji Syuku', serif;
-  color: #201e1e;
-}
+/* --- ★削除: ローディング画面スタイルは不要になったため削除 --- */
 
 /* --- ★追加: 遷移アニメーション --- */
 .transition-overlay {
@@ -436,27 +380,7 @@ body {
   }
 }
 
-
-/* --- ローディングから猫起こし画面への遷移用黒フェードオーバーレイ --- */
-.black-fade-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: black;
-  opacity: 0;
-  pointer-events: none;
-  z-index: 9999; /* Above router-view, below transition-overlay */
-}
-.black-fade-overlay.active {
-  animation: short-fade 1s ease-in-out forwards; /* Short duration, e.g., 1s total */
-}
-@keyframes short-fade {
-  0% { opacity: 0; }
-  50% { opacity: 1; }
-  100% { opacity: 0; }
-}
+/* --- ★削除: black-fade-overlay は不要になったため削除 --- */
 
 /* --- ルートトランジション --- */
 .fade-enter-active,

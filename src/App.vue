@@ -55,7 +55,6 @@ onMounted(async () => {
 
   // --- アセットのプリロード定義 ---
   const imagePaths = [
-    '/assets/images/back/loading.png',
     '/assets/images/back/sleeping.gif',
     '/assets/images/back/wakeup.gif',
     '/assets/images/back/back_out_shrine.png',

@@ -242,6 +242,7 @@ onMounted(async () => {
     '/assets/sounds/Flyer02-1(Take).mp3',
     '/assets/sounds/Hit-Slap01-3(Dry).mp3',
     '/assets/sounds/Xylophone04-05(Fast-Long-3-Up).mp3',
+    '/assets/sounds/NoBGM4sec.mp3',
   ];
 
   // --- 並列処理の定義 ---
@@ -277,8 +278,9 @@ onUnmounted(() => {
 // --- メソッド ---
 const onWakeUpFinished = () => {
   isTransitioning.value = true;
-  audioStore.setBgmPlaybackAllowed(true);
-  audioStore.setBgm('NES-JP-A01-2(Title-Loop115).mp3'); // 遅延なしでBGMを再生
+  
+  // ★削除: BGM再生許可はWakeUpCatScreenに移動したため不要
+
   setTimeout(() => {
     showWakeUpScreen.value = false;
     router.push({ name: 'Title' }); // タイトル画面へ遷移

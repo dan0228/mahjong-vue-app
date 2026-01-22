@@ -10,6 +10,7 @@ export const useAudioStore = defineStore('audio', {
     audioPlayers: new Map(), // プリロードされたAudioオブジェクトを格納するMap (URL -> Audioオブジェクト)
     isSwitchingBgm: false, // BGM切り替え処理中かどうかのフラグ
     isBgmPlaybackAllowed: false, // BGMの再生が許可されているかどうかのフラグ
+    isWaitingForSilentEnd: false, // 遅延再生用の無音オーディオ再生中フラグ
   }),
   actions: {
     /**
@@ -96,6 +97,10 @@ export const useAudioStore = defineStore('audio', {
      * @returns {Promise<void>} BGMの切り替えが完了したときに解決されるPromise。
      */
     async setBgm(newBgmName) {
+      // 遅延再生待機中の場合は、この関数による即時再生をブロック
+      if (this.isWaitingForSilentEnd) {
+        return;
+      }
       if (this.isSwitchingBgm) {
         return; // 既に切り替え処理中の場合は何もしない
       }
@@ -138,6 +143,43 @@ export const useAudioStore = defineStore('audio', {
       }
       
       this.isSwitchingBgm = false; // 切り替え処理完了
+    },
+
+    /**
+     * BGMを指定された遅延時間後に再生する準備をします。
+     * 無音オーディオを再生し、その終了をトリガーにしてBGMを再生します。
+     * @param {string} bgmName - 再生するBGMのファイル名。
+     */
+    prepareDelayedBgm(bgmName) {
+      if (!this.isAudioEnabled) return;
+
+      this.isWaitingForSilentEnd = true;
+      
+      // 無音ファイル
+      const silentSoundUrl = '/assets/sounds/NoBGM4sec.mp3';
+      let audio = this.audioPlayers.get(silentSoundUrl);
+      
+      if (!audio) {
+        audio = new Audio(silentSoundUrl);
+        this.audioPlayers.set(silentSoundUrl, audio);
+      }
+
+      // 'ended'イベントリスナーを一度だけ実行するように設定
+      const playBgmOnEnd = () => {
+        this.isWaitingForSilentEnd = false;
+        this.setBgm(bgmName);
+        // リスナーを削除する必要はありません。{ once: true } が自動的に行います。
+      };
+      
+      audio.addEventListener('ended', playBgmOnEnd, { once: true });
+
+      audio.volume = this.volume; // BGMと同じ音量で再生（無音ファイルなので問題なし）
+      audio.play().catch(e => {
+        console.error("Silent audio for delay failed:", e);
+        // 再生に失敗した場合は、待機状態を解除して即座にBGM再生を試みる
+        this.isWaitingForSilentEnd = false;
+        this.setBgm(bgmName);
+      });
     },
 
     /**

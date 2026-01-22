@@ -49,6 +49,11 @@ const wakeUp = () => {
   if (!isSleeping.value) {
     return;
   }
+
+  // ★変更: BGMの再生を許可し、遅延再生を準備する
+  audioStore.setBgmPlaybackAllowed(true);
+  audioStore.prepareDelayedBgm('NES-JP-A01-2(Title-Loop115).mp3');
+
   isSleeping.value = false;
   wakeupTimestamp.value = Date.now();
   

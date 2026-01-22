@@ -265,11 +265,13 @@ const shouldRenderDrawFromWallButton = computed(() => {
   // 1. 画面下部のプレイヤーであること (props.position === 'bottom')
   // 2. 引いてきた牌がないこと (!props.drawnTileDisplay)
   // 3. 自分のアクション直後（ポンやカン、打牌など）でないこと
+  // 4. ★追加: ストックルールが有効であること
   const isMyActionPhase = gameStore.gamePhase === GAME_PHASES.AWAITING_DISCARD && gameStore.lastActionPlayerId === props.player.id;
 
   return props.position === 'bottom' &&
          !props.drawnTileDisplay &&
-         !isMyActionPhase;
+         !isMyActionPhase &&
+         gameStore.ruleMode === 'stock'; // ★追加
 });
 
 const isStockTileSelectable = computed(() => {

@@ -459,8 +459,8 @@ function getMeldTileClass(meld, tileIndex) {
   margin-right: -6px;
   margin-bottom: 10px;
   background-color: white;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  border: 1px solid #460505;
+  border-radius: 50%;
 }
 
 .winner-title-container {
@@ -472,7 +472,7 @@ function getMeldTileClass(meld, tileIndex) {
 }
 .round-info .round-main-info { margin: -8px 0 -16px 0; font-size: 1.7em; font-weight: bold; }
 .popup-content h2 { margin-top: 0; margin-bottom: 5px; font-size: 1.4em; color: rgb(43, 6, 6); }
-.popup-content h3 { margin-top: -8px; margin-bottom: 2px; color: rgb(43, 6, 6); border-bottom: 1px solid rgba(43, 6, 6, 0.2); padding-bottom: 4px; font-size: 1.3em;}
+.popup-content h3 { margin-top: -8px; margin-bottom: 2px; color: rgb(43, 6, 6); border-top: 1px solid rgba(43, 6, 6, 0.2); padding-bottom: 4px; font-size: 1.2em;}
 .result-section { margin-bottom: 10px; }
 .dora-display {
   display: flex;
@@ -523,7 +523,7 @@ function getMeldTileClass(meld, tileIndex) {
 }
 .score-change-table td {
   padding: 2px 0; /* 上下の余白を追加 */
-  border-bottom: 1px dashed rgba(43, 6, 6, 0.3); /* 破線を追加 */
+  border-bottom: 1px solid rgba(93, 64, 55, 0.18);
 }
 .score-change-table tr:last-child td {
   border-bottom: none; /* 最後の行の線は削除 */
@@ -533,7 +533,7 @@ function getMeldTileClass(meld, tileIndex) {
   text-align: center;
 }
 .score-cell {
-  text-align: left;
+  text-align: right;
 }
 .change-cell {
   text-align: right;

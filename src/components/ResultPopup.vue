@@ -97,7 +97,7 @@
         <h3>{{ t('resultPopup.scoreChanges') }}</h3>
         <table class="score-change-table">
           <tbody>
-            <tr v-for="player in gameStore.players" :key="player.id">
+            <tr v-for="player in gameStore.players" :key="player.id" class="score-row">
               <td class="player-name-cell">{{ getTranslatedPlayerName(player) }}</td>
               <td class="score-cell">{{ (gameStore.getPlayerById(player.id)?.score ?? 0) + (resultDetails.pointChanges[player.id] ?? 0) }}{{ ' ' + t('resultPopup.points', { score: '' }).trim() }}</td>
               <td class="change-cell">
@@ -110,9 +110,15 @@
         </table>
       </div>
 
-      <button @click="signalReady" :disabled="isLocalPlayerReady">
-        {{ isLocalPlayerReady ? t('resultPopup.waiting') : t('resultPopup.next') }}
-      </button>
+      <div 
+        :class="['next-button-container', { 'disabled': isLocalPlayerReady }]"
+        @click="!isLocalPlayerReady && signalReady()"
+      >
+        <img src="/assets/images/button/board_hand.png" alt="Next Button" class="next-button-image" />
+        <span class="next-button-text">
+          {{ isLocalPlayerReady ? t('resultPopup.waiting') : t('resultPopup.next') }}
+        </span>
+      </div>
       </div>
     </div>
   </transition>
@@ -410,8 +416,12 @@ function getMeldTileClass(meld, tileIndex) {
   z-index: 1000;
 }
 .popup-content {
-  background-color: white;
-  padding: 15px;
+  background-image: url('/assets/images/back/start_back.png'); /* 背景画像を設定 */
+  background-size: var(--result-bg-size, cover);
+  background-position: var(--result-bg-position, center); /* 背景画像を中央に配置 */
+  /* background-color: white; */ /* 背景色を削除 */
+  padding: 38px;
+  margin-left: -7px;
   border-radius: 8px;
   width: 95%;
   max-width: 600px;
@@ -419,6 +429,22 @@ function getMeldTileClass(meld, tileIndex) {
   box-shadow: 0 4px 15px rgba(0,0,0,0.2);
   max-height: 590px;
   overflow-y: auto;
+  font-family: 'Yuji Syuku', serif; /* フォントを設定 */
+  color: #333; /* テキストカラーを調整 */
+  /* スクロールバーのスタイル */
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent; /* Firefox */
+}
+/* Webkit系ブラウザ用スクロールバー */
+.popup-content::-webkit-scrollbar {
+  width: 5px;
+}
+.popup-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+.popup-content::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
 }
 
 /* Transition styles */
@@ -435,16 +461,31 @@ function getMeldTileClass(meld, tileIndex) {
   justify-content: center;
   gap: 10px;
   white-space: pre-line;
+  margin-bottom: -40px;
 }
-.popup-content h2 { margin-top: 0; margin-bottom: 10px; font-size: 1.2em; color: #333; }
-.popup-content h3 { margin-top: 10px; margin-bottom: 5px; color: #444; border-bottom: 1px solid #eee; padding-bottom: 4px; font-size: 0.9em;}
+
+.winner-icon {
+  width: 45px;
+  height: 45px;
+  margin-bottom: 60px;
+  margin-top: -20px;
+  margin-left: -15px;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.popup-content h2 { margin-top: 0; margin-bottom: 60px; font-size: 1.2em; color: #333; }
+.popup-content h3 { margin-top: -8px; margin-bottom: -2px; color: #444; border-bottom: 1px solid rgba(172, 150, 136, 0.3); padding-bottom: 4px; font-size: 1.1em;}
 .result-section { margin-bottom: 10px; }
-.round-info .round-main-info { margin: 0 0 5px 0; font-size: 1.2em; font-weight: bold; }
+.round-info .round-main-info { margin: -5px 0 0px 0; font-size: 1.4em; font-weight: bold; }
 .dora-display {
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  margin: 2px auto;
+  margin-top: -14px;
+  margin-bottom: 16px; 
+  margin-left: 60px;
   width: fit-content;
 }
 .dora-label {
@@ -457,7 +498,7 @@ function getMeldTileClass(meld, tileIndex) {
   display: flex;
 }
 .dora-display img.tile-image-small { width: 22px; height: auto; vertical-align: middle; }
-.hand-display { display: flex; justify-content: center; gap: 0px; margin-bottom: 8px; }
+.hand-display { display: flex; justify-content: center; gap: 0px; margin-top: 3px;}
 .hand-display .tile-image-medium img { width: 32px; height: auto; border-radius: 3px; }
 .agari-tile-display { margin-left: 8px; }
 .meld-display {
@@ -479,15 +520,28 @@ function getMeldTileClass(meld, tileIndex) {
 
 .yaku-info ul { list-style: none; padding: 0; margin: 0 0 8px 0; }
 .yaku-info li { margin-bottom: 0px; font-size: 0.8em; }
-.total-score { font-weight: bold; font-size: 1.1em;  color: red;}
+.total-score {margin-top: -5px; font-weight: bold; font-size: 1.1em;  color: #C22B2B;}
 .score-change-table {
   width: 100%;
-  margin: 0 auto;
+  margin-bottom: 10px;
   border-collapse: collapse;
   font-size: 0.9em;
 }
 .score-change-table td {
   padding: 0;
+}
+.score-row {
+  background-image: linear-gradient(to right, rgba(74, 44, 26, 0.3) 30%, transparent 30%); /* 破線効果 */
+  background-size: 20px 1px; /* 破線パターンの幅と高さ (幅を長くして間隔を広げる) */
+  background-repeat: repeat-x; /* 横方向に繰り返す */
+  background-position: bottom; /* 行の下部に配置 */
+  padding-bottom: 5px; /* 内容と線の間にパディング */
+  margin-bottom: 5px; /* 行間のマージン */
+}
+.score-row:last-child {
+  background-image: none; /* 最後の行には線を引かない */
+  padding-bottom: 0;
+  margin-bottom: 0;
 }
 .player-name-cell {
   width: 9em; /* 全角9文字分の幅を確保 */
@@ -500,17 +554,8 @@ function getMeldTileClass(meld, tileIndex) {
 .change-cell {
   text-align: right;
 }
-.point-increase { color: green; }
-.point-decrease { color: red; }
-
-.winner-icon {
-  width: 45px;
-  height: 45px;
-  margin-bottom: 10px;
-  background-color: white;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-}
+.point-increase { color: #4A6B3A; } /* 抹茶色の深緑 */
+.point-decrease { color: #C22B2B; } /* えんじ色 */
 
 .popup-content button {
   padding: 8px 18px;
@@ -519,7 +564,7 @@ function getMeldTileClass(meld, tileIndex) {
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.9em;
+  font-size: .9em;
 }
 .popup-content button:hover {
   background-color: #45a049;
@@ -528,5 +573,46 @@ function getMeldTileClass(meld, tileIndex) {
   background-color: #cccccc;
   color: #666666;
   cursor: not-allowed;
+}
+
+.next-button-container {
+  position: relative;
+  width: 150px; /* 画像の幅に合わせて調整 */
+  height: 50px; /* 画像の高さに合わせて調整 */
+  margin: 15px auto 0; /* 中央配置と上マージン */
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: transform 0.1s ease-out;
+}
+
+.next-button-container.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none; /* クリックイベントを完全に無効化 */
+}
+
+.next-button-container:not(.disabled):hover {
+  transform: translateY(-2px);
+}
+
+.next-button-image {
+  width: 80%;
+  height: 80%;
+  object-fit: contain;
+  position: absolute;
+  top: 0px;
+  left: 25px;
+}
+
+.next-button-text {
+  position: relative; /* 画像の上に表示 */
+  z-index: 1; /* 画像より手前に */
+  color: rgb(73, 9, 9); /* テキスト色 */
+  font-size: 1.4em; /* テキストサイズ */
+  font-weight: bold;
+  top: -5px;
+  left: 10px;
 }
 </style>

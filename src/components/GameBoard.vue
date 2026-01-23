@@ -954,7 +954,7 @@
   object-fit: cover;
   z-index: 100; /* 他のUI要素より手前に表示 (値を大きくする) */
   background-color: white; /* 白背景 */
-  border: 3px solid #ccc; /* 縁 */
+  border: 1px solid #380000;
   border-radius: 6px; /* 角を丸く */
   cursor: pointer; /* クリック可能であることを示す */
   pointer-events: auto; /* 明示的にクリックイベントを有効にする */
@@ -1028,7 +1028,7 @@
 
 .cat-icon-left {
   top: -90px;
-  left: 40px;
+  left: 36px;
   transform: translate(-50%, -50%);
 }
 

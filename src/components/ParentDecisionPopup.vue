@@ -9,10 +9,12 @@
         <div class="dealer-determination-list">
           <div v-for="player in dealerDeterminationResults" :key="player.id" class="player-item" :class="{ 'is-dealer': player.isDealer }">
             <img :src="getWindIcon(player)" alt="Seat Wind" :class="['seat-wind-icon', { 'east-wind-icon': player.seatWind === '東' }]" />
-            <img v-if="getPlayerIcon(player)" :src="getPlayerIcon(player)" alt="Player Icon" class="player-icon" />
             <div class="player-info">
               <span class="player-name">{{ player.originalId ? $t(`aiNames.${player.originalId}`) : player.name }}</span>
-              <span class="score">{{ $t('parentDecisionPopup.score', { score: player.score }) }}</span>
+              <div class="player-details">
+                <img v-if="getPlayerIcon(player)" :src="getPlayerIcon(player)" alt="Player Icon" class="player-icon" />
+                <span class="score">{{ $t('parentDecisionPopup.score', { score: player.score }) }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -222,43 +224,47 @@ function getPlayerIcon(player) {
 }
 .fude-image {
   width: 250px;
-  height: 30px;
+  height: 20px;
   max-width: 300px;
   margin-top: 0px;
-  margin-bottom: 0px;
+  margin-bottom: 10px;
 }
 .dealer-determination-list {
-  margin-top: 20px; /* 上の要素との隙間 */
+  margin-top: -5px; /* 上の要素との隙間 */
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 0px; /* プレイヤー間の間隔を狭くする */
+  border-top: 1px solid rgba(43, 6, 6, 0.0); /* 上部の区切り線 */
+  padding-top: 0px; /* 上部区切り線と最初の要素のスペース */
 }
 .player-item {
   display: flex;
   align-items: center;
-  padding: 10px;
+  padding: 2px;
+  padding-bottom: 1px; /* 下部のスペース */
+  border-bottom: 1px solid rgba(43, 6, 6, 0.3); /* 区切り線 */
 }
 
 .seat-wind-icon {
-  width: 50px;
-  height: 50px;
+  width: 60px;
+  height: 60px;
+  margin-left: 10px;
   margin-right: 5px;
   transition: transform 0.3s ease;
 }
 
 .east-wind-icon {
-  width: 62px; /* 他より大きく */
-  height: 62px;
+  width: 72px; /* 他より大きく */
+  height: 72px;
   margin-right: -5px;
   margin-top: -18px;
   transform: scale(1.1); /* 少しだけ拡大 */
 }
 
 .player-icon {
-  width: 45px;
-  height: 45px;
-  margin-left: 10px;
-  margin-right: 15px;
+  width: 60px;
+  height: 60px;
+  margin-right: 20px; /* アイコンと点数の間のスペース */
   border-radius: 6px;
   border: 1px solid #ccc;
 }
@@ -269,17 +275,26 @@ function getPlayerIcon(player) {
   flex-grow: 1;
   overflow: hidden;
 }
+.player-details {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 2px; /* 区切り線とのスペース */
+}
 .player-name {
   font-weight: 600;
   font-size: 1.2em;
   font-family: 'Yuji Syuku', serif;
+  width: 230px; /* 幅を固定 */
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  padding-bottom: 0px; /* 区切り線のためのスペース */
+  border-bottom: 1px solid rgba(43, 6, 6, 0.15); /* 内部の区切り線 */
 }
 .score {
-  font-size: 1.1em;
+  font-size: 1.4em;
   font-family: 'Yuji Syuku', serif;
 }
 
@@ -287,18 +302,19 @@ function getPlayerIcon(player) {
   margin-top: auto; /* 残りの空間をすべてマージンとして使い、この要素を一番下に押しやる */
 }
 
-.timestamp {
-  margin-top: 2px;
-  font-size: 0.9em;
-  font-family: 'Yuji Syuku', serif;
-  color: #3f0b0b;
-}
-
 .countdown-text {
   font-size: 1.2em;
   font-family: 'Yuji Syuku', serif;
   font-weight: bold;
   color: #94000f;
-  margin-top: -120px;
+  margin-top: -90px;
 }
+
+.timestamp {
+  margin-top: -5px;
+  font-size: 0.9em;
+  font-family: 'Yuji Syuku', serif;
+  color: #3f0b0b;
+}
+
 </style>

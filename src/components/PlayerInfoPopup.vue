@@ -96,7 +96,7 @@ const statBoardImageSrc = computed(() => {
 
 /* ポップアップ本体のレイアウトをCSS Gridに変更 */
 .player-info-popup {
-  width: 350px;
+  width: 360px;
   height: 200px;
   background-image: url('/assets/images/back/omikuji_board.png');
   background-size: 100% 100%;
@@ -121,7 +121,7 @@ const statBoardImageSrc = computed(() => {
 /* 1. プレイヤー名 (一番上の中央) */
 .player-name {
   grid-area: name;
-  font-size: 1.6em;
+  font-size: 1.5em;
   font-family: 'Yuji Syuku', serif;
   font-weight: bold;
   color: #4a2c1a;

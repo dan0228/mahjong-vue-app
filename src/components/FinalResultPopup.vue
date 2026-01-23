@@ -4,12 +4,15 @@
       <div class="popup-content" ref="popupContentRef">
         <h2>{{ t('finalResultPopup.title') }}</h2>
         <div class="final-results-list">
-          <div v-for="player in finalResultDetails.rankedPlayers" :key="player.name" class="player-rank-item" :class="{ 'is-winner': player.rank === 1 }">
-            <span class="rank">{{ player.rank }}</span>
-            <img v-if="getPlayerIcon(player.id)" :src="getPlayerIcon(player.id)" alt="Player Icon" class="player-icon" crossorigin="anonymous" />
+          <div v-for="player in finalResultDetails.rankedPlayers" :key="player.id" class="player-item" :class="{ 'is-winner': player.rank === 1 }">
+            <!-- 方角の代わりに順位を表示 -->
+            <span class="rank-display" :class="{ 'winner-rank': player.rank === 1 }">{{ player.rank }}</span>
             <div class="player-info">
               <span class="player-name">{{ getTranslatedPlayerName(player) }}</span>
-              <span class="score">{{ t('finalResultPopup.score', { score: player.score }) }}</span>
+              <div class="player-details">
+                <img v-if="getPlayerIcon(player.id)" :src="getPlayerIcon(player.id)" alt="Player Icon" class="player-icon" crossorigin="anonymous" />
+                <span class="score">{{ t('finalResultPopup.score', { score: player.score }) }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -412,18 +415,24 @@ async function postToX() {
   justify-content: center;
   z-index: 1050; /* 他の要素より手前に表示 */
 }
-.final-result-popup-content {
+.popup-content {
   background-image: url('/assets/images/back/start_back.png');
-  background-size: cover;
+  background-size: 117% 109%; /* ResultPopup.vue と同じ */
   background-position: center;
-  padding: 20px;
-  border-radius: 10px;
-  color: rgb(43, 6, 6);
+  margin-left: -7px; /* ResultPopup.vue と同じ */
   font-family: 'Yuji Syuku', serif;
-  text-align: center;
-  width: 90%;
+  color: rgb(43, 6, 6);
+  padding: 15px; /* ResultPopup.vue と同じ */
+  border-radius: 8px; /* ResultPopup.vue と同じ */
+  width: 95%; /* ResultPopup.vue と同じ */
   max-width: 600px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.25);
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2); /* ResultPopup.vue と同じ */
+  max-height: 590px; /* ResultPopup.vue と同じ */
+  overflow-y: auto; /* ResultPopup.vue と同じ */
+  /* スクロールバーのスタイル */
+  scrollbar-width: thin; /* ResultPopup.vue と同じ */
+  scrollbar-color: rgba(43, 6, 6, 0.4) transparent; /* ResultPopup.vue と同じ */
 }
 
 /* Transition styles */
@@ -442,72 +451,98 @@ async function postToX() {
 }
 .final-results-list {
   margin-bottom: 0px;
+  margin-top: -5px; /* ParentDecisionPopup.vue と同じ */
+  display: flex;
+  flex-direction: column;
+  gap: 0px; /* ParentDecisionPopup.vue と同じ */
+  border-top: 1px solid rgba(43, 6, 6, 0.0); /* ParentDecisionPopup.vue と同じ */
+  padding-top: 0px; /* ParentDecisionPopup.vue と同じ */
 }
-.player-rank-item {
+.player-item {
   display: flex;
   align-items: center;
-  padding: 7px 15px;
-  background-color: #ffffff;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  margin-bottom: 12px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  padding: 2px; /* ParentDecisionPopup.vue と同じ */
+  padding-bottom: 1px; /* ParentDecisionPopup.vue と同じ */
+  border-bottom: 1px solid rgba(43, 6, 6, 0.3); /* 区切り線 */
 }
-.player-rank-item:last-child {
-  margin-bottom: 0;
+.player-item:last-child {
+  border-bottom: none; /* 最後の要素には区切り線をつけない */
 }
-.player-rank-item.is-winner {
-  background: linear-gradient(135deg, rgba(255, 251, 235, 0.5) 0%, rgba(255, 243, 205, 0.5) 100%); /* 背景を半透明に */
-  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
-  border: 1px solid rgba(255, 238, 186, 0.5); /* 枠線も半透明に */
+.player-item.is-winner {
+  background-color: transparent; /* 白いカードを消すため */
+  border: none; /* 枠線も消す */
 }
-.player-rank-item.is-winner .rank {
-  background-color: #ffc107;
-  color: #212529;
-}
-.rank {
+
+/* 順位表示のスタイル (seat-wind-icon のサイズ感に合わせる) */
+.rank-display {
   font-weight: bold;
-  width: 40px;
-  height: 40px;
+  width: 60px; /* seat-wind-icon と同じ */
+  height: 60px; /* seat-wind-icon と同じ */
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  background-color: #e9ecef;
-  color: #495057;
+  border-radius: 50%; /* 丸くする */
+  background-color: #e9ecef; /* デフォルトの背景色 */
+  color: #495057; /* デフォルトの文字色 */
   flex-shrink: 0;
   font-size: 1.4em;
-  margin-right: 5px;
+  margin-left: 10px; /* seat-wind-icon と同じ */
+  margin-right: 5px; /* seat-wind-icon と同じ */
 }
+.rank-display.winner-rank {
+  background-color: #ffc107; /* is-winner の rank と同じ */
+  color: #212529; /* is-winner の rank と同じ */
+  width: 72px; /* east-wind-icon と同じ */
+  height: 72px; /* east-wind-icon と同じ */
+  margin-right: -5px; /* east-wind-icon と同じ */
+  margin-top: -18px; /* east-wind-icon と同じ */
+  transform: scale(1.1); /* east-wind-icon と同じ */
+}
+
+/* .player-icon のスタイルを ParentDecisionPopup.vue に合わせる */
 .player-icon {
-  width: 50px;
-  height: 50px;
-  margin: 0 10px;
-  flex-shrink: 0;
+  width: 60px;
+  height: 60px;
+  margin-right: 20px; /* ParentDecisionPopup.vue と同じ */
   border-radius: 6px;
-  background-color: white;
   border: 1px solid #ccc;
 }
+
+/* .player-info のスタイルを ParentDecisionPopup.vue に合わせる */
 .player-info {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: center; /* ParentDecisionPopup.vue と同じ */
   flex-grow: 1;
   overflow: hidden;
 }
+
+/* .player-details のスタイルを ParentDecisionPopup.vue に合わせる */
+.player-details {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 2px; /* ParentDecisionPopup.vue と同じ */
+}
+
+/* .player-name のスタイルを ParentDecisionPopup.vue に合わせる */
 .player-name {
   font-weight: 600;
   font-size: 1.2em;
-  color: #212529;
+  font-family: 'Yuji Syuku', serif; /* ParentDecisionPopup.vue と同じ */
+  width: 230px; /* ParentDecisionPopup.vue と同じ */
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  padding-bottom: 0px; /* ParentDecisionPopup.vue と同じ */
+  border-bottom: 1px solid rgba(43, 6, 6, 0.15); /* ParentDecisionPopup.vue と同じ */
 }
+
+/* .score のスタイルを ParentDecisionPopup.vue に合わせる */
 .score {
-  font-weight: bold;
-  color: #007bff;
-  font-size: 1.3em;
+  font-size: 1.4em;
+  font-family: 'Yuji Syuku', serif; /* ParentDecisionPopup.vue と同じ */
 }
 .consecutive-wins {
   font-size: 1.6em;
@@ -563,103 +598,39 @@ async function postToX() {
 }
 .actions {
   display: flex;
-  justify-content: space-around;
-  gap: 15px;
+  justify-content: center; /* 中央寄せに変更 */
+  gap: 15px; /* ボタン間の間隔を調整 */
+  margin-left: 20px;
 }
 .action-button { /* actions button から action-button にクラス名を変更 */
-  padding: 10px 20px;
+  background-image: url('/assets/images/button/board_hand.png');
+  background-color: transparent; /* 透明にする */
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
   border: none;
-  width: 155px;
-  border-radius: 5px;
   cursor: pointer;
-  font-size: 0.8em;
-  transition: background-color 0.2s ease;
-  display: flex; /* テキストを縦に並べるため */
-  flex-direction: column; /* テキストを縦に並べるため */
-  align-items: center; /* テキストを中央揃え */
-  justify-content: center; /* テキストを中央揃え */
-  line-height: 1.2; /* 行間調整 */
-}
-.action-button:first-child { /* 新しいゲームを開始 */
-  background-color: #4CAF50;
-  color: white;
-}
-.action-button:first-child:hover {
-  background-color: #45a049;
-}
-.action-button:last-child { /* タイトルに戻る */
-  background-color: #f44336;
-  color: white;
-}
-.action-button:last-child:hover {
-  background-color: #da190b;
-}
-
-.social-share-buttons {
+  width: 170px; /* ResultPopup.vue のボタンより少し大きく */
+  height: 50px; /* ResultPopup.vue のボタンより少し大きく */
   display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 5px;
-}
-
-.social-button {
-  background-color: transparent;
-  padding: 10px 15px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 0.8em;
-  transition: background-color 0.2s ease, color 0.2s ease;
-  display: flex;
-  justify-content: center;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  color: rgb(43, 6, 6);
+  font-family: 'Yuji Syuku', serif;
+  font-size: 0.9em;
+  transition: transform 0.2s ease;
 }
-
-.social-logo-icon {
-  width: 20px;
-  height: 20px;
+.action-button:hover {
+  transform: scale(1.03);
 }
-
-.x-post-button {
-  color: #1DA1F2;
-  border: 1px solid #1DA1F2;
-}
-
-.x-post-button:hover {
-  background-color: #1DA1F2;
-  color: white;
-}
-
-.instagram-post-button {
-  color: #E1306C;
-  border: 1px solid #E1306C;
-}
-
-.instagram-post-button:hover {
-  background-color: #E1306C;
-  color: white;
-}
-
-.screenshot-button {
-  color: #555;
-  border: 1px solid #ccc;
-}
-
-.screenshot-button:hover {
-  background-color: #f0f0f0;
-}
-
-.screenshot-icon {
-  font-size: 1.2em;
-}
-
-.share-caption {
-  font-size: 0.8em;
-  color: #666;
+.action-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none; /* ホバー効果を無効化 */
 }
 
 .timestamp {
-  margin-top: 15px; /* 調整 */
+  margin-top: 3px; /* 調整 */
+  font-family: 'Yuji Syuku', serif;
   font-size: 0.8em;
   color: rgb(43, 6, 6);
 }

@@ -10,6 +10,12 @@
       >
         {{ $t('wakeUpCat.button') }}
       </span>
+      <span 
+        v-if="isSleeping && isImageLoaded" 
+        class="loading-text"
+      >
+        Loading...
+      </span>
     </div>
   </div>
 </template>
@@ -131,5 +137,18 @@ const wakeUp = () => {
   0% { transform: translateY(0) rotate(-5deg); } /* 開始位置 */
   50% { transform: translateY(-5px) rotate(-5deg); } /* 上にわずかに移動 */
   100% { transform: translateY(0) rotate(-5deg); } /* 開始位置に戻る */
+}
+
+.loading-text {
+  position: absolute;
+  bottom: 8px; /* 画面下からの距離 */
+  right: 10px; /* 画面右からの距離 */
+  color: #F5F5DC; /* 薄いベージュ色 */
+  font-size: 0.8em; /* 小さめのフォントサイズ */
+  font-family: "Yomogi", cursive;
+  text-shadow: 
+    0 0 3px rgba(255, 255, 255, 0.3), /* Soft glow */
+    1px 1px 0 #4a2c12; /* 影 */
+  pointer-events: none; /* クリックイベントを無効化 */
 }
 </style>

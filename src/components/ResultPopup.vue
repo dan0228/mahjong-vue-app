@@ -410,7 +410,11 @@ function getMeldTileClass(meld, tileIndex) {
   z-index: 1000;
 }
 .popup-content {
-  background-color: white;
+  background-image: url('/assets/images/back/start_back.png');
+  background-size: cover;
+  background-position: center;
+  font-family: 'Yuji Syuku', serif;
+  color: rgb(43, 6, 6);
   padding: 15px;
   border-radius: 8px;
   width: 95%;
@@ -419,6 +423,22 @@ function getMeldTileClass(meld, tileIndex) {
   box-shadow: 0 4px 15px rgba(0,0,0,0.2);
   max-height: 590px;
   overflow-y: auto;
+  /* スクロールバーのスタイル */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(43, 6, 6, 0.4) transparent;
+}
+
+.popup-content::-webkit-scrollbar {
+  width: 5px;
+}
+
+.popup-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.popup-content::-webkit-scrollbar-thumb {
+  background-color: rgba(43, 6, 6, 0.4);
+  border-radius: 10px;
 }
 
 /* Transition styles */
@@ -436,8 +456,8 @@ function getMeldTileClass(meld, tileIndex) {
   gap: 10px;
   white-space: pre-line;
 }
-.popup-content h2 { margin-top: 0; margin-bottom: 10px; font-size: 1.2em; color: #333; }
-.popup-content h3 { margin-top: 10px; margin-bottom: 5px; color: #444; border-bottom: 1px solid #eee; padding-bottom: 4px; font-size: 0.9em;}
+.popup-content h2 { margin-top: 0; margin-bottom: 10px; font-size: 1.2em; color: rgb(43, 6, 6); }
+.popup-content h3 { margin-top: 10px; margin-bottom: 5px; color: rgb(43, 6, 6); border-bottom: 1px solid rgba(43, 6, 6, 0.2); padding-bottom: 4px; font-size: 0.9em;}
 .result-section { margin-bottom: 10px; }
 .round-info .round-main-info { margin: 0 0 5px 0; font-size: 1.2em; font-weight: bold; }
 .dora-display {
@@ -479,7 +499,7 @@ function getMeldTileClass(meld, tileIndex) {
 
 .yaku-info ul { list-style: none; padding: 0; margin: 0 0 8px 0; }
 .yaku-info li { margin-bottom: 0px; font-size: 0.8em; }
-.total-score { font-weight: bold; font-size: 1.1em;  color: red;}
+.total-score { font-weight: bold; font-size: 1.1em;  color: rgb(184, 0, 0);}
 .score-change-table {
   width: 100%;
   margin: 0 auto;
@@ -487,7 +507,11 @@ function getMeldTileClass(meld, tileIndex) {
   font-size: 0.9em;
 }
 .score-change-table td {
-  padding: 0;
+  padding: 8px 0; /* 上下の余白を追加 */
+  border-bottom: 1px dashed rgba(43, 6, 6, 0.3); /* 破線を追加 */
+}
+.score-change-table tr:last-child td {
+  border-bottom: none; /* 最後の行の線は削除 */
 }
 .player-name-cell {
   width: 9em; /* 全角9文字分の幅を確保 */
@@ -500,8 +524,8 @@ function getMeldTileClass(meld, tileIndex) {
 .change-cell {
   text-align: right;
 }
-.point-increase { color: green; }
-.point-decrease { color: red; }
+.point-increase { color: #00532E; } /* 抹茶色の深緑 */
+.point-decrease { color: #8B0000; } /* えんじ色 (DarkRed) */
 
 .winner-icon {
   width: 45px;
@@ -513,20 +537,29 @@ function getMeldTileClass(meld, tileIndex) {
 }
 
 .popup-content button {
-  padding: 8px 18px;
-  background-color: #4CAF50;
-  color: white;
+  background-image: url('/assets/images/button/board_hand.png');
+  background-color: transparent;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
   border: none;
-  border-radius: 4px;
   cursor: pointer;
-  font-size: 0.9em;
+  width: 200px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgb(43, 6, 6);
+  font-size: 1.2em;
+  font-weight: bold;
+  transition: transform 0.2s ease;
+  margin: 0 auto; /* 中央揃え */
 }
 .popup-content button:hover {
-  background-color: #45a049;
+  transform: scale(1.05);
 }
 .popup-content button:disabled {
-  background-color: #cccccc;
-  color: #666666;
+  opacity: 0.6;
   cursor: not-allowed;
+  transform: none; /* ホバー効果を無効化 */
 }
 </style>

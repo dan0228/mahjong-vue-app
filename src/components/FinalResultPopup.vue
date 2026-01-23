@@ -412,14 +412,17 @@ async function postToX() {
   justify-content: center;
   z-index: 1050; /* 他の要素より手前に表示 */
 }
-.popup-content {
-  background-color: white;
-  padding: 2px;
+.final-result-popup-content {
+  background-image: url('/assets/images/back/start_back.png');
+  background-size: cover;
+  background-position: center;
+  padding: 20px;
   border-radius: 10px;
-  min-width: 320px;
-  max-width: 95%;
+  color: rgb(43, 6, 6);
+  font-family: 'Yuji Syuku', serif;
   text-align: center;
-  transform: scale(1); 
+  width: 90%;
+  max-width: 600px;
   box-shadow: 0 5px 20px rgba(0,0,0,0.25);
 }
 
@@ -454,9 +457,9 @@ async function postToX() {
   margin-bottom: 0;
 }
 .player-rank-item.is-winner {
-  background: linear-gradient(135deg, #fffbeb 0%, #fff3cd 100%);
+  background: linear-gradient(135deg, rgba(255, 251, 235, 0.5) 0%, rgba(255, 243, 205, 0.5) 100%); /* 背景を半透明に */
   box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
-  border: 1px solid #ffeeba;
+  border: 1px solid rgba(255, 238, 186, 0.5); /* 枠線も半透明に */
 }
 .player-rank-item.is-winner .rank {
   background-color: #ffc107;
@@ -658,6 +661,6 @@ async function postToX() {
 .timestamp {
   margin-top: 15px; /* 調整 */
   font-size: 0.8em;
-  color: #666;
+  color: rgb(43, 6, 6);
 }
 </style>

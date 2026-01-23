@@ -2,6 +2,7 @@
   <transition name="popup">
     <div v-if="show" class="popup-overlay">
       <div class="popup-content">
+        <div class="popup-inner-content">
 
       <div class="result-section round-info" style="text-align: center; margin-bottom: 15px;">
         <p class="round-main-info">{{ t('resultPopup.roundInfo', { wind: roundWindDisplay, round: resultDetails.roundNumber, honba: resultDetails.honba }) }}</p>
@@ -111,8 +112,9 @@
       </div>
 
       <button @click="signalReady" :disabled="isLocalPlayerReady">
-        {{ isLocalPlayerReady ? t('resultPopup.waiting') : t('resultPopup.next') }}
-      </button>
+            {{ isLocalPlayerReady ? t('resultPopup.waiting') : t('resultPopup.next') }}
+          </button>
+        </div> <!-- Close popup-inner-content -->
       </div>
     </div>
   </transition>
@@ -411,8 +413,9 @@ function getMeldTileClass(meld, tileIndex) {
 }
 .popup-content {
   background-image: url('/assets/images/back/start_back.png');
-  background-size: cover;
+  background-size: 117% 109%; /* 縦横調整可能に */
   background-position: center;
+  margin-left: -7px;
   font-family: 'Yuji Syuku', serif;
   color: rgb(43, 6, 6);
   padding: 15px;
@@ -449,6 +452,17 @@ function getMeldTileClass(meld, tileIndex) {
   opacity: 0;
   transform: scale(0.7);
 }
+
+.winner-icon {
+  width: 60px;
+  height: 60px;
+  margin-right: -6px;
+  margin-bottom: 10px;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
 .winner-title-container {
   display: flex;
   align-items: center;
@@ -456,15 +470,16 @@ function getMeldTileClass(meld, tileIndex) {
   gap: 10px;
   white-space: pre-line;
 }
-.popup-content h2 { margin-top: 0; margin-bottom: 10px; font-size: 1.2em; color: rgb(43, 6, 6); }
-.popup-content h3 { margin-top: 10px; margin-bottom: 5px; color: rgb(43, 6, 6); border-bottom: 1px solid rgba(43, 6, 6, 0.2); padding-bottom: 4px; font-size: 0.9em;}
+.round-info .round-main-info { margin: -8px 0 -16px 0; font-size: 1.7em; font-weight: bold; }
+.popup-content h2 { margin-top: 0; margin-bottom: 5px; font-size: 1.4em; color: rgb(43, 6, 6); }
+.popup-content h3 { margin-top: -8px; margin-bottom: 2px; color: rgb(43, 6, 6); border-bottom: 1px solid rgba(43, 6, 6, 0.2); padding-bottom: 4px; font-size: 1.3em;}
 .result-section { margin-bottom: 10px; }
-.round-info .round-main-info { margin: 0 0 5px 0; font-size: 1.2em; font-weight: bold; }
 .dora-display {
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  margin: 2px auto;
+  margin-left: 70px;
+  margin-bottom: 2px;
   width: fit-content;
 }
 .dora-label {
@@ -499,15 +514,15 @@ function getMeldTileClass(meld, tileIndex) {
 
 .yaku-info ul { list-style: none; padding: 0; margin: 0 0 8px 0; }
 .yaku-info li { margin-bottom: 0px; font-size: 0.8em; }
-.total-score { font-weight: bold; font-size: 1.1em;  color: rgb(184, 0, 0);}
+.total-score {margin-top: -4px; margin-bottom: -4px; font-weight: bold; font-size: 1.2em;  color: rgb(184, 0, 0);}
 .score-change-table {
   width: 100%;
   margin: 0 auto;
   border-collapse: collapse;
-  font-size: 0.9em;
+  font-size: 0.85em;
 }
 .score-change-table td {
-  padding: 8px 0; /* 上下の余白を追加 */
+  padding: 2px 0; /* 上下の余白を追加 */
   border-bottom: 1px dashed rgba(43, 6, 6, 0.3); /* 破線を追加 */
 }
 .score-change-table tr:last-child td {
@@ -519,22 +534,12 @@ function getMeldTileClass(meld, tileIndex) {
 }
 .score-cell {
   text-align: left;
-  padding-left: 5px;
 }
 .change-cell {
   text-align: right;
 }
 .point-increase { color: #00532E; } /* 抹茶色の深緑 */
 .point-decrease { color: #8B0000; } /* えんじ色 (DarkRed) */
-
-.winner-icon {
-  width: 45px;
-  height: 45px;
-  margin-bottom: 10px;
-  background-color: white;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-}
 
 .popup-content button {
   background-image: url('/assets/images/button/board_hand.png');
@@ -543,23 +548,27 @@ function getMeldTileClass(meld, tileIndex) {
   background-repeat: no-repeat;
   border: none;
   cursor: pointer;
-  width: 200px;
-  height: 60px;
+  width: 80px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: rgb(43, 6, 6);
-  font-size: 1.2em;
-  font-weight: bold;
+  font-family: 'Yuji Syuku', serif;
+  font-size: 1.3em;
   transition: transform 0.2s ease;
-  margin: 0 auto; /* 中央揃え */
+  margin-top: -5px;
+  margin-left: 130px;
 }
 .popup-content button:hover {
-  transform: scale(1.05);
+  transform: scale(1.03);
 }
 .popup-content button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none; /* ホバー効果を無効化 */
+}
+.popup-inner-content {
+  margin-left: 10px; /* 背景画像以外の内容を右にずらす */
 }
 </style>

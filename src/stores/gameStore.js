@@ -2144,6 +2144,9 @@ export const useGameStore = defineStore('game', {
       if (this.playerTurnCount[playerId] !== undefined) {
         this.playerTurnCount[playerId]++;
       }
+      if (this.turnCount < this.players.length) { // 暗槓も地和・人和を消す
+        this.anyPlayerMeldInFirstRound = true;
+      }
       if (this.deadWall.length > 0) {
         this.drawnTile = mahjongLogic.drawRinshanTile(this.wall);
         this.rinshanKaihouChance = true;

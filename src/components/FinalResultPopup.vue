@@ -552,12 +552,12 @@ async function postToX() {
 /* .player-name のスタイルを ParentDecisionPopup.vue に合わせる */
 .player-name {
   font-weight: 600;
-  font-size: 1.2em;
+  font-size: 1.3em;
   font-family: 'Yuji Syuku', serif; /* ParentDecisionPopup.vue と同じ */
   width: 230px; /* ParentDecisionPopup.vue と同じ */
   max-width: 100%;
   overflow: hidden;
-  text-overflow: ellipsis;
+  text-overflow: clip;
   white-space: nowrap;
   padding-bottom: 0px; /* ParentDecisionPopup.vue と同じ */
   border-bottom: 1px solid rgba(43, 6, 6, 0.15); /* ParentDecisionPopup.vue と同じ */
@@ -640,7 +640,7 @@ async function postToX() {
   justify-content: center;
   color: rgb(43, 6, 6);
   font-family: 'Yuji Syuku', serif;
-  font-size: 1.1em;
+  font-size: 1.2em;
   transition: transform 0.2s ease;
 }
 .action-button:hover {
@@ -663,5 +663,6 @@ async function postToX() {
 .timestamp {
   font-size: 0.7em;
   color: #7d6b6b;
+  margin-top: -3px;
 }
 </style>

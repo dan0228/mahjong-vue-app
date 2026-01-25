@@ -69,26 +69,28 @@
       </div>
 
       <div v-if="!isDrawResult && !isChomboResult" class="result-section yaku-info"> <!-- 和了時のみ表示 -->
-        <h3>{{ t('resultPopup.yakuList') }}</h3>
-        <ul>
-          <li v-for="(yaku, index) in resultDetails.yakuList" :key="index">
-            {{ t(`yaku.${yaku.key}.name`) }}
-            <span v-if="yaku.power !== undefined"> <!-- 役満の場合 -->
-              ({{ yaku.power === 1 ? t('resultPopup.yakuman') : t('resultPopup.multipleYakuman', { count: yaku.power }) }})
-            </span>
-            <span v-else-if="yaku.fans !== undefined"> ({{ t('resultPopup.han', { count: yaku.fans }) }})</span>
-          </li>
-        </ul>
-        <p class="total-score">
-          <span v-if="isYakumanResult">
-            {{ translatedScoreName }}
-          </span>
-          <span v-else-if="resultDetails.totalFans > 0">
-            {{ t('resultPopup.totalFans', { count: resultDetails.totalFans }) }} {{ translatedScoreName }}
-          </span>
-          {{ resultDetails.score ? t('resultPopup.points', { score: resultDetails.score }) : '' }}
-        </p>
-      </div>
+  <h3>{{ t('resultPopup.yakuList') }}</h3>
+  <div :class="['yaku-list-container', yakuListColumnCountClass]">
+    <ul>
+      <li v-for="(yaku, index) in resultDetails.yakuList" :key="index">
+        {{ t(`yaku.${yaku.key}.name`) }}
+        <span v-if="yaku.power !== undefined"> <!-- 役満の場合 -->
+          ({{ yaku.power === 1 ? t('resultPopup.yakuman') : t('resultPopup.multipleYakuman', { count: yaku.power }) }})
+        </span>
+        <span v-else-if="yaku.fans !== undefined"> ({{ t('resultPopup.han', { count: yaku.fans }) }})</span>
+      </li>
+    </ul>
+  </div>
+  <p class="total-score">
+    <span v-if="isYakumanResult">
+      {{ translatedScoreName }}
+    </span>
+    <span v-else-if="resultDetails.totalFans > 0">
+      {{ t('resultPopup.totalFans', { count: resultDetails.totalFans }) }} {{ translatedScoreName }}
+    </span>
+    {{ resultDetails.score ? t('resultPopup.points', { score: resultDetails.score }) : '' }}
+  </p>
+</div>
       <div v-if="isDrawResult" class="result-section draw-info"> <!-- 流局時のみ表示 -->
         <h2>{{ t('resultPopup.draw') }}</h2>
         <p>{{ message }}</p>
@@ -310,6 +312,19 @@ const isKazoeYakuman = computed(() => {
 });
 
 /**
+ * 役のリストの数に応じて、表示する列数を決定するCSSクラスを返します。
+ */
+const yakuListColumnCountClass = computed(() => {
+  const yakuCount = props.resultDetails.yakuList.length;
+  if (yakuCount > 10) {
+    return 'three-columns';
+  } else if (yakuCount > 5) {
+    return 'two-columns';
+  }
+  return ''; // デフォルトは1列
+});
+
+/**
  * 和了牌を除いた元々の手牌を返します。
  */
 const originalHandWithoutAgariTile = computed(() => {
@@ -512,7 +527,31 @@ function getMeldTileClass(meld, tileIndex) {
   content: url('/public/assets/images/tiles/ura.png');
 }
 
-.yaku-info ul { list-style: none; padding: 0; margin: 0 0 8px 0; }
+.yaku-info ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 8px 0;
+  display: block; /* Ensure it behaves like a block for column-count */
+}
+
+.yaku-list-container.two-columns ul {
+  column-count: 2;
+  column-gap: 10px;
+}
+
+.yaku-list-container.two-columns li {
+  break-inside: avoid-column;
+}
+
+.yaku-list-container.three-columns ul {
+  column-count: 3;
+  column-gap: 10px;
+}
+
+.yaku-list-container.three-columns li {
+  break-inside: avoid-column;
+}
+
 .yaku-info li { margin-bottom: 0px; font-size: 0.8em; }
 .total-score {margin-top: -4px; margin-bottom: -4px; font-weight: bold; font-size: 1.2em;  color: rgb(184, 0, 0);}
 .score-change-table {

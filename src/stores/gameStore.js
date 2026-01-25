@@ -2510,7 +2510,8 @@ export const useGameStore = defineStore('game', {
     }));
 
     if (userStore.profile) {
-      await userStore.saveAchievedYaku(options);
+      // UI表示を優先するため、awaitせずにバックグラウンドで実行
+      userStore.saveAchievedYaku(options);
     }
 
     const player1 = this.players.find(p => p.id === 'player1');
@@ -2537,13 +2538,14 @@ export const useGameStore = defineStore('game', {
         is_win: myPlayerRank === 1,
         coin_change: gain,
       };
-      try {
-        const { error } = await supabase.from('matches').insert([matchData]);
-        if (error) throw error;
-        console.log('対局結果をmatchesテーブルに保存しました。');
-      } catch (error) {
-        console.error('matchesテーブルへの対局結果の保存中にエラーが発生しました:', error.message);
-      }
+      // UI表示を優先するため、awaitせずにバックグラウンドで実行
+      supabase.from('matches').insert([matchData]).then(({ error }) => {
+        if (error) {
+          console.error('matchesテーブルへの対局結果の保存中にエラーが発生しました:', error.message);
+        } else {
+          console.log('対局結果をmatchesテーブルに保存しました。');
+        }
+      });
     }
 
     userStore.setGameInProgress(false);

@@ -32,12 +32,22 @@
       <transition name="fade" mode="out-in">
         <div v-if="!isLoading" class="ranking-list-container">
           <div v-for="player in displayLeaderboard" :key="player.id" class="ranking-row" :class="{ 'is-first-place': player.isFirstPlace, 'is-second-place': player.isSecondPlace, 'is-third-place': player.isThirdPlace }">
-            <span class="rank">{{ player.rank }}</span>
-            <img :src="player.profile_image_url" alt="avatar" class="user-avatar" />
-            <div class="user-name-container">
-              <span class="user-name">{{ player.name }}</span>
+            <div class="rank">
+              <img v-if="player.rank === 1" src="/assets/images/info/No1.png" alt="1st" class="rank-icon" />
+              <img v-else-if="player.rank === 2" src="/assets/images/info/No2.png" alt="2nd" class="rank-icon" />
+              <img v-else-if="player.rank === 3" src="/assets/images/info/No3.png" alt="3rd" class="rank-icon" />
+              <template v-else>
+                <img src="/assets/images/info/hand.png" alt="Rank" class="rank-icon" />
+                <span class="rank-number">{{ player.rank }}</span>
+              </template>
             </div>
-            <span class="score">{{ player.score }}</span>
+            <div class="player-info">
+              <span class="user-name">{{ player.name }}</span>
+              <div class="player-details">
+                <img :src="player.profile_image_url" alt="avatar" class="player-icon" />
+                <span class="score">{{ player.score }}</span>
+              </div>
+            </div>
           </div>
         </div>
         <div v-else class="ranking-list-placeholder">
@@ -69,7 +79,7 @@ const ratingLeaderboard = ref([]);
 const catCoinsLeaderboard = ref([]);
 const isLoading = ref(true);
 const error = ref(null);
-const activeRankingType = ref('catCoins'); // 初期表示を猫コインに変更
+const activeRankingType = ref('rating'); // 初期表示を猫コインに変更
 
 // --- 画面のスケーリング処理 ---
 const DESIGN_WIDTH = 360;
@@ -357,7 +367,7 @@ h1 {
   height: 442px; /* 縦幅を長く */
   margin-top: 68px; /* 位置を少し下に */
   overflow-y: auto;
-  padding: 10px;
+  padding: 0px;
   box-sizing: border-box;
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
@@ -378,8 +388,9 @@ h1 {
 .ranking-row {
   display: flex;
   align-items: center;
-  padding: 4px 8px;
+  padding: 4px 0px;
   margin-bottom: 6px;
+  margin-left: 11px;
   background-color: transparent;
   border: none;
   border-radius: 0;
@@ -391,40 +402,89 @@ h1 {
 .ranking-row.is-third-place { border-color: #cd7f32; }
 
 .rank {
-  font-size: 1.6em;
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.rank-number {
+  position: absolute;
+  top: 65%;
+  left: 60%;
+  transform: translate(-50%, -50%);
+  font-size: 1.1em;
   font-weight: bold;
-  width: 30px;
-  text-align: center;
-  flex-shrink: 0;
-}
-.is-first-place .rank { color: #d4af37; }
-.is-second-place .rank { color: #a8a8a8; }
-.is-third-place .rank { color: #cd7f32; }
-
-.user-avatar {
-  width: 35px;
-  height: 35px;
-  border-radius: 50%;
-  border: 1px solid #ccc;
-  margin: 0 10px;
-  flex-shrink: 0;
+  color: #441800;
 }
 
-.user-name-container {
+.rank-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  margin-left: 10px;
+}
+
+.is-first-place .rank {
+  width: 65px;
+  height: 65px;
+  margin-left: -3px;
+}
+
+.is-second-place .rank {
+  width: 60px;
+  height: 60px;
+  margin-left: -2px;
+}
+
+.is-third-place .rank {
+  width: 55px;
+  height: 55px;
+  margin-left: -1px;
+}
+
+.player-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   flex-grow: 1;
-  text-align: center;
-  /* overflowとwhite-spaceを削除して折り返しを許可 */
+  overflow: hidden;
+  margin-left: 0px;
+}
+
+.player-details {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+.player-icon {
+  width: 40px;
+  height: 40px;
+  margin-right: 20px;
+  border-radius: 25%;
+  border: 1px solid #200101;
+  flex-shrink: 0;
 }
 
 .user-name {
+  font-weight: 600;
   font-size: 1.2em;
-  font-weight: bold;
-  white-space: normal; /* 明示的に改行を許可 */
-  word-break: break-all; /* 長い単語でも強制的に改行 */
+  width: 300px;
+  margin-left: 0px;
+  overflow: hidden;
+  text-overflow: clip;
+  white-space: nowrap;
+  border-bottom: 1px solid rgba(43, 6, 6, 0.15);
+  text-align: center;
 }
 
 .score {
-  font-size: 1.2em;
+  font-size: 1.4em;
   font-weight: bold;
   min-width: 60px;
   text-align: right;

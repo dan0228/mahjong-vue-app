@@ -5,8 +5,16 @@
         <h2>{{ t('finalResultPopup.title') }}</h2>
         <div class="final-results-list">
           <div v-for="player in finalResultDetails.rankedPlayers" :key="player.id" class="player-item" :class="{ 'is-winner': player.rank === 1 }">
-            <!-- 方角の代わりに順位を表示 -->
-            <span class="rank-display" :class="{ 'winner-rank': player.rank === 1 }">{{ player.rank }}</span>
+            <!-- 順位表示 -->
+            <div class="rank-container">
+              <template v-if="player.rank === 1">
+                <img src="/assets/images/info/No1.png" alt="No1" class="rank-image no1-image" />
+              </template>
+              <template v-else>
+                <img src="/assets/images/info/hand.png" alt="Hand" class="rank-image hand-image" />
+                <span class="rank-number">{{ player.rank }}</span>
+              </template>
+            </div>
             <div class="player-info">
               <span class="player-name">{{ getTranslatedPlayerName(player) }}</span>
               <div class="player-details">
@@ -16,9 +24,7 @@
             </div>
           </div>
         </div>
-        <p class="consecutive-wins" v-if="gameStore.gameMode !== 'allManual' && winsToDisplay > 0 && myPlayerRank === 1">
-          {{ winsMessage }}
-        </p>
+        
         <div class="coin-gain" v-if="gameStore.lastCoinGain !== 0">
           <div class="coin-change-display">
             <img src="/assets/images/info/cat_coin.png" alt="Cat Coin" class="cat-coin-icon" crossorigin="anonymous">
@@ -34,8 +40,7 @@
           <button v-if="!gameStore.isGameOnline" @click="startNewGame" class="action-button">
             <span>{{ t('finalResultPopup.newGame') }}</span>
           </button>
-          <button @click="backToTitle" class="action-button">
-            <span>{{ t('finalResultPopup.backToTitle') }}</span>
+          <button @click="backToTitle" class="action-button back-to-title-button">
           </button>
         </div>
         <!-- X共有ボタンは削除 -->
@@ -444,59 +449,78 @@ async function postToX() {
   transform: scale(0.7);
 }
 .popup-content h2 {
-  margin-top: 0;
+  margin-top: -10px;
   margin-bottom: 5px;
   color: #333;
-  font-size: 1.5em;
+  font-size: 1.9em;
 }
 .final-results-list {
   margin-bottom: 0px;
-  margin-top: -5px; /* ParentDecisionPopup.vue と同じ */
+  margin-top: -5px;
   display: flex;
   flex-direction: column;
-  gap: 0px; /* ParentDecisionPopup.vue と同じ */
-  border-top: 1px solid rgba(43, 6, 6, 0.0); /* ParentDecisionPopup.vue と同じ */
-  padding-top: 0px; /* ParentDecisionPopup.vue と同じ */
+  gap: 0px;
+  border-top: 1px solid rgba(43, 6, 6, 0.3); /* 上部に区切り線を追加 */
+  padding-top: 0px;
 }
 .player-item {
   display: flex;
   align-items: center;
-  padding: 2px; /* ParentDecisionPopup.vue と同じ */
-  padding-bottom: 1px; /* ParentDecisionPopup.vue と同じ */
+  padding: 2px;
+  padding-bottom: 4px;
   border-bottom: 1px solid rgba(43, 6, 6, 0.3); /* 区切り線 */
 }
 .player-item:last-child {
-  border-bottom: none; /* 最後の要素には区切り線をつけない */
+  margin-bottom: 0;
 }
 .player-item.is-winner {
   background-color: transparent; /* 白いカードを消すため */
-  border: none; /* 枠線も消す */
+  /* border: none; */ /* この行を削除 */
 }
 
-/* 順位表示のスタイル (seat-wind-icon のサイズ感に合わせる) */
-.rank-display {
-  font-weight: bold;
-  width: 60px; /* seat-wind-icon と同じ */
-  height: 60px; /* seat-wind-icon と同じ */
+/* 順位表示のコンテナ */
+.rank-container {
+  position: relative;
+  width: 72px; /* No1.png と hand.png のサイズに合わせる */
+  height: 72px; /* No1.png と hand.png のサイズに合わせる */
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%; /* 丸くする */
-  background-color: #e9ecef; /* デフォルトの背景色 */
-  color: #495057; /* デフォルトの文字色 */
   flex-shrink: 0;
-  font-size: 1.4em;
-  margin-left: 10px; /* seat-wind-icon と同じ */
-  margin-right: 5px; /* seat-wind-icon と同じ */
-}
-.rank-display.winner-rank {
-  background-color: #ffc107; /* is-winner の rank と同じ */
-  color: #212529; /* is-winner の rank と同じ */
-  width: 72px; /* east-wind-icon と同じ */
-  height: 72px; /* east-wind-icon と同じ */
-  margin-right: -5px; /* east-wind-icon と同じ */
+  margin-left: 10px;
+  margin-right: 5px;
   margin-top: -18px; /* east-wind-icon と同じ */
   transform: scale(1.1); /* east-wind-icon と同じ */
+}
+
+.rank-image {
+  position: absolute;
+  margin-top: 20px;
+  object-fit: contain;
+}
+
+.no1-image {
+  margin-top: 20px;
+  width: 110%; /* No1.png は親要素のサイズに合わせる */
+  height: 110%;
+}
+
+.hand-image {
+  width: 60px; /* hand.png を小さくする */
+  height: 60px;
+}
+
+.rank-number {
+  position: absolute;
+  font-family: 'Yuji Syuku', serif; /* 和風フォント */
+  font-size: 1.5em; /* 数字のサイズ */
+  font-weight: bold;
+  color: rgb(43, 6, 6); /* 文字色 */
+  /* hand.png の中央に配置するための微調整 */
+  top: 57%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin-top: 10px;
 }
 
 /* .player-icon のスタイルを ParentDecisionPopup.vue に合わせる */
@@ -505,7 +529,7 @@ async function postToX() {
   height: 60px;
   margin-right: 20px; /* ParentDecisionPopup.vue と同じ */
   border-radius: 6px;
-  border: 1px solid #ccc;
+  border: 1px solid #200101;
 }
 
 /* .player-info のスタイルを ParentDecisionPopup.vue に合わせる */
@@ -577,23 +601,23 @@ async function postToX() {
 }
 
 .total-cat-coins-value {
-  font-size: 1.2em; /* 増減値と同じくらいか少し大きく */
-  color: #f59e0b; /* positive-gainと同じ色 */
+  font-size: 1.0em; /* 増減値と同じくらいか少し大きく */
+  color: #9b0f0f; /* positive-gainと同じ色 */
   margin-bottom: 10px;
   margin-top: -20px;
 }
 
 .positive-gain {
-  color: #f59e0b;
+  color: #9b0f0f;
 }
 
 .negative-gain {
-  color: #f44336; /* 赤色 */
+  color: #9b0f0f; /* 赤色 */
 }
 
 .cat-coin-icon {
-  width: 60px;
-  height: 60px;
+  width: 50px;
+  height: 50px;
   margin-left: 0px;
 }
 .actions {
@@ -628,10 +652,11 @@ async function postToX() {
   transform: none; /* ホバー効果を無効化 */
 }
 
-.timestamp {
-  margin-top: 3px; /* 調整 */
-  font-family: 'Yuji Syuku', serif;
-  font-size: 0.8em;
-  color: rgb(43, 6, 6);
+.back-to-title-button {
+  background-image: url('/assets/images/button/buckToTitle.png');
+  width: 100px; /* 例: 画像のサイズに合わせて調整 */
+  height: 75px; /* 例: 画像のサイズに合わせて調整 */
+  margin-top: -20px;
+  margin-left: 20px;
 }
 </style>

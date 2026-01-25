@@ -219,8 +219,8 @@ const infoButtons = computed(() => [
 
 const titleLogoSrc = computed(() =>
   locale.value === 'en'
-    ? '/assets/images/back/タイトルロゴ_en.png'
-    : '/assets/images/back/タイトルロゴ.png'
+    ? '/assets/images/back/title_logo_en.png'
+    : '/assets/images/back/title_logo.png'
 );
 
 const audioIconSrc = computed(() =>

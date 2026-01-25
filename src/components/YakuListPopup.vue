@@ -270,7 +270,7 @@ h2 {
 }
 
 .yaku-table {
-  width: 95%;
+  width: 99%;
   margin-left: 0px;
   border-collapse: collapse;
   margin-top: 0px;
@@ -299,7 +299,6 @@ h2 {
   align-items: center;
   margin-left: 3px;
   gap: 1px;
-  overflow-x: auto;
   min-width: 0;
 }
 .tile-image-small {

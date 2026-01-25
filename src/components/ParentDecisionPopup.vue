@@ -312,9 +312,9 @@ function getPlayerIcon(player) {
 
 .timestamp {
   margin-top: -5px;
-  font-size: 0.9em;
+  font-size: 0.7em;
   font-family: 'Yuji Syuku', serif;
-  color: #3f0b0b;
+  color: #7d6b6b;
 }
 
 </style>

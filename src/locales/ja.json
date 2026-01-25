@@ -497,7 +497,7 @@
     "score": "{score}点",
     "wins": "{count}連勝！",
     "winStreak": "{count}連勝中！",
-    "newGame": "新しいゲームを開始",
+    "newGame": "新しいゲーム",
     "backToTitle": "タイトルに戻る",
     "totalCatCoins": "Total",
     "tweetText": "集計用：{count}連勝\n#よんじゃん #よんじゃん連勝数\n👇以下リンクからすぐにプレイ可能👇",

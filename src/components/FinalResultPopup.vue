@@ -325,7 +325,7 @@ async function postToX() {
       const timestampElement = document.createElement('div');
       timestampElement.textContent = formattedTimestamp.value;
       timestampElement.style.color = '#7d6b6b';
-      timestampElement.style.fontSize = '1em';
+      timestampElement.style.fontSize = '0.9em';
       tempNode.appendChild(timestampElement);
 
       for (const child of nodeToCapture.children) {
@@ -623,7 +623,7 @@ async function postToX() {
 .actions {
   display: flex;
   justify-content: center; /* 中央寄せに変更 */
-  gap: 15px; /* ボタン間の間隔を調整 */
+  gap: 35px; /* ボタン間の間隔を調整 */
   margin-left: 20px;
 }
 .action-button { /* actions button から action-button にクラス名を変更 */
@@ -633,14 +633,14 @@ async function postToX() {
   background-repeat: no-repeat;
   border: none;
   cursor: pointer;
-  width: 170px; /* ResultPopup.vue のボタンより少し大きく */
+  width: 140px; /* ResultPopup.vue のボタンより少し大きく */
   height: 50px; /* ResultPopup.vue のボタンより少し大きく */
   display: flex;
   align-items: center;
   justify-content: center;
   color: rgb(43, 6, 6);
   font-family: 'Yuji Syuku', serif;
-  font-size: 0.9em;
+  font-size: 1.1em;
   transition: transform 0.2s ease;
 }
 .action-button:hover {
@@ -654,9 +654,14 @@ async function postToX() {
 
 .back-to-title-button {
   background-image: url('/assets/images/button/buckToTitle.png');
-  width: 100px; /* 例: 画像のサイズに合わせて調整 */
-  height: 75px; /* 例: 画像のサイズに合わせて調整 */
-  margin-top: -20px;
+  width: 90px; /* 例: 画像のサイズに合わせて調整 */
+  height: 65px; /* 例: 画像のサイズに合わせて調整 */
+  margin-top: -10px;
   margin-left: 20px;
+}
+
+.timestamp {
+  font-size: 0.7em;
+  color: #7d6b6b;
 }
 </style>

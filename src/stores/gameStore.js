@@ -867,6 +867,10 @@ export const useGameStore = defineStore('game', {
           }
         }
 
+        if (this.playerTurnCount[this.currentTurnPlayerId] !== undefined && !this.rinshanKaihouChance) {
+          this.playerTurnCount[this.currentTurnPlayerId]++;
+        }
+
         const tile = this.wall.shift();
         this.drawnTile = tile;
         this.gamePhase = GAME_PHASES.AWAITING_DISCARD;

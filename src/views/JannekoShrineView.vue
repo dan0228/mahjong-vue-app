@@ -176,9 +176,9 @@ const drawOmikuji = async () => {
     showPopup.value = true;
     return;
   }
-  previousBgm.value = audioStore.currentBgm;
-  audioStore.setBgm(null);
-  audioStore.playSound('Kagura_Suzu01-7.mp3');
+  // previousBgm.value = audioStore.currentBgm; // BGM停止処理を削除するため不要
+  // audioStore.setBgm(null); // BGM停止処理を削除
+  audioStore.playSound('Kagura_Suzu01-7.mp3'); // 効果音は再生
   isFading.value = true;
   try {
     let updatePromise = isFreeDraw
@@ -210,17 +210,17 @@ const drawOmikuji = async () => {
     isNewSaying.value = false;
     showPopup.value = true;
     isFading.value = false;
-    if (previousBgm.value) {
-      audioStore.setBgm(previousBgm.value);
-    }
+    // if (previousBgm.value) { // BGM停止処理を削除したため不要
+    //   audioStore.setBgm(previousBgm.value);
+    // }
   }
 };
 const closePopup = () => {
   showPopup.value = false;
-  if (previousBgm.value) {
-    audioStore.setBgm(previousBgm.value);
-    previousBgm.value = null;
-  }
+  // if (previousBgm.value) { // BGM停止処理を削除したため不要
+  //   audioStore.setBgm(previousBgm.value);
+  //   previousBgm.value = null;
+  // }
 };
 const goToTitle = () => {
   router.push({ name: 'Title' });

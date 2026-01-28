@@ -54,16 +54,6 @@ const routes = [
       bgm: 'GB-JP-A02-2(Menu-Loop105).mp3'
     },
   },
-  {
-    path: '/matchmaking',
-    name: 'Matchmaking',
-    component: () => import('../views/MatchmakingView.vue'),
-    meta: {
-      title: 'オンライン対戦 | よんじゃん！',
-      description: 'オンラインで対戦相手を探しています...',
-      bgm: 'NES-JP-A02-2(Stage1-Loop110).mp3'
-    },
-  },
 ];
 
 const router = createRouter({

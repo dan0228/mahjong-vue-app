@@ -2,14 +2,8 @@
   <transition name="popup">
     <div v-if="userStore.showPenaltyPopup" class="penalty-popup-overlay">
       <div class="penalty-popup-content">
-        <h2 class="popup-title">{{ $t('penaltyPopup.title') }}</h2>
-        <div class="penalty-details">
-          <p class="popup-message win-streak-reset">{{ $t('penaltyPopup.message2') }}</p>
-          <div class="coin-penalty-display">
-            <img src="/assets/images/info/cat_coin.png" alt="Cat Coin" class="cat-coin-icon" crossorigin="anonymous">
-            <span class="negative-gain">-390</span>
-          </div>
-        </div>
+        <!-- メッセージを動的に表示 -->
+        <p class="popup-message">{{ userStore.penaltyMessage }}</p>
         <button @click="closePopup" class="popup-button">{{ $t('penaltyPopup.closeButton') }}</button>
       </div>
     </div>
@@ -18,16 +12,12 @@
 
 <script setup>
 import { useUserStore } from '@/stores/userStore';
-import { useI18n } from 'vue-i18n';
 
 const userStore = useUserStore();
-const { t } = useI18n();
 
 const closePopup = () => {
   userStore.setShowPenaltyPopup(false);
-  // ポップアップを閉じた後に最新のユーザーデータを再フェッチ
-  // これにより、UIに最新の連勝数や猫コインが反映される
-  userStore.fetchUserProfile({ showLoading: false });
+  // 汎用的なポップアップになったため、特定の再フェッチ処理は削除
 };
 </script>
 
@@ -47,70 +37,32 @@ const closePopup = () => {
 
 .penalty-popup-content {
   background-color: white;
-  padding:10px; /* パディングを小さく */
+  padding: 20px;
   border-radius: 10px;
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.25);
   text-align: center;
-  max-width: 350px; /* 最大幅を小さく */
+  max-width: 350px;
   width: 90%;
   color: #333;
-  font-family: 'M PLUS Rounded 1c', sans-serif; /* プロジェクトのフォントに合わせる */
-}
-
-.popup-title {
-  font-size: 2.1em; /* タイトルフォントを少し小さく */
-  color: #b34d4a; /* 赤系の色で警告感を出す */
-  margin-bottom: 15px; /* マージンを調整 */
-  font-weight: bold;
-  white-space: pre-line; /* 改行を反映 */
-}
-
-.penalty-details {
-  margin-bottom: 15px; /* マージンを調整 */
+  font-family: 'M PLUS Rounded 1c', sans-serif;
 }
 
 .popup-message {
-  font-size: 1em; /* メッセージフォントを少し小さく */
-  margin-bottom: 8px;
-  line-height: 1.5;
-}
-
-.win-streak-reset {
-  font-size: 1.8em; /* 猫コインの増減値と同じサイズに */
+  font-size: 1.2em;
+  margin-bottom: 20px;
+  line-height: 1.6;
   font-weight: bold;
-  color: #f44336; /* 赤色 */
-  margin-top: 10px; /* マージンを調整 */
-  margin-bottom: 10px; /* マージンを調整 */
-}
-
-.coin-penalty-display {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 15px;
-}
-
-.cat-coin-icon {
-  width: 50px; /* アイコンサイズを少し小さく */
-  height: 50px;
-  margin-right: 8px;
-}
-
-.negative-gain {
-  font-size: 1.8em; /* 猫コインの増減値 */
-  font-weight: bold;
-  color: #f44336; /* 赤色 */
+  white-space: pre-line; /* メッセージ内の改行を反映させる */
 }
 
 .popup-button {
-  background-color: #f44336; /* 赤系の色で警告感を出す */
+  background-color: #f44336;
   color: white;
   border: none;
-  padding: 10px 20px; /* パディングを調整 */
+  padding: 12px 25px;
   border-radius: 5px;
   cursor: pointer;
-  font-size: 1em; /* ボタンフォントを少し小さく */
-  margin-top: 15px; /* マージンを調整 */
+  font-size: 1em;
   transition: background-color 0.3s ease;
 }
 

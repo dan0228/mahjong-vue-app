@@ -46,6 +46,9 @@ const router = useRouter(); // useRouter を使用
 
 // --- ライフサイクル フック ---
 onMounted(async () => {
+  // ★追加: ページ離脱時の処理を登録
+  window.addEventListener('beforeunload', handleBeforeUnload);
+
   if (isEmailConfirmedPage) {
     gameStore.setAppReady(true); // メール確認ページではすぐにアプリ準備完了とする
     return;
@@ -277,9 +280,21 @@ onMounted(async () => {
 
 onUnmounted(() => {
   document.removeEventListener('visibilitychange', audioStore.handleVisibilityChange);
+  // ★追加: コンポーネント破棄時にイベントリスナーを削除
+  window.removeEventListener('beforeunload', handleBeforeUnload);
 });
 
 // --- メソッド ---
+
+// ★追加: ページ離脱/リロード直前に実行される関数
+const handleBeforeUnload = () => {
+  // isGameOnline は Pinia ストアの状態なので、直接参照する
+  if (gameStore.isGameOnline) {
+    // オンラインゲーム中であれば、サーバーから切断する
+    gameStore.disconnectOnlineGame();
+  }
+};
+
 const onWakeUpFinished = () => {
   isTransitioning.value = true;
   

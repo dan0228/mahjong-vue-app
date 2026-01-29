@@ -293,6 +293,13 @@ export const useGameStore = defineStore('game', {
           this.handleRemoteStateUpdate(newState);
         });
 
+        socket.on('gameError', (error) => {
+          console.error('Game server error:', error);
+          const userStore = useUserStore();
+          // サーバーからのエラーメッセージをポップアップで表示
+          userStore.setPenalty(error.message, 5000);
+        });
+
         socket.on('error', (error) => {
           console.error('Socket error:', error);
         });
@@ -338,7 +345,6 @@ export const useGameStore = defineStore('game', {
       // オフラインモードでは、待機せずに即座に次のラウンドへ進む
       if (!this.isGameOnline) {
         this.showResultPopup = false;
-        this.applyPointChanges();
         if (this.shouldEndGameAfterRound) {
           this.handleGameEnd({ showLoading: false });
         } else {
@@ -908,7 +914,7 @@ export const useGameStore = defineStore('game', {
             } else if (this.canDeclareKakan[playerId] && Math.random() < 1.0) {
               this.declareKakan(playerId, this.canDeclareKakan[playerId][0]);
             } else {
-              this.handleAiDiscard();
+              handleAiDiscardLogic(this, playerId);
             }
           }
         }
@@ -1096,13 +1102,58 @@ export const useGameStore = defineStore('game', {
     },
 
     executeStock(playerId, tileIdToStock, isFromDrawnTile) {
-      if (this.isGameOnline) { // isHostチェックを削除
+      if (this.isGameOnline) {
         if (playerId !== this.localPlayerId) return;
         if (socket && socket.connected) {
           socket.emit('executeStock', { gameId: this.onlineGameId, playerId, tileIdToStock, isFromDrawnTile });
         }
-        return; // サーバーからの状態更新を待つ
+        return;
       }
+
+      // --- ここからオフライン用のロジック ---
+      const player = this.players.find(p => p.id === playerId);
+      if (!player) {
+        console.error('executeStock: Player not found');
+        return;
+      }
+      if (player.stockedTile) {
+        console.error('executeStock: Player already has a stocked tile');
+        return;
+      }
+
+      let tileToStock;
+
+      if (isFromDrawnTile) {
+        if (!this.drawnTile || this.drawnTile.id !== tileIdToStock) {
+          console.error('executeStock: Tile to stock does not match drawn tile.');
+          return;
+        }
+        tileToStock = this.drawnTile;
+        this.drawnTile = null;
+      } else {
+        const tileIndex = player.hand.findIndex(t => t.id === tileIdToStock);
+        if (tileIndex === -1) {
+          console.error('executeStock: Tile to stock not found in hand.');
+          return;
+        }
+        tileToStock = player.hand.splice(tileIndex, 1)[0];
+        if (this.drawnTile) {
+          player.hand.push(this.drawnTile);
+          player.hand = mahjongLogic.sortHand(player.hand);
+        }
+        this.drawnTile = null;
+      }
+
+      if (!tileToStock) {
+        console.error('executeStock: Failed to process stock tile.');
+        return;
+      }
+
+      player.stockedTile = { ...tileToStock, isPublic: true, isStockedTile: true };
+
+      // 次のプレイヤーのターンへ
+      this.moveToNextPlayer();
+    },
 
     moveToNextPlayer() {
       if (this.isGameOnline) {

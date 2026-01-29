@@ -47,8 +47,24 @@ export const useUserStore = defineStore('user', () => {
   const loading = ref(false); // データ読み込み中のフラグ
   const newlyAchievedYaku = ref({}); // 今回のゲームで新たに達成した役を一時的に保持
   const showPenaltyPopup = ref(false); // ペナルティポップアップの表示状態
+  const penaltyMessage = ref(''); // ★ ペナルティポップアップに表示するメッセージ
 
   // --- Actions ---
+
+  /**
+   * ペナルティポップアップを表示し、メッセージを設定します。
+   * @param {string} message - 表示するメッセージ。
+   * @param {number|null} duration - ポップアップを自動で閉じるまでの時間(ミリ秒)。nullの場合は自動で閉じない。
+   */
+  function setPenalty(message, duration = null) {
+    penaltyMessage.value = message;
+    showPenaltyPopup.value = true;
+    if (duration) {
+      setTimeout(() => {
+        showPenaltyPopup.value = false;
+      }, duration);
+    }
+  }
 
   /**
    * ペナルティポップアップの表示状態を設定します。
@@ -505,6 +521,8 @@ export const useUserStore = defineStore('user', () => {
     updateOmikujiDrawInfo,
     deleteUserData,
     showPenaltyPopup,
+    penaltyMessage, // ★公開
+    setPenalty, // ★公開
     setShowPenaltyPopup,
     resetWinStreak, // 連勝数リセットアクションを公開
     registerAsGuest, // 新しいアクションを公開

@@ -4,7 +4,11 @@ import { useUserStore } from './userStore';
 // src/stores/gameStore.js
 import { defineStore } from 'pinia';
 import * as mahjongLogic from '@/services/mahjongLogic';
-import { supabase } from '@/supabaseClient'; // supabaseをインポート
+import { io } from 'socket.io-client'; // Socket.ioクライアントをインポート
+
+// ゲームサーバーのURLを環境変数から取得
+const GAME_SERVER_URL = import.meta.env.VITE_APP_GAME_SERVER_URL;
+let socket = null; // Socket.ioクライアントインスタンス
 
 // AIプレイヤーの候補リスト
 const allAiPlayers = [
@@ -256,9 +260,6 @@ export const useGameStore = defineStore('game', {
     onlineGameId: null,
     isGameOnline: false,
     localPlayerId: null,
-    isHost: false,
-    isWaitingForHost: false,
-    channel: null,
     playersReadyForNextRound: [], // 次のラウンドに進む準備ができたプレイヤーのリスト
     isGameReady: false, // ゲームの初期化が完了し、開始準備ができたかどうか
     isAppReady: false, // アプリケーションの初期読み込みが完了したかどうか
@@ -269,120 +270,67 @@ export const useGameStore = defineStore('game', {
       this.isAppReady = status;
     },
     // --- Online Match Actions ---
-    setOnlineGame({ gameId, localUserId, hostId }) {
+    connectToServer() {
+      if (!socket || !socket.connected) {
+        socket = io(GAME_SERVER_URL);
+
+        socket.on('connect', () => {
+          console.log('Connected to game server:', socket.id);
+          // 接続後、ゲームに参加するなどの処理を行う
+          // 例: サーバーにユーザーIDを送信してセッションを確立
+          // socket.emit('registerUser', { userId: this.localPlayerId });
+        });
+
+        socket.on('disconnect', () => {
+          console.log('Disconnected from game server');
+          this.isGameOnline = false;
+          this.localPlayerId = null;
+          // 必要に応じてUIを更新
+        });
+
+        socket.on('game-state-update', (newState) => {
+          console.log('Received game state update:', newState);
+          this.handleRemoteStateUpdate(newState);
+        });
+
+        socket.on('error', (error) => {
+          console.error('Socket error:', error);
+        });
+      }
+    },
+    setOnlineGame({ gameId, localUserId }) { // hostIdは不要
       this.isGameOnline = true;
       this.onlineGameId = gameId;
       this.localPlayerId = localUserId;
-      this.isHost = localUserId === hostId;
       this.gameMode = 'online';
       this.setRuleMode('stock');
 
-      console.log(`オンライン対戦を開始します。ゲームID: ${gameId}, ユーザーID: ${localUserId}, ホスト: ${this.isHost}`);
+      console.log(`オンライン対戦を開始します。ゲームID: ${gameId}, ユーザーID: ${localPlayerId}`);
 
-      if (this.channel) {
-        supabase.removeChannel(this.channel);
-        this.channel = null;
+      this.connectToServer(); // サーバーに接続
+
+      // サーバーにゲーム参加を通知
+      if (socket) {
+        socket.emit('joinGame', { gameId, userId: localUserId });
       }
-
-      const channel = supabase.channel(`online-game-broadcast:${this.onlineGameId}`);
-
-      channel.on('broadcast', { event: 'state-update' }, ({ payload }) => {
-        console.log(`クライアント[${this.localPlayerId}]が状態更新を受信`);
-        this.handleRemoteStateUpdate(payload.newState);
-      });
-
-      if (this.isHost) {
-        channel.on('broadcast', { event: 'action-intent' }, ({ payload }) => {
-          console.log('ホストがアクション意図を受信:', payload);
-          const { action, args } = payload;
-          if (typeof this[action] === 'function') {
-            this[action](...args);
-          } else {
-            console.error(`不明なアクションを受信しました: ${action}`);
-          }
-        });
-      }
-
-      channel.subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log(`チャンネル[online-game-broadcast:${this.onlineGameId}]の購読に成功しました。`);
-        } else {
-          console.log(`チャンネル[online-game-broadcast:${this.onlineGameId}]の購読ステータス: ${status}`);
-        }
-      });
-
-      this.channel = channel;
     },
 
     disconnectOnlineGame() {
-      if (this.channel) {
-        supabase.removeChannel(this.channel);
-        this.channel = null;
-        this.isGameOnline = false;
-        this.onlineGameId = null;
-        this.isGameReady = false; // ゲーム準備状態をリセット
-        console.log("オンライン対戦チャンネルから切断しました。");
+      if (socket && socket.connected) {
+        socket.disconnect();
       }
+      this.isGameOnline = false;
+      this.onlineGameId = null;
+      this.isGameReady = false; // ゲーム準備状態をリセット
+      console.log("オンライン対戦サーバーから切断しました。");
     },
 
     handleRemoteStateUpdate(newState) {
       if (!this.isGameOnline || !newState) return;
 
-      if ('playersReadyForNextRound' in newState) {
-        console.log('[GUEST LOG] Receiving playersReadyForNextRound:', newState.playersReadyForNextRound);
-      }
+      // サーバーから送られてくる状態をそのまま適用
+      this.$patch(newState);
 
-      this.$patch((state) => {
-        if ('players' in newState) state.players = newState.players;
-        if ('wall' in newState) state.wall = newState.wall;
-        if ('deadWall' in newState) state.deadWall = newState.deadWall;
-        if ('dealerIndex' in newState) state.dealerIndex = newState.dealerIndex;
-        if ('doraIndicators' in newState) state.doraIndicators = newState.doraIndicators;
-        if ('uraDoraIndicators' in newState) state.uraDoraIndicators = newState.uraDoraIndicators;
-        if ('currentTurnPlayerId' in newState) state.currentTurnPlayerId = newState.currentTurnPlayerId;
-        if ('gamePhase' in newState) state.gamePhase = newState.gamePhase;
-        if ('lastDiscardedTile' in newState) state.lastDiscardedTile = newState.lastDiscardedTile;
-        if ('drawnTile' in newState) state.drawnTile = newState.drawnTile;
-        if ('showResultPopup' in newState) state.showResultPopup = newState.showResultPopup;
-        if ('resultMessage' in newState) state.resultMessage = newState.resultMessage;
-        if ('agariResultDetails' in newState) state.agariResultDetails = newState.agariResultDetails;
-        if ('currentRound' in newState) state.currentRound = newState.currentRound;
-        if ('honba' in newState) state.honba = newState.honba;
-        if ('riichiSticks' in newState) state.riichiSticks = newState.riichiSticks;
-        if ('turnCount' in newState) state.turnCount = newState.turnCount;
-        if ('playerTurnCount' in newState) state.playerTurnCount = newState.playerTurnCount;
-        if ('isIppatsuChance' in newState) state.isIppatsuChance = newState.isIppatsuChance;
-        if ('isFuriTen' in newState) state.isFuriTen = newState.isFuriTen;
-        if ('isDoujunFuriTen' in newState) state.isDoujunFuriTen = newState.isDoujunFuriTen;
-        if ('riichiDiscardedTileId' in newState) state.riichiDiscardedTileId = newState.riichiDiscardedTileId;
-        if ('riichiDiscardOptions' in newState) state.riichiDiscardOptions = newState.riichiDiscardOptions;
-        if ('animationState' in newState) state.animationState = newState.animationState;
-        if ('stockAnimationPlayerId' in newState) state.stockAnimationPlayerId = newState.stockAnimationPlayerId;
-        if ('highlightedDiscardTileId' in newState) state.highlightedDiscardTileId = newState.highlightedDiscardTileId;
-        if ('activeActionPlayerId' in newState) state.activeActionPlayerId = newState.activeActionPlayerId;
-        if ('isDeclaringRiichi' in newState) state.isDeclaringRiichi = newState.isDeclaringRiichi;
-        if ('isChankanChance' in newState) state.isChankanChance = newState.isChankanChance;
-        if ('chankanTile' in newState) state.chankanTile = newState.chankanTile;
-        if ('rinshanKaihouChance' in newState) state.rinshanKaihouChance = newState.rinshanKaihouChance;
-        if ('lastActionPlayerId' in newState) state.lastActionPlayerId = newState.lastActionPlayerId;
-        if ('shouldAdvanceRound' in newState) state.shouldAdvanceRound = newState.shouldAdvanceRound;
-        if ('nextDealerIndex' in newState) state.nextDealerIndex = newState.nextDealerIndex;
-        if ('shouldEndGameAfterRound' in newState) state.shouldEndGameAfterRound = newState.shouldEndGameAfterRound;
-        if ('pendingKanDoraReveal' in newState) state.pendingKanDoraReveal = newState.pendingKanDoraReveal;
-        if ('playerActionEligibility' in newState) state.playerActionEligibility = newState.playerActionEligibility;
-        if ('showDealerDeterminationPopup' in newState) state.showDealerDeterminationPopup = newState.showDealerDeterminationPopup;
-        if ('dealerDeterminationResult' in newState) state.dealerDeterminationResult = newState.dealerDeterminationResult;
-        if ('showFinalResultPopup' in newState) state.showFinalResultPopup = newState.showFinalResultPopup;
-        if ('finalResultDetails' in newState) state.finalResultDetails = newState.finalResultDetails;
-        if ('isTenpaiDisplay' in newState) state.isTenpaiDisplay = newState.isTenpaiDisplay;
-        // playersReadyForNextRound の更新方法をリアクティビティを確実に維持する方法に変更
-        if ('playersReadyForNextRound' in newState) {
-          state.playersReadyForNextRound.length = 0;
-          state.playersReadyForNextRound.push(...newState.playersReadyForNextRound);
-        }
-      });
-
-      this.isWaitingForHost = false;
       this.isGameReady = true; // ゲームの準備が完了
     },
 
@@ -403,232 +351,19 @@ export const useGameStore = defineStore('game', {
       const playerId = remotePlayerId || this.localPlayerId;
       if (!playerId || this.playersReadyForNextRound.includes(playerId)) return;
 
-      // ゲストからの呼び出しの場合、UIを即時更新し、ホストに通知
-      if (!remotePlayerId && this.isGameOnline && !this.isHost) {
-        this.playersReadyForNextRound.push(playerId);
-        if (this.channel) {
-          this.channel.send({
-            type: 'broadcast',
-            event: 'action-intent',
-            payload: { action: 'signalReadyForNextRound', args: [playerId] }
-          });
-        }
-        return;
-      }
-
-      // --- ホストとオフラインのロジック ---
-      this.playersReadyForNextRound.push(playerId);
-
-      // 全員の準備が完了した場合
-      if (this.playersReadyForNextRound.length >= this.players.length) {
-        this.showResultPopup = false;
-        this.applyPointChanges();
-
-        if (this.shouldEndGameAfterRound) {
-          this.handleGameEnd({ showLoading: false });
-        } else {
-          this.prepareNextRound();
-          // ★新しい局の準備が完了した後にブロードキャストする
-          if (this.isGameOnline) {
-            this.broadcastGameState();
-          }
-        }
-      } else {
-        // 全員が揃っていない場合は、現在の準備状況をブロードキャスト
-        if (this.isGameOnline) {
-          this.broadcastGameState();
-        }
+      // オンラインモードではサーバーに通知
+      if (socket && socket.connected) {
+        socket.emit('playerReadyForNextRound', { gameId: this.onlineGameId, playerId });
       }
     },
 
-    async broadcastGameState() {
-      if (!this.isGameOnline || !this.isHost || !this.channel) return;
-
-      const stateSnapshot = {
-        players: this.players,
-        wall: this.wall,
-        deadWall: this.deadWall,
-        dealerIndex: this.dealerIndex,
-        doraIndicators: this.doraIndicators,
-        uraDoraIndicators: this.uraDoraIndicators,
-        currentTurnPlayerId: this.currentTurnPlayerId,
-        gamePhase: this.gamePhase,
-        lastDiscardedTile: this.lastDiscardedTile,
-        drawnTile: this.drawnTile,
-        showResultPopup: this.showResultPopup,
-        resultMessage: this.resultMessage,
-        agariResultDetails: this.agariResultDetails,
-        currentRound: this.currentRound,
-        honba: this.honba,
-        riichiSticks: this.riichiSticks,
-        turnCount: this.turnCount,
-        playerTurnCount: this.playerTurnCount,
-        isIppatsuChance: this.isIppatsuChance,
-        isFuriTen: this.isFuriTen,
-        isDoujunFuriTen: this.isDoujunFuriTen,
-        isTenpaiDisplay: this.isTenpaiDisplay,
-        riichiDiscardedTileId: this.riichiDiscardedTileId,
-        riichiDiscardOptions: this.riichiDiscardOptions,
-        animationState: this.animationState,
-        stockAnimationPlayerId: this.stockAnimationPlayerId,
-        highlightedDiscardTileId: this.highlightedDiscardTileId,
-        activeActionPlayerId: this.activeActionPlayerId,
-        isDeclaringRiichi: this.isDeclaringRiichi,
-        isChankanChance: this.isChankanChance,
-        chankanTile: this.chankanTile,
-        rinshanKaihouChance: this.rinshanKaihouChance,
-        lastActionPlayerId: this.lastActionPlayerId,
-        shouldAdvanceRound: this.shouldAdvanceRound,
-        nextDealerIndex: this.nextDealerIndex,
-        shouldEndGameAfterRound: this.shouldEndGameAfterRound,
-        pendingKanDoraReveal: this.pendingKanDoraReveal,
-        playerActionEligibility: this.playerActionEligibility,
-        showDealerDeterminationPopup: this.showDealerDeterminationPopup,
-        dealerDeterminationResult: this.dealerDeterminationResult,
-        showFinalResultPopup: this.showFinalResultPopup,
-        finalResultDetails: this.finalResultDetails,
-        playersReadyForNextRound: this.playersReadyForNextRound,
-      };
-
-      const { error } = await supabase
-        .from('game_states')
-        .update({
-          game_data: stateSnapshot,
-          updated_at: new Date(),
-          current_turn_user_id: this.currentTurnPlayerId,
-          status: this.gamePhase === 'gameOver' ? 'finished' : 'in_progress'
-        })
-        .eq('id', this.onlineGameId);
-
-      if (error) {
-        console.error("Error updating game state in DB:", error);
-      }
-
-      this.channel.send({
-        type: 'broadcast',
-        event: 'state-update',
-        payload: { newState: stateSnapshot }
-      }, { self: true });
-    },
+    
 
     async initializeOnlineGame() {
-      if (!this.isGameOnline || !this.isHost) return;
-      console.log("1. ホストとしてオンラインゲーム初期化を開始。");
-
-      try {
-        const { data: gameData, error: fetchError } = await supabase
-          .from('game_states')
-          .select('player_1_id, player_2_id, player_3_id, player_4_id')
-          .eq('id', this.onlineGameId)
-          .single();
-
-        if (fetchError || !gameData) {
-          throw new Error(`オンラインゲームのプレイヤー情報取得に失敗: ${fetchError?.message}`);
-        }
-        console.log("2. プレイヤーIDを取得:", gameData);
-
-        const playerIds = [gameData.player_1_id, gameData.player_2_id, gameData.player_3_id, gameData.player_4_id].filter(Boolean);
-
-        const { data: profiles, error: profileError } = await supabase
-          .from('users')
-          .select('id, username, avatar_url, cat_coins, rating')
-          .in('id', playerIds);
-
-        if (profileError || !profiles) {
-          throw new Error(`プレイヤーのプロファイル情報取得に失敗: ${profileError?.message}`);
-        }
-        console.log("3. プロフィール情報を取得:", profiles);
-
-        this.players = playerIds.map(id => {
-          const profile = profiles.find(p => p.id === id);
-          if (!profile) console.warn(`ID: ${id} のプロフィールが見つかりません。`);
-          return {
-            id: id,
-            name: profile?.username || 'プレイヤー',
-            avatar_url: profile?.avatar_url,
-            cat_coins: profile?.cat_coins || 0, // 追加
-            rating: profile?.rating || 1500,     // 追加
-            hand: [], discards: [], melds: [], isDealer: false, score: 50000, seatWind: null,
-            stockedTile: null, isUsingStockedTile: false, isStockedTileSelected: false,
-            isAi: false, // オンラインプレイヤーはAIではない
-          };
-        });
-        console.log("4. プレイヤー配列を構築:", this.players);
-
-      this.turnCount = 0;
-      this.honba = 0;
-      this.riichiSticks = 0;
-      this.currentRound = { wind: 'east', number: 1 };
-
-      this.playerTurnCount = {};
-      this.isIppatsuChance = {};
-      this.isFuriTen = {};
-      this.isDoujunFuriTen = {};
-      this.isTenpaiDisplay = {};
-      this.isDeclaringRiichi = {};
-      this.riichiDiscardedTileId = {};
-
-      this.players.forEach(player => {
-        this.playerTurnCount[player.id] = 0;
-        this.isIppatsuChance[player.id] = false;
-        this.isFuriTen[player.id] = false;
-        this.isDoujunFuriTen[player.id] = false;
-        this.isTenpaiDisplay[player.id] = false;
-        this.isDeclaringRiichi[player.id] = false;
-        this.riichiDiscardedTileId[player.id] = null;
-      });
-
-        const playerCount = this.players.length;
-        this.dealerIndex = Math.floor(Math.random() * playerCount);
-        
-        this.players.forEach((player, index) => {
-          player.isDealer = (index === this.dealerIndex);
-        });
-
-        const playersWithWinds = mahjongLogic.assignPlayerWinds(this.players, this.dealerIndex, playerCount);
-        this.players = playersWithWinds;
-
-        let fullWall = mahjongLogic.getAllTiles();
-        fullWall = mahjongLogic.shuffleWall(fullWall);
-
-        const deadWallSize = 14;
-        this.deadWall = fullWall.slice(0, deadWallSize);
-        const liveWallForDealing = fullWall.slice(deadWallSize);
-
-        const initialHandSize = 4;
-        const { hands: initialHands, wall: updatedLiveWall } = mahjongLogic.dealInitialHands(playerCount, liveWallForDealing, initialHandSize);
-        this.wall = updatedLiveWall;
-
-        this.players.forEach((player, index) => {
-          player.hand = initialHands[index] || [];
-        });
-
-        this.doraIndicators = [mahjongLogic.revealDora(this.deadWall)].filter(Boolean);
-        this.currentTurnPlayerId = this.players[this.dealerIndex]?.id;
-        this.gamePhase = GAME_PHASES.PLAYER_TURN;
-
-        this.dealerDeterminationResult.players = this.players.map(p => ({
-          id: p.id,
-          name: p.name,
-          avatar_url: p.avatar_url,
-          seatWind: p.seatWind,
-          isDealer: p.isDealer,
-          score: 50000,
-          originalId: p.originalId,
-        }));
-        this.showDealerDeterminationPopup = true;
-
-        console.log("5. 配牌と親決めが完了。");
-
-        await this.broadcastGameState();
-        console.log("6. 初期ゲーム状態をブロードキャストしました。");
-
-        this.startGameFlow();
-        console.log("7. ゲームフローを開始しました。");
-        this.isGameReady = true; // ゲームの準備が完了
-
-      } catch (error) {
-        console.error("initializeOnlineGameで致命的なエラーが発生:", error);
+      // クライアント側での初期化ロジックは削除
+      // サーバーにゲーム初期化を要求するイベントを発行
+      if (socket && socket.connected) {
+        socket.emit('initializeGame', { gameId: this.onlineGameId, userId: this.localPlayerId });
       }
     },
 
@@ -809,8 +544,11 @@ export const useGameStore = defineStore('game', {
     },
 
     drawTile() {
-      if (this.isGameOnline && !this.isHost) {
-        return;
+      if (this.isGameOnline) { // isHostチェックを削除
+        if (socket && socket.connected) {
+          socket.emit('drawTile', { gameId: this.onlineGameId, playerId: this.localPlayerId });
+        }
+        return; // サーバーからの状態更新を待つ
       }
 
       if (this.wall.length > 0 &&
@@ -876,9 +614,10 @@ export const useGameStore = defineStore('game', {
         this.gamePhase = GAME_PHASES.AWAITING_DISCARD;
         this.lastActionPlayerId = this.currentTurnPlayerId;
 
-        if (this.isGameOnline) {
-          this.broadcastGameState();
-        }
+        // オンラインモードではサーバー主導なので、クライアントからはブロードキャストしない
+        // if (this.isGameOnline) {
+        //   this.broadcastGameState();
+        // }
 
         this.players.forEach(p => this.canDeclareRon[p.id] = false);
         this.players.forEach(p => this.canDeclarePon[p.id] = null);
@@ -1007,6 +746,13 @@ export const useGameStore = defineStore('game', {
     },
 
     useStockedTile(playerId) {
+      if (this.isGameOnline) {
+        if (socket && socket.connected) {
+          socket.emit('useStockedTile', { gameId: this.onlineGameId, playerId: this.localPlayerId });
+        }
+        return; // サーバーからの状態更新を待つ
+      }
+
       const currentPlayer = this.players.find(p => p.id === playerId);
       if (!currentPlayer || !currentPlayer.stockedTile) {
         console.warn("Cannot use stocked tile now. Conditions not met.");
@@ -1046,6 +792,13 @@ export const useGameStore = defineStore('game', {
     },
 
     drawFromWall(playerId) {
+      if (this.isGameOnline) {
+        if (socket && socket.connected) {
+          socket.emit('drawFromWall', { gameId: this.onlineGameId, playerId: this.localPlayerId });
+        }
+        return; // サーバーからの状態更新を待つ
+      }
+
       const currentPlayer = this.players.find(p => p.id === playerId);
       if (!currentPlayer || (this.gamePhase !== GAME_PHASES.PLAYER_TURN && this.gamePhase !== GAME_PHASES.AWAITING_STOCK_SELECTION_TIMER)) {
         console.warn("Cannot draw from wall now. Conditions not met.");
@@ -1161,34 +914,20 @@ export const useGameStore = defineStore('game', {
         }
       }
 
-      if (this.isGameOnline) {
-        this.broadcastGameState();
-      }
+      // オンラインモードではサーバー主導なので、クライアントからはブロードキャストしない
+      // if (this.isGameOnline) {
+      //   this.broadcastGameState();
+      // }
     },
 
     discardTile(playerId, tileIdToDiscard, isFromDrawnTile, isStocking = false) {
-      if (this.isGameOnline && !this.isHost) {
+      if (this.isGameOnline) { // isHostチェックを削除
         if (playerId !== this.localPlayerId) return;
 
-        if (!this.channel) {
-          console.error("チャンネルが初期化されていません。アクションを送信できません。");
-          return;
+        if (socket && socket.connected) {
+          socket.emit('discardTile', { gameId: this.onlineGameId, playerId, tileIdToDiscard, isFromDrawnTile, isStocking });
         }
-        // 既にホストからの応答待ち中の場合は、新たなアクションを送信しない
-        if (this.isWaitingForHost) {
-          console.warn("ゲスト: ホストからの応答待ち中に、新たな捨て牌アクションを試みました。");
-          return;
-        }
-        this.isWaitingForHost = true; // ホストからの応答待ち状態に設定
-        this.channel.send({
-          type: 'broadcast',
-          event: 'action-intent',
-          payload: {
-            action: 'discardTile',
-            args: [playerId, tileIdToDiscard, isFromDrawnTile, isStocking]
-          }
-        });
-        // return; // ここでreturnせず、ローカルでUIを即時更新する
+        return; // サーバーからの状態更新を待つ
       }
 
       const audioStore = useAudioStore();
@@ -1357,56 +1096,20 @@ export const useGameStore = defineStore('game', {
     },
 
     executeStock(playerId, tileIdToStock, isFromDrawnTile) {
-      if (this.isGameOnline && !this.isHost) {
+      if (this.isGameOnline) { // isHostチェックを削除
         if (playerId !== this.localPlayerId) return;
-        if (!this.channel) {
-          console.error("チャンネルが初期化されていません。アクションを送信できません。");
-          return;
+        if (socket && socket.connected) {
+          socket.emit('executeStock', { gameId: this.onlineGameId, playerId, tileIdToStock, isFromDrawnTile });
         }
-        // 既にホストからの応答待ち中の場合は、新たなアクションを送信しない
-        if (this.isWaitingForHost) {
-          console.warn("ゲスト: ホストからの応答待ち中に、新たなストックアクションを試みました。");
-          return;
-        }
-        this.isWaitingForHost = true; // ホストからの応答待ち状態に設定
-        this.channel.send({
-          type: 'broadcast',
-          event: 'action-intent',
-          payload: { action: 'executeStock', args: [playerId, tileIdToStock, isFromDrawnTile] }
-        });
-        // return; // ここでreturnせず、ローカルでUIを即時更新する
+        return; // サーバーからの状態更新を待つ
       }
-
-      const audioStore = useAudioStore();
-      const player = this.players.find(p => p.id === playerId);
-      if (!player) {
-        console.error("Stock failed: Player not found.");
-        return;
-      }
-
-      if (player.stockedTile) {
-        console.warn("Stock failed: Player already has a stocked tile.");
-        return;
-      }
-      if (player.isRiichi || player.isDoubleRiichi) {
-        console.warn("Stock failed: Player is in Riichi.");
-        return;
-      }
-
-      this.stockAnimationPlayerId = playerId;
-      setTimeout(() => {
-        this.stockAnimationPlayerId = null;
-        if (this.isGameOnline) {
-          this.broadcastGameState();
-        }
-      }, 600);
-
-      audioStore.playSound('Percussive_Accent04-3(High).mp3');
-
-      this.discardTile(playerId, tileIdToStock, isFromDrawnTile, true);
-    },
 
     moveToNextPlayer() {
+      if (this.isGameOnline) {
+        // サーバーからの状態更新を待つため、クライアント側では何もしない
+        return;
+      }
+
       if (this.players.length === 0) return;
 
       const currentPlayerIndex = this.players.findIndex(p => p.id === this.currentTurnPlayerId);
@@ -1436,9 +1139,9 @@ export const useGameStore = defineStore('game', {
       this.waitingForPlayerResponses = [];
       this.activeActionPlayerId = null;
 
-      if (this.isGameOnline) {
-        this.broadcastGameState();
-      }
+      // if (this.isGameOnline) { // サーバー主導なので、クライアントからはブロードキャストしない
+      //   this.broadcastGameState();
+      // }
     },
 
     handleRyuukyoku() {
@@ -1537,9 +1240,9 @@ export const useGameStore = defineStore('game', {
         setTimeout(() => {
           this.stopRiichiBgm();
           this.showResultPopup = true;
-          if (this.isGameOnline) {
-            this.broadcastGameState();
-          }
+          // if (this.isGameOnline) { // サーバー主導なので、クライアントからはブロードキャストしない
+          //   this.broadcastGameState();
+          // }
         }, 2000); // 2秒の遅延
       }
     },
@@ -1606,19 +1309,12 @@ export const useGameStore = defineStore('game', {
     },
 
     chooseToDrawFromWall(playerId) {
-      if (this.isGameOnline && !this.isHost) {
+      if (this.isGameOnline) { // isHostチェックを削除
         if (playerId !== this.localPlayerId) return;
-        if (!this.channel) {
-          console.error("チャンネルが初期化されていません。アクションを送信できません。");
-          return;
+        if (socket && socket.connected) {
+          socket.emit('chooseToDrawFromWall', { gameId: this.onlineGameId, playerId });
         }
-        this.isWaitingForHost = true;
-        this.channel.send({
-          type: 'broadcast',
-          event: 'action-intent',
-          payload: { action: 'chooseToDrawFromWall', args: [playerId] }
-        });
-        return;
+        return; // サーバーからの状態更新を待つ
       }
 
       const player = this.players.find(p => p.id === playerId);
@@ -1681,9 +1377,9 @@ export const useGameStore = defineStore('game', {
         if (this.gamePhase === GAME_PHASES.RIICHI_ANIMATION) {
           this.gamePhase = GAME_PHASES.AWAITING_RIICHI_DISCARD;
 
-          if (this.isGameOnline) {
-            this.broadcastGameState();
-          }
+          // if (this.isGameOnline) { // サーバー主導なので、クライアントからはブロードキャストしない
+          //   this.broadcastGameState();
+          // }
 
           const currentPlayer = this.players.find(p => p.id === this.currentTurnPlayerId);
           if (this.gameMode === 'vsCPU' && currentPlayer && currentPlayer.id !== 'player1') {
@@ -1694,19 +1390,12 @@ export const useGameStore = defineStore('game', {
     },
 
     declareRiichi(playerId) {
-      if (this.isGameOnline && !this.isHost) {
+      if (this.isGameOnline) { // isHostチェックを削除
         if (playerId !== this.localPlayerId) return;
-        if (!this.channel) {
-          console.error("チャンネルが初期化されていません。アクションを送信できません。");
-          return;
+        if (socket && socket.connected) {
+          socket.emit('declareRiichi', { gameId: this.onlineGameId, playerId });
         }
-        this.isWaitingForHost = true;
-        this.channel.send({
-          type: 'broadcast',
-          event: 'action-intent',
-          payload: { action: 'declareRiichi', args: [playerId] }
-        });
-        return;
+        return; // サーバーからの状態更新を待つ
       }
 
       const audioStore = useAudioStore();
@@ -1738,29 +1427,18 @@ export const useGameStore = defineStore('game', {
 
       this.setRiichiAnimationState(playerId);
 
-      if (this.isGameOnline) {
-        this.broadcastGameState();
-      }
+      // if (this.isGameOnline) { // サーバー主導なので、クライアントからはブロードキャストしない
+      //   this.broadcastGameState();
+      // }
     },
 
     playerSkipsCall(playerId) {
-      if (this.isGameOnline && !this.isHost) {
+      if (this.isGameOnline) { // isHostチェックを削除
         if (playerId !== this.localPlayerId) return;
-
-        if (!this.channel) {
-          console.error("チャンネルが初期化されていません。アクションを送信できません。");
-          return;
+        if (socket && socket.connected) {
+          socket.emit('playerSkipsCall', { gameId: this.onlineGameId, playerId });
         }
-        this.isWaitingForHost = true;
-        this.channel.send({
-          type: 'broadcast',
-          event: 'action-intent',
-          payload: {
-            action: 'playerSkipsCall',
-            args: [playerId]
-          }
-        });
-        return;
+        return; // サーバーからの状態更新を待つ
       }
 
       if (this.activeActionPlayerId !== playerId) {
@@ -1784,23 +1462,12 @@ export const useGameStore = defineStore('game', {
     },
 
     playerDeclaresCall(playerId, actionType, tile) {
-      if (this.isGameOnline && !this.isHost) {
+      if (this.isGameOnline) { // isHostチェックを削除
         if (playerId !== this.localPlayerId) return;
-
-        if (!this.channel) {
-          console.error("チャンネルが初期化されていません。アクションを送信できません。");
-          return;
+        if (socket && socket.connected) {
+          socket.emit('playerDeclaresCall', { gameId: this.onlineGameId, playerId, actionType, tile });
         }
-        this.isWaitingForHost = true;
-        this.channel.send({
-          type: 'broadcast',
-          event: 'action-intent',
-          payload: {
-            action: 'playerDeclaresCall',
-            args: [playerId, actionType, tile]
-          }
-        });
-        return;
+        return; // サーバーからの状態更新を待つ
       }
 
       if (this.activeActionPlayerId !== playerId) {
@@ -1861,9 +1528,9 @@ export const useGameStore = defineStore('game', {
       }
 
       // ★★★ Crucially, broadcast the state change ★★★
-      if (this.isGameOnline) {
-        this.broadcastGameState();
-      }
+      // if (this.isGameOnline) { // サーバー主導なので、クライアントからはブロードキャストしない
+      //   this.broadcastGameState();
+      // }
     },
 
     processPendingActions() {
@@ -1928,6 +1595,13 @@ export const useGameStore = defineStore('game', {
     },
 
     declarePon(playerId, targetPlayerId, tileToPon) {
+      if (this.isGameOnline) {
+        if (socket && socket.connected) {
+          socket.emit('declarePon', { gameId: this.onlineGameId, playerId, targetPlayerId, tileToPon });
+        }
+        return; // サーバーからの状態更新を待つ
+      }
+
       const audioStore = useAudioStore();
       const player = this.players.find(p => p.id === playerId);
       const targetPlayer = this.players.find(p => p.id === targetPlayerId);
@@ -1998,19 +1672,26 @@ export const useGameStore = defineStore('game', {
       }
 
       this.animationState = { type: 'pon', playerId: playerId };
-      if (this.isGameOnline) {
-        this.broadcastGameState();
-      }
+      // if (this.isGameOnline) { // サーバー主導なので、クライアントからはブロードキャストしない
+      //   this.broadcastGameState();
+      // }
       audioStore.playSound('Percussive_Accent03-1(Dry).mp3');
       setTimeout(() => {
         this.animationState = { type: null, playerId: null };
-        if (this.isGameOnline) {
-          this.broadcastGameState();
-        }
+        // if (this.isGameOnline) { // サーバー主導なので、クライアントからはブロードキャストしない
+        //   this.broadcastGameState();
+        // }
       }, 1500);
     },
 
     declareMinkan(playerId, targetPlayerId, tileToKan) {
+      if (this.isGameOnline) {
+        if (socket && socket.connected) {
+          socket.emit('declareMinkan', { gameId: this.onlineGameId, playerId, targetPlayerId, tileToKan });
+        }
+        return; // サーバーからの状態更新を待つ
+      }
+
       const audioStore = useAudioStore();
       const player = this.players.find(p => p.id === playerId);
       const targetPlayer = this.players.find(p => p.id === targetPlayerId);
@@ -2078,33 +1759,25 @@ export const useGameStore = defineStore('game', {
       }
 
       this.animationState = { type: 'kan', playerId: playerId };
-      if (this.isGameOnline) {
-        this.broadcastGameState();
-      }
+      // if (this.isGameOnline) { // サーバー主導なので、クライアントからはブロードキャストしない
+      //   this.broadcastGameState();
+      // }
       audioStore.playSound('Hyoshigi01-1.mp3');
       setTimeout(() => {
         this.animationState = { type: null, playerId: null };
-        if (this.isGameOnline) {
-          this.broadcastGameState();
-        }
+        // if (this.isGameOnline) { // サーバー主導なので、クライアントからはブロードキャストしない
+        //   this.broadcastGameState();
+        // }
       }, 1500);
     },
 
     declareAnkan(playerId, tileToAnkan) {
-      if (this.isGameOnline && !this.isHost) {
+      if (this.isGameOnline) {
         if (playerId !== this.localPlayerId) return;
-        this.isWaitingForHost = true;
-        if (!this.channel) {
-          console.error("チャンネルが初期化されていません。アクションを送信できません。");
-          this.isWaitingForHost = false;
-          return;
+        if (socket && socket.connected) {
+          socket.emit('declareAnkan', { gameId: this.onlineGameId, playerId, tileToAnkan });
         }
-        this.channel.send({
-          type: 'broadcast',
-          event: 'action-intent',
-          payload: { action: 'declareAnkan', args: [playerId, tileToAnkan] }
-        });
-        return;
+        return; // サーバーからの状態更新を待つ
       }
 
       const audioStore = useAudioStore();
@@ -2166,33 +1839,25 @@ export const useGameStore = defineStore('game', {
       }
 
       this.animationState = { type: 'kan', playerId: playerId };
-      if (this.isGameOnline) {
-        this.broadcastGameState();
-      }
+      // if (this.isGameOnline) { // サーバー主導なので、クライアントからはブロードキャストしない
+      //   this.broadcastGameState();
+      // }
       audioStore.playSound('Hyoshigi01-1.mp3');
       setTimeout(() => {
         this.animationState = { type: null, playerId: null };
-        if (this.isGameOnline) {
-          this.broadcastGameState();
-        }
+        // if (this.isGameOnline) { // サーバー主導なので、クライアントからはブロードキャストしない
+        //   this.broadcastGameState();
+        // }
       }, 1500);
     },
 
     declareKakan(playerId, tileToKakan) {
-      if (this.isGameOnline && !this.isHost) {
+      if (this.isGameOnline) {
         if (playerId !== this.localPlayerId) return;
-        this.isWaitingForHost = true;
-        if (!this.channel) {
-          console.error("チャンネルが初期化されていません。アクションを送信できません。");
-          this.isWaitingForHost = false;
-          return;
+        if (socket && socket.connected) {
+          socket.emit('declareKakan', { gameId: this.onlineGameId, playerId, tileToKakan });
         }
-        this.channel.send({
-          type: 'broadcast',
-          event: 'action-intent',
-          payload: { action: 'declareKakan', args: [playerId, tileToKakan] }
-        });
-        return;
+        return; // サーバーからの状態更新を待つ
       }
 
       const audioStore = useAudioStore();
@@ -2251,15 +1916,15 @@ export const useGameStore = defineStore('game', {
       this.setNextActiveResponder();
 
       this.animationState = { type: 'kan', playerId: playerId };
-      if (this.isGameOnline) {
-        this.broadcastGameState();
-      }
+      // if (this.isGameOnline) { // サーバー主導なので、クライアントからはブロードキャストしない
+      //   this.broadcastGameState();
+      // }
       audioStore.playSound('Hyoshigi01-1.mp3');
       setTimeout(() => {
         this.animationState = { type: null, playerId: null };
-        if (this.isGameOnline) {
-          this.broadcastGameState();
-        }
+        // if (this.isGameOnline) { // サーバー主導なので、クライアントからはブロードキャストしない
+        //   this.broadcastGameState();
+        // }
       }, 1500);
     },
     
@@ -2286,20 +1951,12 @@ export const useGameStore = defineStore('game', {
       }
     },
     handleAgari(agariPlayerId, agariTile, isTsumo, ronTargetPlayerId = null) {
-      if (this.isGameOnline && !this.isHost) {
+      if (this.isGameOnline) {
         if (agariPlayerId !== this.localPlayerId) return;
-        this.isWaitingForHost = true;
-        if (!this.channel) {
-          console.error("チャンネルが初期化されていません。アクションを送信できません。");
-          this.isWaitingForHost = false;
-          return;
+        if (socket && socket.connected) {
+          socket.emit('handleAgari', { gameId: this.onlineGameId, agariPlayerId, agariTile, isTsumo, ronTargetPlayerId });
         }
-        this.channel.send({
-          type: 'broadcast',
-          event: 'action-intent',
-          payload: { action: 'handleAgari', args: [agariPlayerId, agariTile, isTsumo, ronTargetPlayerId] }
-        });
-        return;
+        return; // サーバーからの状態更新を待つ
       }
 
       const audioStore = useAudioStore();

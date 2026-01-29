@@ -5,6 +5,7 @@ import { useUserStore } from './userStore';
 import { defineStore } from 'pinia';
 import * as mahjongLogic from '@/services/mahjongLogic';
 import { io } from 'socket.io-client'; // Socket.ioクライアントをインポート
+import { supabase } from '@/supabaseClient';
 
 // ゲームサーバーのURLを環境変数から取得
 const GAME_SERVER_URL = import.meta.env.VITE_APP_GAME_SERVER_URL;
@@ -1312,6 +1313,11 @@ export const useGameStore = defineStore('game', {
     prepareNextRound() {
       this.applyPointChanges(); // 点数更新をここで実行
 
+      // 和了した場合のみリーチ棒をリセット
+      if (this.agariResultDetails && !this.agariResultDetails.isDraw) {
+        this.riichiSticks = 0;
+      }
+
       this.playersReadyForNextRound = []; // ★次のラウンドの準備を始める前に、必ず準備完了リストをリセット
 
       const playerBelowZero = this.players.find(p => p.score < 0);
@@ -2103,7 +2109,6 @@ export const useGameStore = defineStore('game', {
           pointChanges[agariPlayerId] = winResult.score;
         }
         pointChanges[agariPlayerId] += this.riichiSticks * 1000;
-        this.riichiSticks = 0;
       }
 
       this.gamePhase = GAME_PHASES.ROUND_END;

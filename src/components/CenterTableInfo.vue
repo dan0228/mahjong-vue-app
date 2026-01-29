@@ -46,7 +46,7 @@
       </div>
     </div>
     <!-- テキストベースのUI -->
-    <div v-else class="info-text-container">
+    <div v-else-if="!dealer && !gameStore.hasGameStarted" class="info-text-container">
       <div class="round-info">
         <span>{{ roundWind }}{{ roundNumber }}局</span>
         <span>{{ honbaCount }}本場</span>

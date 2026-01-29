@@ -264,7 +264,7 @@ export const useGameStore = defineStore('game', {
     playersReadyForNextRound: [], // 次のラウンドに進む準備ができたプレイヤーのリスト
     isGameReady: false, // ゲームの初期化が完了し、開始準備ができたかどうか
     isAppReady: false, // アプリケーションの初期読み込みが完了したかどうか
-
+    hasGameStarted: false, // ゲームが開始されたかどうかを示すフラグ
   }),
   actions: {
     setAppReady(status) {
@@ -396,6 +396,8 @@ export const useGameStore = defineStore('game', {
       this.playersReadyForNextRound = []; // ★局の初期化時に、必ず準備完了リストをリセット
 
       const userStore = useUserStore(); // userStoreを取得
+
+      this.hasGameStarted = true; // ゲームが開始されたことを示す
 
       if (this.dealerIndex === null) {
         const shuffledAis = [...allAiPlayers].sort(() => 0.5 - Math.random());
@@ -2381,6 +2383,7 @@ export const useGameStore = defineStore('game', {
       this.stopRiichiBgm();
       this.previousBgm = null;
       this.isGameReady = false; // ゲーム準備状態をリセット
+      this.hasGameStarted = false; // ゲームが終了したことを示す
     },
 
     updateFuriTenState(playerId) {

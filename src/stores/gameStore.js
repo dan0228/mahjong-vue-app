@@ -1298,7 +1298,20 @@ export const useGameStore = defineStore('game', {
       }
     },
 
+    applyPointChanges() {
+      if (this.agariResultDetails && this.agariResultDetails.pointChanges) {
+        for (const playerId in this.agariResultDetails.pointChanges) {
+          const player = this.players.find(p => p.id === playerId);
+          if (player) {
+            player.score += this.agariResultDetails.pointChanges[playerId];
+          }
+        }
+      }
+    },
+
     prepareNextRound() {
+      this.applyPointChanges(); // 点数更新をここで実行
+
       this.playersReadyForNextRound = []; // ★次のラウンドの準備を始める前に、必ず準備完了リストをリセット
 
       const playerBelowZero = this.players.find(p => p.score < 0);
@@ -2265,16 +2278,6 @@ export const useGameStore = defineStore('game', {
     }
   },
 
-  applyPointChanges() {
-    const pointChanges = this.agariResultDetails.pointChanges;
-    if (pointChanges) {
-      this.players.forEach(player => {
-        if (pointChanges[player.id]) {
-          player.score += pointChanges[player.id];
-        }
-      });
-    }
-  },
     returnToTitle() {
       const userStore = useUserStore();
       this.showFinalResultPopup = false;
@@ -2496,7 +2499,7 @@ export const useGameStore = defineStore('game', {
         if (score < minScoreForRiichiDiscard) {
           minScoreForRiichiDiscard = score;
           bestRiichiDiscardTile = tile;
-        }
+        } 
       }
 
       if (bestRiichiDiscardTile) {
@@ -2740,16 +2743,6 @@ export const useGameStore = defineStore('game', {
     startGameFlow() {
       if (this.currentTurnPlayerId && this.gamePhase === GAME_PHASES.PLAYER_TURN) {
         this.drawTile();
-      }
-    },
-    applyPointChanges() {
-      if (this.agariResultDetails && this.agariResultDetails.pointChanges) {
-        for (const playerId in this.agariResultDetails.pointChanges) {
-          const player = this.players.find(p => p.id === playerId);
-          if (player) {
-            player.score += this.agariResultDetails.pointChanges[playerId];
-          }
-        }
       }
     }
   },

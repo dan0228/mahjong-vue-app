@@ -1,85 +1,118 @@
 <template>
   <div class="matchmaking-container">
-    <router-link to="/" class="back-to-title-btn">
-      {{ $t('shrineView.backToTitle') }}
-    </router-link>
     
-    <div class="content-wrapper">
-      <h1 class="status-text">{{ $t('matchmaking.status.searching') }}</h1>
-
-      <!-- プレイヤーアイコンを個別に配置 -->
-      <div id="player-1" class="player-slot">
-        <img src="/assets/images/info/cat_icon_1.png" alt="Player Avatar" class="player-avatar" />
-      </div>
-      <div id="player-2" class="player-slot">
-        <img src="/assets/images/info/cat_icon_2.png" alt="Player Avatar" class="player-avatar" />
-      </div>
-      <div id="player-3" class="player-slot">
-        <img src="/assets/images/info/cat_icon_3.png" alt="Player Avatar" class="player-avatar" />
-      </div>
-      <div id="player-4" class="player-slot">
-        <img src="/assets/images/info/hito_icon_1.png" alt="Player Avatar" class="player-avatar" />
+    <!-- スケーリングされるコンテンツのラッパー -->
+    <div class="scaler" :style="scalerStyle">
+      <!-- 透明なコンテンツラッパー -->
+      <div class="content-wrapper">
+        <div class="status-box">
+          <h1 class="status-text">{{ $t('matchmaking.status.searching') }}</h1>
+        </div>
+        
+        <!-- プレイヤーアイコンを個別に配置 -->
+        <div id="player-1" class="player-slot">
+          <img src="/assets/images/info/cat_icon_1.png" alt="Player Avatar" class="player-avatar" />
+        </div>
+        <div id="player-2" class="player-slot">
+          <img src="/assets/images/info/cat_icon_2.png" alt="Player Avatar" class="player-avatar" />
+        </div>
+        <div id="player-3" class="player-slot">
+          <img src="/assets/images/info/cat_icon_3.png" alt="Player Avatar" class="player-avatar" />
+        </div>
+        <div id="player-4" class="player-slot">
+          <img src="/assets/images/info/hito_icon_1.png" alt="Player Avatar" class="player-avatar" />
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
+
 const { t } = useI18n();
+
+// --- スケーリング処理 (TitleView.vueと同一) ---
+const DESIGN_WIDTH = 360;
+const DESIGN_HEIGHT = 640;
+
+const calculateScaleFactor = () => {
+  if (typeof window === 'undefined') return 1;
+  const currentWidth = window.innerWidth;
+  const currentHeight = window.innerHeight;
+  const scaleX = currentWidth / DESIGN_WIDTH;
+  const scaleY = currentHeight / DESIGN_HEIGHT;
+  return Math.min(scaleX, scaleY);
+};
+
+const scaleFactor = ref(calculateScaleFactor());
+
+const scalerStyle = computed(() => ({
+  transform: `translate(-50%, -50%) scale(${scaleFactor.value})`,
+}));
+
+const updateScaleFactor = () => {
+  scaleFactor.value = calculateScaleFactor();
+};
+
+onMounted(() => {
+  window.addEventListener('resize', updateScaleFactor);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', updateScaleFactor);
+});
 </script>
 
 <style scoped>
-/* じゃん猫神社画面の構造を完全に再現 */
+/* 1. 外側の背景コンテナ */
 .matchmaking-container {
   width: 100vw;
   height: 100vh;
   background-image: url('/assets/images/back/matching.png');
-  background-size: cover; /* 画面全体を覆うように設定 */
+  background-size: cover;
   background-position: center;
   position: relative;
   overflow: hidden;
   font-family: 'Yuji Syuku', serif;
 }
 
-/* コンテンツを中央に配置するためのラッパー(オプション) */
+/* 2. スケーリングされる「キャンバス」 */
+.scaler {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 360px;
+  height: 640px;
+  transform-origin: center center;
+}
+
+/* 3. 透明なコンテンツラッパー */
 .content-wrapper {
-  position: relative;
   width: 100%;
   height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  position: relative;
+  /* 背景は外側で指定するため、ここは透明 */
+  background: transparent; 
 }
 
-.back-to-title-btn {
+/* status-textを囲む半透明のボックス */
+.status-box {
   position: absolute;
-  top: 20px;
-  right: 20px;
-  z-index: 20;
-  background-color: rgba(0, 0, 0, 0.5);
-  color: white;
-  padding: 8px 15px;
-  border-radius: 5px;
-  text-decoration: none;
-  font-family: 'Yuji Syuku', serif;
-  transition: background-color 0.3s;
-}
-
-.back-to-title-btn:hover {
-  background-color: rgba(0, 0, 0, 0.7);
+  top: 110px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.4);
+  padding: 10px 40px;
+  border-radius: 10px;
 }
 
 .status-text {
-  position: absolute;
-  top: 15%;
   color: white;
-  font-size: 1.8em;
+  font-size: 24px;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
   white-space: nowrap;
-  background-color: rgba(0, 0, 0, 0.4);
-  padding: 10px 50px;
-  border-radius: 10px;
 }
 
 .player-slot {
@@ -97,31 +130,30 @@ const { t } = useI18n();
 }
 
 /* 各プレイヤーのアイコンの位置とサイズをCSSで個別に指定 */
-/* top/leftは画面全体に対するパーセンテージ指定 */
 #player-1 {
-  top: 80%;
-  left: 30%;
+  top: 500px;
+  left: 100px;
   width: 70px;
   height: 70px;
 }
 
 #player-2 {
-  top: 80%;
-  left: 70%;
+  top: 500px;
+  left: 260px;
   width: 70px;
   height: 70px;
 }
 
 #player-3 {
-  top: 65%;
-  left: 15%;
+  top: 420px;
+  left: 30px;
   width: 70px;
   height: 70px;
 }
 
 #player-4 {
-  top: 65%;
-  left: 85%;
+  top: 420px;
+  left: 330px;
   width: 70px;
   height: 70px;
 }

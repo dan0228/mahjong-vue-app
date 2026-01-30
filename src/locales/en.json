@@ -586,7 +586,12 @@
     "classicDescription": "Standard Rules for 4-tiles Mahjong",
     "stock": "Stock",
     "stockDescription": "You can stock one tile",
-    "recommended": "NEW!"
+    "recommended": "NEW!",
+    "onlineMatchTitle": "Online Match",
+    "friendMatch": "Friend Match",
+    "friendMatchDescription": "Play with friends using a password",
+    "rankedMatch": "Ranked Match",
+    "rankedMatchDescription": "Play rated matches"
   },
   "matchmaking": {
     "title": "Searching for Opponent",

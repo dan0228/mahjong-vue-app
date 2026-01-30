@@ -56,7 +56,7 @@
             >
               <img :src="button.imgSrc" :alt="button.alt" />
               <span v-if="button.isUnderConstruction" class="construction-badge">Under Construction</span>
-              <div v-if="button.showStockText" class="stock-text">STOCK</div> <!-- 追加 -->
+              <div v-if="button.showStockText" class="stock-text">STOCK</div>
             </button>
           </div>
           <!-- サブ・情報ボタン -->
@@ -99,7 +99,14 @@
       <YakuListPopup :show="showYakuListPopup" @close="showYakuListPopup = false" />
       <HowToPlayPopup :show="showHowToPlayPopup" @close="showHowToPlayPopup = false" />
       <SettingsPopup :show="showSettingsPopup" @close="showSettingsPopup = false" />
-      <GameModeSelectionPopup v-if="showGameModeSelectionPopup" @close="showGameModeSelectionPopup = false" @mode-selected="onModeSelected" />
+      <GameModeSelectionPopup
+        v-if="popupProps"
+        :show="activePopup !== null"
+        :background-image="popupProps.backgroundImage"
+        :buttons="popupProps.buttons"
+        @close="activePopup = null"
+        @select="handlePopupSelect"
+      />
     </div>
   </div>
 </template>
@@ -116,7 +123,7 @@ import YakuListPopup from '@/components/YakuListPopup.vue';
 import HowToPlayPopup from '@/components/HowToPlayPopup.vue';
 import SettingsPopup from '@/components/SettingsPopup.vue';
 import GameModeSelectionPopup from '@/components/GameModeSelectionPopup.vue';
-import LoadingIndicator from '@/components/LoadingIndicator.vue'; // LoadingIndicator をインポート
+import LoadingIndicator from '@/components/LoadingIndicator.vue';
 import { useViewportHeight } from '@/composables/useViewportHeight';
 
 // --- デバイス判定 ---
@@ -134,22 +141,61 @@ const showRulesPopup = ref(false);
 const showYakuListPopup = ref(false);
 const showHowToPlayPopup = ref(false);
 const showSettingsPopup = ref(false);
-const showGameModeSelectionPopup = ref(false);
+
+// --- ポップアップ管理 ---
+const activePopup = ref(null); // 'ai' または 'online' または null
+
+const popupProps = computed(() => {
+  if (activePopup.value === 'ai') {
+    return {
+      backgroundImage: '/assets/images/back/mode_back.png',
+      buttons: [
+        { id: 'classic', title: t('gameModeSelection.classic'), description: t('gameModeSelection.classicDescription'), customClass: 'mode-left' },
+        { id: 'stock', title: t('gameModeSelection.stock'), description: t('gameModeSelection.stockDescription'), customClass: 'mode-right' }
+      ]
+    };
+  }
+  if (activePopup.value === 'online') {
+    return {
+      backgroundImage: '/assets/images/back/online_back.png', // ユーザー指定の画像
+      buttons: [
+        { id: 'friend', title: t('gameModeSelection.friendMatch'), description: t('gameModeSelection.friendMatchDescription'), customClass: 'mode-left' },
+        { id: 'ranked', title: t('gameModeSelection.rankedMatch'), description: t('gameModeSelection.rankedMatchDescription'), customClass: 'mode-right online-ranked-button' }
+      ]
+    };
+  }
+  return null;
+});
+
+const handlePopupSelect = (id) => {
+  const popupType = activePopup.value;
+  activePopup.value = null;
+
+  if (popupType === 'ai') {
+    gameStore.setRuleMode(id);
+    const gameMode = 'vsCPU';
+    gameStore.setGameMode(gameMode);
+    gameStore.resetGameForNewSession({ keepStreak: true });
+    gameStore.initializeGame();
+    gameStore.showDealerDeterminationPopup = true;
+    router.push('/game');
+  } else if (popupType === 'online') {
+    if (id === 'friend') {
+      // TODO: 友人対戦のマッチメイキング画面へ遷移
+      console.log('Friend match selected, navigating to matchmaking...');
+      router.push('/matchmaking'); // 仮で同じ画面へ
+    } else if (id === 'ranked') {
+      // TODO: 全国対戦のマッチメイキング画面へ遷移
+      console.log('Ranked match selected, navigating to matchmaking...');
+      router.push('/matchmaking');
+    }
+  }
+};
+
 
 // --- ナビゲーションとアクション ---
 const navigateTo = (path) => {
   router.push(path);
-};
-
-const onModeSelected = (mode) => {
-  gameStore.setRuleMode(mode);
-  showGameModeSelectionPopup.value = false;
-  const gameMode = 'vsCPU'; // AI対戦モード(vsCPU)を固定、デバッグ用はallManual
-  gameStore.setGameMode(gameMode);
-  gameStore.resetGameForNewSession({ keepStreak: true });
-  gameStore.initializeGame();
-  gameStore.showDealerDeterminationPopup = true;
-  router.push('/game');
 };
 
 // --- ボタンデータ ---
@@ -159,7 +205,7 @@ const mainButtons = computed(() => [
     alt: t('titleView.menu.catAiMatch'),
     action: () => {
       audioStore.playSound('Hit-Slap01-3(Dry).mp3');
-      showGameModeSelectionPopup.value = true;
+      activePopup.value = 'ai';
     },
     cssClass: 'main-button',
     imgSrc: locale.value === 'en' ? '/assets/images/button/title_cat_AI_match_en.png' : '/assets/images/button/title_cat_AI_match.png',
@@ -167,11 +213,13 @@ const mainButtons = computed(() => [
   {
     id: 'online-match',
     alt: t('titleView.menu.onlineMatch'),
-    action: () => navigateTo('/matchmaking'),
+    action: () => {
+      audioStore.playSound('Hit-Slap01-3(Dry).mp3');
+      activePopup.value = 'online';
+    },
     cssClass: 'main-button',
     imgSrc: locale.value === 'en' ? '/assets/images/button/title_online_match_en.png' : '/assets/images/button/title_online_match.png',
-    isUnderConstruction: true, // 工事中フラグ
-    showStockText: true, // STOCKテキストを表示するフラグ
+    showStockText: true,
   },
 ]);
 
@@ -676,6 +724,3 @@ onBeforeUnmount(() => {
   text-shadow: 3px 3px 3px #5a3b22;
 }
 </style>
-
-
-

@@ -1,15 +1,17 @@
 <template>
-  <div class="popup-overlay" @click.self="$emit('close')">
-    <div class="popup-container">
-      <button class="close-button" @click="$emit('close')">×</button>
+  <div v-if="show" class="popup-overlay" @click.self="closePopup">
+    <div class="popup-container" :style="containerStyle">
+      <button class="close-button" @click="closePopup">×</button>
       <div class="popup-content">
-        <div class="mode-option mode-left" @click="selectMode('classic')">
-          <div class="mode-title">{{ t('gameModeSelection.classic') }}</div>
-          <div class="mode-description" v-html="t('gameModeSelection.classicDescription')"></div>
-        </div>
-        <div class="mode-option mode-right" @click="selectMode('stock')">
-          <div class="mode-title">{{ t('gameModeSelection.stock') }}</div>
-          <div class="mode-description" v-html="t('gameModeSelection.stockDescription')"></div>
+        <div
+          v-for="button in buttons"
+          :key="button.id"
+          class="mode-option"
+          :class="button.customClass"
+          @click="selectOption(button.id)"
+        >
+          <div class="mode-title">{{ button.title }}</div>
+          <div class="mode-description" v-html="button.description"></div>
         </div>
       </div>
     </div>
@@ -17,14 +19,35 @@
 </template>
 
 <script setup>
-import { defineEmits } from 'vue';
-import { useI18n } from 'vue-i18n';
+import { computed, defineProps, defineEmits } from 'vue';
 
-const { t } = useI18n();
-const emit = defineEmits(['close', 'mode-selected']);
+const props = defineProps({
+  show: {
+    type: Boolean,
+    required: true,
+  },
+  backgroundImage: {
+    type: String,
+    required: true,
+  },
+  buttons: {
+    type: Array,
+    required: true,
+  },
+});
 
-const selectMode = (mode) => {
-  emit('mode-selected', mode);
+const emit = defineEmits(['close', 'select']);
+
+const containerStyle = computed(() => ({
+  backgroundImage: `url(${props.backgroundImage})`,
+}));
+
+const closePopup = () => {
+  emit('close');
+};
+
+const selectOption = (id) => {
+  emit('select', id);
 };
 </script>
 
@@ -43,7 +66,6 @@ const selectMode = (mode) => {
 }
 
 .popup-container {
-  background-image: url('/assets/images/back/mode_back.png');
   background-size: cover;
   background-position: center;
   border-radius: 0px;
@@ -57,7 +79,6 @@ const selectMode = (mode) => {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  /* 勢いよく登場するアニメーション */
   animation: slap-in 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
@@ -91,7 +112,7 @@ const selectMode = (mode) => {
 }
 
 .mode-option {
-  width: 130px; /* コンテナの幅を固定してテキストを改行させる */
+  width: 130px;
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
@@ -108,17 +129,21 @@ const selectMode = (mode) => {
 }
 
 .mode-left {
-  left: 10px; /* この値を調整して左側のモードの位置を変更 */
+  left: 10px;
   top: 80px;
 }
 
 .mode-right {
-  right: 20px; /* この値を調整して右側のモードの位置を変更 */
-  top: 80px;
+  right: 20px;
+  top: 85px;
+}
+
+.mode-right.online-ranked-button {
+  top: 76px;
 }
 
 .mode-option:hover {
-  transform: translateY(-50%) scale(1.05); /* Y軸方向の変異を維持しつつ拡大 */
+  transform: translateY(-50%) scale(1.05);
   color: #7a6a53;
   text-shadow: 0px 0px 8px rgba(255, 255, 255, 1);
 }
@@ -136,21 +161,20 @@ const selectMode = (mode) => {
   color: #6d5f4b;
 }
 
-/* 勢いよく登場するアニメーションのキーフレーム */
 @keyframes slap-in {
   0% {
     opacity: 0;
-    transform: scale(1.5); /* 手前にある状態 */
+    transform: scale(1.5);
   }
   60% {
     opacity: 1;
-    transform: scale(0.95); /* 勢い余って少し行き過ぎる（机にめり込むイメージ） */
+    transform: scale(0.95);
   }
   80% {
-    transform: scale(1.02); /* 反動で少し浮く */
+    transform: scale(1.02);
   }
   100% {
-    transform: scale(1);    /* 定位置 */
+    transform: scale(1);
   }
 }
 </style>

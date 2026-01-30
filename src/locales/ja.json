@@ -586,7 +586,12 @@
     "classicDescription": "四牌で行う<br>基本のルール",
     "stock": "ストック",
     "stockDescription": "1枚だけ牌を<br>取り置き可能",
-    "recommended": "NEW！"
+    "recommended": "NEW！",
+    "onlineMatchTitle": "オンライン対戦",
+    "friendMatch": "友人対戦",
+    "friendMatchDescription": "友達と合言葉で対戦",
+    "rankedMatch": "全国対戦",
+    "rankedMatchDescription": "猛者とのレート戦"
   },
   "matchmaking": {
     "title": "対戦相手を検索中",

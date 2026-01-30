@@ -150,8 +150,8 @@ const popupProps = computed(() => {
     return {
       backgroundImage: '/assets/images/back/mode_back.png',
       buttons: [
-        { id: 'classic', title: t('gameModeSelection.classic'), description: t('gameModeSelection.classicDescription'), customClass: 'mode-left' },
-        { id: 'stock', title: t('gameModeSelection.stock'), description: t('gameModeSelection.stockDescription'), customClass: 'mode-right' }
+        { id: 'classic', title: t('gameModeSelection.classic'), description: t('gameModeSelection.classicDescription'), customClass: 'mode-left', isForm: false },
+        { id: 'stock', title: t('gameModeSelection.stock'), description: t('gameModeSelection.stockDescription'), customClass: 'mode-right', isForm: false }
       ]
     };
   }
@@ -159,20 +159,21 @@ const popupProps = computed(() => {
     return {
       backgroundImage: '/assets/images/back/online_back.png', // ユーザー指定の画像
       buttons: [
-        { id: 'friend', title: t('gameModeSelection.friendMatch'), description: t('gameModeSelection.friendMatchDescription'), customClass: 'mode-left' },
-        { id: 'ranked', title: t('gameModeSelection.rankedMatch'), description: t('gameModeSelection.rankedMatchDescription'), customClass: 'mode-right online-ranked-button' }
+        { id: 'friend', title: t('gameModeSelection.friendMatch'), description: '', customClass: 'mode-left', isForm: true },
+        { id: 'ranked', title: t('gameModeSelection.rankedMatch'), description: t('gameModeSelection.rankedMatchDescription'), customClass: 'mode-right online-ranked-button', isForm: false }
       ]
     };
   }
   return null;
 });
 
-const handlePopupSelect = (id) => {
+const handlePopupSelect = (payload) => {
+  const { action, passcode } = payload;
   const popupType = activePopup.value;
   activePopup.value = null;
 
   if (popupType === 'ai') {
-    gameStore.setRuleMode(id);
+    gameStore.setRuleMode(action);
     const gameMode = 'vsCPU';
     gameStore.setGameMode(gameMode);
     gameStore.resetGameForNewSession({ keepStreak: true });
@@ -180,11 +181,15 @@ const handlePopupSelect = (id) => {
     gameStore.showDealerDeterminationPopup = true;
     router.push('/game');
   } else if (popupType === 'online') {
-    if (id === 'friend') {
-      // TODO: 友人対戦のマッチメイキング画面へ遷移
-      console.log('Friend match selected, navigating to matchmaking...');
+    if (action === 'enter_room') {
+      // TODO: 友人対戦（入室）のマッチメイキング処理
+      console.log(`Entering friend match with passcode: ${passcode}`);
       router.push('/matchmaking'); // 仮で同じ画面へ
-    } else if (id === 'ranked') {
+    } else if (action === 'create_room') {
+      // TODO: 友人対戦（部屋立て）のマッチメイキング処理
+      console.log(`Creating friend match with passcode: ${passcode}`);
+      router.push('/matchmaking'); // 仮で同じ画面へ
+    } else if (action === 'ranked') {
       // TODO: 全国対戦のマッチメイキング画面へ遷移
       console.log('Ranked match selected, navigating to matchmaking...');
       router.push('/matchmaking');

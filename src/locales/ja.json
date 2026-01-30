@@ -591,7 +591,9 @@
     "friendMatch": "友人対戦",
     "friendMatchDescription": "友達と合言葉で対戦",
     "rankedMatch": "全国対戦",
-    "rankedMatchDescription": "猛者とのレート戦"
+    "rankedMatchDescription": "猛者とのレート戦",
+    "enterRoom": "入室",
+    "createRoom": "開設"
   },
   "matchmaking": {
     "title": "対戦相手を検索中",

@@ -588,10 +588,12 @@
     "stockDescription": "You can stock one tile",
     "recommended": "NEW!",
     "onlineMatchTitle": "Online Match",
-    "friendMatch": "Friend Match",
+    "friendMatch": "Friend",
     "friendMatchDescription": "Play with friends using a password",
-    "rankedMatch": "Ranked Match",
-    "rankedMatchDescription": "Play rated matches"
+    "rankedMatch": "Ranked",
+    "rankedMatchDescription": "Climb the ranks",
+    "enterRoom": "Enter",
+    "createRoom": "Create"
   },
   "matchmaking": {
     "title": "Searching for Opponent",

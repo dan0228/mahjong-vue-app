@@ -4,68 +4,59 @@
       {{ $t('shrineView.backToTitle') }}
     </router-link>
     
-    <div class="matchmaking-content">
+    <div class="content-wrapper">
       <h1 class="status-text">{{ $t('matchmaking.status.searching') }}</h1>
-      <!-- The v-for is now on the player-slot itself -->
-      <div
-        v-for="player in waitingPlayers"
-        :key="player.id"
-        class="player-slot"
-        :style="getPlayerStyle(player)"
-      >
-        <img :src="player.avatarUrl" alt="Player Avatar" class="player-avatar" />
+
+      <!-- プレイヤーアイコンを個別に配置 -->
+      <div id="player-1" class="player-slot">
+        <img src="/assets/images/info/cat_icon_1.png" alt="Player Avatar" class="player-avatar" />
+      </div>
+      <div id="player-2" class="player-slot">
+        <img src="/assets/images/info/cat_icon_2.png" alt="Player Avatar" class="player-avatar" />
+      </div>
+      <div id="player-3" class="player-slot">
+        <img src="/assets/images/info/cat_icon_3.png" alt="Player Avatar" class="player-avatar" />
+      </div>
+      <div id="player-4" class="player-slot">
+        <img src="/assets/images/info/hito_icon_1.png" alt="Player Avatar" class="player-avatar" />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-
 const { t } = useI18n();
-
-// ダミーデータにtop, left, sizeプロパティを追加
-const waitingPlayers = ref([
-  { id: 1, avatarUrl: '/assets/images/info/cat_icon_1.png', top: '85%', left: '25%', size: '70px' },
-  { id: 2, avatarUrl: '/assets/images/info/cat_icon_2.png', top: '85%', left: '70%', size: '70px' },
-  { id: 3, avatarUrl: '/assets/images/info/cat_icon_3.png', top: '75%', left: '-10%', size: '70px' },
-  { id: 4, avatarUrl: '/assets/images/info/hito_icon_1.png', top: '75%', left: '100%', size: '70px' },
-]);
-
-// プレイヤー毎のスタイルを動的に生成する関数
-const getPlayerStyle = (player) => ({
-  position: 'absolute',
-  top: player.top,
-  left: player.left,
-  width: player.size,
-  height: player.size,
-});
-
 </script>
 
 <style scoped>
+/* じゃん猫神社画面の構造を完全に再現 */
 .matchmaking-container {
   width: 100vw;
   height: 100vh;
   background-image: url('/assets/images/back/matching.png');
-  background-size: cover;
-  background-repeat: no-repeat;
+  background-size: cover; /* 画面全体を覆うように設定 */
   background-position: center;
   position: relative;
   overflow: hidden;
+  font-family: 'Yuji Syuku', serif;
+}
+
+/* コンテンツを中央に配置するためのラッパー(オプション) */
+.content-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-family: 'Yuji Syuku', serif;
 }
 
 .back-to-title-btn {
   position: absolute;
   top: 20px;
   right: 20px;
-  z-index: 20; /* コンテンツより手前に表示 */
-  
+  z-index: 20;
   background-color: rgba(0, 0, 0, 0.5);
   color: white;
   padding: 8px 15px;
@@ -79,43 +70,59 @@ const getPlayerStyle = (player) => ({
   background-color: rgba(0, 0, 0, 0.7);
 }
 
-.matchmaking-content {
-  /* position: relative を追加して、中の絶対配置の基準点にする */
-  position: relative;
-  width: 80vw;
-  height: 80vh;
-  max-width: 400px;
-  max-height: 600px;
-  
-  padding: 20px;
+.status-text {
+  position: absolute;
+  top: 15%;
+  color: white;
+  font-size: 1.8em;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+  white-space: nowrap;
+  background-color: rgba(0, 0, 0, 0.4);
+  padding: 10px 50px;
   border-radius: 10px;
 }
 
-.status-text {
-  position: absolute;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: white;
-  font-size: 1.5em;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
-  width: 100%;
-  text-align: center;
-}
-
-/* .players-container は不要になったので削除 */
-
 .player-slot {
-  /* スタイルはscriptで動的に設定されるが、共通のスタイルはここに記述可能 */
-  transition: all 0.3s ease; /* 位置やサイズ変更時にアニメーション */
+  position: absolute;
+  transform: translate(-50%, -50%);
 }
 
 .player-avatar {
   width: 100%;
   height: 100%;
-  border-radius: 50%; /* アイコンを丸くする */
+  border-radius: 50%;
   border: 1px solid rgb(41, 2, 2);
   box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
-  object-fit: cover; /* 画像のアスペクト比を保ちつつ、コンテナにフィットさせる */
+  object-fit: cover;
+}
+
+/* 各プレイヤーのアイコンの位置とサイズをCSSで個別に指定 */
+/* top/leftは画面全体に対するパーセンテージ指定 */
+#player-1 {
+  top: 80%;
+  left: 30%;
+  width: 70px;
+  height: 70px;
+}
+
+#player-2 {
+  top: 80%;
+  left: 70%;
+  width: 70px;
+  height: 70px;
+}
+
+#player-3 {
+  top: 65%;
+  left: 15%;
+  width: 70px;
+  height: 70px;
+}
+
+#player-4 {
+  top: 65%;
+  left: 85%;
+  width: 70px;
+  height: 70px;
 }
 </style>

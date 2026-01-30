@@ -2,6 +2,7 @@ import { createRouter, createWebHashHistory } from 'vue-router';
 import TitleView from '../views/TitleView.vue';
 import GameView from '../views/GameView.vue';
 import JannekoShrineView from '../views/JannekoShrineView.vue';
+import MatchmakingView from '../views/MatchmakingView.vue';
 import { useAudioStore } from '../stores/audioStore';
 
 const routes = [
@@ -52,6 +53,16 @@ const routes = [
       title: 'ランキング | よんじゃん！',
       description: '最大連勝数のランキングです。',
       bgm: 'GB-JP-A02-2(Menu-Loop105).mp3'
+    },
+  },
+  {
+    path: '/matchmaking',
+    name: 'Matchmaking',
+    component: MatchmakingView,
+    meta: {
+      title: '対戦待機中 | よんじゃん！',
+      description: 'オンライン対戦のマッチングを行っています。',
+      bgm: 'NES-JP-A02-2(Stage1-Loop110).mp3'
     },
   },
 ];

@@ -599,7 +599,9 @@
     "title": "Searching for Opponent",
     "cancel": "Cancel",
     "status": {
-      "searching": "Searching for an opponent...",
+      "searching": "Waiting...",
+      "ready": "Ready!",
+      "countdown": "Starting in...{count}",
       "error": "An error occurred. Returning to title."
     }
   },

@@ -30,12 +30,15 @@
         </div>
 
         <div class="status-box">
-          <h1 class="status-text">{{ $t('matchmaking.status.searching') }}</h1>
+          <h1 class="status-text">{{ statusText }}</h1>
+          <h2 v-if="showCountdown" class="countdown-text">
+            {{ t('matchmaking.status.countdown', { count: countdown }) }}
+          </h2>
         </div>
         
         <!-- プレイヤーアイコンをデータに基づいて配置 -->
         <div 
-          v-for="player in players"
+          v-for="player in foundPlayers"
           :key="player.id"
           :id="'player-' + player.id"
           class="player-slot"
@@ -58,11 +61,13 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/userStore';
 import PlayerInfoPopup from '@/components/PlayerInfoPopup.vue';
 
 const { t, locale } = useI18n();
 const userStore = useUserStore();
+const router = useRouter();
 
 // --- ポップアップ関連 ---
 const showPlayerInfoPopup = ref(false);
@@ -77,8 +82,8 @@ const closePlayerInfoPopup = () => {
   showPlayerInfoPopup.value = false;
 };
 
-// --- プレイヤーデータ ---
-const players = computed(() => {
+// --- マッチングロジック ---
+const allPlayers = computed(() => {
   const mainPlayer = {
     id: 1,
     username: userStore.profile?.username || 'Player 1',
@@ -94,6 +99,40 @@ const players = computed(() => {
   return [mainPlayer, ...dummyPlayers].sort((a, b) => a.id - b.id);
 });
 
+const foundPlayers = ref([]);
+const statusKey = ref('searching'); // 'searching' or 'ready'
+const statusText = computed(() => t(`matchmaking.status.${statusKey.value}`));
+const countdown = ref(3);
+const showCountdown = ref(false);
+let countdownInterval = null;
+
+const startFinalSequence = () => {
+  statusKey.value = 'ready'; // テキストのキーを変更
+  showCountdown.value = true;
+
+  countdownInterval = setInterval(() => {
+    countdown.value--;
+    if (countdown.value === 0) {
+      clearInterval(countdownInterval);
+      router.push('/game');
+    }
+  }, 1000);
+};
+
+const simulateMatchmaking = () => {
+  const playersToFind = [...allPlayers.value];
+  let delay = 0;
+  playersToFind.forEach((player, index) => {
+    delay += Math.random() * 1500 + 500; // 0.5秒から2秒のランダムな遅延
+    setTimeout(() => {
+      foundPlayers.value.push(player);
+      if (foundPlayers.value.length === 4) {
+        startFinalSequence();
+      }
+    }, delay);
+  });
+};
+
 // --- i18n関連の算出プロパティ ---
 const boardImageSrc = computed(() =>
   locale.value === 'en'
@@ -103,22 +142,18 @@ const boardImageSrc = computed(() =>
 
 // --- 火の粉アニメーションのスタイル ---
 const fireParticleStyles = ref([]);
-
 const generateFireParticleStyles = () => {
   const styles = [];
   for (let i = 0; i < 20; i++) {
-    // ランダムな遅延を生成
-    const randomDelay = Math.random() * 0.9 + 1.8;
-    styles.push({ animationDelay: `${randomDelay * (i + 1)}s` });
+    const randomDelay = Math.random() * 4;
+    styles.push({ animationDelay: `${randomDelay}s` });
   }
   fireParticleStyles.value = styles;
 };
 
-
 // --- スケーリング処理 ---
 const DESIGN_WIDTH = 360;
 const DESIGN_HEIGHT = 640;
-
 const calculateScaleFactor = () => {
   if (typeof window === 'undefined') return 1;
   const currentWidth = window.innerWidth;
@@ -127,31 +162,28 @@ const calculateScaleFactor = () => {
   const scaleY = currentHeight / DESIGN_HEIGHT;
   return Math.min(scaleX, scaleY);
 };
-
 const scaleFactor = ref(calculateScaleFactor());
-
 const scalerStyle = computed(() => ({
   transform: `translate(-50%, -50%) scale(${scaleFactor.value})`,
 }));
-
 const updateScaleFactor = () => {
   scaleFactor.value = calculateScaleFactor();
 };
 
 onMounted(() => {
   window.addEventListener('resize', updateScaleFactor);
-  generateFireParticleStyles(); // コンポーネントマウント時にランダムなスタイルを生成
+  generateFireParticleStyles();
+  simulateMatchmaking(); // マッチングシミュレーションを開始
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', updateScaleFactor);
+  clearInterval(countdownInterval); // コンポーネント離脱時にタイマーをクリア
 });
 </script>
 
 <style scoped>
 /* (Previous styles remain the same) */
-
-/* 1. 外側の背景コンテナ */
 .matchmaking-container {
   width: 100vw;
   height: 100vh;
@@ -162,8 +194,6 @@ onBeforeUnmount(() => {
   overflow: hidden;
   font-family: 'Yuji Syuku', serif;
 }
-
-/* 2. スケーリングされる「キャンバス」 */
 .scaler {
   position: absolute;
   top: 50%;
@@ -172,8 +202,6 @@ onBeforeUnmount(() => {
   height: 640px;
   transform-origin: center center;
 }
-
-/* 3. 透明なコンテンツラッパー */
 .content-wrapper {
   width: 100%;
   height: 100%;
@@ -181,20 +209,16 @@ onBeforeUnmount(() => {
   background: transparent; 
   overflow: hidden;
 }
-
-/* --- ここから追加 --- */
 .user-stats {
   position: absolute;
   top: 10px;
   left: 10px;
   z-index: 20;
 }
-
 .board-image {
   width: 90px;
   height: auto;
 }
-
 .rating-number-on-board {
   position: absolute;
   top: 6px;
@@ -204,7 +228,6 @@ onBeforeUnmount(() => {
   color: rgb(255, 255, 255);
   text-shadow: 3px 3px 3px #5a3b22;
 }
-
 .cat-coins-number-on-board {
   position: absolute;
   top: 37px;
@@ -214,10 +237,6 @@ onBeforeUnmount(() => {
   color: rgb(255, 255, 255);
   text-shadow: 3px 3px 3px #5a3b22;
 }
-/* --- ここまで追加 --- */
-
-
-/* タイトルへ戻るボタン */
 .back-to-title-container {
   position: absolute;
   top: 10px;
@@ -225,19 +244,23 @@ onBeforeUnmount(() => {
   z-index: 20;
 }
 
+.back-to-title-container a { /* router-link (a tag) */
+  display: block;
+  width: 62px; /* Match image width */
+  height: 62px; /* Match image height (assuming square) */
+  cursor: pointer;
+}
 .back-to-title-image {
   width: 62px;
   height: auto;
   cursor: pointer;
-  transition: transform 0.2s ease;
+  transition: all 0.2s ease; /* transformとfilterの両方をアニメーション */
   filter: drop-shadow(0px 0px 3px rgba(0, 0, 0, 0.8));
 }
-
 .back-to-title-image:hover {
-  transform: translateY(-3px);
+  transform: translateY(-4px);
+  filter: drop-shadow(0px 0px 3px rgba(0, 0, 0, 0.8));
 }
-
-/* status-textを囲む半透明のボックス */
 .status-box {
   position: absolute;
   top: 170px;
@@ -246,22 +269,28 @@ onBeforeUnmount(() => {
   padding: 10px 40px;
   border-radius: 10px;
   z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
 }
-
 .status-text {
   color: white;
-  font-size: 20px;
+  font-size: 18px;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);
   white-space: nowrap;
 }
-
+.countdown-text {
+  color: #ffd700;
+  font-size: 18px;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 1);
+}
 .player-slot {
   position: absolute;
   transform: translate(-50%, -50%);
   z-index: 10;
   cursor: pointer;
 }
-
 .player-slot::after {
   content: '';
   position: absolute;
@@ -275,7 +304,6 @@ onBeforeUnmount(() => {
   filter: blur(4px);
   z-index: -1;
 }
-
 .player-avatar {
   width: 100%;
   height: 100%;
@@ -284,37 +312,30 @@ onBeforeUnmount(() => {
   box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
   object-fit: cover;
 }
-
-/* 各プレイヤーのアイコンの位置とサイズをCSSで個別に指定 */
 #player-1 {
   top: 450px;
   left: 130px;
   width: 60px;
   height: 60px;
 }
-
 #player-2 {
   top: 450px;
   left: 240px;
   width: 60px;
   height: 60px;
 }
-
 #player-3 {
   top: 415px;
   left: 45px;
   width: 55px;
   height: 55px;
 }
-
 #player-4 {
   top: 415px;
   left: 320px;
   width: 55px;
   height: 55px;
 }
-
-/* 煙アニメーション */
 .smoke-container {
   position: absolute;
   bottom: 35%;
@@ -322,7 +343,6 @@ onBeforeUnmount(() => {
   width: 1px;
   height: 1px;
 }
-
 .smoke-particle {
   position: absolute;
   bottom: 0;
@@ -337,7 +357,6 @@ onBeforeUnmount(() => {
   opacity: 0;
   animation-delay: calc(var(--i) * 1.2s);
 }
-
 @keyframes rise {
   0% {
     transform: translate(-50%, 20px) scale(0.2);
@@ -351,8 +370,6 @@ onBeforeUnmount(() => {
     opacity: 0;
   }
 }
-
-/* 火の粉アニメーション */
 .fire-container {
   position: absolute;
   top: 59%;
@@ -361,7 +378,6 @@ onBeforeUnmount(() => {
   height: 100px;
   transform: translate(-50%, -50%);
 }
-
 .fire-particle {
   position: absolute;
   bottom: 0;
@@ -371,36 +387,32 @@ onBeforeUnmount(() => {
   background: #ffc400;
   border-radius: 50%;
   box-shadow: 0 0 10px #ffc400, 0 0 20px #ffc400, 0 0 40px #ff8c00, 0 0 80px #ff8c00;
-  animation: crackle 7.0s infinite;
+  animation: crackle 4.0s infinite;
   opacity: 0;
-  /* animation-delayはscriptでインラインスタイルとして設定される */
 }
-
 .fire-particle:nth-child(2n) {
   animation-name: crackle-2;
   width: 1px;
   height: 1px;
   animation-duration: 6.2s;
 }
-
 @keyframes crackle {
   0% {
     transform: translateY(-2px) translateX(3px);
     opacity: 1;
   }
   100% {
-    transform: translateY(-30px) translateX(-10px);
+    transform: translateY(-25px) translateX(-10px);
     opacity: 0;
   }
 }
-
 @keyframes crackle-2 {
   0% {
     transform: translateY(0) translateX(7px);
     opacity: 1;
   }
   100% {
-    transform: translateY(-30px) translateX(15px);
+    transform: translateY(-25px) translateX(15px);
     opacity: 0;
   }
 }

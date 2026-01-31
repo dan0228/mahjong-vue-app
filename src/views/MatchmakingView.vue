@@ -13,10 +13,10 @@
         </div>
 
         <!-- タイトルへ戻るボタン -->
-        <div class="back-to-title-container">
-          <router-link to="/">
-            <img src="/assets/images/button/buckToTitle.png" alt="Back to Title" class="back-to-title-image" />
-          </router-link>
+        <div class="top-controls">
+          <button @click="goToTitle" class="back-button">
+            <img src="/assets/images/button/buckToTitle.png" :alt="$t('matchmaking.backToTitle')" />
+          </button>
         </div>
 
         <!-- 煙アニメーションのコンテナ -->
@@ -80,6 +80,10 @@ const openPlayerInfoPopup = (player) => {
 
 const closePlayerInfoPopup = () => {
   showPlayerInfoPopup.value = false;
+};
+
+const goToTitle = () => {
+  router.push({ name: 'Title' });
 };
 
 // --- マッチングロジック ---
@@ -237,29 +241,30 @@ onBeforeUnmount(() => {
   color: rgb(255, 255, 255);
   text-shadow: 3px 3px 3px #5a3b22;
 }
-.back-to-title-container {
+.top-controls {
   position: absolute;
   top: 10px;
   right: 10px;
   z-index: 20;
 }
 
-.back-to-title-container a { /* router-link (a tag) */
-  display: block;
-  width: 62px; /* Match image width */
-  height: 62px; /* Match image height (assuming square) */
+.back-button {
+  background: none;
+  border: none;
   cursor: pointer;
+  padding: 0;
+  z-index: 20;
 }
-.back-to-title-image {
+
+.back-button img {
   width: 62px;
   height: auto;
-  cursor: pointer;
-  transition: all 0.2s ease; /* transformとfilterの両方をアニメーション */
-  filter: drop-shadow(0px 0px 3px rgba(0, 0, 0, 0.8));
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.8));
+  transition: all 0.2s ease;
 }
-.back-to-title-image:hover {
+
+.back-button:hover img {
   transform: translateY(-4px);
-  filter: drop-shadow(0px 0px 3px rgba(0, 0, 0, 0.8));
 }
 .status-box {
   position: absolute;

@@ -11,6 +11,10 @@ export const useAudioStore = defineStore('audio', {
     isSwitchingBgm: false, // BGM切り替え処理中かどうかのフラグ
     isBgmPlaybackAllowed: false, // BGMの再生が許可されているかどうかのフラグ
     isWaitingForSilentEnd: false, // 遅延再生用の無音オーディオ再生中フラグ
+    // 特定のBGMの音量倍率を定義
+    bgmVolumeMultipliers: {
+      'takibi.mp3': 3.0, // 焚き火の音量に倍率を設定
+    },
   }),
   actions: {
     /**
@@ -71,7 +75,8 @@ export const useAudioStore = defineStore('audio', {
       localStorage.setItem('volume', this.volume);
       const audio = this.currentBgm ? this.audioPlayers.get(`/assets/sounds/${this.currentBgm}`) : null;
       if (audio) {
-        audio.volume = this.volume;
+        const multiplier = this.bgmVolumeMultipliers[this.currentBgm] || 1;
+        audio.volume = Math.min(1, this.volume * multiplier);
       }
     },
 
@@ -127,7 +132,8 @@ export const useAudioStore = defineStore('audio', {
 
       // 新しいBGMのAudioオブジェクトが存在する場合
       if (newAudio) {
-        newAudio.volume = this.volume; // 音量を設定
+        const multiplier = this.bgmVolumeMultipliers[newBgmName] || 1;
+        newAudio.volume = Math.min(1, this.volume * multiplier); // 倍率を考慮した音量を設定
         newAudio.loop = true; // ループ再生を有効化
 
         // オーディオが有効で、かつ再生が許可されている場合のみ再生

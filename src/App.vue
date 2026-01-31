@@ -241,7 +241,7 @@ onMounted(async () => {
     '/assets/sounds/NES-JP-A03-2(Stage2-Loop140).mp3',
     '/assets/sounds/GB-JP-A02-2(Menu-Loop105).mp3',
     '/assets/sounds/NES-JP-A01-2(Title-Loop115).mp3',
-    '/assets/sounds/打牌.mp3',
+    '/assets/sounds/dahai.mp3',
     '/assets/sounds/NES-JP-A04-2(Stage3-Loop125).mp3',
     '/assets/sounds/Percussive_Accent03-1(Dry).mp3',
     '/assets/sounds/Hyoshigi01-1.mp3',
@@ -253,6 +253,7 @@ onMounted(async () => {
     '/assets/sounds/Hit-Slap01-3(Dry).mp3',
     '/assets/sounds/Xylophone04-05(Fast-Long-3-Up).mp3',
     '/assets/sounds/NoBGM4sec.mp3',
+    '/assets/sounds/takibi.mp3',
   ];
 
   // --- 並列処理の定義 ---

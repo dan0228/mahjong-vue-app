@@ -62,7 +62,7 @@ const routes = [
     meta: {
       title: '対戦待機中 | よんじゃん！',
       description: 'オンライン対戦のマッチングを行っています。',
-      bgm: 'NES-JP-A02-2(Stage1-Loop110).mp3'
+      bgm: 'takibi.mp3'
     },
   },
 ];

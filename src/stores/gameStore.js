@@ -941,7 +941,7 @@ export const useGameStore = defineStore('game', {
 
       const audioStore = useAudioStore();
       if (!isStocking) {
-        audioStore.playSound('打牌.mp3');
+        audioStore.playSound('dahai.mp3');
       }
 
       const runDiscardLogic = () => {

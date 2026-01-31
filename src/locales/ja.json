@@ -601,7 +601,7 @@
     "status": {
       "searching": "待機中...",
       "ready": "準備完了！",
-      "countdown": "ゲーム開始まで...{count}",
+      "countdown": "{count}",
       "error": "エラーが発生しました。タイトルに戻ります。"
     }
   },

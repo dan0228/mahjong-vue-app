@@ -30,10 +30,10 @@
         </div>
 
         <div class="status-box">
-          <h1 class="status-text">{{ statusText }}</h1>
-          <h2 v-if="showCountdown" class="countdown-text">
-            {{ t('matchmaking.status.countdown', { count: countdown }) }}
-          </h2>
+          <h1 class="status-text">
+            {{ statusText }}
+            <span v-if="showCountdown" class="countdown-number">{{ countdown }}</span>
+          </h1>
         </div>
         
         <!-- プレイヤーアイコンをデータに基づいて配置 -->
@@ -63,10 +63,12 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/userStore';
+import { useAudioStore } from '@/stores/audioStore'; // 追加
 import PlayerInfoPopup from '@/components/PlayerInfoPopup.vue';
 
 const { t, locale } = useI18n();
 const userStore = useUserStore();
+const audioStore = useAudioStore(); // 追加
 const router = useRouter();
 
 // --- ポップアップ関連 ---
@@ -106,21 +108,24 @@ const allPlayers = computed(() => {
 const foundPlayers = ref([]);
 const statusKey = ref('searching'); // 'searching' or 'ready'
 const statusText = computed(() => t(`matchmaking.status.${statusKey.value}`));
-const countdown = ref(3);
+const countdown = ref(5);
 const showCountdown = ref(false);
 let countdownInterval = null;
 
 const startFinalSequence = () => {
-  statusKey.value = 'ready'; // テキストのキーを変更
-  showCountdown.value = true;
+  // 全員が揃ってから1秒待ってから「準備完了！」と表示し、カウントダウンを開始
+  setTimeout(() => {
+    statusKey.value = 'ready'; // テキストのキーを変更
+    showCountdown.value = true;
 
-  countdownInterval = setInterval(() => {
-    countdown.value--;
-    if (countdown.value === 0) {
-      clearInterval(countdownInterval);
-      router.push('/game');
-    }
-  }, 1000);
+    countdownInterval = setInterval(() => {
+      countdown.value--;
+      if (countdown.value === 0) {
+        clearInterval(countdownInterval);
+        router.push('/game');
+      }
+    }, 1000);
+  }, 1000); // 1秒の遅延
 };
 
 const simulateMatchmaking = () => {
@@ -130,7 +135,10 @@ const simulateMatchmaking = () => {
     delay += Math.random() * 1500 + 500; // 0.5秒から2秒のランダムな遅延
     setTimeout(() => {
       foundPlayers.value.push(player);
+      audioStore.playSound('Hyoshigi01-1.mp3'); // ★追加
       if (foundPlayers.value.length === 4) {
+        // 全員が揃ったら、すぐにstartFinalSequenceを呼び出すのではなく、
+        // startFinalSequence内で1秒の遅延を設けるため、ここでは直接呼び出す
         startFinalSequence();
       }
     }, delay);
@@ -274,27 +282,48 @@ onBeforeUnmount(() => {
   padding: 10px 40px;
   border-radius: 10px;
   z-index: 5;
-  display: flex;
-  flex-direction: column;
+  /* display: flex; */ /* 削除 */
+  /* flex-direction: column; */ /* 削除 */
   align-items: center;
-  gap: 5px;
+  /* gap: 5px; */ /* 削除 */
 }
 .status-text {
   color: white;
   font-size: 18px;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);
   white-space: nowrap;
+  display: flex; /* 追加 */
+  align-items: baseline; /* 追加 */
+  gap: 5px; /* 追加 */
 }
-.countdown-text {
-  color: #ffd700;
-  font-size: 18px;
+.countdown-number { /* 新しいクラスのスタイル */
+  color: white;
+  font-size: 24px; /* 少し大きくする */
   text-shadow: 1px 1px 3px rgba(0, 0, 0, 1);
+  font-weight: bold;
 }
 .player-slot {
   position: absolute;
   transform: translate(-50%, -50%);
   z-index: 10;
   cursor: pointer;
+  animation: bounceIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; /* 弾むアニメーションを追加 */
+  opacity: 0; /* 初期状態は非表示 */
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 50px) scale(0.5); /* 少し下から小さく出現 */
+  }
+  70% {
+    opacity: 1;
+    transform: translate(-50%, -55%) scale(1.1); /* 定位置より少し大きく弾む */
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1); /* 定位置に収まる */
+  }
 }
 .player-slot::after {
   content: '';

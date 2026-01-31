@@ -5,6 +5,11 @@
     <div class="scaler" :style="scalerStyle">
       <!-- 透明なコンテンツラッパー -->
       <div class="content-wrapper">
+        <!-- 煙アニメーションのコンテナ -->
+        <div class="smoke-container">
+          <img v-for="i in 10" :key="i" src="/assets/images/back/smoke.png" class="smoke-particle" :style="{ '--i': i }" />
+        </div>
+
         <div class="status-box">
           <h1 class="status-text">{{ $t('matchmaking.status.searching') }}</h1>
         </div>
@@ -95,6 +100,7 @@ onBeforeUnmount(() => {
   position: relative;
   /* 背景は外側で指定するため、ここは透明 */
   background: transparent; 
+  overflow: hidden;
 }
 
 /* status-textを囲む半透明のボックス */
@@ -106,6 +112,7 @@ onBeforeUnmount(() => {
   background-color: rgba(0, 0, 0, 0.4);
   padding: 10px 40px;
   border-radius: 10px;
+  z-index: 5; /* 煙より手前に表示 */
 }
 
 .status-text {
@@ -118,6 +125,7 @@ onBeforeUnmount(() => {
 .player-slot {
   position: absolute;
   transform: translate(-50%, -50%);
+  z-index: 5; /* 煙より手前に表示 */
 }
 
 .player-avatar {
@@ -131,30 +139,70 @@ onBeforeUnmount(() => {
 
 /* 各プレイヤーのアイコンの位置とサイズをCSSで個別に指定 */
 #player-1 {
-  top: 500px;
-  left: 100px;
-  width: 70px;
-  height: 70px;
+  top: 450px;
+  left: 130px;
+  width: 60px;
+  height: 60px;
 }
 
 #player-2 {
-  top: 500px;
-  left: 260px;
-  width: 70px;
-  height: 70px;
+  top: 450px;
+  left: 240px;
+  width: 60px;
+  height: 60px;
 }
 
 #player-3 {
-  top: 420px;
-  left: 30px;
-  width: 70px;
-  height: 70px;
+  top: 415px;
+  left: 45px;
+  width: 55px;
+  height: 55px;
 }
 
 #player-4 {
-  top: 420px;
-  left: 330px;
-  width: 70px;
-  height: 70px;
+  top: 415px;
+  left: 320px;
+  width: 55px;
+  height: 55px;
+}
+
+/* 煙アニメーション */
+.smoke-container {
+  position: absolute;
+  bottom: 35%;
+  left: 52%;
+  width: 1px;
+  height: 1px;
+}
+
+.smoke-particle {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 60px; /* 煙の基本サイズ */
+  height: auto;
+  transform-origin: center bottom;
+  animation-name: rise;
+  animation-duration: 12s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  opacity: 0;
+  /* カスタムプロパティを使って遅延をばらけさせる */
+  animation-delay: calc(var(--i) * 1.2s);
+}
+
+@keyframes rise {
+  0% {
+    transform: translate(-50%, 20px) scale(0.2);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.4;
+  }
+  100% {
+    /* 右上に向かって移動 */
+    transform: translate(0px, -150px) scale(1.5) rotate(60deg);
+    opacity: 0;
+  }
 }
 </style>

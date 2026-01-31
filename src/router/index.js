@@ -62,7 +62,8 @@ const routes = [
     meta: {
       title: '対戦待機中 | よんじゃん！',
       description: 'オンライン対戦のマッチングを行っています。',
-      bgm: 'takibi.mp3'
+      bgm: 'NES-JP-A02-2(Stage1-Loop110).mp3',
+      loopingSounds: ['takibi.mp3']
     },
   },
 ];
@@ -106,19 +107,26 @@ router.afterEach((to) => {
 router.beforeEach((to, from, next) => {
   const audioStore = useAudioStore();
 
-  // BGMが変更される場合
+  // Stop any previously looping sounds
+  audioStore.stopAllLoopingSounds();
+
+  // Set new BGM if it's different
   if (to.meta.bgm !== from.meta.bgm) {
     audioStore.setBgm(to.meta.bgm);
   }
 
-  // アプリケーションの初回ロード時、または直接URLアクセス時にタイトル画面へリダイレクト
-  // from.name が undefined の場合、それはアプリケーションが初めてロードされたことを意味します。
-  // この時、直接 '/game' などにアクセスされた場合でも、必ず '/'(Title) に一度遷移させます。
-  // ただし、メール認証のコールバックページは例外的に直接アクセスを許可します。
+  // Play any new looping sounds
+  if (to.meta.loopingSounds) {
+    to.meta.loopingSounds.forEach(soundName => {
+      audioStore.playSound(soundName, { loop: true });
+    });
+  }
+
+  // Handle initial load redirect
   if (from.name === undefined && to.name !== 'Title' && to.name !== 'EmailConfirmed') {
-    next({ name: 'Title' }); // タイトル画面へリダイレクト
+    next({ name: 'Title' });
   } else {
-    next(); // 通常のナビゲーションを続行
+    next();
   }
 });
 

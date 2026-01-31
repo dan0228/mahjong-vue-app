@@ -108,9 +108,9 @@ const wakeUp = () => {
 .wake-up-text { /* ボタンからテキスト表示に変更 */
   position: absolute; /* 画像の右下に配置 */
   bottom: 58%; /* 調整可能 */
-  right: 30%; /* 調整可能 */
+  right: 17%; /* 調整可能 */
   color: #F5F5DC; /* 薄いベージュ色 */
-  font-size: 1.5em; /* 大きめのフォントサイズ */
+  font-size: 2.8em; /* 大きめのフォントサイズ */
   font-family: "Yomogi", cursive;
   text-shadow: 
     0 0 5px rgba(255, 255, 255, 0.5), /* Soft glow */
@@ -144,11 +144,12 @@ const wakeUp = () => {
   bottom: 8px; /* 画面下からの距離 */
   right: 10px; /* 画面右からの距離 */
   color: #F5F5DC; /* 薄いベージュ色 */
-  font-size: 0.8em; /* 小さめのフォントサイズ */
+  font-size: 1.3em; /* 小さめのフォントサイズ */
   font-family: "Yomogi", cursive;
   text-shadow: 
     0 0 3px rgba(255, 255, 255, 0.3), /* Soft glow */
     1px 1px 0 #4a2c12; /* 影 */
   pointer-events: none; /* クリックイベントを無効化 */
+  animation: slow-blink 3s infinite alternate; /* 点滅アニメーション */
 }
 </style>

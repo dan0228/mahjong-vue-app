@@ -13,10 +13,19 @@ export const useAudioStore = defineStore('audio', {
     isWaitingForSilentEnd: false, // 遅延再生用の無音オーディオ再生中フラグ
     // 特定のBGMの音量倍率を定義
     bgmVolumeMultipliers: {
-      'takibi.mp3': 3.0, // 焚き火の音量に倍率を設定
+      'takibi.mp3': 0.8, // 焚き火の音量に倍率を設定
+      'NES-JP-A02-2(Stage1-Loop110).mp3': 0.3, // マッチング画面のBGMを少し小さく
     },
+    loopingSoundEffects: new Map(), // ループ中の効果音を管理
   }),
   actions: {
+    stopAllLoopingSounds() {
+      this.loopingSoundEffects.forEach((soundData) => {
+        soundData.player.pause();
+        soundData.player.currentTime = 0;
+      });
+      this.loopingSoundEffects.clear();
+    },
     /**
      * 指定されたURLのオーディオファイルをプリロードします。
      * 読み込みの進捗状況をコールバック関数で報告できます。
@@ -56,13 +65,23 @@ export const useAudioStore = defineStore('audio', {
     toggleAudio() {
       this.isAudioEnabled = !this.isAudioEnabled;
       localStorage.setItem('isAudioEnabled', this.isAudioEnabled);
-      const audio = this.currentBgm ? this.audioPlayers.get(`/assets/sounds/${this.currentBgm}`) : null;
-      if (audio) {
-        if (this.isAudioEnabled) {
-          audio.play();
-        } else {
-          audio.pause();
+
+      if (!this.isAudioEnabled) {
+        // Disable audio: pause everything
+        this.audioPlayers.forEach(audio => {
+          if (!audio.paused) {
+            audio.pause();
+          }
+        });
+      } else {
+        // Enable audio: resume what should be playing
+        const bgmAudio = this.currentBgm ? this.audioPlayers.get(`/assets/sounds/${this.currentBgm}`) : null;
+        if (bgmAudio && this.isBgmPlaybackAllowed) {
+          bgmAudio.play().catch(e => console.error("BGM resume failed", e));
         }
+        this.loopingSoundEffects.forEach(soundData => {
+          soundData.player.play().catch(e => console.error("Looping SE resume failed", e));
+        });
       }
     },
 
@@ -73,11 +92,18 @@ export const useAudioStore = defineStore('audio', {
     setVolume(newVolume) {
       this.volume = Math.max(0, Math.min(1, newVolume));
       localStorage.setItem('volume', this.volume);
-      const audio = this.currentBgm ? this.audioPlayers.get(`/assets/sounds/${this.currentBgm}`) : null;
-      if (audio) {
+
+      // Update BGM volume
+      const bgmAudio = this.currentBgm ? this.audioPlayers.get(`/assets/sounds/${this.currentBgm}`) : null;
+      if (bgmAudio) {
         const multiplier = this.bgmVolumeMultipliers[this.currentBgm] || 1;
-        audio.volume = Math.min(1, this.volume * multiplier);
+        bgmAudio.volume = Math.min(1, this.volume * multiplier);
       }
+
+      // Update looping sound effects volume
+      this.loopingSoundEffects.forEach((soundData) => {
+        soundData.player.volume = Math.min(1, this.volume * soundData.volume);
+      });
     },
 
     /**
@@ -191,18 +217,33 @@ export const useAudioStore = defineStore('audio', {
     /**
      * 指定された効果音を再生します。
      * @param {string} sound - 再生する効果音のファイル名 (例: 'se.mp3')。
+     * @param {object} [options] - 再生オプション。
+     * @param {boolean} [options.loop=false] - ループ再生するかどうか。
+     * @param {number} [options.volume=1] - グローバル音量に対する倍率。
      */
-    playSound(sound) {
-      if (this.isAudioEnabled) { // isAudioEnabled を使用
+    playSound(sound, options = {}) {
+      const { loop = false } = options;
+
+      if (this.isAudioEnabled) {
         let audio = this.audioPlayers.get(`/assets/sounds/${sound}`);
         if (!audio) {
-          // プリロードされていない場合、新しいAudioオブジェクトを作成して保存
           audio = new Audio(`/assets/sounds/${sound}`);
           this.audioPlayers.set(`/assets/sounds/${sound}`, audio);
         }
-        audio.currentTime = 0; // 再生位置を先頭にリセット
-        audio.volume = this.volume; // 音量を設定
-        audio.play().catch(e => console.error("効果音の再生に失敗しました:", e)); // 再生を開始 (エラーハンドリング)
+        
+        // bgmVolumeMultipliersを唯一の音量倍率のソースとする
+        const volumeMultiplier = this.bgmVolumeMultipliers[sound] || 1;
+
+        audio.currentTime = 0;
+        audio.volume = Math.min(1, this.volume * volumeMultiplier);
+        audio.loop = loop;
+        
+        audio.play().catch(e => console.error(`効果音の再生に失敗しました: ${sound}`, e));
+
+        if (loop) {
+          // 後で全体の音量を変更した際に再適用できるよう、倍率を保存しておく
+          this.loopingSoundEffects.set(sound, { player: audio, volume: volumeMultiplier });
+        }
       }
     },
 
@@ -219,19 +260,14 @@ export const useAudioStore = defineStore('audio', {
             audio.pause();
           }
         });
-      } else {
-        // ページが再び表示されたら、有効なオーディオを再生再開
-        this.audioPlayers.forEach((audio, url) => {
-          // BGMの場合
-          if (url.includes(this.currentBgm) && this.isAudioEnabled && this.isBgmPlaybackAllowed) {
-            audio.play().catch(e => console.error("BGMの再生に失敗しました:", e));
-          }
-          // SEの場合 (BGMと異なるURLで、かつSEが有効な場合)
-          else if (!url.includes(this.currentBgm) && this.isAudioEnabled) {
-            // 効果音は通常ループしないため、再生中のものだけを再開
-            // ここでは、効果音は短いため、再開の必要はないと判断し、BGMのみを対象とする
-            // もし効果音も長時間再生されるものがある場合は、別途状態管理が必要
-          }
+      } else if (this.isAudioEnabled) {
+        // ページが再び表示されたら、再生すべきものを再開
+        const bgmAudio = this.currentBgm ? this.audioPlayers.get(`/assets/sounds/${this.currentBgm}`) : null;
+        if (bgmAudio && this.isBgmPlaybackAllowed) {
+          bgmAudio.play().catch(e => console.error("BGM resume on visibility change failed", e));
+        }
+        this.loopingSoundEffects.forEach(soundData => {
+          soundData.player.play().catch(e => console.error("Looping SE resume on visibility change failed", e));
         });
       }
     },

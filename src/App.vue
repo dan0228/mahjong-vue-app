@@ -254,6 +254,7 @@ onMounted(async () => {
     '/assets/sounds/Xylophone04-05(Fast-Long-3-Up).mp3',
     '/assets/sounds/NoBGM4sec.mp3',
     '/assets/sounds/takibi.mp3',
+    '/assets/sounds/NES-JP-A02-2(Stage1-Loop110).mp3',
   ];
 
   // --- 並列処理の定義 ---

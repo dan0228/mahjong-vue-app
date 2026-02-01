@@ -1186,6 +1186,12 @@ export const useGameStore = defineStore('game', {
         return;
       }
 
+      // ★追加: 既にオンラインゲームが開始されている、またはマッチメイキング中の場合は何もしない
+      if (this.isGameOnline || this.onlineGameId) {
+        console.log('[GameStore] Matchmaking already in progress or game online. Skipping request.');
+        return;
+      }
+
       console.log('[GameStore] Calling connectToServer()...');
       this.connectToServer(); // サーバーへの接続を開始
 
@@ -1200,6 +1206,7 @@ export const useGameStore = defineStore('game', {
         emitRequest();
       } else if (socket) {
         console.log('[GameStore] Socket not connected yet, waiting for "connect" event.');
+        // ★修正: socket.once を使用して、一度だけイベントを送信するようにする
         socket.once('connect', emitRequest);
       } else {
         console.error('[GameStore] Matchmaking request failed: Socket.io instance not created.');

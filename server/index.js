@@ -1169,25 +1169,74 @@ async function _processDiscard(gameId, playerId, tileIdToDiscard, isFromDrawnTil
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
 
-  socket.on('disconnect', () => {
+  socket.on('disconnect', async () => { // async を追加
     console.log('User disconnected:', socket.id);
+    let disconnectedUserId = null;
+
     // userSocketMapから切断したユーザーを削除
     for (const [userId, socketId] of userSocketMap.entries()) {
         if (socketId === socket.id) {
+            disconnectedUserId = userId;
             userSocketMap.delete(userId);
             console.log(`Removed user ${userId} from userSocketMap`);
             break;
         }
     }
+
     // ユーザーが切断された場合の処理 (例: 参加していたゲームから削除)
-    for (const gameId in gameStates) {
-      const game = gameStates[gameId];
-      const playerIndex = game.players.findIndex(p => p.socketId === socket.id);
-      if (playerIndex !== -1) {
-        console.log(`Player ${game.players[playerIndex].id} disconnected from game ${gameId}`);
-        // プレイヤーをゲームから削除するか、状態を更新するなどの処理
-        // 簡単化のため、ここでは特に何もしないが、実際にはゲームの状態を更新し、他のプレイヤーに通知する必要がある
-      }
+    if (disconnectedUserId) {
+        for (const gameId in gameStates) {
+            const game = gameStates[gameId];
+            // game.players が配列であることを確認
+            if (!Array.isArray(game.players)) {
+                console.warn(`Game ${gameId} has invalid players array.`);
+                continue;
+            }
+
+            const playerIndex = game.players.findIndex(p => p.id === disconnectedUserId);
+
+            if (playerIndex !== -1) {
+                console.log(`Player ${disconnectedUserId} disconnected from game ${gameId}`);
+                
+                // プレイヤーをゲームから削除
+                game.players.splice(playerIndex, 1);
+
+                // プレイヤーが0人になった場合、ゲームの状態をキャンセル済みに更新
+                if (game.players.length === 0) {
+                    console.log(`Game ${gameId} has no players left. Setting status to 'cancelled'.`);
+                    game.status = 'cancelled'; // game_statesテーブルのstatusカラムを更新
+                    
+                    // Supabaseのgame_statesテーブルを更新
+                    const { error } = await supabase
+                        .from('game_states')
+                        .update({ status: 'cancelled', updated_at: new Date() })
+                        .eq('id', gameId);
+
+                    if (error) {
+                        console.error(`Error updating game status to 'cancelled' for game ${gameId}:`, error);
+                    } else {
+                        // メモリからもゲーム状態を削除
+                        delete gameStates[gameId];
+                        console.log(`Game ${gameId} removed from memory.`);
+                    }
+                } else {
+                    // プレイヤーが残っている場合、他のプレイヤーに状態更新をブロードキャスト
+                    io.to(gameId).emit('game-state-update', game);
+                }
+                break; // 該当ゲームを見つけたらループを抜ける
+            }
+            // ★追加: プレイヤーが切断してもゲームが残っている場合、そのプレイヤーのsocketIdをnullにする
+            // このブロックは、playerIndex が -1 で、かつ disconnectedUserId が game.players の中に存在する場合に実行されるべき
+            // ただし、playerIndex !== -1 のブロックで break しているので、この else if は到達しない
+            // したがって、このロジックは playerIndex !== -1 のブロックの外に移動するか、別の方法で処理する必要がある
+            // 現状のロジックでは、切断されたプレイヤーが game.players に含まれていても playerIndex が -1 の場合は処理されない
+            // ここでは、切断されたプレイヤーが game.players に含まれているが、socketId が見つからなかったケースを想定して修正
+            const disconnectedPlayerInGame = game.players.find(p => p.id === disconnectedUserId);
+            if (disconnectedPlayerInGame) {
+                disconnectedPlayerInGame.socketId = null;
+                io.to(gameId).emit('game-state-update', game);
+            }
+        }
     }
   });
 

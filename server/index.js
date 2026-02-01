@@ -641,9 +641,6 @@ async function declareMinkan(gameId, playerId, targetPlayerId, tileToKan) {
 // 嶺上牌を引いた後の処理を行うヘルパー関数
 function _handlePostRinshanDraw(gameId, playerId) {
 
-// 嶺上牌を引いた後の処理を行うヘルパー関数
-function _handlePostRinshanDraw(gameId, playerId) {
-
   const gameState = gameStates[gameId];
   if (!gameState) return;
 

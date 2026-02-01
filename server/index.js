@@ -1406,7 +1406,7 @@ io.on('connection', (socket) => {
 
   // クライアントがストックした牌を使用することを要求する
   socket.on('useStockedTile', async ({ gameId, playerId }) => {
-    const gameState = gameStates[gameStates[gameId]];
+    const gameState = gameStates[gameId];
     if (!gameState) return socket.emit('gameError', { message: 'ゲームが見つかりません。' });
     if (gameState.currentTurnPlayerId !== playerId) return socket.emit('gameError', { message: 'あなたのターンではありません。' });
     
@@ -1818,6 +1818,8 @@ io.on('connection', (socket) => {
     
     await updateAndBroadcastGameState(gameId, gameState);
   });
+
+});
 
 const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, () => {

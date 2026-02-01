@@ -8,7 +8,6 @@
 // --- ライブラリのインポート ---
 import { createApp } from 'vue'; // Vueアプリケーションを作成するためのコア機能
 import { createPinia } from 'pinia'; // 状態管理ライブラリ
-import { inject } from '@vercel/analytics'; // Vercelの分析ツール
 
 // --- 内部モジュールのインポート ---
 import App from './App.vue'; // ルートコンポーネント
@@ -16,10 +15,6 @@ import router from './router'; // ルーター設定
 import i18n from './i18n'; // 国際化(i18n)設定
 import { useGameStore, GAME_PHASES } from './stores/gameStore'; // ゲーム状態ストア
 import './styles/main.css'; // グローバルCSS
-
-// --- Vercel Analytics の初期化 ---
-// パフォーマンスや利用状況の分析を有効にします
-inject();
 
 // --- Vueアプリケーションのインスタンス化とプラグインの適用 ---
 const app = createApp(App);

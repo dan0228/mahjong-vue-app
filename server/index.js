@@ -46,9 +46,8 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 // 現在アクティブなゲームの状態を保持するオブジェクト
 const gameStates = {};
 
-// マッチング待機中のプレイヤーを保持するキュー
-// 各要素: { userId: string, socketId: string, gameId: string | null }
-let matchmakingQueue = [];
+// ユーザーIDとソケットIDをマッピングするMap
+const userSocketMap = new Map();
 
 // ルートハンドラ
 app.get('/', (req, res) => {
@@ -1167,6 +1166,14 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
+    // userSocketMapから切断したユーザーを削除
+    for (const [userId, socketId] of userSocketMap.entries()) {
+        if (socketId === socket.id) {
+            userSocketMap.delete(userId);
+            console.log(`Removed user ${userId} from userSocketMap`);
+            break;
+        }
+    }
     // ユーザーが切断された場合の処理 (例: 参加していたゲームから削除)
     for (const gameId in gameStates) {
       const game = gameStates[gameId];
@@ -1181,6 +1188,9 @@ io.on('connection', (socket) => {
 
   // クライアントがゲームに参加する
   socket.on('joinGame', async ({ gameId, userId }) => {
+    if (userId) {
+        userSocketMap.set(userId, socket.id);
+    }
     socket.join(gameId); // Socket.ioルームに参加
 
     if (!gameStates[gameId]) {
@@ -1222,220 +1232,75 @@ io.on('connection', (socket) => {
   });
 
   // クライアントがマッチメイキングを要求する
-  socket.on('requestMatchmaking', async ({ userId }) => {
-    console.log(`Matchmaking request from user: ${userId}, socket: ${socket.id}`);
+  socket.on('requestMatchmaking', async ({ userId, rating }) => {
+    console.log(`Matchmaking request from user: ${userId}, rating: ${rating}, socket: ${socket.id}`);
 
-    // 既にキューにいる場合は何もしない
-    if (matchmakingQueue.some(p => p.userId === userId)) {
-      console.log(`User ${userId} is already in matchmaking queue.`);
-      return;
+    if (!userId || rating === undefined) {
+        return socket.emit('gameError', { message: 'ユーザー情報またはレーティングが不足しています。' });
     }
 
-    // 既存のゲームを探す
-    let foundGame = null;
-    for (const queueEntry of matchmakingQueue) {
-      if (queueEntry.gameId) {
-        const { data: gameStateData, error: fetchError } = await supabase
-          .from('game_states')
-          .select('*')
-          .eq('id', queueEntry.gameId)
-          .single();
+    // ユーザーとソケットIDをマップ
+    userSocketMap.set(userId, socket.id);
 
-        if (fetchError || !gameStateData) {
-          console.error(`Error fetching game state for matchmaking: ${fetchError?.message}`);
-          continue;
+    try {
+        // SupabaseのRPC関数を呼び出す
+        const { data: matchData, error: rpcError } = await supabase.rpc('find_or_create_match', {
+            p_user_id: userId,
+            p_user_rating: rating
+        });
+
+        if (rpcError) {
+            throw rpcError;
         }
 
-        const playersInGame = [
-          gameStateData.player_1_id,
-          gameStateData.player_2_id,
-          gameStateData.player_3_id,
-          gameStateData.player_4_id
-        ].filter(Boolean);
-
-        if (playersInGame.length < 4) {
-          foundGame = { gameId: queueEntry.gameId, players: playersInGame };
-          break;
+        // rpcは配列で結果を返す
+        if (!matchData || matchData.length === 0) {
+            throw new Error('マッチングに失敗しました。RPCからデータが返されませんでした。');
         }
-      }
-    }
 
-    if (foundGame) {
-      // 既存のゲームに参加
-      const playerNumber = foundGame.players.length + 1;
-      const updateColumn = `player_${playerNumber}_id`;
+        const { game_id, is_full, players } = matchData[0];
 
-      const { error: updateError } = await supabase
-        .from('game_states')
-        .update({ [updateColumn]: userId })
-        .eq('id', foundGame.gameId);
+        if (!players) {
+            console.log("Waiting for more players...");
+            // プレイヤーが自分しかいない場合、playersはnullになりうるので、自分自身の情報でリストを作成
+            const { data: self, error: userError } = await supabase.from('users').select('id, username, avatar_url, rating').eq('id', userId).single();
+            if (userError) throw userError;
 
-      if (updateError) {
-        console.error(`Error adding player to existing game: ${updateError.message}`);
-        socket.emit('gameError', { message: '既存のゲームへの参加に失敗しました。' });
-        return;
-      }
+            if (self) {
+                 socket.emit('matchmaking-update', { gameId: game_id, players: [self] });
+            }
+            return;
+        }
 
-      // マッチングキューにプレイヤーを追加
-      matchmakingQueue.push({ userId, socketId: socket.id, gameId: foundGame.gameId });
+        // 参加している全プレイヤーに通知
+        for (const player of players) {
+            const playerSocketId = userSocketMap.get(player.id);
+            if (playerSocketId) {
+                const playerSocket = io.sockets.sockets.get(playerSocketId);
+                if (playerSocket) {
+                    // イベント送信
+                    if (is_full) {
+                        playerSocket.emit('game-found', { gameId: game_id, players: players });
+                    } else {
+                        playerSocket.emit('matchmaking-update', { gameId: game_id, players: players });
+                    }
+                }
+            } else {
+                console.warn(`Socket ID for player ${player.id} not found in userSocketMap.`);
+            }
+        }
 
-      // ゲームの状態を再取得して、プレイヤー数をチェック
-      const { data: updatedGameStateData, error: refetchError } = await supabase
-        .from('game_states')
-        .select('*')
-        .eq('id', foundGame.gameId)
-        .single();
-
-      if (refetchError || !updatedGameStateData) {
-        console.error(`Error refetching game state after player join: ${refetchError?.message}`);
-        socket.emit('gameError', { message: 'ゲーム状態の更新に失敗しました。' });
-        return;
-      }
-
-      const currentPlayersInGame = [
-        updatedGameStateData.player_1_id,
-        updatedGameStateData.player_2_id,
-        updatedGameStateData.player_3_id,
-        updatedGameStateData.player_4_id
-      ].filter(Boolean);
-
-      if (currentPlayersInGame.length === 4) {
-        // ゲームが満員になったら、全プレイヤーに通知
-        console.log(`Game ${foundGame.gameId} is full. Notifying players.`);
-        io.to(foundGame.gameId).emit('game-found', { gameId: foundGame.gameId });
-
-        // マッチングキューからこのゲームに関連するエントリを削除
-        matchmakingQueue = matchmakingQueue.filter(entry => entry.gameId !== foundGame.gameId);
-      } else {
-        // まだ満員でない場合は、参加したプレイヤーにゲームIDを通知
-        socket.emit('matchmaking-started', { gameId: foundGame.gameId });
-      }
-
-    } else {
-      // 新しいゲームを作成
-      const newGameId = `game_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-      const initialGameState = {
-        players: [], // 初期プレイヤーは空
-        wall: [],
-        deadWall: [],
-        dealerIndex: null,
-        doraIndicators: [],
-        uraDoraIndicators: [],
-        currentTurnPlayerId: null,
-        gamePhase: GAME_PHASES.WAITING_TO_START,
-        lastDiscardedTile: null,
-        drawnTile: null,
-        showResultPopup: false,
-        resultMessage: '',
-        showFinalResultPopup: false,
-        finalResultDetails: {
-          rankedPlayers: [],
-          consecutiveWins: 0,
-        },
-        currentRound: { wind: 'east', number: 1 },
-        honba: 0,
-        riichiSticks: 0,
-        turnCount: 0,
-        playerTurnCount: {},
-        isIppatsuChance: {},
-        isChankanChance: false,
-        chankanTile: null,
-        rinshanKaihouChance: false,
-        lastActionPlayerId: null,
-        canDeclareRon: {},
-        canDeclarePon: {},
-        canDeclareMinkan: {},
-        canDeclareAnkan: {},
-        canDeclareKakan: {},
-        playerActionEligibility: {},
-        actionResponseQueue: [],
-        waitingForPlayerResponses: [],
-        playerResponses: {},
-        isFuriTen: {},
-        activeActionPlayerId: null,
-        isDoujunFuriTen: {},
-        riichiDiscardOptions: [],
-        isDeclaringRiichi: {},
-        agariResultDetails: {
-          roundWind: null,
-          roundNumber: null,
-          honba: 0,
-          doraIndicators: [],
-          uraDoraIndicators: [],
-          winningHand: [],
-          agariTile: null,
-          yakuList: [],
-          totalFans: 0,
-          fu: 0,
-          score: 0,
-          scoreName: null,
-          pointChanges: {},
-        },
-        anyPlayerMeldInFirstRound: false,
-        gameMode: 'online', // オンラインモードに設定
-        ruleMode: 'stock', // デフォルトでストックルールに設定
-        shouldAdvanceRound: false,
-        nextDealerIndex: null,
-        shouldEndGameAfterRound: false,
-        pendingKanDoraReveal: false,
-        animationState: {
-          type: null,
-          playerId: null,
-        },
-        riichiDiscardedTileId: {},
-        previousConsecutiveWins: 0,
-        showDealerDeterminationPopup: false,
-        dealerDeterminationResult: {
-          players: [],
-        },
-        lastCoinGain: 0,
-        isRiichiBgmActive: false,
-        previousBgm: null,
-        highlightedDiscardTileId: null,
-        stockSelectionCountdown: 1.3,
-        stockSelectionTimerId: null,
-        stockAnimationPlayerId: null,
-        isTenpaiDisplay: {},
-
-        // Online Match State
-        onlineGameId: newGameId,
-        isGameOnline: true,
-        localPlayerId: null, // これはクライアント側で設定される
-        playersReadyForNextRound: [],
-        isGameReady: false,
-        isAppReady: false,
-        hasGameStarted: false,
-      };
-
-      const { error: insertError } = await supabase
-        .from('game_states')
-        .insert([
-          {
-            id: newGameId,
-            game_data: initialGameState,
-            player_1_id: userId,
-            status: 'in_progress',
-            created_at: new Date(),
-            updated_at: new Date(),
-          }
-        ]);
-
-      if (insertError) {
-        console.error(`Error creating new game: ${insertError.message}`);
-        socket.emit('gameError', { message: '新しいゲームの作成に失敗しました。' });
-        return;
-      }
-
-      // マッチングキューにプレイヤーを追加
-      matchmakingQueue.push({ userId, socketId: socket.id, gameId: newGameId });
-
-      console.log(`New game ${newGameId} created by user ${userId}.`);
-      socket.emit('matchmaking-started', { gameId: newGameId });
+    } catch (error) {
+        console.error('Matchmaking error:', error);
+        socket.emit('gameError', { message: `マッチング処理中にエラーが発生しました。` });
     }
   });
 
   // クライアントがゲームの初期化を要求する
   socket.on('initializeGame', async ({ gameId, userId }) => {
+    if (userId) {
+        userSocketMap.set(userId, socket.id);
+    }
     if (!gameStates[gameId]) {
       console.error(`Game ${gameId} not found for initialization.`);
       socket.emit('gameError', { message: 'ゲームが見つかりません。' });

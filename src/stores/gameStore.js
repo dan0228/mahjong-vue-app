@@ -308,30 +308,18 @@ export const useGameStore = defineStore('game', {
           console.error('Socket error:', error);
         });
 
-        socket.on('matchmaking-started', ({ gameId }) => {
-          console.log(`マッチメイキング開始: ゲームID ${gameId}`);
+        socket.on('matchmaking-update', ({ gameId, players }) => {
+          console.log(`マッチング状況更新: ゲームID ${gameId}, プレイヤー:`, players);
           this.onlineGameId = gameId;
           this.isGameOnline = true;
           this.localPlayerId = userStore.profile.id; // 自分のIDを設定
-          // マッチング待機画面で表示する情報を更新
-          // 例: プレイヤーリストを初期化し、自分だけを表示
-          this.players = [{
-            id: this.localPlayerId,
-            name: userStore.profile.username,
-            avatar_url: userStore.profile.avatar_url,
-            cat_coins: userStore.profile.cat_coins,
-            rating: userStore.profile.rating,
-            isAi: false,
-            // その他の初期プロパティ
-          }];
-          // MatchmakingView がこの状態を監視してUIを更新する
+          this.players = players; // サーバーから受け取ったプレイヤーリストで更新
         });
 
-        socket.on('game-found', ({ gameId }) => {
-          console.log(`ゲームが見つかりました: ゲームID ${gameId}`);
+        socket.on('game-found', ({ gameId, players }) => {
+          console.log(`ゲームが見つかりました: ゲームID ${gameId}, プレイヤー:`, players);
+          this.players = players; // 最終的なプレイヤーリストで更新
           this.setOnlineGame({ gameId, localUserId: userStore.profile.id });
-          this.initializeOnlineGame(); // サーバーにゲーム初期化を要求
-          // MatchmakingView がこの状態を監視してUIを更新する
         });
       }
     },
@@ -1199,8 +1187,9 @@ export const useGameStore = defineStore('game', {
       this.connectToServer(); // サーバーへの接続を開始
 
       const emitRequest = () => {
-        socket.emit('requestMatchmaking', { userId: userStore.profile.id });
-        console.log(`マッチメイキング要求をサーバーに送信しました。ユーザーID: ${userStore.profile.id}`);
+        // ratingをペイロードに追加
+        socket.emit('requestMatchmaking', { userId: userStore.profile.id, rating: userStore.profile.rating });
+        console.log(`マッチメイキング要求をサーバーに送信しました。ユーザーID: ${userStore.profile.id}, レーティング: ${userStore.profile.rating}`);
       };
 
       if (socket && socket.connected) {

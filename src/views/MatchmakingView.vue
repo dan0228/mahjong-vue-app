@@ -36,15 +36,26 @@
           </h1>
         </div>
         
-        <!-- プレイヤーアイコンをデータに基づいて配置 -->
+        <!-- プレイヤー表示エリア -->
         <div 
-          v-for="player in foundPlayers"
-          :key="player.id"
-          :id="'player-' + player.id"
-          class="player-slot"
-          @click="openPlayerInfoPopup(player)"
+          v-for="(slot, index) in displaySlots"
+          :key="slot.key"
+          :class="['player-slot', `slot-${index + 1}`]"
         >
-          <img :src="player.avatar_url" alt="Player Avatar" class="player-avatar" />
+          <!-- プレイヤーがいる場合 -->
+          <template v-if="!slot.isWaiting">
+            <img 
+              :src="slot.player.avatar_url || '/assets/images/info/cat_icon_1.png'" 
+              alt="Player Avatar" 
+              class="player-avatar"
+              @click="openPlayerInfoPopup(slot.player)"
+            />
+            <span class="player-name">{{ slot.player.username }}</span>
+          </template>
+          <!-- 待機中の場合 -->
+          <template v-else>
+            <div class="waiting-indicator">?</div>
+          </template>
         </div>
 
         <!-- プレイヤー情報ポップアップ -->
@@ -93,6 +104,7 @@ const showPlayerInfoPopup = ref(false);
 const selectedPlayer = ref(null);
 
 const openPlayerInfoPopup = (player) => {
+  if (!player) return;
   selectedPlayer.value = player;
   showPlayerInfoPopup.value = true;
 };
@@ -107,8 +119,32 @@ const goToTitle = () => {
 };
 
 // --- マッチングロジック ---
-// foundPlayers を gameStore.players に変更
-const foundPlayers = computed(() => gameStore.players);
+// 4つの表示スロットを管理するためのcomputed property
+const displaySlots = computed(() => {
+  const slots = [];
+  const players = gameStore.players || [];
+  const totalSlots = 4;
+
+  for (let i = 0; i < totalSlots; i++) {
+    if (i < players.length) {
+      // 参加者がいるスロット
+      slots.push({
+        isWaiting: false,
+        player: players[i],
+        key: players[i].id
+      });
+    } else {
+      // 参加者がいない空きスロット
+      slots.push({
+        isWaiting: true,
+        player: null,
+        key: `waiting-${i}`
+      });
+    }
+  }
+  return slots;
+});
+
 
 // statusKey のロジックを調整
 const statusKey = computed(() => {
@@ -122,7 +158,14 @@ const statusKey = computed(() => {
   return 'searching'; // 初期状態
 });
 
-const statusText = computed(() => t(`matchmaking.status.${statusKey.value}`));
+const statusText = computed(() => {
+    const baseText = t(`matchmaking.status.${statusKey.value}`);
+    if (gameStore.onlineGameId && !gameStore.isGameReady) {
+        const playerCount = gameStore.players?.length || 0;
+        return `${baseText} (${playerCount} / 4)`;
+    }
+    return baseText;
+});
 const countdown = ref(3); // カウントダウンの初期値は3のまま
 const showCountdown = ref(false);
 let countdownInterval = null;
@@ -293,25 +336,27 @@ onBeforeUnmount(() => {
 }
 .player-slot {
   position: absolute;
-  transform: translate(-50%, -50%);
   z-index: 10;
-  cursor: pointer;
-  animation: bounceIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; /* 弾むアニメーションを追加 */
-  opacity: 0; /* 初期状態は非表示 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  animation: bounceIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  opacity: 0;
 }
 
 @keyframes bounceIn {
   0% {
     opacity: 0;
-    transform: translate(-50%, 50px) scale(0.5); /* 少し下から小さく出現 */
+    transform: scale(0.5);
   }
   70% {
     opacity: 1;
-    transform: translate(-50%, -55%) scale(1.1); /* 定位置より少し大きく弾む */
+    transform: scale(1.1);
   }
   100% {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1); /* 定位置に収まる */
+    transform: scale(1);
   }
 }
 .player-slot::after {
@@ -334,26 +379,67 @@ onBeforeUnmount(() => {
   border: 1px solid rgb(41, 2, 2);
   box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
   object-fit: cover;
+  cursor: pointer;
 }
-#player-1 {
-  top: 450px;
-  left: 130px;
-  width: 60px;
-  height: 60px;
+.player-name {
+  color: white;
+  font-size: 12px;
+  text-shadow: 1px 1px 2px black;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 1px 8px;
+  border-radius: 8px;
+  white-space: nowrap;
+  z-index: 1;
 }
-#player-2 {
-  top: 450px;
-  left: 240px;
-  width: 60px;
-  height: 60px;
+.waiting-indicator {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 2px dashed rgba(255, 255, 255, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 24px;
+  font-weight: bold;
+  animation: pulse 2s infinite;
 }
-#player-3 {
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+}
+
+.slot-1 {
   top: 415px;
   left: 45px;
   width: 55px;
   height: 55px;
 }
-#player-4 {
+.slot-2 {
+  top: 450px;
+  left: 130px;
+  width: 60px;
+  height: 60px;
+}
+.slot-3 {
+  top: 450px;
+  left: 240px;
+  width: 60px;
+  height: 60px;
+}
+.slot-4 {
   top: 415px;
   left: 320px;
   width: 55px;

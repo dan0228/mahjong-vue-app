@@ -1233,25 +1233,29 @@ io.on('connection', (socket) => {
 
   // クライアントがマッチメイキングを要求する
   socket.on('requestMatchmaking', async ({ userId, rating }) => {
-    console.log(`Matchmaking request from user: ${userId}, rating: ${rating}, socket: ${socket.id}`);
+    console.log(`[1/5] Matchmaking request received from user: ${userId}, rating: ${rating}, socket: ${socket.id}`);
 
     if (!userId || rating === undefined) {
+        console.error('[ERROR] Invalid request: userId or rating is missing.');
         return socket.emit('gameError', { message: 'ユーザー情報またはレーティングが不足しています。' });
     }
 
     // ユーザーとソケットIDをマップ
     userSocketMap.set(userId, socket.id);
+    console.log(`[2/5] User ${userId} mapped to socket ${socket.id}`);
 
     try {
-        // SupabaseのRPC関数を呼び出す
+        console.log('[3/5] Calling RPC "find_or_create_match"...');
         const { data: matchData, error: rpcError } = await supabase.rpc('find_or_create_match', {
             p_user_id: userId,
             p_user_rating: rating
         });
 
         if (rpcError) {
+            console.error('[ERROR] RPC call failed:', rpcError);
             throw rpcError;
         }
+        console.log('[4/5] RPC call successful. Result:', JSON.stringify(matchData, null, 2));
 
         // rpcは配列で結果を返す
         if (!matchData || matchData.length === 0) {
@@ -1259,6 +1263,7 @@ io.on('connection', (socket) => {
         }
 
         const { game_id, is_full, players } = matchData[0];
+        console.log(`[5/5] Processing match result. Game ID: ${game_id}, Is Full: ${is_full}`);
 
         if (!players) {
             console.log("Waiting for more players...");
@@ -1291,7 +1296,7 @@ io.on('connection', (socket) => {
         }
 
     } catch (error) {
-        console.error('Matchmaking error:', error);
+        console.error('[FATAL] An error occurred in matchmaking process:', error);
         socket.emit('gameError', { message: `マッチング処理中にエラーが発生しました。` });
     }
   });

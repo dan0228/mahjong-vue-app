@@ -275,17 +275,19 @@ export const useGameStore = defineStore('game', {
       const userStore = useUserStore(); // userStoreを取得
 
       if (!socket || !socket.connected) {
+        console.log('[GameStore] Connecting to game server at', GAME_SERVER_URL);
         socket = io(GAME_SERVER_URL);
 
         socket.on('connect', () => {
-          console.log('Connected to game server:', socket.id);
-          // 接続後、ゲームに参加するなどの処理を行う
-          // 例: サーバーにユーザーIDを送信してセッションを確立
-          // socket.emit('registerUser', { userId: this.localPlayerId });
+          console.log('[GameStore] Successfully connected to game server with socket ID:', socket.id);
+        });
+
+        socket.on('connect_error', (err) => {
+          console.error('[GameStore] Connection failed:', err.message);
         });
 
         socket.on('disconnect', () => {
-          console.log('Disconnected from game server');
+          console.log('[GameStore] Disconnected from game server');
           this.isGameOnline = false;
           this.onlineGameId = null; // 切断時にゲームIDをリセット
           this.localPlayerId = null;
@@ -1180,25 +1182,27 @@ export const useGameStore = defineStore('game', {
     async requestMatchmaking() {
       const userStore = useUserStore();
       if (!userStore.profile || !userStore.profile.id) {
-        console.error('マッチメイキング要求: ユーザープロフィールまたはIDが見つかりません。');
+        console.error('[GameStore] Matchmaking request failed: User profile or ID not found.');
         return;
       }
 
+      console.log('[GameStore] Calling connectToServer()...');
       this.connectToServer(); // サーバーへの接続を開始
 
       const emitRequest = () => {
+        console.log('[GameStore] Emitting "requestMatchmaking" event...');
         // ratingをペイロードに追加
         socket.emit('requestMatchmaking', { userId: userStore.profile.id, rating: userStore.profile.rating });
-        console.log(`マッチメイキング要求をサーバーに送信しました。ユーザーID: ${userStore.profile.id}, レーティング: ${userStore.profile.rating}`);
+        console.log(`[GameStore] "requestMatchmaking" event sent. UserID: ${userStore.profile.id}, Rating: ${userStore.profile.rating}`);
       };
 
       if (socket && socket.connected) {
         emitRequest();
       } else if (socket) {
-        // 接続が確立されるのを待ってから要求を送信
+        console.log('[GameStore] Socket not connected yet, waiting for "connect" event.');
         socket.once('connect', emitRequest);
       } else {
-        console.error('マッチメイキング要求: Socket.ioインスタンスが作成されていません。');
+        console.error('[GameStore] Matchmaking request failed: Socket.io instance not created.');
       }
     },
 

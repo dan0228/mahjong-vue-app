@@ -516,9 +516,7 @@ const isUsernameLengthValid = computed(() => getCharacterWidth(username.value) <
 const isUsernameProfane = computed(() => containsProfanity(username.value));
 const isFormValid = computed(() => isUsernameNotEmpty.value && isUsernameLengthValid.value && !isUsernameProfane.value);
 
-const hasPendingProfileChanges = computed(() => {
-  return username.value !== userStore.profile?.username || selectedFile.value !== null;
-});
+
 
 // --- 保存処理 ---
 const saveProfile = async () => {

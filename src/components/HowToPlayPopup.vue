@@ -1,4 +1,5 @@
 <template>
+  <!-- eslint-disable vue/no-v-html -->
   <transition name="scroll">
     <div
       v-if="show"

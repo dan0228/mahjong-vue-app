@@ -60,7 +60,7 @@ import { useI18n } from 'vue-i18n';
 import { useZoomLock } from '@/composables/useZoomLock';
 import { useUserStore } from '@/stores/userStore'; // userStoreをインポート
 
-const { t, locale } = useI18n(); // i18nの翻訳関数とロケールを取得
+const { locale } = useI18n(); // i18nのロケールを取得
 
 // ズーム防止機能を有効化
 useZoomLock();
@@ -77,7 +77,6 @@ const props = defineProps({
   },
   dealerDeterminationResults: {
     type: Array,
-    required: true,
     default: () => [],
   },
 });

@@ -257,7 +257,6 @@ const props = defineProps({
   },
   resultDetails: {
     type: Object,
-    required: true,
     default: () => ({ pointChanges: {} })
   },
 });
@@ -415,12 +414,7 @@ const isYakumanResult = computed(() => {
   return props.resultDetails.scoreName && props.resultDetails.scoreName.includes('役満');
 });
 
-/**
- * 結果が数え役満かどうかを判定します。
- */
-const isKazoeYakuman = computed(() => {
-  return props.resultDetails.scoreName === '数え役満';
-});
+
 
 /**
  * 役のリストの数に応じて、表示する列数を決定するCSSクラスを返します。

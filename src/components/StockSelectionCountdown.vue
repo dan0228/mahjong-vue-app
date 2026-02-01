@@ -42,7 +42,7 @@
 <script setup>
 import { computed, defineProps } from 'vue';
 import { useGameStore } from '@/stores/gameStore';
-import { useI18n } from 'vue-i18n';
+
 
 const props = defineProps({
   showCountdown: { type: Boolean, default: false },
@@ -51,7 +51,7 @@ const props = defineProps({
 });
 
 const gameStore = useGameStore();
-const { t } = useI18n();
+
 
 // 円ゲージのサイズ設定
 const gaugeSize = computed(() => props.position === 'bottom' ? 80 : 40); // SVG size

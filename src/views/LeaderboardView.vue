@@ -31,6 +31,7 @@
         </button>
       </div>
 
+      <!-- eslint-disable-next-line vue/no-v-html -->
       <h1><span v-html="$t('leaderboardView.title')" /></h1>
 
       <!-- ランキング種類切り替えUI (New) -->
@@ -129,7 +130,7 @@ import { useViewportHeight } from '@/composables/useViewportHeight';
 import { useAudioStore } from '@/stores/audioStore';
 import { supabase } from '@/supabaseClient';
 import { useUserStore } from '@/stores/userStore';
-import LoadingIndicator from '@/components/LoadingIndicator.vue';
+
 
 // --- リアクティブな状態とストア ---
 const router = useRouter();
@@ -233,19 +234,7 @@ const displayLeaderboard = computed(() => {
   return rankedData;
 });
 
-const getCharacterWidth = (str) => {
-  let width = 0;
-  if (!str) return 0;
-  for (let i = 0; i < str.length; i++) {
-    const charCode = str.charCodeAt(i);
-    if ((charCode >= 0x0020 && charCode <= 0x007e) || (charCode >= 0xff61 && charCode <= 0xff9f)) {
-      width += 1;
-    } else {
-      width += 2;
-    }
-  }
-  return width;
-};
+
 
 const activeRankingTitle = computed(() => {
   if (activeRankingType.value === 'rating') {

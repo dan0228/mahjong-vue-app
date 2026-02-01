@@ -793,7 +793,7 @@ function applyPointChanges(gameId) {
 }
 
 // ゲーム終了処理を行うヘルパー関数
-async function handleGameEnd(gameId, options = { showLoading: true }) {
+async function handleGameEnd(gameId) {
   const gameState = gameStates[gameId];
   if (!gameState) return;
 

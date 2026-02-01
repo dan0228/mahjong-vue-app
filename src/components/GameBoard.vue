@@ -347,10 +347,10 @@
   import { computed, onMounted, ref, onBeforeUnmount, watch } from 'vue';
   import { useI18n } from 'vue-i18n';
   import { useRouter } from 'vue-router';
-  import { supabase } from '@/supabaseClient';
-  import PlayerHand from './PlayerHand.vue';
+  
+  
   import { useGameStore } from '@/stores/gameStore';
-  import { useAudioStore } from '@/stores/audioStore';
+  
   import { useUserStore } from '@/stores/userStore';
   import CenterTableInfo from './CenterTableInfo.vue';
   import DiscardPile from './DiscardPile.vue';
@@ -362,7 +362,7 @@
   import YakuListPopup from './YakuListPopup.vue';
   import PlayerInfoPopup from './PlayerInfoPopup.vue'; // PlayerInfoPopupをインポート
   // import Wall from './Wall.vue'; // 将来的に使用
-  import * as mahjongLogic from '@/services/mahjongLogic'; // 役判定などに使用
+  
   import { GAME_PHASES } from '@/stores/gameStore'; // ゲームフェーズ定数
 
 /**
@@ -374,7 +374,7 @@
   // --- リアクティブ変数とストアの初期化 ---
   const { t } = useI18n();
   const gameStore = useGameStore();
-  const audioStore = useAudioStore();
+  
   const userStore = useUserStore();
   const router = useRouter();
   const showRulesPopup = ref(false); // ルールポップアップの表示状態
@@ -734,7 +734,7 @@
   };
 
   // --- ライフサイクルフック ---
-  let realtimeChannel = null;
+  
 
   onMounted(() => {
     // オンラインゲームの初期化ロジックはGameView.vueに移動しました。

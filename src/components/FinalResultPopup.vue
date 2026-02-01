@@ -92,12 +92,12 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits, computed, ref, watch, onMounted } from 'vue';
+import { defineProps, defineEmits, computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useGameStore } from '@/stores/gameStore';
 import { useUserStore } from '@/stores/userStore'; // userStoreをインポート
 import { useZoomLock } from '@/composables/useZoomLock';
-import * as htmlToImage from 'html-to-image';
+
 
 /**
  * 最終結果表示用ポップアップコンポーネント。
@@ -116,10 +116,7 @@ useZoomLock();
 // ポップアップのコンテンツ部分への参照
 const popupContentRef = ref(null);
 
-const myPlayerRank = computed(() => {
-  const myResult = props.finalResultDetails.rankedPlayers.find(p => p.id === 'player1');
-  return myResult ? myResult.rank : null;
-});
+
 
 const props = defineProps({
   /**
@@ -136,7 +133,6 @@ const props = defineProps({
    */
   finalResultDetails: {
     type: Object,
-    required: true,
     default: () => ({ rankedPlayers: [], consecutiveWins: 0 }),
   },
 });
@@ -201,32 +197,9 @@ function getTranslatedPlayerName(player) {
   return player.name; // フォールバック
 }
 
-/**
- * 表示用の連勝数を算出します。
- * 負けた直後（現在の連勝数が0）は、途切れる前の連勝数を表示します。
- */
-const winsToDisplay = computed(() => {
-  // 現在の連勝数が0で、直前の連勝数が1以上の場合、直前の連勝数を表示
-  if (props.finalResultDetails.consecutiveWins === 0 && gameStore.previousConsecutiveWins > 0) {
-    return gameStore.previousConsecutiveWins;
-  }
-  // それ以外の場合は現在の連勝数を表示
-  return props.finalResultDetails.consecutiveWins;
-});
 
-/**
- * 連勝数に応じたメッセージを生成します。
- * 連勝が途切れた場合と連勝中の場合でメッセージを切り替えます。
- */
-const winsMessage = computed(() => {
-  const wins = winsToDisplay.value;
-  // 現在の連勝数が0で、直前の連勝数が1以上の場合、「〇連勝！」
-  if (props.finalResultDetails.consecutiveWins === 0 && gameStore.previousConsecutiveWins > 0) {
-    return t('finalResultPopup.wins', { count: wins });
-  }
-  // それ以外（連勝中）の場合、「〇連勝中！」
-  return t('finalResultPopup.winStreak', { count: wins });
-});
+
+
 
 /**
  * 現在の日時をフォーマットした文字列を返します。
@@ -278,174 +251,9 @@ function getPlayerIcon(playerId) {
   return null;
 }
 
-/**
- * デバイスがモバイルであるか簡易的に判定します。
- * @returns {boolean} モバイルデバイスであればtrue。
- */
-function isMobile() {
-  const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-  return /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
-}
 
-/**
- * X (旧Twitter) に結果を投稿します。
- * スクリーンショットを生成し、Web Share API またはクリップボード経由で共有します。
- */
-async function postToX() {
-  if (!popupContentRef.value) return;
 
-  // --- PC向けロジックは後で実行するため、先行するウィンドウオープンは削除 ---
 
-  const fontCssLink = document.querySelector('link[rel="stylesheet"][href*="fonts.googleapis.com"]');
-  let newStyleElement = null;
-  
-  // --- クリーンアップ用変数の準備 ---
-
-  const nodeToCapture = popupContentRef.value;
-  let tempNode = null;
-  const originalChildren = [];
-  const originalPadding = nodeToCapture.style.padding;
-  const originalInlineStyles = {
-    background: nodeToCapture.style.background,
-    backgroundColor: nodeToCapture.style.backgroundColor,
-    backgroundImage: nodeToCapture.style.backgroundImage,
-    backgroundSize: nodeToCapture.style.backgroundSize,
-    backgroundPosition: nodeToCapture.style.backgroundPosition,
-  };
-
-  try {
-    nodeToCapture.style.backgroundColor = '#f0fff0';
-    nodeToCapture.style.backgroundImage = [
-      'radial-gradient(circle at 50% 100%, transparent 30%, #cce8cc 30%, #cce8cc 45%, transparent 45%)',
-      'radial-gradient(circle at 0 50%, transparent 30%, #cce8cc 30%, #cce8cc 45%, transparent 45%)',
-      'radial-gradient(circle at 100% 50%, transparent 30%, #cce8cc 30%, #cce8cc 45%, transparent 45%)',
-      'radial-gradient(circle at 50% 0, transparent 30%, #cce8cc 30%, #cce8cc 45%, transparent 45%)'
-    ].join(', ');
-    nodeToCapture.style.backgroundSize = '50px 50px';
-    nodeToCapture.style.backgroundPosition = '25px 25px, 0 25px, 25px 0, 0 0';
-
-    const scale = 3;
-    let options;
-
-    if (fontCssLink) {
-      fontCssLink.disabled = true;
-      const cssText = await (await fetch(fontCssLink.href)).text();
-      newStyleElement = document.createElement('style');
-      newStyleElement.appendChild(document.createTextNode(cssText));
-      document.head.appendChild(newStyleElement);
-    }
-
-    if (isMobile()) {
-      tempNode = document.createElement('div');
-      tempNode.style.textAlign = 'center';
-      tempNode.style.fontFamily = "'Noto Sans JP', sans-serif";
-      tempNode.style.padding = '40px 20px';
-      tempNode.style.background = 'transparent';
-
-      const titleElement = document.createElement('h1');
-      titleElement.textContent = t('titleView.altLogo');
-      titleElement.style.color = '#4a4a4a';
-      titleElement.style.fontSize = '2.2em';
-      titleElement.style.whiteSpace = 'nowrap';
-      titleElement.style.fontWeight = 'bold';
-      titleElement.style.margin = '0 0 20px 0';
-      tempNode.appendChild(titleElement);
-
-      const winsElement = document.createElement('p');
-      if (winsToDisplay.value > 0) {
-        winsElement.textContent = winsMessage.value;
-      } else {
-        winsElement.textContent = t('finalResultPopup.wins', { count: 0 });
-      }
-      winsElement.style.color = '#ff9800';
-      winsElement.style.fontSize = '2.5em';
-      winsElement.style.fontWeight = 'bold';
-      winsElement.style.margin = '0 0 20px 0';
-      tempNode.appendChild(winsElement);
-
-      const timestampElement = document.createElement('div');
-      timestampElement.textContent = formattedTimestamp.value;
-      timestampElement.style.color = '#7d6b6b';
-      timestampElement.style.fontSize = '0.9em';
-      tempNode.appendChild(timestampElement);
-
-      for (const child of nodeToCapture.children) {
-        originalChildren.push(child);
-        child.style.display = 'none';
-      }
-      
-      nodeToCapture.style.padding = '20px';
-      nodeToCapture.appendChild(tempNode);
-    }
-
-    options = {
-      width: nodeToCapture.offsetWidth * scale,
-      height: nodeToCapture.offsetHeight * scale,
-      style: {
-        transform: `scale(${scale})`,
-        transformOrigin: 'top left'
-      },
-      cacheBust: true
-    };
-
-    const blob = await htmlToImage.toBlob(nodeToCapture, options);
-    if (!blob) {
-      throw new Error('画像のBlob生成に失敗しました。');
-    }
-
-    const file = new File([blob], 'mahjong-result.png', { type: 'image/png' });
-    const baseText = t('finalResultPopup.tweetText', { count: winsToDisplay.value });
-    const gameUrl = "https://mahjong-vue-app.vercel.app";
-
-    if (isMobile() && navigator.share && navigator.canShare({ files: [file] })) {
-      const captionText = `\n${gameUrl}\n${baseText}`;
-      await navigator.share({
-        files: [file],
-        title: t('finalResultPopup.title'),
-        text: captionText,
-      });
-    } else if (!isMobile()) {
-      try {
-        const clipboardItem = new ClipboardItem({ 'image/png': blob });
-        await navigator.clipboard.write([clipboardItem]);
-        
-        const pastePrompt = t('finalResultPopup.pastePromptPC');
-        const pcCaptionText = `${pastePrompt}\n\n${baseText}\n${gameUrl}`;
-
-        const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(pcCaptionText)}`;
-        window.open(twitterUrl, '_blank');
-
-      } catch (err) {
-        console.error("クリップボードへの画像のコピーに失敗しました: ", err);
-        alert(t('finalResultPopup.imageCopiedError'));
-      }
-    }
-
-  } catch (err) {
-    console.error(`Xへの共有準備中にエラーが発生しました: `, err);
-    alert(t('finalResultPopup.clipboardCopyError'));
-  } finally {
-    nodeToCapture.style.background = originalInlineStyles.background;
-    nodeToCapture.style.backgroundColor = originalInlineStyles.backgroundColor;
-    nodeToCapture.style.backgroundImage = originalInlineStyles.backgroundImage;
-    nodeToCapture.style.backgroundSize = originalInlineStyles.backgroundSize;
-    nodeToCapture.style.backgroundPosition = originalInlineStyles.backgroundPosition;
-
-    if (isMobile() && tempNode) {
-      nodeToCapture.removeChild(tempNode);
-      originalChildren.forEach(child => {
-        child.style.display = '';
-      });
-      nodeToCapture.style.padding = originalPadding;
-    }
-    if (fontCssLink) {
-      fontCssLink.disabled = false;
-    }
-    if (newStyleElement) {
-      document.head.removeChild(newStyleElement);
-    }
-  }
-}
 </script>
 
 <style scoped>

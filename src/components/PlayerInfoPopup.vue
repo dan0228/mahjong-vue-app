@@ -3,7 +3,7 @@
     <div
       v-if="show"
       class="popup-overlay"
-      @click="$emit('close')"
+      @click="emit('close')"
     >
       <div
         class="player-info-popup"
@@ -45,8 +45,10 @@
 </template>
 
 <script setup>
-import { defineProps, computed } from 'vue';
+import { defineProps, computed, defineEmits } from 'vue';
 import { useI18n } from 'vue-i18n';
+
+const emit = defineEmits(['close']);
 
 const props = defineProps({
   show: {

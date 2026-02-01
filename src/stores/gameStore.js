@@ -332,7 +332,7 @@ export const useGameStore = defineStore('game', {
       this.gameMode = 'online';
       this.setRuleMode('stock');
 
-      console.log(`オンライン対戦を開始します。ゲームID: ${gameId}, ユーザーID: ${localPlayerId}`);
+      console.log(`オンライン対戦を開始します。ゲームID: ${gameId}, ユーザーID: ${localUserId}`);
 
       this.connectToServer(); // サーバーに接続
 
@@ -1285,7 +1285,7 @@ export const useGameStore = defineStore('game', {
         this.players.forEach(p => pointChanges[p.id] = 0);
 
         if (tenpaiPlayers.length > 0 && tenpaiPlayers.length < 4) {
-          const totalPayment = 3000;
+          
           let paymentPerNoten = 0;
           let incomePerTenpai = 0;
 

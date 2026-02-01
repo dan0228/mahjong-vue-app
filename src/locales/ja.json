@@ -45,16 +45,16 @@
         "<strong>字牌：</strong>東・南・西・北・白・發・中"
       ],
       "handCompositionTitle": "<strong>手牌の構成：</strong>",
-      "handComposition": "通常は13枚の手牌ですが、「よんじゃん！」では<strong>4枚</strong>です（1枚引いて合計5枚）。<br><strong>「面子（メンツ）」</strong>と呼ばれる3枚セット(222や567など)と、<strong>「対子（トイツ）」</strong>と呼ばれる2枚セット(88や99など)を揃えるのが基本です。<br>「よんじゃん！」では、<strong>1面子 + 1対子</strong>の形を作ればアガリです！"
+      "handComposition": "通常は13枚の手牌ですが、「よんじゃん！」では<strong>4枚</strong>です（1枚引いて合計5枚）。\n<strong>「面子（メンツ）」</strong>と呼ばれる3枚セット(222や567など)と、<strong>「対子（トイツ）」</strong>と呼ばれる2枚セット(88や99など)を揃えるのが基本です。\n「よんじゃん！」では、<strong>1面子 + 1対子</strong>の形を作ればアガリです！"
     },
     "section3": {
       "title": "基本の流れ",
-      "intro": "麻雀は「局」という単位で進行します。<br>※「よんじゃん！」は東場のみ（東風戦）。",
+      "intro": "麻雀は「局」という単位で進行します。\n※「よんじゃん！」は東場のみ（東風戦）。",
       "flow": [
         "各局で「親」と「子」が決まり、親から順番に牌を引きます。",
         "親がアガれば次局も親を継続（連荘）。",
         "親が負けるか、誰もアガれずに終わる（流局）と、親は次の人に移ります。",
-        "東1局 → 東2局 → 東3局 → 東4局 と進み、東4局が終わるとゲーム終了。<br>最終得点が一番高い人の勝利です！"
+        "東1局 → 東2局 → 東3局 → 東4局 と進み、東4局が終わるとゲーム終了。\n最終得点が一番高い人の勝利です！"
       ],
       "roundFlowTitle": "<strong>1局の流れ：</strong>",
       "roundFlow": [
@@ -583,9 +583,9 @@
   "gameModeSelection": {
     "title": "対戦ルール選択",
     "classic": "クラシック",
-    "classicDescription": "四牌で行う<br>基本のルール",
+    "classicDescription": "四牌で行う\n基本のルール",
     "stock": "ストック",
-    "stockDescription": "1枚だけ牌を<br>取り置き可能",
+    "stockDescription": "1枚だけ牌を\n取り置き可能",
     "recommended": "NEW！",
     "onlineMatchTitle": "オンライン対戦",
     "friendMatch": "友人対戦",

@@ -31,7 +31,7 @@ import { getTileImageUrl, tileToString } from '@/utils/tileUtils';
  * @property {string|null} riichiDiscardedTileId - リーチ宣言牌のID。この牌は横向きに表示されます。
  * @property {string|null} highlightedTileId - ハイライト表示する牌のID。
  */
-const props = defineProps({
+defineProps({
   tiles: {
     type: Array,
     default: () => []

@@ -109,7 +109,7 @@
 </template>
 
 <script setup>
-  import { computed, ref, onMounted, watch } from 'vue';
+  import { computed, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getTileImageUrl, tileToString } from '@/utils/tileUtils'; // 画像表示用ユーティリティ
 import { YONHAI_YAKU, YONHAI_YAKUMAN } from '@/services/mahjongLogic'; // 役定義をインポート

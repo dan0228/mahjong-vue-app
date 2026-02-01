@@ -30,10 +30,9 @@
             <div class="mode-title">
               {{ button.title }}
             </div>
-            <div
-              class="mode-description"
-              v-html="button.description"
-            />
+            <div class="mode-description">
+              {{ button.description }}
+            </div>
           </div>
 
           <!-- 友人対戦フォーム -->
@@ -83,7 +82,7 @@
 </template>
 
 <script setup>
-import { ref, computed, defineProps, defineEmits, onMounted } from 'vue';
+import { ref, computed, defineProps, defineEmits } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
@@ -270,6 +269,7 @@ const selectOption = (action) => {
   font-size: 0.9em;
   line-height: 1.2;
   color: #6d5f4b;
+  white-space: pre-line;
 }
 
 /* 友人対戦フォーム用のスタイル */

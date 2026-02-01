@@ -35,9 +35,9 @@
 
 <script setup>
 import { defineProps, defineEmits, computed } from 'vue';
-import { useI18n } from 'vue-i18n';
 
-const { t } = useI18n(); // i18nの翻訳関数を取得
+
+
 
 /**
  * コンポーネントのプロパティを定義。
@@ -47,10 +47,22 @@ const { t } = useI18n(); // i18nの翻訳関数を取得
  * @property {boolean} isNew - 新しく解放された名言かどうか。
  */
 const props = defineProps({
-  saying: String,
-  fortune: String,
-  sayingId: String,
-  isNew: Boolean,
+  saying: {
+    type: String,
+    default: ''
+  },
+  fortune: {
+    type: String,
+    default: ''
+  },
+  sayingId: {
+    type: String,
+    default: ''
+  },
+  isNew: {
+    type: Boolean,
+    default: false
+  },
 });
 
 /**

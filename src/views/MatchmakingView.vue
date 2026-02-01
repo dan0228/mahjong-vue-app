@@ -103,13 +103,12 @@ import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/userStore';
 import { useGameStore } from '@/stores/gameStore'; // gameStoreをインポート
-import { useAudioStore } from '@/stores/audioStore'; // 追加
+
 import PlayerInfoPopup from '@/components/PlayerInfoPopup.vue';
 
 const { t, locale } = useI18n();
 const userStore = useUserStore();
 const gameStore = useGameStore(); // gameStoreを定義
-const audioStore = useAudioStore(); // 追加
 const router = useRouter();
 
 // --- レスポンシブデザインのためのスケーリング ---

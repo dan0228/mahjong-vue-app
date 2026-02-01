@@ -125,7 +125,7 @@ const randomSaying = ref('');
 const randomSayingId = ref(null);
 const isNewSaying = ref(false);
 const isFading = ref(false);
-const previousBgm = ref(null);
+
 
 // --- 算出プロパティ ---
 const revealedSayings = computed(() => userStore.profile?.revealed_sayings || {});

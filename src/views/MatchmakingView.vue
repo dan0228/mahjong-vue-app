@@ -71,7 +71,7 @@
           <!-- プレイヤーがいる場合 -->
           <template v-if="!slot.isWaiting">
             <img 
-              :src="slot.player.avatar_url || '/assets/images/info/cat_icon_1.png'" 
+              :src="slot.player.avatar_url || '/assets/images/info/hito_icon_1.png'" 
               alt="Player Avatar" 
               class="player-avatar"
               @click="openPlayerInfoPopup(slot.player)"
@@ -154,11 +154,11 @@ const displaySlots = computed(() => {
 
   for (let i = 0; i < totalSlots; i++) {
     if (i < players.length) {
-      // 参加者がいるスロット
+      const player = players[i];
       slots.push({
-        isWaiting: false,
-        player: players[i],
-        key: players[i].id
+        isWaiting: !player.avatar_url, // avatar_url がない場合は待機中とみなす
+        player: player,
+        key: player.id
       });
     } else {
       // 参加者がいない空きスロット

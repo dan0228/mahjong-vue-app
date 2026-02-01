@@ -1,15 +1,25 @@
 <template>
   <transition name="scroll">
-    <div v-if="show" class="popup-overlay" @click.self="$emit('close')">
+    <div
+      v-if="show"
+      class="popup-overlay"
+      @click.self="$emit('close')"
+    >
       <div class="popup-content">
         <h2>{{ $t('rulePopup.title') }}</h2>
 
         <!-- Tab Buttons -->
         <div class="tab-buttons">
-          <button :class="{ active: activeTab === 'basic' }" @click="activeTab = 'basic'">
+          <button
+            :class="{ active: activeTab === 'basic' }"
+            @click="activeTab = 'basic'"
+          >
             {{ $t('rulePopup.tabs.basic') }}
           </button>
-          <button :class="{ active: activeTab === 'stock' }" @click="activeTab = 'stock'">
+          <button
+            :class="{ active: activeTab === 'stock' }"
+            @click="activeTab = 'stock'"
+          >
             {{ $t('rulePopup.tabs.stock') }}
           </button>
         </div>
@@ -17,8 +27,14 @@
         <div class="popup-body">
           <!-- Basic Rules Content -->
           <div v-if="activeTab === 'basic'">
-            <p class="subtitle">{{ $t('rulePopup.subtitle') }}</p>
-            <div v-for="section in basicRuleSections" :key="section" class="section">
+            <p class="subtitle">
+              {{ $t('rulePopup.subtitle') }}
+            </p>
+            <div
+              v-for="section in basicRuleSections"
+              :key="section"
+              class="section"
+            >
               <h3>{{ $t(`rulePopup.sections.${section}.title`) }}</h3>
               <p>{{ $t(`rulePopup.sections.${section}.description`) }}</p>
             </div>
@@ -33,22 +49,41 @@
             <div class="section">
               <h3>{{ $t('rulePopup.stockConditionsTitle') }}</h3>
               <ul>
-                <li v-for="item in $tm('rulePopup.stockConditions')" :key="item">{{ item }}</li>
+                <li
+                  v-for="item in $tm('rulePopup.stockConditions')"
+                  :key="item"
+                >
+                  {{ item }}
+                </li>
               </ul>
             </div>
             <div class="section">
               <h3>{{ $t('rulePopup.stockUsageTitle') }}</h3>
               <ul>
-                <li v-for="item in $tm('rulePopup.stockUsage')" :key="item">{{ item }}</li>
+                <li
+                  v-for="item in $tm('rulePopup.stockUsage')"
+                  :key="item"
+                >
+                  {{ item }}
+                </li>
               </ul>
             </div>
           </div>
         </div>
 
         <div class="close-button-container">
-          <button @click="$emit('close')" class="close-button">{{ $t('rulePopup.closeButton') }}</button>
+          <button
+            class="close-button"
+            @click="$emit('close')"
+          >
+            {{ $t('rulePopup.closeButton') }}
+          </button>
         </div>
-        <img src="/assets/images/back/fude.png" class="close-fude-image" alt="fude" />
+        <img
+          src="/assets/images/back/fude.png"
+          class="close-fude-image"
+          alt="fude"
+        >
       </div>
     </div>
   </transition>

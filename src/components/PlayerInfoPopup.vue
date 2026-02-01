@@ -1,18 +1,35 @@
 <template>
   <transition name="popup-animation">
-    <div v-if="show" class="popup-overlay" @click="$emit('close')">
-      <div class="player-info-popup" @click.stop>
+    <div
+      v-if="show"
+      class="popup-overlay"
+      @click="$emit('close')"
+    >
+      <div
+        class="player-info-popup"
+        @click.stop
+      >
         <!-- 1. プレイヤー名 (一番上の中央) -->
-        <h3 class="player-name">{{ player.name }}</h3>
+        <h3 class="player-name">
+          {{ player.name }}
+        </h3>
         
         <!-- 2. プレイヤーアイコン (左下) -->
         <div class="player-icon-area">
-          <img :src="playerIconSrc" alt="Player Avatar" class="player-avatar" />
+          <img
+            :src="playerIconSrc"
+            alt="Player Avatar"
+            class="player-avatar"
+          >
         </div>
 
         <!-- 3. レートと猫コイン (右下) -->
         <div class="player-stats-area">
-          <img :src="statBoardImageSrc" alt="Player Stats Board" class="stat-board-image" />
+          <img
+            :src="statBoardImageSrc"
+            alt="Player Stats Board"
+            class="stat-board-image"
+          >
           <div class="stat-values-overlay">
             <div class="stat-value-row rating-row">
               <span class="stat-value">{{ player.rating }}</span>

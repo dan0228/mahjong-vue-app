@@ -1,9 +1,15 @@
 <template>
   <transition name="scroll">
-    <div v-if="show" class="popup-overlay" @click.self="$emit('close')">
+    <div
+      v-if="show"
+      class="popup-overlay"
+      @click.self="$emit('close')"
+    >
       <div class="popup-content">
         <h2>{{ $t('yakuListPopup.title') }}</h2>
-        <p class="achievement-note">{{ $t('yakuListPopup.achievementNote') }}</p>
+        <p class="achievement-note">
+          {{ $t('yakuListPopup.achievementNote') }}
+        </p>
         <div class="popup-body">
           <div class="yaku-section">
             <table class="yaku-table">
@@ -11,11 +17,17 @@
                 <tr>
                   <th>{{ $t('yakuListPopup.yakuNameHeader') }}</th>
                   <th>{{ $t('yakuListPopup.hanHeader') }}</th>
-                  <th class="example-column">{{ $t('yakuListPopup.exampleHeader') }}</th>
+                  <th class="example-column">
+                    {{ $t('yakuListPopup.exampleHeader') }}
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="yaku in normalYakuList" :key="yaku.key" :class="{ 'achieved-yaku': isAchieved(yaku.key) }">
+                <tr
+                  v-for="yaku in normalYakuList"
+                  :key="yaku.key"
+                  :class="{ 'achieved-yaku': isAchieved(yaku.key) }"
+                >
                   <td>{{ $t(`yaku.${yaku.key}.name`) }}</td>
                   <td>
                     {{ $t('yakuListPopup.han', { n: yaku.fans }) }}
@@ -30,7 +42,8 @@
                           :key="index"
                           :src="determineTileImage(yaku, tile, index)"
                           :alt="determineTileAlt(yaku, tile, index)"
-                          :class="['tile-image-small', getTileSpecificClass(yaku, index, yaku.exampleTiles.length)]"/>
+                          :class="['tile-image-small', getTileSpecificClass(yaku, index, yaku.exampleTiles.length)]"
+                        >
                       </span>
                       <span v-else>-</span>
                     </div>
@@ -45,11 +58,17 @@
                 <tr>
                   <th>{{ $t('yakuListPopup.yakumanNameHeader') }}</th>
                   <th>{{ $t('yakuListPopup.yakumanValueHeader') }}</th>
-                  <th class="example-column">{{ $t('yakuListPopup.exampleHeader') }}</th>
+                  <th class="example-column">
+                    {{ $t('yakuListPopup.exampleHeader') }}
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="yakuman in yakumanList" :key="yakuman.key" :class="{ 'achieved-yaku': isAchieved(yakuman.key) }">
+                <tr
+                  v-for="yakuman in yakumanList"
+                  :key="yakuman.key"
+                  :class="{ 'achieved-yaku': isAchieved(yakuman.key) }"
+                >
                   <td>{{ $t(`yaku.${yakuman.key}.name`) }}</td>
                   <td>{{ yakuman.power === 1 ? $t('yakuListPopup.yakuman') : $t('yakuListPopup.multipleYakuman', { n: yakuman.power }) }}</td>
                   <td class="example-column">
@@ -60,7 +79,8 @@
                           :key="index"
                           :src="determineTileImage(yakuman, tile, index)"
                           :alt="determineTileAlt(yakuman, tile, index)"
-                          :class="['tile-image-small', getTileSpecificClass(yakuman, index, yakuman.exampleTiles.length)]"/>
+                          :class="['tile-image-small', getTileSpecificClass(yakuman, index, yakuman.exampleTiles.length)]"
+                        >
                       </span>
                       <span v-else>-</span>
                     </div>
@@ -71,9 +91,18 @@
           </div>
         </div>
         <div class="close-button-container">
-          <button @click="$emit('close')" class="close-button">{{ $t('yakuListPopup.closeButton') }}</button>
+          <button
+            class="close-button"
+            @click="$emit('close')"
+          >
+            {{ $t('yakuListPopup.closeButton') }}
+          </button>
         </div>
-        <img src="/assets/images/back/fude.png" class="close-fude-image" alt="fude" />
+        <img
+          src="/assets/images/back/fude.png"
+          class="close-fude-image"
+          alt="fude"
+        >
       </div>
     </div>
   </transition>

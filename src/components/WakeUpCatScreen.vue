@@ -1,7 +1,16 @@
 <template>
   <div class="wake-up-screen-overlay">
-    <div class="content-container" @click="wakeUp" :class="{ 'clickable-area': isSleeping }">
-      <img :src="currentGifSrc" alt="Cat" class="cat-gif" @load="onImageLoad" />
+    <div
+      class="content-container"
+      :class="{ 'clickable-area': isSleeping }"
+      @click="wakeUp"
+    >
+      <img
+        :src="currentGifSrc"
+        alt="Cat"
+        class="cat-gif"
+        @load="onImageLoad"
+      >
       
       <span 
         v-if="isSleeping && isImageLoaded" 

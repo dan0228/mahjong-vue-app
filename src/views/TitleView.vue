@@ -1,22 +1,32 @@
 <template>
-  <div class="title-view-container" :style="{ height: viewportHeight }">
+  <div
+    class="title-view-container"
+    :style="{ height: viewportHeight }"
+  >
     <!-- アプリケーションの準備ができていない場合はローディングインジケーターを表示 -->
     <LoadingIndicator v-if="!gameStore.isAppReady" />
 
     <!-- 背景スクロールコンテナ(imgタグは不要) -->
-    <div class="scrolling-background-container"></div>
+    <div class="scrolling-background-container" />
 
-    <div class="title-screen" :style="scalerStyle">
+    <div
+      class="title-screen"
+      :style="scalerStyle"
+    >
       <!-- 背景 -->
       <div class="title-background-container">
-        <div class="title-background-image"></div>
+        <div class="title-background-image" />
       </div>
 
       <!-- ヘッダー -->
       <header class="title-header">
         <!-- ユーザー情報 -->
         <div class="user-stats">
-          <img :src="boardImageSrc" alt="Board" class="board-image" />
+          <img
+            :src="boardImageSrc"
+            alt="Board"
+            class="board-image"
+          >
           <span class="rating-number-on-board">{{ userStore.profile?.rating ?? 1500 }}</span>
           <span class="cat-coins-number-on-board">{{ userStore.profile?.cat_coins || 0 }}</span>
         </div>
@@ -25,18 +35,50 @@
           <div class="top-controls">
             <div class="top-controls-group">
               <div class="language-selector">
-                <div class="language-flag language-flag-ja" :class="{ selected: locale === 'ja' }" @click="locale = 'ja'"></div>
-                <div class="language-flag language-flag-en" :class="{ selected: locale === 'en' }" @click="locale = 'en'"></div>
+                <div
+                  class="language-flag language-flag-ja"
+                  :class="{ selected: locale === 'ja' }"
+                  @click="locale = 'ja'"
+                />
+                <div
+                  class="language-flag language-flag-en"
+                  :class="{ selected: locale === 'en' }"
+                  @click="locale = 'en'"
+                />
               </div>
-              <button @click="showSettingsPopup = true" class="settings-button">
-                <img src="/assets/images/button/setting_button.png" alt="Settings" class="settings-button-image" />
+              <button
+                class="settings-button"
+                @click="showSettingsPopup = true"
+              >
+                <img
+                  src="/assets/images/button/setting_button.png"
+                  alt="Settings"
+                  class="settings-button-image"
+                >
               </button>
             </div>
           </div>
           <div class="volume-slider-container">
-            <input v-if="!isMobileDevice" type="range" min="0" max="1" step="0.01" :value="audioStore.volume" @input="handleVolumeChange" @change="handleVolumeChange" class="volume-slider" />
-            <button @click.stop="audioStore.toggleAudio()" class="audio-button">
-              <img :src="audioIconSrc" alt="Audio" class="audio-button-image" />
+            <input
+              v-if="!isMobileDevice"
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              :value="audioStore.volume"
+              class="volume-slider"
+              @input="handleVolumeChange"
+              @change="handleVolumeChange"
+            >
+            <button
+              class="audio-button"
+              @click.stop="audioStore.toggleAudio()"
+            >
+              <img
+                :src="audioIconSrc"
+                alt="Audio"
+                class="audio-button-image"
+              >
             </button>
           </div>
         </div>
@@ -44,41 +86,62 @@
 
       <!-- メインコンテンツ -->
       <main class="title-main-content">
-        <img :src="titleLogoSrc" :alt="$t('titleView.altLogo')" class="title-logo" />
+        <img
+          :src="titleLogoSrc"
+          :alt="$t('titleView.altLogo')"
+          class="title-logo"
+        >
         <div class="title-buttons-container">
           <!-- メインボタン -->
           <div class="button-group main-group">
             <button
               v-for="button in mainButtons"
               :key="button.id"
-              @click="button.action"
               :class="['menu-button', button.cssClass, { 'image-button': button.imgSrc }]"
+              @click="button.action"
             >
-              <img :src="button.imgSrc" :alt="button.alt" />
-              <span v-if="button.isUnderConstruction" class="construction-badge">Under Construction</span>
-              <div v-if="button.showStockText" class="stock-text">STOCK</div>
+              <img
+                :src="button.imgSrc"
+                :alt="button.alt"
+              >
+              <span
+                v-if="button.isUnderConstruction"
+                class="construction-badge"
+              >Under Construction</span>
+              <div
+                v-if="button.showStockText"
+                class="stock-text"
+              >
+                STOCK
+              </div>
             </button>
           </div>
           <!-- サブ・情報ボタン -->
           <div class="combined-button-group">
             <div class="sub-group">
-               <button
+              <button
                 v-for="button in subButtons"
                 :key="button.id"
-                @click="button.action"
                 :class="['menu-button', button.cssClass, { 'image-button': button.imgSrc }]"
+                @click="button.action"
               >
-                <img :src="button.imgSrc" :alt="button.alt" />
+                <img
+                  :src="button.imgSrc"
+                  :alt="button.alt"
+                >
               </button>
             </div>
             <div class="info-group">
-               <button
+              <button
                 v-for="button in infoButtons"
                 :key="button.id"
-                @click="button.action"
                 :class="['menu-button', button.cssClass, { 'image-button': button.imgSrc }]"
+                @click="button.action"
               >
-                <img :src="button.imgSrc" :alt="button.alt" />
+                <img
+                  :src="button.imgSrc"
+                  :alt="button.alt"
+                >
               </button>
             </div>
           </div>
@@ -87,18 +150,38 @@
 
       <!-- フッター -->
       <footer class="footer-info">
-        <div class="credit">BGM by OtoLogic(CC BY 4.0)</div>
-        <div class="x-account">
-          <a href="https://x.com/danAllGreen" target="_blank" rel="noopener noreferrer">{{ $t('titleView.officialX') }}</a>
+        <div class="credit">
+          BGM by OtoLogic(CC BY 4.0)
         </div>
-        <div class="version-info">v1.7.11 | 2026.1.26</div>
+        <div class="x-account">
+          <a
+            href="https://x.com/danAllGreen"
+            target="_blank"
+            rel="noopener noreferrer"
+          >{{ $t('titleView.officialX') }}</a>
+        </div>
+        <div class="version-info">
+          v1.7.11 | 2026.1.26
+        </div>
       </footer>
 
       <!-- ポップアップ -->
-      <RulePopup :show="showRulesPopup" @close="showRulesPopup = false" />
-      <YakuListPopup :show="showYakuListPopup" @close="showYakuListPopup = false" />
-      <HowToPlayPopup :show="showHowToPlayPopup" @close="showHowToPlayPopup = false" />
-      <SettingsPopup :show="showSettingsPopup" @close="showSettingsPopup = false" />
+      <RulePopup
+        :show="showRulesPopup"
+        @close="showRulesPopup = false"
+      />
+      <YakuListPopup
+        :show="showYakuListPopup"
+        @close="showYakuListPopup = false"
+      />
+      <HowToPlayPopup
+        :show="showHowToPlayPopup"
+        @close="showHowToPlayPopup = false"
+      />
+      <SettingsPopup
+        :show="showSettingsPopup"
+        @close="showSettingsPopup = false"
+      />
       <GameModeSelectionPopup
         v-if="popupProps"
         :show="activePopup !== null"

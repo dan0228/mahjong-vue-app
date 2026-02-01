@@ -1,70 +1,97 @@
 <template>
   <transition name="scroll">
-    <div v-if="show" class="popup-overlay" @click.self="$emit('close')">
+    <div
+      v-if="show"
+      class="popup-overlay"
+      @click.self="$emit('close')"
+    >
       <div class="popup-content">
         <h2>{{ $t('howToPlayPopup.title') }}</h2>
         <div class="popup-body">
           <div class="section">
             <h3>
-              <i class="fa-solid fa-fan icon-left"></i>
+              <i class="fa-solid fa-fan icon-left" />
               <span>{{ $t('howToPlayPopup.section1.title') }}</span>
-              <i class="fa-solid fa-fan icon-right"></i>
+              <i class="fa-solid fa-fan icon-right" />
             </h3>
-            <p v-html="$t('howToPlayPopup.section1.line1')"></p>
-            <p v-html="$t('howToPlayPopup.section1.line2')"></p>
-            <p v-html="$t('howToPlayPopup.section1.line3')"></p>
-            <p v-html="$t('howToPlayPopup.section1.line4')"></p>
+            <p v-html="$t('howToPlayPopup.section1.line1')" />
+            <p v-html="$t('howToPlayPopup.section1.line2')" />
+            <p v-html="$t('howToPlayPopup.section1.line3')" />
+            <p v-html="$t('howToPlayPopup.section1.line4')" />
           </div>
 
           <div class="section">
             <h3>
-              <i class="fa-solid fa-dragon icon-left"></i>
+              <i class="fa-solid fa-dragon icon-left" />
               <span>{{ $t('howToPlayPopup.section2.title') }}</span>
-              <i class="fa-solid fa-dragon icon-right"></i>
+              <i class="fa-solid fa-dragon icon-right" />
             </h3>
-            <p v-html="$t('howToPlayPopup.section2.objective')"></p>
-            <p v-html="$t('howToPlayPopup.section2.tileTypesTitle')"></p>
+            <p v-html="$t('howToPlayPopup.section2.objective')" />
+            <p v-html="$t('howToPlayPopup.section2.tileTypesTitle')" />
             <ul>
-              <li v-html="$t('howToPlayPopup.section2.tileTypes[0]')"></li>
-              <li v-html="$t('howToPlayPopup.section2.tileTypes[1]')"></li>
+              <li v-html="$t('howToPlayPopup.section2.tileTypes[0]')" />
+              <li v-html="$t('howToPlayPopup.section2.tileTypes[1]')" />
             </ul>
-            <p v-html="$t('howToPlayPopup.section2.handCompositionTitle')"></p>
-            <p v-html="$t('howToPlayPopup.section2.handComposition')"></p>
+            <p v-html="$t('howToPlayPopup.section2.handCompositionTitle')" />
+            <p v-html="$t('howToPlayPopup.section2.handComposition')" />
           </div>
 
           <div class="section">
             <h3>
-              <i class="fa-solid fa-list-ol icon-left"></i>
+              <i class="fa-solid fa-list-ol icon-left" />
               <span>{{ $t('howToPlayPopup.section3.title') }}</span>
-              <i class="fa-solid fa-list-ol icon-right"></i>
+              <i class="fa-solid fa-list-ol icon-right" />
             </h3>
-            <p v-html="$t('howToPlayPopup.section3.intro')"></p>
+            <p v-html="$t('howToPlayPopup.section3.intro')" />
             <ol>
-              <li v-for="item in $tm('howToPlayPopup.section3.flow')" :key="item" v-html="item"></li>
+              <li
+                v-for="item in $tm('howToPlayPopup.section3.flow')"
+                :key="item"
+                v-html="item"
+              />
             </ol>
-            <p v-html="$t('howToPlayPopup.section3.roundFlowTitle')"></p>
+            <p v-html="$t('howToPlayPopup.section3.roundFlowTitle')" />
             <ol>
-              <li v-for="item in $tm('howToPlayPopup.section3.roundFlow')" :key="item" v-html="item"></li>
+              <li
+                v-for="item in $tm('howToPlayPopup.section3.roundFlow')"
+                :key="item"
+                v-html="item"
+              />
             </ol>
           </div>
 
           <div class="section">
             <h3>
-              <i class="fa-solid fa-bolt icon-left"></i>
+              <i class="fa-solid fa-bolt icon-left" />
               <span>{{ $t('howToPlayPopup.section4.title') }}</span>
-              <i class="fa-solid fa-bolt icon-right"></i>
+              <i class="fa-solid fa-bolt icon-right" />
             </h3>
             <dl>
-              <div v-for="(action, key) in $tm('howToPlayPopup.section4.actions')" :key="key">
+              <div
+                v-for="(action, key) in $tm('howToPlayPopup.section4.actions')"
+                :key="key"
+              >
                 <dt>{{ action.term }}</dt>
                 <dd>{{ action.definition }}</dd>
               </div>
             </dl>
           </div>
-          <p class="conclusion" v-html="$t('howToPlayPopup.conclusion')"></p>
+          <p
+            class="conclusion"
+            v-html="$t('howToPlayPopup.conclusion')"
+          />
         </div>
-        <button @click="$emit('close')" class="close-button">{{ $t('howToPlayPopup.closeButton') }}</button>
-        <img src="/assets/images/back/fude.png" class="close-fude-image" alt="fude" />
+        <button
+          class="close-button"
+          @click="$emit('close')"
+        >
+          {{ $t('howToPlayPopup.closeButton') }}
+        </button>
+        <img
+          src="/assets/images/back/fude.png"
+          class="close-fude-image"
+          alt="fude"
+        >
       </div>
     </div>
   </transition>

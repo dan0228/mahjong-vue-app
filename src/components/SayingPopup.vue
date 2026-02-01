@@ -1,13 +1,34 @@
 <template>
-  <div class="popup-overlay" @click.self="$emit('close')">
+  <div
+    class="popup-overlay"
+    @click.self="$emit('close')"
+  >
     <div class="popup-content">
-      <button class="close-button" @click="$emit('close')">×</button>
-      <p v-if="fortune" class="fortune-text"><strong>{{ $t('sayingPopup.fortune') }}</strong>{{ fortune }}</p>
+      <button
+        class="close-button"
+        @click="$emit('close')"
+      >
+        ×
+      </button>
+      <p
+        v-if="fortune"
+        class="fortune-text"
+      >
+        <strong>{{ $t('sayingPopup.fortune') }}</strong>{{ fortune }}
+      </p>
       <p class="saying-text-with-prefix">
         <strong>{{ $t('sayingPopup.oracle') }}</strong>
-        <span v-if="sayingNumber !== null">{{ $t('sayingPopup.sayingNo', { n: sayingNumber }) }}</span><span v-if="isNew" class="new-tag">{{ $t('sayingPopup.newTag') }}</span><br>{{ saying }}
+        <span v-if="sayingNumber !== null">{{ $t('sayingPopup.sayingNo', { n: sayingNumber }) }}</span><span
+          v-if="isNew"
+          class="new-tag"
+        >{{ $t('sayingPopup.newTag') }}</span><br>{{ saying }}
       </p>
-      <button @click="$emit('close')" class="new-close-button">{{ $t('sayingPopup.closeButton') }}</button>
+      <button
+        class="new-close-button"
+        @click="$emit('close')"
+      >
+        {{ $t('sayingPopup.closeButton') }}
+      </button>
     </div>
   </div>
 </template>

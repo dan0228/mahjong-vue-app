@@ -1,7 +1,18 @@
 <template>
-  <div v-if="props.showCountdown" class="countdown-overlay" :style="overlayStyle">
-    <div :class="['countdown-container', { 'ai-player': props.position !== 'bottom' }]" :style="{ width: containerSize, height: containerSize }">
-      <svg class="progress-ring" :width="size" :height="size">
+  <div
+    v-if="props.showCountdown"
+    class="countdown-overlay"
+    :style="overlayStyle"
+  >
+    <div
+      :class="['countdown-container', { 'ai-player': props.position !== 'bottom' }]"
+      :style="{ width: containerSize, height: containerSize }"
+    >
+      <svg
+        class="progress-ring"
+        :width="size"
+        :height="size"
+      >
         <circle
           class="progress-ring-circle-bg"
           :stroke-width="strokeWidth"
@@ -18,7 +29,12 @@
           :style="{ strokeDasharray: circumference, strokeDashoffset: strokeDashoffset }"
         />
       </svg>
-      <img src="/assets/images/button/stock_in.png" alt="Stock Icon" class="stock-icon" :style="{ width: iconSize, height: iconSize }" />
+      <img
+        src="/assets/images/button/stock_in.png"
+        alt="Stock Icon"
+        class="stock-icon"
+        :style="{ width: iconSize, height: iconSize }"
+      >
     </div>
   </div>
 </template>

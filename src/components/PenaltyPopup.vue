@@ -1,10 +1,20 @@
 <template>
   <transition name="popup">
-    <div v-if="userStore.showPenaltyPopup" class="penalty-popup-overlay">
+    <div
+      v-if="userStore.showPenaltyPopup"
+      class="penalty-popup-overlay"
+    >
       <div class="penalty-popup-content">
         <!-- メッセージを動的に表示 -->
-        <p class="popup-message">{{ userStore.penaltyMessage }}</p>
-        <button @click="closePopup" class="popup-button">{{ $t('penaltyPopup.closeButton') }}</button>
+        <p class="popup-message">
+          {{ userStore.penaltyMessage }}
+        </p>
+        <button
+          class="popup-button"
+          @click="closePopup"
+        >
+          {{ $t('penaltyPopup.closeButton') }}
+        </button>
       </div>
     </div>
   </transition>

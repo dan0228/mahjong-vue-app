@@ -2353,6 +2353,7 @@ export const useGameStore = defineStore('game', {
       userStore.resetTemporaryData();
 
       if (!options.keepStreak) {
+        // 後から記載
       }
 
       const currentStreakFromUserStore = userStore.profile?.current_win_streak || 0;

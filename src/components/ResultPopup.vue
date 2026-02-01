@@ -1,119 +1,230 @@
 <template>
   <transition name="popup">
-    <div v-if="show" class="popup-overlay">
+    <div
+      v-if="show"
+      class="popup-overlay"
+    >
       <div class="popup-content">
         <div class="popup-inner-content">
-
-      <div class="result-section round-info" style="text-align: center; margin-bottom: 15px;">
-        <p class="round-main-info">{{ t('resultPopup.roundInfo', { wind: roundWindDisplay, round: resultDetails.roundNumber, honba: resultDetails.honba }) }}</p>
-      </div>
-      <div v-if="!isDrawResult" class="winner-title-container">
-        <img v-if="winnerIconSrc" :src="winnerIconSrc" alt="Winner Icon" class="winner-icon" />
-        <h2>{{ resultTitle }}</h2>
-      </div>
-      <div v-if="!isDrawResult && !isChomboResult" class="result-section round-info-details"> <!-- 和了時のみ表示 -->
-        <div class="dora-display">
-          <span class="dora-label">{{ t('resultPopup.dora') }}</span>
-          <div class="dora-tiles">
-            <!-- 表示するドラ -->
-            <img v-for="(tile, index) in resultDetails.doraIndicators" :key="'dora-'+tile.id + '-' + index" :src="getTileImageUrl(tile)" :alt="tileToString(tile)" class="tile-image-small"/>
-            <!-- ドラの残りを裏向きで表示 (最大4つまで) -->
-            <img v-for="n in Math.max(0, 4 - (resultDetails.doraIndicators?.length || 0))" :key="'dora-hidden-' + n" :src="getTileImageUrl({type: 'ura'})" :alt="t('resultPopup.doraHidden')" class="tile-image-small"/>
+          <div
+            class="result-section round-info"
+            style="text-align: center; margin-bottom: 15px;"
+          >
+            <p class="round-main-info">
+              {{ t('resultPopup.roundInfo', { wind: roundWindDisplay, round: resultDetails.roundNumber, honba: resultDetails.honba }) }}
+            </p>
           </div>
-        </div>
-        <div class="dora-display">
-          <span class="dora-label">{{ t('resultPopup.uraDora') }}</span>
-          <div class="dora-tiles">
-            <template v-if="isRiichiAgari">
-              <!-- リーチ和了時は、表ドラの数だけ裏ドラを表示（めくれている分＋裏向き） -->
-              <img v-for="(tile, index) in resultDetails.uraDoraIndicators" :key="'ura-revealed-'+tile.id + '-' + index" :src="getTileImageUrl(tile)" :alt="tileToString(tile)" class="tile-image-small" />
-              <img v-for="n in Math.max(0, 4 - (resultDetails.uraDoraIndicators?.length || 0))" :key="'ura-hidden-riichi-' + n" :src="getTileImageUrl({type: 'ura'})" :alt="t('resultPopup.uraDoraHidden')" class="tile-image-small" />
-            </template>
-            <template v-else>
-              <!-- リーチなし和了や流局時は、4牌分を裏向きで表示 -->
-              <img v-for="n in 4" :key="'ura-hidden-no-riichi-' + n" :src="getTileImageUrl({type: 'ura'})" :alt="t('resultPopup.uraDoraHidden')" class="tile-image-small"/>
-            </template>
+          <div
+            v-if="!isDrawResult"
+            class="winner-title-container"
+          >
+            <img
+              v-if="winnerIconSrc"
+              :src="winnerIconSrc"
+              alt="Winner Icon"
+              class="winner-icon"
+            >
+            <h2>{{ resultTitle }}</h2>
           </div>
-        </div>
-      </div>
+          <div
+            v-if="!isDrawResult && !isChomboResult"
+            class="result-section round-info-details"
+          >
+            <!-- 和了時のみ表示 -->
+            <div class="dora-display">
+              <span class="dora-label">{{ t('resultPopup.dora') }}</span>
+              <div class="dora-tiles">
+                <!-- 表示するドラ -->
+                <img
+                  v-for="(tile, index) in resultDetails.doraIndicators"
+                  :key="'dora-'+tile.id + '-' + index"
+                  :src="getTileImageUrl(tile)"
+                  :alt="tileToString(tile)"
+                  class="tile-image-small"
+                >
+                <!-- ドラの残りを裏向きで表示 (最大4つまで) -->
+                <img
+                  v-for="n in Math.max(0, 4 - (resultDetails.doraIndicators?.length || 0))"
+                  :key="'dora-hidden-' + n"
+                  :src="getTileImageUrl({type: 'ura'})"
+                  :alt="t('resultPopup.doraHidden')"
+                  class="tile-image-small"
+                >
+              </div>
+            </div>
+            <div class="dora-display">
+              <span class="dora-label">{{ t('resultPopup.uraDora') }}</span>
+              <div class="dora-tiles">
+                <template v-if="isRiichiAgari">
+                  <!-- リーチ和了時は、表ドラの数だけ裏ドラを表示（めくれている分＋裏向き） -->
+                  <img
+                    v-for="(tile, index) in resultDetails.uraDoraIndicators"
+                    :key="'ura-revealed-'+tile.id + '-' + index"
+                    :src="getTileImageUrl(tile)"
+                    :alt="tileToString(tile)"
+                    class="tile-image-small"
+                  >
+                  <img
+                    v-for="n in Math.max(0, 4 - (resultDetails.uraDoraIndicators?.length || 0))"
+                    :key="'ura-hidden-riichi-' + n"
+                    :src="getTileImageUrl({type: 'ura'})"
+                    :alt="t('resultPopup.uraDoraHidden')"
+                    class="tile-image-small"
+                  >
+                </template>
+                <template v-else>
+                  <!-- リーチなし和了や流局時は、4牌分を裏向きで表示 -->
+                  <img
+                    v-for="n in 4"
+                    :key="'ura-hidden-no-riichi-' + n"
+                    :src="getTileImageUrl({type: 'ura'})"
+                    :alt="t('resultPopup.uraDoraHidden')"
+                    class="tile-image-small"
+                  >
+                </template>
+              </div>
+            </div>
+          </div>
 
-      <div v-if="!isDrawResult && !isChomboResult" class="result-section winning-hand-info"> <!-- 和了時のみ表示 -->
-        <h3>{{ t('resultPopup.winningHand') }}</h3>
-        <div class="hand-display">
-          <!-- 元々持っていた4牌 -->
-          <span v-for="(tile, index) in originalHandWithoutAgariTile" :key="'original-' + tile.id + '-' + index" class="tile-image-medium">
-            <img :src="getTileImageUrl(tile)" :alt="tileToString(tile)" />
-          </span>
-          <!-- 和了牌 (少し間を開ける) -->
-          <span v-if="resultDetails.agariTile" class="tile-image-medium agari-tile-display">
-            <img :src="getTileImageUrl(resultDetails.agariTile)" :alt="tileToString(resultDetails.agariTile)" />
-          </span>
-          <!-- 鳴いた牌 -->
-          <template v-if="resultDetails.melds && resultDetails.melds.length > 0">
-            <div v-for="(meld, meldIndex) in resultDetails.melds" :key="'meld-' + meldIndex" class="meld-display">
-              <span v-for="(tile, tileIndex) in meld.tiles" :key="'meld-' + meldIndex + '-tile-' + tileIndex" class="tile-image-medium" :class="getMeldTileClass(meld, tileIndex)">
-                <img :src="meld.type === 'ankan' && (tileIndex === 1 || tileIndex === 2) ? '/assets/images/tiles/ura.png' : getTileImageUrl(tile)" :alt="tileToString(tile)" />
+          <div
+            v-if="!isDrawResult && !isChomboResult"
+            class="result-section winning-hand-info"
+          >
+            <!-- 和了時のみ表示 -->
+            <h3>{{ t('resultPopup.winningHand') }}</h3>
+            <div class="hand-display">
+              <!-- 元々持っていた4牌 -->
+              <span
+                v-for="(tile, index) in originalHandWithoutAgariTile"
+                :key="'original-' + tile.id + '-' + index"
+                class="tile-image-medium"
+              >
+                <img
+                  :src="getTileImageUrl(tile)"
+                  :alt="tileToString(tile)"
+                >
+              </span>
+              <!-- 和了牌 (少し間を開ける) -->
+              <span
+                v-if="resultDetails.agariTile"
+                class="tile-image-medium agari-tile-display"
+              >
+                <img
+                  :src="getTileImageUrl(resultDetails.agariTile)"
+                  :alt="tileToString(resultDetails.agariTile)"
+                >
+              </span>
+              <!-- 鳴いた牌 -->
+              <template v-if="resultDetails.melds && resultDetails.melds.length > 0">
+                <div
+                  v-for="(meld, meldIndex) in resultDetails.melds"
+                  :key="'meld-' + meldIndex"
+                  class="meld-display"
+                >
+                  <span
+                    v-for="(tile, tileIndex) in meld.tiles"
+                    :key="'meld-' + meldIndex + '-tile-' + tileIndex"
+                    class="tile-image-medium"
+                    :class="getMeldTileClass(meld, tileIndex)"
+                  >
+                    <img
+                      :src="meld.type === 'ankan' && (tileIndex === 1 || tileIndex === 2) ? '/assets/images/tiles/ura.png' : getTileImageUrl(tile)"
+                      :alt="tileToString(tile)"
+                    >
+                  </span>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <div
+            v-if="isChomboResult"
+            class="result-section winning-hand-info"
+          >
+            <!-- チョンボ時のみ表示 -->
+            <h3>{{ t('resultPopup.chomboHand') }}</h3>
+            <div class="hand-display">
+              <span
+                v-for="(tile, index) in resultDetails.winningHand"
+                :key="'chombo-hand-' + tile.id + '-' + index"
+                class="tile-image-medium"
+              >
+                <img
+                  :src="getTileImageUrl(tile)"
+                  :alt="tileToString(tile)"
+                >
               </span>
             </div>
-          </template>
-        </div>
-      </div>
+          </div>
 
-      <div v-if="isChomboResult" class="result-section winning-hand-info"> <!-- チョンボ時のみ表示 -->
-        <h3>{{ t('resultPopup.chomboHand') }}</h3>
-        <div class="hand-display">
-          <span v-for="(tile, index) in resultDetails.winningHand" :key="'chombo-hand-' + tile.id + '-' + index" class="tile-image-medium">
-            <img :src="getTileImageUrl(tile)" :alt="tileToString(tile)" />
-          </span>
-        </div>
-      </div>
+          <div
+            v-if="!isDrawResult && !isChomboResult"
+            class="result-section yaku-info"
+          >
+            <!-- 和了時のみ表示 -->
+            <h3>{{ t('resultPopup.yakuList') }}</h3>
+            <div :class="['yaku-list-container', yakuListColumnCountClass]">
+              <ul>
+                <li
+                  v-for="(yaku, index) in resultDetails.yakuList"
+                  :key="index"
+                >
+                  {{ t(`yaku.${yaku.key}.name`) }}
+                  <span v-if="yaku.power !== undefined"> <!-- 役満の場合 -->
+                    ({{ yaku.power === 1 ? t('resultPopup.yakuman') : t('resultPopup.multipleYakuman', { count: yaku.power }) }})
+                  </span>
+                  <span v-else-if="yaku.fans !== undefined"> ({{ t('resultPopup.han', { count: yaku.fans }) }})</span>
+                </li>
+              </ul>
+            </div>
+            <p class="total-score">
+              <span v-if="isYakumanResult">
+                {{ translatedScoreName }}
+              </span>
+              <span v-else-if="resultDetails.totalFans > 0">
+                {{ t('resultPopup.totalFans', { count: resultDetails.totalFans }) }} {{ translatedScoreName }}
+              </span>
+              {{ resultDetails.score ? t('resultPopup.points', { score: resultDetails.score }) : '' }}
+            </p>
+          </div>
+          <div
+            v-if="isDrawResult"
+            class="result-section draw-info"
+          >
+            <!-- 流局時のみ表示 -->
+            <h2>{{ t('resultPopup.draw') }}</h2>
+            <p>{{ message }}</p>
+            <!-- 必要に応じてノーテン罰符などの情報を表示 -->
+          </div>
+          <div class="result-section score-changes">
+            <!-- 点数変動は常に表示 -->
+            <h3>{{ t('resultPopup.scoreChanges') }}</h3>
+            <table class="score-change-table">
+              <tbody>
+                <tr
+                  v-for="player in gameStore.players"
+                  :key="player.id"
+                >
+                  <td class="player-name-cell">
+                    {{ getTranslatedPlayerName(player) }}
+                  </td>
+                  <td class="score-cell">
+                    {{ (gameStore.getPlayerById(player.id)?.score ?? 0) + (resultDetails.pointChanges[player.id] ?? 0) }}{{ ' ' + t('resultPopup.points', { score: '' }).trim() }}
+                  </td>
+                  <td class="change-cell">
+                    <span :class="getPointChangeClass(resultDetails.pointChanges[player.id])">
+                      ({{ formatPointChange(resultDetails.pointChanges[player.id]) }})
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-      <div v-if="!isDrawResult && !isChomboResult" class="result-section yaku-info"> <!-- 和了時のみ表示 -->
-  <h3>{{ t('resultPopup.yakuList') }}</h3>
-  <div :class="['yaku-list-container', yakuListColumnCountClass]">
-    <ul>
-      <li v-for="(yaku, index) in resultDetails.yakuList" :key="index">
-        {{ t(`yaku.${yaku.key}.name`) }}
-        <span v-if="yaku.power !== undefined"> <!-- 役満の場合 -->
-          ({{ yaku.power === 1 ? t('resultPopup.yakuman') : t('resultPopup.multipleYakuman', { count: yaku.power }) }})
-        </span>
-        <span v-else-if="yaku.fans !== undefined"> ({{ t('resultPopup.han', { count: yaku.fans }) }})</span>
-      </li>
-    </ul>
-  </div>
-  <p class="total-score">
-    <span v-if="isYakumanResult">
-      {{ translatedScoreName }}
-    </span>
-    <span v-else-if="resultDetails.totalFans > 0">
-      {{ t('resultPopup.totalFans', { count: resultDetails.totalFans }) }} {{ translatedScoreName }}
-    </span>
-    {{ resultDetails.score ? t('resultPopup.points', { score: resultDetails.score }) : '' }}
-  </p>
-</div>
-      <div v-if="isDrawResult" class="result-section draw-info"> <!-- 流局時のみ表示 -->
-        <h2>{{ t('resultPopup.draw') }}</h2>
-        <p>{{ message }}</p>
-        <!-- 必要に応じてノーテン罰符などの情報を表示 -->
-      </div>
-      <div class="result-section score-changes"> <!-- 点数変動は常に表示 -->
-        <h3>{{ t('resultPopup.scoreChanges') }}</h3>
-        <table class="score-change-table">
-          <tbody>
-            <tr v-for="player in gameStore.players" :key="player.id">
-              <td class="player-name-cell">{{ getTranslatedPlayerName(player) }}</td>
-              <td class="score-cell">{{ (gameStore.getPlayerById(player.id)?.score ?? 0) + (resultDetails.pointChanges[player.id] ?? 0) }}{{ ' ' + t('resultPopup.points', { score: '' }).trim() }}</td>
-              <td class="change-cell">
-                <span :class="getPointChangeClass(resultDetails.pointChanges[player.id])">
-                  ({{ formatPointChange(resultDetails.pointChanges[player.id]) }})
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <button @click="signalReady" :disabled="isLocalPlayerReady">
+          <button
+            :disabled="isLocalPlayerReady"
+            @click="signalReady"
+          >
             {{ isLocalPlayerReady ? t('resultPopup.waiting') : t('resultPopup.next') }}
           </button>
         </div> <!-- Close popup-inner-content -->

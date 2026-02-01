@@ -1,69 +1,220 @@
 <template>
   <div class="center-table-info">
     <!-- v-if/v-else: 親の位置を示す背景画像がある場合は画像ベースのUI、ない場合はテキストベースのUIに切り替え -->
-    <div v-if="centerImageSrc" class="center-image-container">
-      <img :src="centerImageSrc" :alt="centerImageAltText" class="center-info-image" />
-      <img v-if="riichiStickBaseImageSrc" :src="riichiStickBaseImageSrc" :alt="t('centerTableInfo.altTextRiichiStickBase')" class="riichi-stick-base-image" />
+    <div
+      v-if="centerImageSrc"
+      class="center-image-container"
+    >
+      <img
+        :src="centerImageSrc"
+        :alt="centerImageAltText"
+        class="center-info-image"
+      >
+      <img
+        v-if="riichiStickBaseImageSrc"
+        :src="riichiStickBaseImageSrc"
+        :alt="t('centerTableInfo.altTextRiichiStickBase')"
+        class="riichi-stick-base-image"
+      >
       <div class="riichi-stick-count-images">
-        <img v-if="riichiStickCountImage1Src" :src="riichiStickCountImage1Src" :alt="t('centerTableInfo.altTextRiichiStickCount1')" class="riichi-stick-count-digit" />
-        <img v-if="riichiStickCountImage2Src" :src="riichiStickCountImage2Src" :alt="t('centerTableInfo.altTextRiichiStickCount2')" class="riichi-stick-count-digit" />
+        <img
+          v-if="riichiStickCountImage1Src"
+          :src="riichiStickCountImage1Src"
+          :alt="t('centerTableInfo.altTextRiichiStickCount1')"
+          class="riichi-stick-count-digit"
+        >
+        <img
+          v-if="riichiStickCountImage2Src"
+          :src="riichiStickCountImage2Src"
+          :alt="t('centerTableInfo.altTextRiichiStickCount2')"
+          class="riichi-stick-count-digit"
+        >
       </div>
       <div class="remaining-tiles-count-images">
-        <img v-if="remainingTilesImage1Src" :src="remainingTilesImage1Src" :alt="t('centerTableInfo.altTextRemainingTiles1')" class="remaining-tiles-count-digit" />
-        <img v-if="remainingTilesImage2Src" :src="remainingTilesImage2Src" :alt="t('centerTableInfo.altTextRemainingTiles2')" class="remaining-tiles-count-digit" />
-        <img v-if="remainingTilesImage3Src" :src="remainingTilesImage3Src" :alt="t('centerTableInfo.altTextRemainingTiles3')" class="remaining-tiles-count-digit" />
+        <img
+          v-if="remainingTilesImage1Src"
+          :src="remainingTilesImage1Src"
+          :alt="t('centerTableInfo.altTextRemainingTiles1')"
+          class="remaining-tiles-count-digit"
+        >
+        <img
+          v-if="remainingTilesImage2Src"
+          :src="remainingTilesImage2Src"
+          :alt="t('centerTableInfo.altTextRemainingTiles2')"
+          class="remaining-tiles-count-digit"
+        >
+        <img
+          v-if="remainingTilesImage3Src"
+          :src="remainingTilesImage3Src"
+          :alt="t('centerTableInfo.altTextRemainingTiles3')"
+          class="remaining-tiles-count-digit"
+        >
       </div>
       <!-- 各プレイヤーの点数表示 -->
-      <div v-if="orderedPlayers[0]" class="player-score-image-container bottom-player-score">
-        <img v-if="bottomPlayerScoreInfo.sign" :src="bottomPlayerScoreInfo.sign" :alt="t('centerTableInfo.altTextScoreSign')" class="score-sign-image" />
-        <img v-for="(src, index) in bottomPlayerScoreInfo.digits" :key="`digit-${index}-${src}`" :src="src" :alt="t('centerTableInfo.altTextScoreDigit', { index })" class="score-digit-image" />
+      <div
+        v-if="orderedPlayers[0]"
+        class="player-score-image-container bottom-player-score"
+      >
+        <img
+          v-if="bottomPlayerScoreInfo.sign"
+          :src="bottomPlayerScoreInfo.sign"
+          :alt="t('centerTableInfo.altTextScoreSign')"
+          class="score-sign-image"
+        >
+        <img
+          v-for="(src, index) in bottomPlayerScoreInfo.digits"
+          :key="`digit-${index}-${src}`"
+          :src="src"
+          :alt="t('centerTableInfo.altTextScoreDigit', { index })"
+          class="score-digit-image"
+        >
       </div>
-      <div v-if="orderedPlayers[3]" class="player-score-image-container side-player-score left-player-score">
-        <img v-if="leftPlayerScoreInfo.sign" :src="leftPlayerScoreInfo.sign" :alt="t('centerTableInfo.altTextScoreSign')" class="score-sign-image" />
-        <img v-for="(src, index) in leftPlayerScoreInfo.digits" :key="`left-digit-${index}-${src}`" :src="src" :alt="t('centerTableInfo.altTextScoreDigit', { index })" class="score-digit-image" />
+      <div
+        v-if="orderedPlayers[3]"
+        class="player-score-image-container side-player-score left-player-score"
+      >
+        <img
+          v-if="leftPlayerScoreInfo.sign"
+          :src="leftPlayerScoreInfo.sign"
+          :alt="t('centerTableInfo.altTextScoreSign')"
+          class="score-sign-image"
+        >
+        <img
+          v-for="(src, index) in leftPlayerScoreInfo.digits"
+          :key="`left-digit-${index}-${src}`"
+          :src="src"
+          :alt="t('centerTableInfo.altTextScoreDigit', { index })"
+          class="score-digit-image"
+        >
       </div>
-      <div v-if="orderedPlayers[2]" class="player-score-image-container vertical-player-score top-player-score">
-        <img v-if="topPlayerScoreInfo.sign" :src="topPlayerScoreInfo.sign" :alt="t('centerTableInfo.altTextScoreSign')" class="score-sign-image" />
-        <img v-for="(src, index) in topPlayerScoreInfo.digits" :key="`top-digit-${index}-${src}`" :src="src" :alt="t('centerTableInfo.altTextScoreDigit', { index })" class="score-digit-image" />
+      <div
+        v-if="orderedPlayers[2]"
+        class="player-score-image-container vertical-player-score top-player-score"
+      >
+        <img
+          v-if="topPlayerScoreInfo.sign"
+          :src="topPlayerScoreInfo.sign"
+          :alt="t('centerTableInfo.altTextScoreSign')"
+          class="score-sign-image"
+        >
+        <img
+          v-for="(src, index) in topPlayerScoreInfo.digits"
+          :key="`top-digit-${index}-${src}`"
+          :src="src"
+          :alt="t('centerTableInfo.altTextScoreDigit', { index })"
+          class="score-digit-image"
+        >
       </div>
-      <div v-if="orderedPlayers[1]" class="player-score-image-container side-player-score right-player-score">
-        <img v-if="rightPlayerScoreInfo.sign" :src="rightPlayerScoreInfo.sign" :alt="t('centerTableInfo.altTextScoreSign')" class="score-sign-image" />
-        <img v-for="(src, index) in rightPlayerScoreInfo.digits" :key="`right-digit-${index}-${src}`" :src="src" :alt="t('centerTableInfo.altTextScoreDigit', { index })" class="score-digit-image" />
+      <div
+        v-if="orderedPlayers[1]"
+        class="player-score-image-container side-player-score right-player-score"
+      >
+        <img
+          v-if="rightPlayerScoreInfo.sign"
+          :src="rightPlayerScoreInfo.sign"
+          :alt="t('centerTableInfo.altTextScoreSign')"
+          class="score-sign-image"
+        >
+        <img
+          v-for="(src, index) in rightPlayerScoreInfo.digits"
+          :key="`right-digit-${index}-${src}`"
+          :src="src"
+          :alt="t('centerTableInfo.altTextScoreDigit', { index })"
+          class="score-digit-image"
+        >
       </div>
       <!-- 各プレイヤーのリーチ棒表示 -->
-      <img v-if="orderedPlayers[0]?.isRiichi || orderedPlayers[0]?.isDoubleRiichi" src="/assets/images/tenbo/tenbou1000.png" :alt="t('centerTableInfo.altTextRiichiStickBottom')" class="riichi-stick-image bottom-riichi-stick" />
-      <img v-if="orderedPlayers[3]?.isRiichi || orderedPlayers[3]?.isDoubleRiichi" src="/assets/images/tenbo/tenbou1000.png" :alt="t('centerTableInfo.altTextRiichiStickLeft')" class="riichi-stick-image left-riichi-stick" />
-      <img v-if="orderedPlayers[2]?.isRiichi || orderedPlayers[2]?.isDoubleRiichi" src="/assets/images/tenbo/tenbou1000.png" :alt="t('centerTableInfo.altTextRiichiStickTop')" class="riichi-stick-image top-riichi-stick" />
-      <img v-if="orderedPlayers[1]?.isRiichi || orderedPlayers[1]?.isDoubleRiichi" src="/assets/images/tenbo/tenbou1000.png" :alt="t('centerTableInfo.altTextRiichiStickRight')" class="riichi-stick-image right-riichi-stick" />
+      <img
+        v-if="orderedPlayers[0]?.isRiichi || orderedPlayers[0]?.isDoubleRiichi"
+        src="/assets/images/tenbo/tenbou1000.png"
+        :alt="t('centerTableInfo.altTextRiichiStickBottom')"
+        class="riichi-stick-image bottom-riichi-stick"
+      >
+      <img
+        v-if="orderedPlayers[3]?.isRiichi || orderedPlayers[3]?.isDoubleRiichi"
+        src="/assets/images/tenbo/tenbou1000.png"
+        :alt="t('centerTableInfo.altTextRiichiStickLeft')"
+        class="riichi-stick-image left-riichi-stick"
+      >
+      <img
+        v-if="orderedPlayers[2]?.isRiichi || orderedPlayers[2]?.isDoubleRiichi"
+        src="/assets/images/tenbo/tenbou1000.png"
+        :alt="t('centerTableInfo.altTextRiichiStickTop')"
+        class="riichi-stick-image top-riichi-stick"
+      >
+      <img
+        v-if="orderedPlayers[1]?.isRiichi || orderedPlayers[1]?.isDoubleRiichi"
+        src="/assets/images/tenbo/tenbou1000.png"
+        :alt="t('centerTableInfo.altTextRiichiStickRight')"
+        class="riichi-stick-image right-riichi-stick"
+      >
       <!-- 場風・局数表示 -->
-      <img v-if="roundIndicatorImageSrc" :src="roundIndicatorImageSrc" :alt="t('centerTableInfo.altTextRound')" class="round-indicator-image" />
+      <img
+        v-if="roundIndicatorImageSrc"
+        :src="roundIndicatorImageSrc"
+        :alt="t('centerTableInfo.altTextRound')"
+        class="round-indicator-image"
+      >
       <!-- 王牌ドラ表示エリア -->
-      <div v-if="deadWallDisplayTiles.length > 0" class="dead-wall-display-area">
-        <div v-for="(tilePair, pairIndex) in deadWallDisplayTiles" :key="`deadwall-pair-${pairIndex}`" class="dead-wall-tile-pair">
-          <img :src="getTileImageUrl(tilePair.bottom)" :alt="tileToString(tilePair.bottom)" class="dead-wall-tile dead-wall-bottom-tile" />
-          <img :src="getTileImageUrl(tilePair.top)" :alt="tileToString(tilePair.top)" class="dead-wall-tile dead-wall-top-tile" />
+      <div
+        v-if="deadWallDisplayTiles.length > 0"
+        class="dead-wall-display-area"
+      >
+        <div
+          v-for="(tilePair, pairIndex) in deadWallDisplayTiles"
+          :key="`deadwall-pair-${pairIndex}`"
+          class="dead-wall-tile-pair"
+        >
+          <img
+            :src="getTileImageUrl(tilePair.bottom)"
+            :alt="tileToString(tilePair.bottom)"
+            class="dead-wall-tile dead-wall-bottom-tile"
+          >
+          <img
+            :src="getTileImageUrl(tilePair.top)"
+            :alt="tileToString(tilePair.top)"
+            class="dead-wall-tile dead-wall-top-tile"
+          >
         </div>
       </div>
     </div>
     <!-- テキストベースのUI -->
-    <div v-else-if="!dealer && !gameStore.hasGameStarted" class="info-text-container">
+    <div
+      v-else-if="!dealer && !gameStore.hasGameStarted"
+      class="info-text-container"
+    >
       <div class="round-info">
         <span>{{ roundWind }}{{ roundNumber }}局</span>
         <span>{{ honbaCount }}本場</span>
         <span>供託: {{ riichiSticksCount }}</span>
       </div>
-      <div v-if="dealer" class="dealer-info">
+      <div
+        v-if="dealer"
+        class="dealer-info"
+      >
         <span>現在の親: {{ dealer.name }} ({{ dealer.seatWind }})</span>
       </div>
       <div class="scores">
-        <template v-for="(player, index) in orderedPlayers" :key="index">
-          <div v-if="player" class="player-score">
+        <template
+          v-for="(player, index) in orderedPlayers"
+          :key="index"
+        >
+          <div
+            v-if="player"
+            class="player-score"
+          >
             <span class="player-name">
               {{ getPlayerDisplayLabel(player) }}:
             </span>
             <span class="score-value">{{ player.score }}</span>
-            <span v-if="player.isDealer && player.id !== dealer?.id" class="dealer-indicator-small"> (親)</span>
-            <span v-if="player.seatWind && player.id !== dealer?.id" class="wind-indicator-small">
+            <span
+              v-if="player.isDealer && player.id !== dealer?.id"
+              class="dealer-indicator-small"
+            > (親)</span>
+            <span
+              v-if="player.seatWind && player.id !== dealer?.id"
+              class="wind-indicator-small"
+            >
               ({{ player.seatWind }})
             </span>
           </div>
@@ -73,8 +224,15 @@
         <span>残り牌山: {{ remainingTiles }}</span>
         <div class="dora-indicators">
           <span>ドラ表示:</span>
-          <div v-for="(tile, index) in doraTiles" :key="index" class="tile">
-            <img :src="getTileImageUrl(tile)" :alt="tileToString(tile)" />
+          <div
+            v-for="(tile, index) in doraTiles"
+            :key="index"
+            class="tile"
+          >
+            <img
+              :src="getTileImageUrl(tile)"
+              :alt="tileToString(tile)"
+            >
           </div>
           <span v-if="!doraTiles || doraTiles.length === 0">(なし)</span>
         </div>

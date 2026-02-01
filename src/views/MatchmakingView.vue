@@ -1,38 +1,64 @@
 <template>
   <div class="matchmaking-container">
-    
     <!-- スケーリングされるコンテンツのラッパー -->
-    <div class="scaler" :style="scalerStyle">
+    <div
+      class="scaler"
+      :style="scalerStyle"
+    >
       <!-- 透明なコンテンツラッパー -->
       <div class="content-wrapper">
         <!-- ユーザー情報 -->
         <div class="user-stats">
-          <img :src="boardImageSrc" alt="Board" class="board-image" />
+          <img
+            :src="boardImageSrc"
+            alt="Board"
+            class="board-image"
+          >
           <span class="rating-number-on-board">{{ userStore.profile?.rating ?? 1500 }}</span>
           <span class="cat-coins-number-on-board">{{ userStore.profile?.cat_coins || 0 }}</span>
         </div>
 
         <!-- タイトルへ戻るボタン -->
         <div class="top-controls">
-          <button @click="goToTitle" class="back-button">
-            <img src="/assets/images/button/buckToTitle.png" alt="タイトルへ戻る" />
+          <button
+            class="back-button"
+            @click="goToTitle"
+          >
+            <img
+              src="/assets/images/button/buckToTitle.png"
+              alt="タイトルへ戻る"
+            >
           </button>
         </div>
 
         <!-- 煙アニメーションのコンテナ -->
         <div class="smoke-container">
-          <img v-for="i in 10" :key="i" src="/assets/images/back/smoke.png" class="smoke-particle" :style="{ '--i': i }" />
+          <img
+            v-for="i in 10"
+            :key="i"
+            src="/assets/images/back/smoke.png"
+            class="smoke-particle"
+            :style="{ '--i': i }"
+          >
         </div>
 
         <!-- 火の粉アニメーションのコンテナ -->
         <div class="fire-container">
-          <div v-for="i in 20" :key="i" class="fire-particle" :style="fireParticleStyles[i-1]"></div>
+          <div
+            v-for="i in 20"
+            :key="i"
+            class="fire-particle"
+            :style="fireParticleStyles[i-1]"
+          />
         </div>
 
         <div class="status-box">
           <h1 class="status-text">
             {{ statusText }}
-            <span v-if="showCountdown" class="countdown-number">{{ countdown }}</span>
+            <span
+              v-if="showCountdown"
+              class="countdown-number"
+            >{{ countdown }}</span>
           </h1>
         </div>
         
@@ -49,12 +75,14 @@
               alt="Player Avatar" 
               class="player-avatar"
               @click="openPlayerInfoPopup(slot.player)"
-            />
+            >
             <span class="player-name">{{ slot.player.username }}</span>
           </template>
           <!-- 待機中の場合 -->
           <template v-else>
-            <div class="waiting-indicator">?</div>
+            <div class="waiting-indicator">
+              ?
+            </div>
           </template>
         </div>
 

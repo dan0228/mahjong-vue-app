@@ -12,54 +12,150 @@
       />
     </div>
     <!-- ストック選択中にツモ牌の位置に表示されるクリック領域 -->
-    <div v-if="shouldRenderDrawFromWallButton" :class="['draw-from-wall-area', { 'is-active': isDrawFromWallActive, 'has-melds': hasMelds }]" @click="isDrawFromWallActive && drawFromWall()">
-      <img src="/assets/images/button/wall_drow.png" :alt="t('playerArea.drawFromWall')" class="draw-from-wall-image" />
+    <div
+      v-if="shouldRenderDrawFromWallButton"
+      :class="['draw-from-wall-area', { 'is-active': isDrawFromWallActive, 'has-melds': hasMelds }]"
+      @click="isDrawFromWallActive && drawFromWall()"
+    >
+      <img
+        src="/assets/images/button/wall_drow.png"
+        :alt="t('playerArea.drawFromWall')"
+        class="draw-from-wall-image"
+      >
     </div>
-    <div v-if="player.melds && player.melds.length > 0" class="melds-area">
-        <div v-for="(meld, meldIndex) in player.melds" :key="meldIndex" class="meld">
-          <!-- 加槓の場合は、ベースとなるポン(3牌)を表示し、4枚目は重ねて表示する -->
-          <span v-for="(tile, tileIndex) in (meld.type === 'kakan' ? meld.tiles.slice(0, 3) : meld.tiles)"
-                :key="tile.id + '-' + tileIndex"
-                :class="['meld-tile', getMeldTileRotationClass(meld, tileIndex)]">
+    <div
+      v-if="player.melds && player.melds.length > 0"
+      class="melds-area"
+    >
+      <div
+        v-for="(meld, meldIndex) in player.melds"
+        :key="meldIndex"
+        class="meld"
+      >
+        <!-- 加槓の場合は、ベースとなるポン(3牌)を表示し、4枚目は重ねて表示する -->
+        <span
+          v-for="(tile, tileIndex) in (meld.type === 'kakan' ? meld.tiles.slice(0, 3) : meld.tiles)"
+          :key="tile.id + '-' + tileIndex"
+          :class="['meld-tile', getMeldTileRotationClass(meld, tileIndex)]"
+        >
 
-            <img :src="getMeldTileImage(meld, tile, tileIndex)" :alt="getMeldTileAlt(meld, tile, tileIndex)" class="meld-tile-image" />
-            <!-- 加槓の場合、横向きの牌の上に4枚目を重ねる -->
-            <img v-if="meld.type === 'kakan' && getMeldTileRotationClass(meld, tileIndex) === 'rotated-meld-tile'"
-                 :src="getTileImageUrl(meld.tiles[3])"
-                 :alt="tileToString(meld.tiles[3])"
-                 class="meld-tile-image kakan-added-tile" />
-          </span>
-        </div>
+          <img
+            :src="getMeldTileImage(meld, tile, tileIndex)"
+            :alt="getMeldTileAlt(meld, tile, tileIndex)"
+            class="meld-tile-image"
+          >
+          <!-- 加槓の場合、横向きの牌の上に4枚目を重ねる -->
+          <img
+            v-if="meld.type === 'kakan' && getMeldTileRotationClass(meld, tileIndex) === 'rotated-meld-tile'"
+            :src="getTileImageUrl(meld.tiles[3])"
+            :alt="tileToString(meld.tiles[3])"
+            class="meld-tile-image kakan-added-tile"
+          >
+        </span>
+      </div>
     </div>
     <!-- ストック牌の表示エリア -->
-    <div v-if="gameStore.ruleMode === 'stock'" 
-         :class="['stocked-tile-area', positionClass, { 'selected-stocked-tile': player.isStockedTileSelected, 'selectable': isStockTileSelectable, 'disabled': !isStockTileSelectable, 'pointer-events-none': !isStockTileSelectable }]"
-         @click="onToggleStockedTileSelection(player.id)">
-      <img src="/assets/images/back/stock_frame.png" alt="Stock Frame" class="stock-frame-image" />
-      <div v-if="player.stockedTile" class="stocked-tile-content">
+    <div
+      v-if="gameStore.ruleMode === 'stock'" 
+      :class="['stocked-tile-area', positionClass, { 'selected-stocked-tile': player.isStockedTileSelected, 'selectable': isStockTileSelectable, 'disabled': !isStockTileSelectable, 'pointer-events-none': !isStockTileSelectable }]"
+      @click="onToggleStockedTileSelection(player.id)"
+    >
+      <img
+        src="/assets/images/back/stock_frame.png"
+        alt="Stock Frame"
+        class="stock-frame-image"
+      >
+      <div
+        v-if="player.stockedTile"
+        class="stocked-tile-content"
+      >
         <div :class="['tile', {'is-stocked-tile': player.stockedTile?.isStockedTile}]">
-          <img :src="getTileImageUrl(player.stockedTile)" :alt="tileToString(player.stockedTile)" />
+          <img
+            :src="getTileImageUrl(player.stockedTile)"
+            :alt="tileToString(player.stockedTile)"
+          >
         </div>
       </div>
       <transition name="fade-gauge">
-        <StockSelectionCountdown v-if="showStockCountdown" :show-countdown="showStockCountdown" :position="position" />
+        <StockSelectionCountdown
+          v-if="showStockCountdown"
+          :show-countdown="showStockCountdown"
+          :position="position"
+        />
       </transition>
     </div>
     <!-- アクションボタンエリア -->
-    <div v-if="isMyHand || gameStore.gameMode === 'allManual'" :class="['player-actions', `player-actions-${position}`]">
-        <!-- ツモ番のアクション -->
-        <img v-if="canDeclareTsumoAgari" :src="t('playerArea.tsumoButtonImg')" :alt="t('playerArea.tsumo')" class="action-image-button" @click="emitAction('tsumoAgari')" />
-        <img v-if="canDeclareRiichi && !player.isRiichi && !player.isDoubleRiichi" :src="t('playerArea.riichiButtonImg')" :alt="t('playerArea.riichi')" class="action-image-button" @click="emitAction('riichi')" />
-        <img v-if="canDeclareAnkan" :src="t('playerArea.kanButtonImg')" :alt="t('playerArea.ankan')" class="action-image-button" @click="emitAction('ankan')" />
-        <img v-if="canDeclareKakan && !player.isRiichi && !player.isDoubleRiichi" :src="t('playerArea.kanButtonImg')" :alt="t('playerArea.kakan')" class="action-image-button" @click="emitAction('kakan')" />
-        <!-- ストックアクション -->
-        <img v-if="canStockAction" :src="t('playerArea.stockButtonImg')" :alt="t('playerArea.stock')" class="action-image-button stock-button" @click="emitAction('stock')" />
-        <!-- 他家の打牌/加槓に対するアクション -->
-        <img v-if="canDeclareRon" :src="t('playerArea.ronButtonImg')" :alt="t('playerArea.ron')" class="action-image-button" @click="emitAction('ron')" />
-        <img v-if="canDeclarePon && !player.isRiichi && !player.isDoubleRiichi" :src="t('playerArea.ponButtonImg')" :alt="t('playerArea.pon')" class="action-image-button" @click="emitAction('pon')" />
-        <img v-if="canDeclareMinkan && !player.isRiichi && !player.isDoubleRiichi" :src="t('playerArea.kanButtonImg')" :alt="t('playerArea.kan')" class="action-image-button" @click="emitAction('minkan')" />
-        <!-- スキップボタン -->
-        <img v-if="showSkipButton" :src="t('playerArea.skipButtonImg')" :alt="t('playerArea.skip')" class="action-image-button skip-button" @click="emitAction('skip')" />
+    <div
+      v-if="isMyHand || gameStore.gameMode === 'allManual'"
+      :class="['player-actions', `player-actions-${position}`]"
+    >
+      <!-- ツモ番のアクション -->
+      <img
+        v-if="canDeclareTsumoAgari"
+        :src="t('playerArea.tsumoButtonImg')"
+        :alt="t('playerArea.tsumo')"
+        class="action-image-button"
+        @click="emitAction('tsumoAgari')"
+      >
+      <img
+        v-if="canDeclareRiichi && !player.isRiichi && !player.isDoubleRiichi"
+        :src="t('playerArea.riichiButtonImg')"
+        :alt="t('playerArea.riichi')"
+        class="action-image-button"
+        @click="emitAction('riichi')"
+      >
+      <img
+        v-if="canDeclareAnkan"
+        :src="t('playerArea.kanButtonImg')"
+        :alt="t('playerArea.ankan')"
+        class="action-image-button"
+        @click="emitAction('ankan')"
+      >
+      <img
+        v-if="canDeclareKakan && !player.isRiichi && !player.isDoubleRiichi"
+        :src="t('playerArea.kanButtonImg')"
+        :alt="t('playerArea.kakan')"
+        class="action-image-button"
+        @click="emitAction('kakan')"
+      >
+      <!-- ストックアクション -->
+      <img
+        v-if="canStockAction"
+        :src="t('playerArea.stockButtonImg')"
+        :alt="t('playerArea.stock')"
+        class="action-image-button stock-button"
+        @click="emitAction('stock')"
+      >
+      <!-- 他家の打牌/加槓に対するアクション -->
+      <img
+        v-if="canDeclareRon"
+        :src="t('playerArea.ronButtonImg')"
+        :alt="t('playerArea.ron')"
+        class="action-image-button"
+        @click="emitAction('ron')"
+      >
+      <img
+        v-if="canDeclarePon && !player.isRiichi && !player.isDoubleRiichi"
+        :src="t('playerArea.ponButtonImg')"
+        :alt="t('playerArea.pon')"
+        class="action-image-button"
+        @click="emitAction('pon')"
+      >
+      <img
+        v-if="canDeclareMinkan && !player.isRiichi && !player.isDoubleRiichi"
+        :src="t('playerArea.kanButtonImg')"
+        :alt="t('playerArea.kan')"
+        class="action-image-button"
+        @click="emitAction('minkan')"
+      >
+      <!-- スキップボタン -->
+      <img
+        v-if="showSkipButton"
+        :src="t('playerArea.skipButtonImg')"
+        :alt="t('playerArea.skip')"
+        class="action-image-button skip-button"
+        @click="emitAction('skip')"
+      >
     </div>
   </div>
 </template>

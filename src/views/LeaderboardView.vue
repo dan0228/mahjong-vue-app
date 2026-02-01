@@ -1,56 +1,119 @@
 <template>
-  <div class="leaderboard-view-container" :style="{ height: viewportHeight }">
-    <div class="leaderboard-screen" :style="scalerStyle">
+  <div
+    class="leaderboard-view-container"
+    :style="{ height: viewportHeight }"
+  >
+    <div
+      class="leaderboard-screen"
+      :style="scalerStyle"
+    >
       <div class="user-stats">
-        <img :src="boardImageSrc" alt="Board" class="board-image" />
+        <img
+          :src="boardImageSrc"
+          alt="Board"
+          class="board-image"
+        >
         <span class="rating-number-on-board">{{ userStore.profile?.rating ?? 3000 }}</span>
         <span class="cat-coins-number-on-board">{{ userStore.profile?.cat_coins || 0 }}</span>
       </div>
       <div class="top-controls">
-        <h2 class="top-30-text">TOP30</h2>
-        <button @click="goBack" class="back-button">
-          <img src="/assets/images/button/buckToTitle.png" :alt="$t('shrineView.backToTitle')" />
+        <h2 class="top-30-text">
+          TOP30
+        </h2>
+        <button
+          class="back-button"
+          @click="goBack"
+        >
+          <img
+            src="/assets/images/button/buckToTitle.png"
+            :alt="$t('shrineView.backToTitle')"
+          >
         </button>
       </div>
 
-      <h1><span v-html="$t('leaderboardView.title')"></span></h1>
+      <h1><span v-html="$t('leaderboardView.title')" /></h1>
 
       <!-- ランキング種類切り替えUI (New) -->
       <button 
         :class="['cat-coin-toggle-button', { active: activeRankingType === 'catCoins', vertical: locale === 'ja' }]" 
-        @click="activeRankingType = 'catCoins'">
+        @click="activeRankingType = 'catCoins'"
+      >
         {{ $t('leaderboardView.typeCatCoins') }}
       </button>
       <button 
         :class="['rating-toggle-button', { active: activeRankingType === 'rating', vertical: locale === 'ja' }]" 
-        @click="activeRankingType = 'rating'">
+        @click="activeRankingType = 'rating'"
+      >
         {{ $t('leaderboardView.typeRating') }}
       </button>
 
-      <h2 class="ranking-list-title">{{ activeRankingTitle }}</h2>
-      <img src="/assets/images/back/fude.png" class="fude-image" alt="" />
-      <transition name="fade" mode="out-in">
-        <div v-if="!isLoading" class="ranking-list-container">
-          <div v-for="player in displayLeaderboard" :key="player.id" class="ranking-row" :class="{ 'is-first-place': player.isFirstPlace, 'is-second-place': player.isSecondPlace, 'is-third-place': player.isThirdPlace }">
+      <h2 class="ranking-list-title">
+        {{ activeRankingTitle }}
+      </h2>
+      <img
+        src="/assets/images/back/fude.png"
+        class="fude-image"
+        alt=""
+      >
+      <transition
+        name="fade"
+        mode="out-in"
+      >
+        <div
+          v-if="!isLoading"
+          class="ranking-list-container"
+        >
+          <div
+            v-for="player in displayLeaderboard"
+            :key="player.id"
+            class="ranking-row"
+            :class="{ 'is-first-place': player.isFirstPlace, 'is-second-place': player.isSecondPlace, 'is-third-place': player.isThirdPlace }"
+          >
             <div class="rank">
-              <img v-if="player.rank === 1" src="/assets/images/info/No1.png" alt="1st" class="rank-icon" />
-              <img v-else-if="player.rank === 2" src="/assets/images/info/No2.png" alt="2nd" class="rank-icon" />
-              <img v-else-if="player.rank === 3" src="/assets/images/info/No3.png" alt="3rd" class="rank-icon" />
+              <img
+                v-if="player.rank === 1"
+                src="/assets/images/info/No1.png"
+                alt="1st"
+                class="rank-icon"
+              >
+              <img
+                v-else-if="player.rank === 2"
+                src="/assets/images/info/No2.png"
+                alt="2nd"
+                class="rank-icon"
+              >
+              <img
+                v-else-if="player.rank === 3"
+                src="/assets/images/info/No3.png"
+                alt="3rd"
+                class="rank-icon"
+              >
               <template v-else>
-                <img src="/assets/images/info/hand.png" alt="Rank" class="rank-icon" />
+                <img
+                  src="/assets/images/info/hand.png"
+                  alt="Rank"
+                  class="rank-icon"
+                >
                 <span class="rank-number">{{ player.rank }}</span>
               </template>
             </div>
             <div class="player-info">
               <span class="user-name">{{ player.name }}</span>
               <div class="player-details">
-                <img :src="player.profile_image_url" alt="avatar" class="player-icon" />
+                <img
+                  :src="player.profile_image_url"
+                  alt="avatar"
+                  class="player-icon"
+                >
                 <span class="score">{{ player.score }}</span>
               </div>
             </div>
           </div>
         </div>
-        <div v-else class="ranking-list-placeholder">
+        <div
+          v-else
+          class="ranking-list-placeholder"
+        >
           <!-- ローディング中にレイアウトが崩れないようにスペースを確保 -->
         </div>
       </transition>

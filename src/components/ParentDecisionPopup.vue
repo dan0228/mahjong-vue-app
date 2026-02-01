@@ -1,26 +1,53 @@
 <template>
   <transition name="popup">
-    <div v-if="show" class="popup-overlay">
+    <div
+      v-if="show"
+      class="popup-overlay"
+    >
       <div class="popup-content">
         <div>
-          <h2 class="popup-title">{{ $t('parentDecisionPopup.title') }}</h2>
-          <img src="/assets/images/back/fude.png" alt="fude" class="fude-image" />
+          <h2 class="popup-title">
+            {{ $t('parentDecisionPopup.title') }}
+          </h2>
+          <img
+            src="/assets/images/back/fude.png"
+            alt="fude"
+            class="fude-image"
+          >
         </div>
         <div class="dealer-determination-list">
-          <div v-for="player in dealerDeterminationResults" :key="player.id" class="player-item" :class="{ 'is-dealer': player.isDealer }">
-            <img :src="getWindIcon(player)" alt="Seat Wind" :class="['seat-wind-icon', { 'east-wind-icon': player.seatWind === '東' }]" />
+          <div
+            v-for="player in dealerDeterminationResults"
+            :key="player.id"
+            class="player-item"
+            :class="{ 'is-dealer': player.isDealer }"
+          >
+            <img
+              :src="getWindIcon(player)"
+              alt="Seat Wind"
+              :class="['seat-wind-icon', { 'east-wind-icon': player.seatWind === '東' }]"
+            >
             <div class="player-info">
               <span class="player-name">{{ player.originalId ? $t(`aiNames.${player.originalId}`) : player.name }}</span>
               <div class="player-details">
-                <img v-if="getPlayerIcon(player)" :src="getPlayerIcon(player)" alt="Player Icon" class="player-icon" />
+                <img
+                  v-if="getPlayerIcon(player)"
+                  :src="getPlayerIcon(player)"
+                  alt="Player Icon"
+                  class="player-icon"
+                >
                 <span class="score">{{ $t('parentDecisionPopup.score', { score: player.score }) }}</span>
               </div>
             </div>
           </div>
         </div>
         <div class="bottom-info">
-          <p class="countdown-text">{{ $t('parentDecisionPopup.countdown', { n: countdown }) }}</p>
-          <div class="timestamp">{{ formattedTimestamp }}</div>
+          <p class="countdown-text">
+            {{ $t('parentDecisionPopup.countdown', { n: countdown }) }}
+          </p>
+          <div class="timestamp">
+            {{ formattedTimestamp }}
+          </div>
         </div>
       </div>
     </div>

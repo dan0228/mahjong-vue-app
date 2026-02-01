@@ -1,28 +1,37 @@
 <template>
-    <div :class="['player-hand-container', `position-${position}`, { 'my-turn-active': isMyHand && canDiscard }]">
-      <!-- プレイヤー情報は PlayerArea に移動済みと仮定 -->
+  <div :class="['player-hand-container', `position-${position}`, { 'my-turn-active': isMyHand && canDiscard }]">
+    <!-- プレイヤー情報は PlayerArea に移動済みと仮定 -->
+    <div
+      class="hand-tiles-area player-hand"
+    >
       <div
-        class="hand-tiles-area player-hand"
+        v-for="tile in playerDisplayHand"
+        :key="tile.id"
+        :class="[getTileClasses(tile, false), { 'is-in-hand': tile?.isStockedTile }]"
+        @click="selectTile(tile, false)"
       >
-        <div
-          v-for="tile in playerDisplayHand"
-          :key="tile.id"
-          :class="[getTileClasses(tile, false), { 'is-in-hand': tile?.isStockedTile }]"
-          @click="selectTile(tile, false)"
+        <img
+          :src="getTileImageUrl(isMyHand || tile.isPublic ? tile : null)"
+          :alt="isMyHand ? tileToString(tile) : '裏向きの牌'"
         >
-          <img :src="getTileImageUrl(isMyHand || tile.isPublic ? tile : null)" :alt="isMyHand ? tileToString(tile) : '裏向きの牌'" />
-        </div>
       </div>
-      <div v-if="drawnTileDisplay" class="drawn-tile-area player-hand">
-        <div
-          :class="getTileClasses(drawnTileDisplay, true)"
-          @click="selectTile(drawnTileDisplay, true)"
-        >
-                    <img :src="getTileImageUrl(isMyHand || drawnTileDisplay.isPublic ? drawnTileDisplay : null)" :alt="isMyHand ? tileToString(drawnTileDisplay) : '裏向きの牌'" />
-        </div>
-      </div>
-      <!-- ストック牌の表示エリアは PlayerArea.vue に移動しました -->
     </div>
+    <div
+      v-if="drawnTileDisplay"
+      class="drawn-tile-area player-hand"
+    >
+      <div
+        :class="getTileClasses(drawnTileDisplay, true)"
+        @click="selectTile(drawnTileDisplay, true)"
+      >
+        <img
+          :src="getTileImageUrl(isMyHand || drawnTileDisplay.isPublic ? drawnTileDisplay : null)"
+          :alt="isMyHand ? tileToString(drawnTileDisplay) : '裏向きの牌'"
+        >
+      </div>
+    </div>
+    <!-- ストック牌の表示エリアは PlayerArea.vue に移動しました -->
+  </div>
 </template>
 
 <script setup>

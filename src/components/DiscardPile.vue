@@ -11,7 +11,11 @@
       :style="{ order: index }"
     >
       <!-- 牌の向きはCSSで制御 -->
-      <img :src="getTileImageUrl(tile)" :alt="tileToString(tile)" class="discard-tile-image" />
+      <img
+        :src="getTileImageUrl(tile)"
+        :alt="tileToString(tile)"
+        class="discard-tile-image"
+      >
     </div>
   </div>
 </template>

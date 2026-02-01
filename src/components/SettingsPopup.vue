@@ -1,47 +1,117 @@
 <template>
-  <div v-if="show" class="popup-overlay" @click.self="closePopup">
+  <div
+    v-if="show"
+    class="popup-overlay"
+    @click.self="closePopup"
+  >
     <div class="popup-content">
       <!-- ログインフォーム -->
-      <div v-if="!userStore.profile || showLoginForm" class="form-container">
+      <div
+        v-if="!userStore.profile || showLoginForm"
+        class="form-container"
+      >
         <div>
-          <h2 class="popup-title">{{ $t('login.title') }}</h2>
-          <img src="/assets/images/back/fude.png" alt="fude" class="fude-image" />
+          <h2 class="popup-title">
+            {{ $t('login.title') }}
+          </h2>
+          <img
+            src="/assets/images/back/fude.png"
+            alt="fude"
+            class="fude-image"
+          >
         </div>
-        <form @submit.prevent="userStore.otpSent ? loginWithOtp() : sendOtp()" class="form-content-container">
-          <p class="form-description">{{ $t('login.description') }}</p>
+        <form
+          class="form-content-container"
+          @submit.prevent="userStore.otpSent ? loginWithOtp() : sendOtp()"
+        >
+          <p class="form-description">
+            {{ $t('login.description') }}
+          </p>
           <div class="form-group">
             <label for="email">{{ $t('login.emailLabel') }}</label>
-            <input type="email" id="email" v-model="email" :placeholder="$t('login.emailPlaceholder')" :disabled="userStore.otpSent" />
+            <input
+              id="email"
+              v-model="email"
+              type="email"
+              :placeholder="$t('login.emailPlaceholder')"
+              :disabled="userStore.otpSent"
+            >
           </div>
 
-          <div v-if="userStore.otpSent" class="form-group">
+          <div
+            v-if="userStore.otpSent"
+            class="form-group"
+          >
             <label for="otp">{{ $t('login.otpLabel') }}</label>
-            <input type="text" id="otp" v-model="otp" :placeholder="$t('login.otpPlaceholder')" />
+            <input
+              id="otp"
+              v-model="otp"
+              type="text"
+              :placeholder="$t('login.otpPlaceholder')"
+            >
           </div>
 
-          <div v-if="loginError" class="error-message">{{ loginError }}</div>
+          <div
+            v-if="loginError"
+            class="error-message"
+          >
+            {{ loginError }}
+          </div>
 
-          <button type="submit" class="custom-button login-submit-button" :disabled="userStore.loading || isSendingOtp || isVerifyingOtp">
+          <button
+            type="submit"
+            class="custom-button login-submit-button"
+            :disabled="userStore.loading || isSendingOtp || isVerifyingOtp"
+          >
             <span>{{ userStore.otpSent ? $t('login.loginButton') : $t('login.sendOtpButton') }}</span>
           </button>
         </form>
-        <button type="button" @click="cancelLogin" class="custom-button cancel-button">{{ $t('settingsPopup.cancelButton') }}</button>
+        <button
+          type="button"
+          class="custom-button cancel-button"
+          @click="cancelLogin"
+        >
+          {{ $t('settingsPopup.cancelButton') }}
+        </button>
       </div>
 
       <!-- プロフィール編集フォーム -->
-      <div v-else class="form-container">
+      <div
+        v-else
+        class="form-container"
+      >
         <div>
-          <h2 class="popup-title">{{ $t('settingsPopup.title') }}</h2>
-          <img src="/assets/images/back/fude.png" alt="fude" class="fude-image" />
+          <h2 class="popup-title">
+            {{ $t('settingsPopup.title') }}
+          </h2>
+          <img
+            src="/assets/images/back/fude.png"
+            alt="fude"
+            class="fude-image"
+          >
         </div>
-        <form @submit.prevent="saveProfile" class="form-content-container">
+        <form
+          class="form-content-container"
+          @submit.prevent="saveProfile"
+        >
           <div class="form-group">
             <label for="username-settings">{{ $t('usernameRegistration.usernameLabel') }}</label>
-            <input type="text" id="username-settings" v-model="username" :placeholder="$t('usernameRegistration.usernamePlaceholder')" />
-            <div v-if="username.length > 0 && !isUsernameLengthValid" class="error-message">
+            <input
+              id="username-settings"
+              v-model="username"
+              type="text"
+              :placeholder="$t('usernameRegistration.usernamePlaceholder')"
+            >
+            <div
+              v-if="username.length > 0 && !isUsernameLengthValid"
+              class="error-message"
+            >
               {{ $t('usernameRegistration.errors.usernameTooLong') }}
             </div>
-            <div v-if="isUsernameProfane" class="error-message">
+            <div
+              v-if="isUsernameProfane"
+              class="error-message"
+            >
               {{ $t('usernameRegistration.errors.usernameProfane') }}
             </div>
           </div>
@@ -50,18 +120,45 @@
             <label>{{ $t('usernameRegistration.avatarLabel') }}</label>
             <div class="avatar-upload-container">
               <label for="avatar-upload-settings">
-                <img :src="previewUrl || userStore.profile?.avatar_url || '/assets/images/info/hito_icon_1.png'" alt="Avatar Preview" class="avatar-preview" />
+                <img
+                  :src="previewUrl || userStore.profile?.avatar_url || '/assets/images/info/hito_icon_1.png'"
+                  alt="Avatar Preview"
+                  class="avatar-preview"
+                >
               </label>
-              <input type="file" id="avatar-upload-settings" @change="onFileChange" accept="image/png, image/jpeg" style="display: none;" ref="fileInput" />
+              <input
+                id="avatar-upload-settings"
+                ref="fileInput"
+                type="file"
+                accept="image/png, image/jpeg"
+                style="display: none;"
+                @change="onFileChange"
+              >
               <div class="x-input-and-buttons">
                 <div class="button-stack">
-                  <button type="button" class="custom-button x-avatar-button" @click="onXAvatarClick" :disabled="isLoadingXAvatar">
+                  <button
+                    type="button"
+                    class="custom-button x-avatar-button"
+                    :disabled="isLoadingXAvatar"
+                    @click="onXAvatarClick"
+                  >
                     <LoadingIndicator v-if="isLoadingXAvatar" />
                     <span v-else>{{ $t('avatarSection.getXIconButton') }}</span>
                   </button>
                 </div>
-                <input type="text" id="x-handle-input-settings" v-model="xHandleInput" :placeholder="$t('avatarSection.xAccountPlaceholder')" class="x-handle-input" />
-                <div v-if="xHandleError" class="error-message">{{ xHandleError }}</div>
+                <input
+                  id="x-handle-input-settings"
+                  v-model="xHandleInput"
+                  type="text"
+                  :placeholder="$t('avatarSection.xAccountPlaceholder')"
+                  class="x-handle-input"
+                >
+                <div
+                  v-if="xHandleError"
+                  class="error-message"
+                >
+                  {{ xHandleError }}
+                </div>
               </div>
             </div>
           </div>
@@ -74,38 +171,101 @@
           <div class="email-edit-section">
             <label class="email-label-small">{{ $t('settingsPopup.emailSection.label') }}</label>
             <div v-if="!isEditingEmail">
-              <p class="email-text-small">{{ pendingEmail || userStore.profile?.email || $t('settingsPopup.emailSection.notSet') }}</p>
-              <button type="button" @click="startEditEmail" class="custom-button edit-email-button">{{ $t('settingsPopup.emailSection.editEmailButton') }}</button>
+              <p class="email-text-small">
+                {{ pendingEmail || userStore.profile?.email || $t('settingsPopup.emailSection.notSet') }}
+              </p>
+              <button
+                type="button"
+                class="custom-button edit-email-button"
+                @click="startEditEmail"
+              >
+                {{ $t('settingsPopup.emailSection.editEmailButton') }}
+              </button>
             </div>
-            <form v-else @submit.prevent="requestEmailUpdate">
+            <form
+              v-else
+              @submit.prevent="requestEmailUpdate"
+            >
               <div class="form-group">
-                <label for="email-settings" class="email-label-small">{{ $t('settingsPopup.emailSection.newEmailLabel') }}</label>
-                <input type="email" id="email-settings" v-model="emailInput" :placeholder="$t('settingsPopup.emailSection.newEmailPlaceholder')" />
+                <label
+                  for="email-settings"
+                  class="email-label-small"
+                >{{ $t('settingsPopup.emailSection.newEmailLabel') }}</label>
+                <input
+                  id="email-settings"
+                  v-model="emailInput"
+                  type="email"
+                  :placeholder="$t('settingsPopup.emailSection.newEmailPlaceholder')"
+                >
               </div>
-              <div v-if="emailError" class="error-message">{{ emailError }}</div>
-              <div class="button-group" v-if="!emailUpdateMessage">
-                <button type="button" @click="cancelEditEmail" class="custom-button cancel-button">{{ $t('settingsPopup.cancelButton') }}</button>
-                <button type="submit" class="custom-button" :disabled="isUpdatingEmail">
+              <div
+                v-if="emailError"
+                class="error-message"
+              >
+                {{ emailError }}
+              </div>
+              <div
+                v-if="!emailUpdateMessage"
+                class="button-group"
+              >
+                <button
+                  type="button"
+                  class="custom-button cancel-button"
+                  @click="cancelEditEmail"
+                >
+                  {{ $t('settingsPopup.cancelButton') }}
+                </button>
+                <button
+                  type="submit"
+                  class="custom-button"
+                  :disabled="isUpdatingEmail"
+                >
                   {{ $t('settingsPopup.emailSection.sendUpdateRequestButton') }}
                 </button>
               </div>
             </form>
-            <div v-if="emailUpdateMessage" class="success-message">{{ emailUpdateMessage }}</div>
+            <div
+              v-if="emailUpdateMessage"
+              class="success-message"
+            >
+              {{ emailUpdateMessage }}
+            </div>
           </div>
 
-          <div class="button-group" v-if="!isEditingEmail">
-            <button type="button" @click="closePopup" class="custom-button cancel-button" :disabled="isEditingEmail && !emailUpdateMessage" :class="{'disabled-button-style': isEditingEmail && !emailUpdateMessage}">{{ $t('settingsPopup.cancelButton') }}</button>
-            <button type="submit" class="custom-button" :disabled="!isFormValid">
+          <div
+            v-if="!isEditingEmail"
+            class="button-group"
+          >
+            <button
+              type="button"
+              class="custom-button cancel-button"
+              :disabled="isEditingEmail && !emailUpdateMessage"
+              :class="{'disabled-button-style': isEditingEmail && !emailUpdateMessage}"
+              @click="closePopup"
+            >
+              {{ $t('settingsPopup.cancelButton') }}
+            </button>
+            <button
+              type="submit"
+              class="custom-button"
+              :disabled="!isFormValid"
+            >
               {{ $t('settingsPopup.saveButton') }}
             </button>
           </div>
         </form>
 
         <div class="account-actions-container">
-          <button @click="showLoginForm = true" class="secondary-action-button">
+          <button
+            class="secondary-action-button"
+            @click="showLoginForm = true"
+          >
             {{ $t('settingsPopup.switchAccountButton') }}
           </button>
-          <button @click="handleDeleteAccount" class="delete-button">
+          <button
+            class="delete-button"
+            @click="handleDeleteAccount"
+          >
             {{ $t('settingsPopup.deleteAccountSection.button') }}
           </button>
         </div>

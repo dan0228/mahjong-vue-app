@@ -1,7 +1,19 @@
 <template>
-  <div v-if="show" class="popup-overlay" @click.self="closePopup">
-    <div class="popup-container" :style="containerStyle">
-      <button class="close-button" @click="closePopup">×</button>
+  <div
+    v-if="show"
+    class="popup-overlay"
+    @click.self="closePopup"
+  >
+    <div
+      class="popup-container"
+      :style="containerStyle"
+    >
+      <button
+        class="close-button"
+        @click="closePopup"
+      >
+        ×
+      </button>
       <div class="popup-content">
         <!-- ボタンをループ処理 -->
         <div
@@ -11,16 +23,29 @@
           :class="[button.customClass, { 'clickable': !button.isForm }]"
         >
           <!-- 通常の選択肢 -->
-          <div v-if="!button.isForm" @click="selectOption(button.id, null)">
-            <div class="mode-title">{{ button.title }}</div>
-            <div class="mode-description" v-html="button.description"></div>
+          <div
+            v-if="!button.isForm"
+            @click="selectOption(button.id, null)"
+          >
+            <div class="mode-title">
+              {{ button.title }}
+            </div>
+            <div
+              class="mode-description"
+              v-html="button.description"
+            />
           </div>
 
           <!-- 友人対戦フォーム -->
           <div v-if="button.isForm">
-            <div class="mode-title form-title">{{ button.title }}</div>
+            <div class="mode-title form-title">
+              {{ button.title }}
+            </div>
             <div class="friend-match-form">
-              <div class="passcode-wrapper" @paste.prevent="handlePaste">
+              <div
+                class="passcode-wrapper"
+                @paste.prevent="handlePaste"
+              >
                 <input
                   v-for="i in 4"
                   :key="i"
@@ -33,11 +58,21 @@
                   @keydown="handleKeydown(i - 1, $event)"
                   @focus="handleFocus(i-1)"
                   @click.stop
-                />
+                >
               </div>
               <div class="form-buttons">
-                <button class="form-button enter-room-btn" @click="selectOption('enter_room')">{{ t('gameModeSelection.enterRoom') }}</button>
-                <button class="form-button create-room-btn" @click="selectOption('create_room')">{{ t('gameModeSelection.createRoom') }}</button>
+                <button
+                  class="form-button enter-room-btn"
+                  @click="selectOption('enter_room')"
+                >
+                  {{ t('gameModeSelection.enterRoom') }}
+                </button>
+                <button
+                  class="form-button create-room-btn"
+                  @click="selectOption('create_room')"
+                >
+                  {{ t('gameModeSelection.createRoom') }}
+                </button>
               </div>
             </div>
           </div>

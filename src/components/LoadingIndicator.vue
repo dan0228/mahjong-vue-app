@@ -1,6 +1,6 @@
 <template>
   <div class="loading-overlay">
-    <div class="spinner"></div>
+    <div class="spinner" />
   </div>
 </template>
 

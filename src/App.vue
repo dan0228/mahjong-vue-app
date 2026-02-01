@@ -1,16 +1,28 @@
 <template>
   <!-- メインコンテンツ -->
-  <router-view v-if="!showWakeUpScreen" v-slot="{ Component }">
-    <transition name="fade" mode="out-in">
+  <router-view
+    v-if="!showWakeUpScreen"
+    v-slot="{ Component }"
+  >
+    <transition
+      name="fade"
+      mode="out-in"
+    >
       <component :is="Component" />
     </transition>
   </router-view>
 
   <!-- 猫を起こす画面 -->
-  <WakeUpCatScreen v-if="showWakeUpScreen" @finished="onWakeUpFinished" />
+  <WakeUpCatScreen
+    v-if="showWakeUpScreen"
+    @finished="onWakeUpFinished"
+  />
 
   <!-- 遷移用オーバーレイ -->
-  <div class="transition-overlay" :class="{ active: isTransitioning }"></div>
+  <div
+    class="transition-overlay"
+    :class="{ active: isTransitioning }"
+  />
 
   <!-- 通信中ローディングインジケーター -->
   <LoadingIndicator v-if="userStore.loading" />

@@ -1,29 +1,50 @@
 <template>
-  <div class="shrine-view-container" :style="{ height: viewportHeight }">
-    <div class="sakura-container" ref="sakuraContainer">
-        <img
-          v-for="petal in petals"
-          :key="petal.id"
-          class="sakura-petal"
-          :src="petal.src"
-          :style="petal.style"
-        />
+  <div
+    class="shrine-view-container"
+    :style="{ height: viewportHeight }"
+  >
+    <div
+      ref="sakuraContainer"
+      class="sakura-container"
+    >
+      <img
+        v-for="petal in petals"
+        :key="petal.id"
+        class="sakura-petal"
+        :src="petal.src"
+        :style="petal.style"
+      >
     </div>
-    <div class="shrine-screen" :style="scalerStyle">
+    <div
+      class="shrine-screen"
+      :style="scalerStyle"
+    >
       <div class="user-stats">
-        <img :src="boardImageSrc" alt="Board" class="board-image" />
+        <img
+          :src="boardImageSrc"
+          alt="Board"
+          class="board-image"
+        >
         <span class="rating-number-on-board">{{ userStore.profile?.rating ?? 1500 }}</span>
         <span class="cat-coins-number-on-board">{{ userStore.profile?.cat_coins || 0 }}</span>
       </div>
       <div class="top-controls">
-        
-        <button @click="goToTitle" class="back-button">
-          <img src="/assets/images/button/buckToTitle.png" :alt="$t('shrineView.backToTitle')" />
+        <button
+          class="back-button"
+          @click="goToTitle"
+        >
+          <img
+            src="/assets/images/button/buckToTitle.png"
+            :alt="$t('shrineView.backToTitle')"
+          >
         </button>
       </div>
 
-      <button @click="drawOmikuji" class="omikuji-button">
-        {{ $t('shrineView.omikujiButton.line1') }}<br />
+      <button
+        class="omikuji-button"
+        @click="drawOmikuji"
+      >
+        {{ $t('shrineView.omikujiButton.line1') }}<br>
         <span class="coin-text">
           <template v-if="userStore.profile?.daily_free_omikuji_count > 0">
             {{ $t('shrineView.omikujiButton.freeDrawText', { count: userStore.profile.daily_free_omikuji_count }) }}
@@ -37,9 +58,16 @@
         <div class="sayings-container">
           <table class="sayings-table">
             <tbody>
-              <tr v-for="(saying, index) in sayings" :key="saying.id">
-                <td class="saying-no">{{ $t('shrineView.sayingNo', { n: index + 1 }) }}</td>
-                <td class="saying-text">{{ revealedSayings[saying.id] ? saying.text : $t('shrineView.unknownSaying') }}</td>
+              <tr
+                v-for="(saying, index) in sayings"
+                :key="saying.id"
+              >
+                <td class="saying-no">
+                  {{ $t('shrineView.sayingNo', { n: index + 1 }) }}
+                </td>
+                <td class="saying-text">
+                  {{ revealedSayings[saying.id] ? saying.text : $t('shrineView.unknownSaying') }}
+                </td>
               </tr>
             </tbody>
           </table>
@@ -50,13 +78,13 @@
           v-if="showPopup"
           :fortune="randomFortune"
           :saying="randomSaying"
-          :sayingId="randomSayingId"
-          :isNew="isNewSaying"
+          :saying-id="randomSayingId"
+          :is-new="isNewSaying"
           @close="closePopup"
         />
       </transition>
 
-      <div :class="{ 'fade-overlay': true, 'is-fading': isFading }"></div>
+      <div :class="{ 'fade-overlay': true, 'is-fading': isFading }" />
 
       <!-- 収集率カウンター -->
       <div class="collection-rate-counter">

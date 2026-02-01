@@ -1,5 +1,8 @@
 <template>
-  <div class="game-view-container" :style="{ height: viewportHeight }">
+  <div
+    class="game-view-container"
+    :style="{ height: viewportHeight }"
+  >
     <GameBoard />
     <StockSelectionCountdown />
   </div>

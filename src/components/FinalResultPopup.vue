@@ -1,33 +1,66 @@
 <template>
   <transition name="popup">
-    <div v-if="show" class="popup-overlay">
-      <div class="popup-content" ref="popupContentRef">
+    <div
+      v-if="show"
+      class="popup-overlay"
+    >
+      <div
+        ref="popupContentRef"
+        class="popup-content"
+      >
         <h2>{{ t('finalResultPopup.title') }}</h2>
         <div class="final-results-list">
-          <div v-for="player in finalResultDetails.rankedPlayers" :key="player.id" class="player-item" :class="{ 'is-winner': player.rank === 1 }">
+          <div
+            v-for="player in finalResultDetails.rankedPlayers"
+            :key="player.id"
+            class="player-item"
+            :class="{ 'is-winner': player.rank === 1 }"
+          >
             <!-- 順位表示 -->
             <div class="rank-container">
               <template v-if="player.rank === 1">
-                <img src="/assets/images/info/No1.png" alt="No1" class="rank-image no1-image" />
+                <img
+                  src="/assets/images/info/No1.png"
+                  alt="No1"
+                  class="rank-image no1-image"
+                >
               </template>
               <template v-else>
-                <img src="/assets/images/info/hand.png" alt="Hand" class="rank-image hand-image" />
+                <img
+                  src="/assets/images/info/hand.png"
+                  alt="Hand"
+                  class="rank-image hand-image"
+                >
                 <span class="rank-number">{{ player.rank }}</span>
               </template>
             </div>
             <div class="player-info">
               <span class="player-name">{{ getTranslatedPlayerName(player) }}</span>
               <div class="player-details">
-                <img v-if="getPlayerIcon(player.id)" :src="getPlayerIcon(player.id)" alt="Player Icon" class="player-icon" crossorigin="anonymous" />
+                <img
+                  v-if="getPlayerIcon(player.id)"
+                  :src="getPlayerIcon(player.id)"
+                  alt="Player Icon"
+                  class="player-icon"
+                  crossorigin="anonymous"
+                >
                 <span class="score">{{ t('finalResultPopup.score', { score: player.score }) }}</span>
               </div>
             </div>
           </div>
         </div>
         
-        <div class="coin-gain" v-if="gameStore.lastCoinGain !== 0">
+        <div
+          v-if="gameStore.lastCoinGain !== 0"
+          class="coin-gain"
+        >
           <div class="coin-change-display">
-            <img src="/assets/images/info/cat_coin.png" alt="Cat Coin" class="cat-coin-icon" crossorigin="anonymous">
+            <img
+              src="/assets/images/info/cat_coin.png"
+              alt="Cat Coin"
+              class="cat-coin-icon"
+              crossorigin="anonymous"
+            >
             <span :class="{ 'positive-gain': gameStore.lastCoinGain > 0, 'negative-gain': gameStore.lastCoinGain < 0 }">
               {{ gameStore.lastCoinGain > 0 ? '+' : '' }}{{ gameStore.lastCoinGain }}
             </span>
@@ -37,14 +70,22 @@
           </div>
         </div>
         <div class="actions">
-          <button v-if="!gameStore.isGameOnline" @click="startNewGame" class="action-button">
+          <button
+            v-if="!gameStore.isGameOnline"
+            class="action-button"
+            @click="startNewGame"
+          >
             <span>{{ t('finalResultPopup.newGame') }}</span>
           </button>
-          <button @click="backToTitle" class="action-button back-to-title-button">
-          </button>
+          <button
+            class="action-button back-to-title-button"
+            @click="backToTitle"
+          />
         </div>
         <!-- X共有ボタンは削除 -->
-        <div class="timestamp">{{ formattedTimestamp }}</div>
+        <div class="timestamp">
+          {{ formattedTimestamp }}
+        </div>
       </div>
     </div>
   </transition>

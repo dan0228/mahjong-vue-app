@@ -640,7 +640,6 @@ async function declareMinkan(gameId, playerId, targetPlayerId, tileToKan) {
 
 // 嶺上牌を引いた後の処理を行うヘルパー関数
 function _handlePostRinshanDraw(gameId, playerId) {
-
   const gameState = gameStates[gameId];
   if (!gameState) return;
 
@@ -1407,7 +1406,7 @@ io.on('connection', (socket) => {
 
   // クライアントがストックした牌を使用することを要求する
   socket.on('useStockedTile', async ({ gameId, playerId }) => {
-    const gameState = gameStates[gameId];
+    const gameState = gameStates[gameStates[gameId]];
     if (!gameState) return socket.emit('gameError', { message: 'ゲームが見つかりません。' });
     if (gameState.currentTurnPlayerId !== playerId) return socket.emit('gameError', { message: 'あなたのターンではありません。' });
     
@@ -1683,7 +1682,7 @@ io.on('connection', (socket) => {
     if (gameState.drawnTile && mahjongLogic.getTileKey(gameState.drawnTile) === kakanKey) {
         gameState.drawnTile = null;
     } else {
-      const tileIndexInHand = player.hand.findIndex(t => mahjongLogic.getTileKey(t) === kakanKey);
+      const tileIndexInHand = player.hand.findIndex(t => t.id === tileToKakan.id);
       if (tileIndexInHand > -1) {
         player.hand.splice(tileIndexInHand, 1);
       }

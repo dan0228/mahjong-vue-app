@@ -272,6 +272,8 @@ export const useGameStore = defineStore('game', {
     },
     // --- Online Match Actions ---
     connectToServer() {
+      const userStore = useUserStore(); // userStoreを取得
+
       if (!socket || !socket.connected) {
         socket = io(GAME_SERVER_URL);
 
@@ -285,6 +287,7 @@ export const useGameStore = defineStore('game', {
         socket.on('disconnect', () => {
           console.log('Disconnected from game server');
           this.isGameOnline = false;
+          this.onlineGameId = null; // 切断時にゲームIDをリセット
           this.localPlayerId = null;
           // 必要に応じてUIを更新
         });
@@ -296,13 +299,39 @@ export const useGameStore = defineStore('game', {
 
         socket.on('gameError', (error) => {
           console.error('Game server error:', error);
-          const userStore = useUserStore();
+          // const userStore = useUserStore(); // 既に取得済み
           // サーバーからのエラーメッセージをポップアップで表示
           userStore.setPenalty(error.message, 5000);
         });
 
         socket.on('error', (error) => {
           console.error('Socket error:', error);
+        });
+
+        socket.on('matchmaking-started', ({ gameId }) => {
+          console.log(`マッチメイキング開始: ゲームID ${gameId}`);
+          this.onlineGameId = gameId;
+          this.isGameOnline = true;
+          this.localPlayerId = userStore.profile.id; // 自分のIDを設定
+          // マッチング待機画面で表示する情報を更新
+          // 例: プレイヤーリストを初期化し、自分だけを表示
+          this.players = [{
+            id: this.localPlayerId,
+            name: userStore.profile.username,
+            avatar_url: userStore.profile.avatar_url,
+            cat_coins: userStore.profile.cat_coins,
+            rating: userStore.profile.rating,
+            isAi: false,
+            // その他の初期プロパティ
+          }];
+          // MatchmakingView がこの状態を監視してUIを更新する
+        });
+
+        socket.on('game-found', ({ gameId }) => {
+          console.log(`ゲームが見つかりました: ゲームID ${gameId}`);
+          this.setOnlineGame({ gameId, localUserId: userStore.profile.id });
+          this.initializeOnlineGame(); // サーバーにゲーム初期化を要求
+          // MatchmakingView がこの状態を監視してUIを更新する
         });
       }
     },
@@ -1112,8 +1141,7 @@ export const useGameStore = defineStore('game', {
         }
         return;
       }
-
-      // --- ここからオフライン用のロジック ---
+    // ... 既存のアクション ...
       const player = this.players.find(p => p.id === playerId);
       if (!player) {
         console.error('executeStock: Player not found');
@@ -1156,6 +1184,28 @@ export const useGameStore = defineStore('game', {
 
       // 次のプレイヤーのターンへ
       this.moveToNextPlayer();
+    },
+
+    /**
+     * オンライン対戦のマッチメイキングをサーバーに要求します。
+     */
+    async requestMatchmaking() {
+      const userStore = useUserStore();
+      if (!userStore.profile || !userStore.profile.id) {
+        console.error('マッチメイキング要求: ユーザープロフィールまたはIDが見つかりません。');
+        // エラー処理、例えばログイン画面へのリダイレクトなど
+        return;
+      }
+
+      this.connectToServer(); // サーバーに接続
+
+      if (socket && socket.connected) {
+        socket.emit('requestMatchmaking', { userId: userStore.profile.id });
+        console.log(`マッチメイキング要求をサーバーに送信しました。ユーザーID: ${userStore.profile.id}`);
+      } else {
+        console.error('マッチメイキング要求: Socket.ioに接続されていません。');
+        // 接続エラー時の処理
+      }
     },
 
     moveToNextPlayer() {

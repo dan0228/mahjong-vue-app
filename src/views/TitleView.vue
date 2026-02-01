@@ -192,6 +192,8 @@ const handlePopupSelect = (payload) => {
     } else if (action === 'ranked') {
       // TODO: 全国対戦のマッチメイキング画面へ遷移
       console.log('Ranked match selected, navigating to matchmaking...');
+      gameStore.setGameMode('online'); // ゲームモードをオンラインに設定
+      gameStore.requestMatchmaking(); // マッチング要求を送信
       router.push('/matchmaking');
     }
   }

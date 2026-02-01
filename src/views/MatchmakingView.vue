@@ -89,33 +89,30 @@ const goToTitle = () => {
 };
 
 // --- マッチングロジック ---
-const allPlayers = computed(() => {
-  const mainPlayer = {
-    id: 1,
-    username: userStore.profile?.username || 'Player 1',
-    rating: userStore.profile?.rating || 1500,
-    avatar_url: userStore.profile?.avatar_url || '/assets/images/info/hito_icon_1.png',
-    cat_coins: userStore.profile?.cat_coins || 0,
-  };
-  const dummyPlayers = [
-    { id: 2, username: 'くろ', rating: 1500, avatar_url: '/assets/images/info/cat_icon_3.png', cat_coins: 100 },
-    { id: 3, username: 'たま', rating: 1500, avatar_url: '/assets/images/info/cat_icon_2.png', cat_coins: 200 },
-    { id: 4, username: 'とら', rating: 1500, avatar_url: '/assets/images/info/cat_icon_1.png', cat_coins: 300 },
-  ];
-  return [mainPlayer, ...dummyPlayers].sort((a, b) => a.id - b.id);
+// foundPlayers を gameStore.players に変更
+const foundPlayers = computed(() => gameStore.players);
+
+// statusKey のロジックを調整
+const statusKey = computed(() => {
+  if (gameStore.isGameReady) {
+    return 'ready';
+  }
+  // gameStore.onlineGameId が設定されていればマッチング中
+  if (gameStore.onlineGameId) {
+    return 'searching';
+  }
+  return 'searching'; // 初期状態
 });
 
-const foundPlayers = ref([]);
-const statusKey = ref('searching'); // 'searching' or 'ready'
 const statusText = computed(() => t(`matchmaking.status.${statusKey.value}`));
-const countdown = ref(5);
+const countdown = ref(3); // カウントダウンの初期値は3のまま
 const showCountdown = ref(false);
 let countdownInterval = null;
 
 const startFinalSequence = () => {
   // 全員が揃ってから1秒待ってから「準備完了！」と表示し、カウントダウンを開始
   setTimeout(() => {
-    statusKey.value = 'ready'; // テキストのキーを変更
+    // statusKey.value = 'ready'; // computed に変更したので不要
     showCountdown.value = true;
 
     countdownInterval = setInterval(() => {
@@ -128,69 +125,23 @@ const startFinalSequence = () => {
   }, 1000); // 1秒の遅延
 };
 
-const simulateMatchmaking = () => {
-  const playersToFind = [...allPlayers.value];
-  let delay = 0;
-  playersToFind.forEach((player, index) => {
-    delay += Math.random() * 1500 + 500; // 0.5秒から2秒のランダムな遅延
-    setTimeout(() => {
-      foundPlayers.value.push(player);
-      audioStore.playSound('Hyoshigi01-1.mp3'); // ★追加
-      if (foundPlayers.value.length === 4) {
-        // 全員が揃ったら、すぐにstartFinalSequenceを呼び出すのではなく、
-        // startFinalSequence内で1秒の遅延を設けるため、ここでは直接呼び出す
-        startFinalSequence();
-      }
-    }, delay);
-  });
-};
-
-// --- i18n関連の算出プロパティ ---
-const boardImageSrc = computed(() =>
-  locale.value === 'en'
-    ? '/assets/images/info/board_en.png'
-    : '/assets/images/info/board.png'
-);
-
-// --- 火の粉アニメーションのスタイル ---
-const fireParticleStyles = ref([]);
-const generateFireParticleStyles = () => {
-  const styles = [];
-  for (let i = 0; i < 20; i++) {
-    const randomDelay = Math.random() * 4;
-    styles.push({ animationDelay: `${randomDelay}s` });
+// gameStore.isGameReady の変更を監視
+watch(() => gameStore.isGameReady, (newVal) => {
+  if (newVal) {
+    startFinalSequence();
   }
-  fireParticleStyles.value = styles;
-};
-
-// --- スケーリング処理 ---
-const DESIGN_WIDTH = 360;
-const DESIGN_HEIGHT = 640;
-const calculateScaleFactor = () => {
-  if (typeof window === 'undefined') return 1;
-  const currentWidth = window.innerWidth;
-  const currentHeight = window.innerHeight;
-  const scaleX = currentWidth / DESIGN_WIDTH;
-  const scaleY = currentHeight / DESIGN_HEIGHT;
-  return Math.min(scaleX, scaleY);
-};
-const scaleFactor = ref(calculateScaleFactor());
-const scalerStyle = computed(() => ({
-  transform: `translate(-50%, -50%) scale(${scaleFactor.value})`,
-}));
-const updateScaleFactor = () => {
-  scaleFactor.value = calculateScaleFactor();
-};
+});
 
 onMounted(() => {
   window.addEventListener('resize', updateScaleFactor);
   generateFireParticleStyles();
-  simulateMatchmaking(); // マッチングシミュレーションを開始
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', updateScaleFactor);
   clearInterval(countdownInterval); // コンポーネント離脱時にタイマーをクリア
+  // マッチング中に画面を離れた場合、サーバーにマッチングキャンセルを通知する処理が必要になる可能性あり
+  // gameStore.cancelMatchmaking(); // 必要に応じて実装
 });
 </script>
 

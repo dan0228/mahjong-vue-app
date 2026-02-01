@@ -1490,8 +1490,9 @@ io.on('connection', (socket) => {
             // socketId はサーバーサイドで管理されるべき情報であり、クライアントにブロードキャストされる game_data に含めるべきではない
             return {
               id: id,
-              name: profile?.username || 'プレイヤー',
-              avatar_url: profile?.avatar_url || '/assets/images/info/hito_icon_1.png', // デフォルトアイコンを設定
+              name: profile?.username || 'プレイヤー', // name プロパティはそのまま
+              username: profile?.username || 'プレイヤー', // username プロパティを追加
+              avatar_url: profile?.avatar_url || '/assets/images/info/hito_icon_1.png',
               cat_coins: profile?.cat_coins || 0,
               rating: profile?.rating || 1500,
               hand: [], discards: [], melds: [], isDealer: false, score: 50000, seatWind: null,

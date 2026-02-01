@@ -27,13 +27,13 @@ const httpServer = createServer(app);
 
 // CORS設定
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*', // 環境変数からフロントエンドのURLを読み込むか、全て許可
+  origin: process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : '*', // 環境変数からフロントエンドのURLを読み込むか、全て許可
   methods: ["GET", "POST"]
 }));
 
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.FRONTEND_URL || '*',
+    origin: process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : '*',
     methods: ["GET", "POST"]
   }
 });

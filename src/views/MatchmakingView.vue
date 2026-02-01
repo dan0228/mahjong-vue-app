@@ -337,6 +337,8 @@ onBeforeUnmount(() => {
 .player-slot {
   position: absolute;
   z-index: 10;
+  margin-left: -20px;
+  margin-top: -30px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -396,7 +398,6 @@ onBeforeUnmount(() => {
   height: 100%;
   border-radius: 50%;
   background-color: rgba(0, 0, 0, 0.3);
-  border: 2px dashed rgba(255, 255, 255, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;

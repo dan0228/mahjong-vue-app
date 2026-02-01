@@ -64,12 +64,16 @@ const props = defineProps({
 const { locale } = useI18n();
 
 const playerIconSrc = computed(() => {
-  if (!props.player) return '/assets/images/info/hito_icon_1.png';
-  if (props.player.avatar_url) return props.player.avatar_url;
+  if (!props.player || !props.player.id) return '/assets/images/info/hito_icon_1.png'; // プレイヤーオブジェクトまたはIDがない場合
+  if (props.player.avatar_url) return props.player.avatar_url; // avatar_url が設定されていればそれを使用
+
+  // AIプレイヤーのアイコン
   if (props.player.originalId === 'kuro') return '/assets/images/info/cat_icon_3.png';
   if (props.player.originalId === 'tama') return '/assets/images/info/cat_icon_2.png';
   if (props.player.originalId === 'tora') return '/assets/images/info/cat_icon_1.png';
   if (props.player.originalId === 'janneko') return '/assets/images/info/cat_icon_4.png';
+  
+  // 上記以外（人間プレイヤーでavatar_urlがnullの場合など）はデフォルトアイコン
   return '/assets/images/info/hito_icon_1.png';
 });
 

@@ -1185,6 +1185,9 @@ io.on('connection', (socket) => {
 
     // ユーザーが切断された場合の処理
     if (disconnectedUserId) {
+        let gameFoundAndUpdated = false;
+
+        // 1. メモリ上のアクティブなゲームから切断したユーザーを探す
         for (const gameId in gameStates) {
             const game = gameStates[gameId];
             if (!Array.isArray(game.players)) {
@@ -1195,7 +1198,7 @@ io.on('connection', (socket) => {
             const playerIndex = game.players.findIndex(p => p.id === disconnectedUserId);
 
             if (playerIndex !== -1) {
-                console.log(`Player ${disconnectedUserId} disconnected from game ${gameId}`);
+                console.log(`Player ${disconnectedUserId} disconnected from active game ${gameId}`);
                 
                 // Supabaseのgame_statesテーブルのplayer_X_idカラムを更新するための準備
                 const updateData = { updated_at: new Date() };
@@ -1214,7 +1217,10 @@ io.on('connection', (socket) => {
                 game.players.splice(playerIndex, 1);
 
                 // game_data 内の players 配列からも切断したプレイヤーを削除
-                game.game_data.players = game.game_data.players.filter(p => p.id !== disconnectedUserId);
+                // game.game_data は gameStates[gameId] と同じオブジェクトを参照しているため、game.players の変更は game.game_data.players にも反映される
+                // 明示的にフィルターし直す必要はないが、念のため安全策として
+                game.game_data.players = game.players.filter(p => p.id !== disconnectedUserId);
+
 
                 // 残りのプレイヤー数に応じてstatusを更新
                 if (game.players.length === 0) {
@@ -1245,7 +1251,77 @@ io.on('connection', (socket) => {
                         io.to(gameId).emit('game-state-update', game);
                     }
                 }
+                gameFoundAndUpdated = true;
                 break; // 該当ゲームを見つけたらループを抜ける
+            }
+        }
+
+        // 2. メモリ上のゲームに見つからなかった場合、Supabaseからマッチメイキング中のゲームを探す
+        if (!gameFoundAndUpdated) {
+            console.log(`Player ${disconnectedUserId} not found in active games. Checking Supabase for matchmaking games.`);
+            const { data: matchmakingGames, error: fetchError } = await supabase
+                .from('game_states')
+                .select('id, player_1_id, player_2_id, player_3_id, player_4_id, game_data, status')
+                .or(`player_1_id.eq.${disconnectedUserId},player_2_id.eq.${disconnectedUserId},player_3_id.eq.${disconnectedUserId},player_4_id.eq.${disconnectedUserId}`)
+                .eq('status', 'waiting'); // マッチメイキング中のゲームのみを対象
+
+            if (fetchError) {
+                console.error(`Error fetching matchmaking games for disconnected user ${disconnectedUserId}:`, fetchError);
+                return;
+            }
+
+            for (const dbGame of matchmakingGames) {
+                let playerIndexInDb = -1;
+                if (dbGame.player_1_id === disconnectedUserId) playerIndexInDb = 0;
+                else if (dbGame.player_2_id === disconnectedUserId) playerIndexInDb = 1;
+                else if (dbGame.player_3_id === disconnectedUserId) playerIndexInDb = 2;
+                else if (dbGame.player_4_id === disconnectedUserId) playerIndexInDb = 3;
+
+                if (playerIndexInDb !== -1) {
+                    console.log(`Player ${disconnectedUserId} found in matchmaking game ${dbGame.id} in Supabase.`);
+
+                    const updateData = { updated_at: new Date() };
+                    let playerColumnToNull = null;
+                    if (playerIndexInDb === 0) playerColumnToNull = 'player_1_id';
+                    else if (playerIndexInDb === 1) playerColumnToNull = 'player_2_id';
+                    else if (playerIndexInDb === 2) playerColumnToNull = 'player_3_id';
+                    else if (playerIndexInDb === 3) playerColumnToNull = 'player_4_id';
+
+                    if (playerColumnToNull) {
+                        updateData[playerColumnToNull] = null;
+                    }
+
+                    // game_data 内の players 配列からも切断したプレイヤーを削除
+                    let updatedGameDataPlayers = dbGame.game_data.players.filter(p => p.id !== disconnectedUserId);
+                    dbGame.game_data.players = updatedGameDataPlayers; // メモリ上のdbGameオブジェクトを更新
+
+                    // 残りのプレイヤー数に応じてstatusを更新
+                    if (updatedGameDataPlayers.length === 0) {
+                        updateData.status = 'cancelled';
+                        console.log(`Matchmaking game ${dbGame.id} has no players left. Setting status to 'cancelled'.`);
+                    } else {
+                        updateData.status = 'waiting';
+                        console.log(`Matchmaking game ${dbGame.id} still has players. Setting status to 'waiting'.`);
+                    }
+
+                    updateData.game_data = dbGame.game_data; // 更新された game_data をセット
+
+                    const { error: updateError } = await supabase
+                        .from('game_states')
+                        .update(updateData)
+                        .eq('id', dbGame.id);
+
+                    if (updateError) {
+                        console.error(`Error updating matchmaking game state for game ${dbGame.id}:`, updateError);
+                    } else {
+                        console.log(`Matchmaking game ${dbGame.id} updated in Supabase.`);
+                        // 他のプレイヤーに状態更新をブロードキャスト (もしいる場合)
+                        if (updatedGameDataPlayers.length > 0) {
+                            io.to(dbGame.id).emit('game-state-update', dbGame.game_data);
+                        }
+                    }
+                    break; // 該当ゲームを見つけたらループを抜ける
+                }
             }
         }
     }

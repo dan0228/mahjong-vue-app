@@ -1302,7 +1302,7 @@ io.on('connection', (socket) => {
 
     } catch (error) {
         console.error('[FATAL] An error occurred in matchmaking process:', error);
-        socket.emit('gameError', { message: `マッチング処理中にエラーが発生しました。` });
+        socket.emit('gameError', { message: `マッチング処理中にエラーが発生しました: ${error.message || error}` });
     }
   });
 

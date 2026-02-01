@@ -15,7 +15,7 @@
         <!-- タイトルへ戻るボタン -->
         <div class="top-controls">
           <button @click="goToTitle" class="back-button">
-            <img src="/assets/images/button/buckToTitle.png" :alt="$t('matchmaking.backToTitle')" />
+            <img src="/assets/images/button/buckToTitle.png" alt="タイトルへ戻る" />
           </button>
         </div>
 
@@ -59,17 +59,34 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/userStore';
+import { useGameStore } from '@/stores/gameStore'; // gameStoreをインポート
 import { useAudioStore } from '@/stores/audioStore'; // 追加
 import PlayerInfoPopup from '@/components/PlayerInfoPopup.vue';
 
 const { t, locale } = useI18n();
 const userStore = useUserStore();
+const gameStore = useGameStore(); // gameStoreを定義
 const audioStore = useAudioStore(); // 追加
 const router = useRouter();
+
+// --- レスポンシブデザインのためのスケーリング ---
+const scaleFactor = ref(1);
+const scalerStyle = computed(() => ({
+  transform: `translate(-50%, -50%) scale(${scaleFactor.value})`,
+}));
+
+const updateScaleFactor = () => {
+  const viewportHeight = window.innerHeight;
+  const viewportWidth = window.innerWidth;
+  const scaleHeight = viewportHeight / 640;
+  const scaleWidth = viewportWidth / 360;
+  scaleFactor.value = Math.min(scaleHeight, scaleWidth);
+};
+
 
 // --- ポップアップ関連 ---
 const showPlayerInfoPopup = ref(false);
@@ -85,6 +102,7 @@ const closePlayerInfoPopup = () => {
 };
 
 const goToTitle = () => {
+  gameStore.disconnectOnlineGame(); // ゲームストアの切断処理を呼び出す
   router.push({ name: 'Title' });
 };
 
@@ -132,9 +150,29 @@ watch(() => gameStore.isGameReady, (newVal) => {
   }
 });
 
+// --- UI関連の動的プロパティ ---
+const boardImageSrc = computed(() =>
+  locale.value === 'en'
+    ? '/assets/images/info/board_en.png'
+    : '/assets/images/info/board.png'
+);
+
+const fireParticleStyles = ref([]);
+const generateFireParticleStyles = () => {
+  fireParticleStyles.value = Array.from({ length: 20 }, () => ({
+    left: `${Math.random() * 100}%`,
+    animationDelay: `${Math.random() * 4}s`,
+    animationDuration: `${2 + Math.random() * 3}s`,
+  }));
+};
+
+
 onMounted(() => {
+  updateScaleFactor();
   window.addEventListener('resize', updateScaleFactor);
   generateFireParticleStyles();
+  // マッチング要求を開始
+  gameStore.requestMatchmaking();
 });
 
 onBeforeUnmount(() => {

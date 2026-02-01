@@ -1193,18 +1193,23 @@ export const useGameStore = defineStore('game', {
       const userStore = useUserStore();
       if (!userStore.profile || !userStore.profile.id) {
         console.error('マッチメイキング要求: ユーザープロフィールまたはIDが見つかりません。');
-        // エラー処理、例えばログイン画面へのリダイレクトなど
         return;
       }
 
-      this.connectToServer(); // サーバーに接続
+      this.connectToServer(); // サーバーへの接続を開始
 
-      if (socket && socket.connected) {
+      const emitRequest = () => {
         socket.emit('requestMatchmaking', { userId: userStore.profile.id });
         console.log(`マッチメイキング要求をサーバーに送信しました。ユーザーID: ${userStore.profile.id}`);
+      };
+
+      if (socket && socket.connected) {
+        emitRequest();
+      } else if (socket) {
+        // 接続が確立されるのを待ってから要求を送信
+        socket.once('connect', emitRequest);
       } else {
-        console.error('マッチメイキング要求: Socket.ioに接続されていません。');
-        // 接続エラー時の処理
+        console.error('マッチメイキング要求: Socket.ioインスタンスが作成されていません。');
       }
     },
 

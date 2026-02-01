@@ -1197,12 +1197,10 @@ io.on('connection', (socket) => {
             if (playerIndex !== -1) {
                 console.log(`Player ${disconnectedUserId} disconnected from game ${gameId}`);
                 
-                // プレイヤーをゲームから削除
-                game.players.splice(playerIndex, 1);
-
-                // Supabaseのgame_statesテーブルのplayer_X_idカラムを更新
+                // Supabaseのgame_statesテーブルのplayer_X_idカラムを更新するための準備
                 const updateData = { updated_at: new Date() };
                 let playerColumnToNull = null;
+                // playerIndex は splice 前の元のインデックスを使用
                 if (playerIndex === 0) playerColumnToNull = 'player_1_id';
                 else if (playerIndex === 1) playerColumnToNull = 'player_2_id';
                 else if (playerIndex === 2) playerColumnToNull = 'player_3_id';
@@ -1211,6 +1209,12 @@ io.on('connection', (socket) => {
                 if (playerColumnToNull) {
                     updateData[playerColumnToNull] = null;
                 }
+
+                // プレイヤーをゲームから削除 (この時点で game.players のインデックスが変更される)
+                game.players.splice(playerIndex, 1);
+
+                // game_data 内の players 配列からも切断したプレイヤーを削除
+                game.game_data.players = game.game_data.players.filter(p => p.id !== disconnectedUserId);
 
                 // 残りのプレイヤー数に応じてstatusを更新
                 if (game.players.length === 0) {
@@ -1293,12 +1297,12 @@ io.on('connection', (socket) => {
   });
 
   // クライアントがマッチメイキングを要求する
-  socket.on('requestMatchmaking', async ({ userId, rating }) => {
+  socket.on('requestMatchmaking', async ({ userId, rating, username, avatarUrl }) => { // username, avatarUrl を追加
     console.log(`[1/5] Matchmaking request received from user: ${userId}, rating: ${rating}, socket: ${socket.id}`);
 
-    if (!userId || rating === undefined) {
-        console.error('[ERROR] Invalid request: userId or rating is missing.');
-        return socket.emit('gameError', { message: 'ユーザー情報またはレーティングが不足しています。' });
+    if (!userId || rating === undefined || !username) { // username のチェックを追加
+        console.error('[ERROR] Invalid request: userId, rating or username is missing.');
+        return socket.emit('gameError', { message: 'ユーザー情報、レーティング、またはユーザー名が不足しています。' });
     }
 
     // ユーザーとソケットIDをマップ
@@ -1309,7 +1313,9 @@ io.on('connection', (socket) => {
         console.log('[3/5] Calling RPC "find_or_create_match"...');
         const { data: matchData, error: rpcError } = await supabase.rpc('find_or_create_match', {
             p_user_id: userId,
-            p_user_rating: rating
+            p_user_rating: rating,
+            p_username: username, // 追加
+            p_avatar_url: avatarUrl // 追加
         });
 
         if (rpcError) {

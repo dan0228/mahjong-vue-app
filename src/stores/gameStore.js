@@ -285,7 +285,12 @@ export const useGameStore = defineStore('game', {
           if (this.isMatchmakingRequested) {
             const userStore = useUserStore(); // userStoreを再度取得
             console.log('[GameStore] Emitting "requestMatchmaking" event after connect...');
-            socket.emit('requestMatchmaking', { userId: userStore.profile.id, rating: userStore.profile.rating });
+            socket.emit('requestMatchmaking', {
+              userId: userStore.profile.id,
+              rating: userStore.profile.rating,
+              username: userStore.profile.username,
+              avatarUrl: userStore.profile.avatar_url,
+            });
             console.log(`[GameStore] "requestMatchmaking" event sent. UserID: ${userStore.profile.id}, Rating: ${userStore.profile.rating}`);
           }
         });

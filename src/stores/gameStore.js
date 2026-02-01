@@ -283,7 +283,10 @@ export const useGameStore = defineStore('game', {
           console.log('[GameStore] Successfully connected to game server with socket ID:', socket.id);
           // 接続成功時にマッチメイキングリクエストが保留されていれば送信
           if (this.isMatchmakingRequested) {
-            this.requestMatchmaking();
+            const userStore = useUserStore(); // userStoreを再度取得
+            console.log('[GameStore] Emitting "requestMatchmaking" event after connect...');
+            socket.emit('requestMatchmaking', { userId: userStore.profile.id, rating: userStore.profile.rating });
+            console.log(`[GameStore] "requestMatchmaking" event sent. UserID: ${userStore.profile.id}, Rating: ${userStore.profile.rating}`);
           }
         });
 
@@ -1198,43 +1201,33 @@ export const useGameStore = defineStore('game', {
         return;
       }
 
-      // ★修正: 既にマッチメイキングリクエストが送信されている場合は何もしない
-      if (this.isMatchmakingRequested) {
-        console.log('[GameStore] Matchmaking request already sent. Skipping.');
+      // 既にオンラインゲームが開始されている、またはオンラインゲームIDがある場合は何もしない
+      if (this.isGameOnline || this.onlineGameId) {
+        console.log('[GameStore] Already in an online game or game ID exists. Skipping matchmaking request.');
         return;
       }
 
-      // ★修正: 既にオンラインゲームが開始されている、またはオンラインゲームIDがある場合は何もしない
-      if (this.isGameOnline || this.onlineGameId) {
-        console.log('[GameStore] Already in an online game or game ID exists. Skipping matchmaking request.');
+      // マッチメイキングリクエストが送信中であればスキップ
+      if (this.isMatchmakingRequested) {
+        console.log('[GameStore] Matchmaking request already in progress. Skipping.');
         return;
       }
 
       this.isMatchmakingRequested = true; // リクエストフラグを立てる
 
       console.log('[GameStore] Calling connectToServer()...');
-      // connectToServerはsocketが未接続の場合にのみ新しいソケットを作成する
-      // 接続済みであれば何もしない
-      this.connectToServer(); 
+      this.connectToServer(); // サーバーへの接続を開始
 
-      const emitRequest = () => {
+      // ソケットが既に接続済みであれば直接イベントを送信
+      if (socket && socket.connected) {
         console.log('[GameStore] Emitting "requestMatchmaking" event...');
-        // ratingをペイロードに追加
         socket.emit('requestMatchmaking', { userId: userStore.profile.id, rating: userStore.profile.rating });
         console.log(`[GameStore] "requestMatchmaking" event sent. UserID: ${userStore.profile.id}, Rating: ${userStore.profile.rating}`);
-      };
-
-      if (socket && socket.connected) {
-        // ソケットが既に接続済みであれば直接イベントを送信
-        emitRequest();
-      } else if (socket) {
-        // ソケットが未接続だがインスタンスは存在する場合、接続後にイベントを送信
-        console.log('[GameStore] Socket not connected yet, waiting for "connect" event to emit matchmaking request.');
-        // connectToServer内でconnectイベントリスナーがemitRequestを呼び出すように変更済み
-      } else {
+      } else if (!socket) {
         console.error('[GameStore] Matchmaking request failed: Socket.io instance not created.');
         this.isMatchmakingRequested = false; // エラー時はリクエストフラグをリセット
       }
+      // ソケットが未接続の場合は、connectToServer内のconnectイベントリスナーで処理される
     },
 
     moveToNextPlayer() {

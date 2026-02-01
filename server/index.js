@@ -41,6 +41,15 @@ const io = new Server(httpServer, {
 // Supabaseクライアントの初期化
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_KEY; // サービスロールキーを使用
+
+// ★追加: 環境変数の存在チェック
+if (!supabaseUrl) {
+  console.error("Error: SUPABASE_URL 環境変数が設定されていません。Renderの環境設定を確認してください。");
+}
+if (!supabaseKey) {
+  console.error("Error: SUPABASE_SERVICE_KEY 環境変数が設定されていません。Renderの環境設定を確認してください。");
+}
+
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // 現在アクティブなゲームの状態を保持するオブジェクト

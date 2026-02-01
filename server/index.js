@@ -1183,11 +1183,10 @@ io.on('connection', (socket) => {
         }
     }
 
-    // ユーザーが切断された場合の処理 (例: 参加していたゲームから削除)
+    // ユーザーが切断された場合の処理
     if (disconnectedUserId) {
         for (const gameId in gameStates) {
             const game = gameStates[gameId];
-            // game.players が配列であることを確認
             if (!Array.isArray(game.players)) {
                 console.warn(`Game ${gameId} has invalid players array.`);
                 continue;
@@ -1201,40 +1200,48 @@ io.on('connection', (socket) => {
                 // プレイヤーをゲームから削除
                 game.players.splice(playerIndex, 1);
 
-                // プレイヤーが0人になった場合、ゲームの状態をキャンセル済みに更新
-                if (game.players.length === 0) {
-                    console.log(`Game ${gameId} has no players left. Setting status to 'cancelled'.`);
-                    game.status = 'cancelled'; // game_statesテーブルのstatusカラムを更新
-                    
-                    // Supabaseのgame_statesテーブルを更新
-                    const { error } = await supabase
-                        .from('game_states')
-                        .update({ status: 'cancelled', updated_at: new Date() })
-                        .eq('id', gameId);
+                // Supabaseのgame_statesテーブルのplayer_X_idカラムを更新
+                const updateData = { updated_at: new Date() };
+                let playerColumnToNull = null;
+                if (playerIndex === 0) playerColumnToNull = 'player_1_id';
+                else if (playerIndex === 1) playerColumnToNull = 'player_2_id';
+                else if (playerIndex === 2) playerColumnToNull = 'player_3_id';
+                else if (playerIndex === 3) playerColumnToNull = 'player_4_id';
 
-                    if (error) {
-                        console.error(`Error updating game status to 'cancelled' for game ${gameId}:`, error);
-                    } else {
+                if (playerColumnToNull) {
+                    updateData[playerColumnToNull] = null;
+                }
+
+                // 残りのプレイヤー数に応じてstatusを更新
+                if (game.players.length === 0) {
+                    updateData.status = 'cancelled';
+                    console.log(`Game ${gameId} has no players left. Setting status to 'cancelled'.`);
+                } else {
+                    updateData.status = 'waiting'; // プレイヤーが残っていればwaitingに戻す
+                    console.log(`Game ${gameId} still has players. Setting status to 'waiting'.`);
+                }
+
+                // game_dataも更新
+                updateData.game_data = game;
+
+                const { error } = await supabase
+                    .from('game_states')
+                    .update(updateData)
+                    .eq('id', gameId);
+
+                if (error) {
+                    console.error(`Error updating game state for game ${gameId}:`, error);
+                } else {
+                    if (game.players.length === 0) {
                         // メモリからもゲーム状態を削除
                         delete gameStates[gameId];
                         console.log(`Game ${gameId} removed from memory.`);
+                    } else {
+                        // プレイヤーが残っている場合、他のプレイヤーに状態更新をブロードキャスト
+                        io.to(gameId).emit('game-state-update', game);
                     }
-                } else {
-                    // プレイヤーが残っている場合、他のプレイヤーに状態更新をブロードキャスト
-                    io.to(gameId).emit('game-state-update', game);
                 }
                 break; // 該当ゲームを見つけたらループを抜ける
-            }
-            // ★追加: プレイヤーが切断してもゲームが残っている場合、そのプレイヤーのsocketIdをnullにする
-            // このブロックは、playerIndex が -1 で、かつ disconnectedUserId が game.players の中に存在する場合に実行されるべき
-            // ただし、playerIndex !== -1 のブロックで break しているので、この else if は到達しない
-            // したがって、このロジックは playerIndex !== -1 のブロックの外に移動するか、別の方法で処理する必要がある
-            // 現状のロジックでは、切断されたプレイヤーが game.players に含まれていても playerIndex が -1 の場合は処理されない
-            // ここでは、切断されたプレイヤーが game.players に含まれているが、socketId が見つからなかったケースを想定して修正
-            const disconnectedPlayerInGame = game.players.find(p => p.id === disconnectedUserId);
-            if (disconnectedPlayerInGame) {
-                disconnectedPlayerInGame.socketId = null;
-                io.to(gameId).emit('game-state-update', game);
             }
         }
     }
@@ -1398,7 +1405,7 @@ io.on('connection', (socket) => {
 
       const initialPlayers = playerIds.map(id => {
         const profile = profiles.find(p => p.id === id);
-        const existingPlayer = gameStates[gameId].players.find(p => p.id === id); // 既存のsocketIdを保持
+        // socketId はサーバーサイドで管理されるべき情報であり、クライアントにブロードキャストされる game_data に含めるべきではない
         return {
           id: id,
           name: profile?.username || 'プレイヤー',
@@ -1408,7 +1415,6 @@ io.on('connection', (socket) => {
           hand: [], discards: [], melds: [], isDealer: false, score: 50000, seatWind: null,
           stockedTile: null, isUsingStockedTile: false, isStockedTileSelected: false,
           isAi: false,
-          socketId: existingPlayer?.socketId || null, // 既存のsocketIdを再設定
         };
       });
 

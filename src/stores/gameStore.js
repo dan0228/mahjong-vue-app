@@ -291,7 +291,7 @@ export const useGameStore = defineStore('game', {
               username: userStore.profile.username,
               avatarUrl: userStore.profile.avatar_url,
             });
-            console.log(`[GameStore] "requestMatchmaking" event sent. UserID: ${userStore.profile.id}, Rating: ${userStore.profile.rating}`);
+            console.log(`[GameStore] "requestMatchmaking" event sent. UserID: ${userStore.profile.id}, Rating: ${userStore.profile.rating}, AvatarURL: ${userStore.profile.avatar_url}`);
           }
         });
 
@@ -1226,8 +1226,8 @@ export const useGameStore = defineStore('game', {
       // ソケットが既に接続済みであれば直接イベントを送信
       if (socket && socket.connected) {
         console.log('[GameStore] Emitting "requestMatchmaking" event...');
-        socket.emit('requestMatchmaking', { userId: userStore.profile.id, rating: userStore.profile.rating });
-        console.log(`[GameStore] "requestMatchmaking" event sent. UserID: ${userStore.profile.id}, Rating: ${userStore.profile.rating}`);
+        socket.emit('requestMatchmaking', { userId: userStore.profile.id, rating: userStore.profile.rating, username: userStore.profile.username, avatarUrl: userStore.profile.avatar_url });
+        console.log(`[GameStore] "requestMatchmaking" event sent. UserID: ${userStore.profile.id}, Rating: ${userStore.profile.rating}, AvatarURL: ${userStore.profile.avatar_url}`);
       } else if (!socket) {
         console.error('[GameStore] Matchmaking request failed: Socket.io instance not created.');
         this.isMatchmakingRequested = false; // エラー時はリクエストフラグをリセット

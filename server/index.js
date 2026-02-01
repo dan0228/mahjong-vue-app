@@ -1373,8 +1373,8 @@ io.on('connection', (socket) => {
   });
 
   // クライアントがマッチメイキングを要求する
-  socket.on('requestMatchmaking', async ({ userId, rating, username, avatarUrl }) => { // username, avatarUrl を追加
-    console.log(`[1/5] Matchmaking request received from user: ${userId}, rating: ${rating}, socket: ${socket.id}`);
+  socket.on('requestMatchmaking', async ({ userId, rating, username, avatarUrl }) => {
+    console.log(`[1/5] Matchmaking request received from user: ${userId}, rating: ${rating}, socket: ${socket.id}, avatarUrl: ${avatarUrl}`);
 
     if (!userId || rating === undefined || !username) { // username のチェックを追加
         console.error('[ERROR] Invalid request: userId, rating or username is missing.');
@@ -1390,7 +1390,7 @@ io.on('connection', (socket) => {
         const { data: matchData, error: rpcError } = await supabase.rpc('find_or_create_match', {
             p_user_id: userId,
             p_user_rating: rating,
-            p_username: username, // 追加
+            p_username: username,
             p_avatar_url: avatarUrl // 追加
         });
 
@@ -1486,19 +1486,19 @@ io.on('connection', (socket) => {
       }
 
       const initialPlayers = playerIds.map(id => {
-        const profile = profiles.find(p => p.id === id);
-        // socketId はサーバーサイドで管理されるべき情報であり、クライアントにブロードキャストされる game_data に含めるべきではない
-        return {
-          id: id,
-          name: profile?.username || 'プレイヤー',
-          avatar_url: profile?.avatar_url,
-          cat_coins: profile?.cat_coins || 0,
-          rating: profile?.rating || 1500,
-          hand: [], discards: [], melds: [], isDealer: false, score: 50000, seatWind: null,
-          stockedTile: null, isUsingStockedTile: false, isStockedTileSelected: false,
-          isAi: false,
-        };
-      });
+            const profile = profiles.find(p => p.id === id);
+            // socketId はサーバーサイドで管理されるべき情報であり、クライアントにブロードキャストされる game_data に含めるべきではない
+            return {
+              id: id,
+              name: profile?.username || 'プレイヤー',
+              avatar_url: profile?.avatar_url || '/assets/images/info/hito_icon_1.png', // デフォルトアイコンを設定
+              cat_coins: profile?.cat_coins || 0,
+              rating: profile?.rating || 1500,
+              hand: [], discards: [], melds: [], isDealer: false, score: 50000, seatWind: null,
+              stockedTile: null, isUsingStockedTile: false, isStockedTileSelected: false,
+              isAi: false,
+            };
+          });
 
       gameStates[gameId].players = initialPlayers; // プレイヤー情報を更新
 
